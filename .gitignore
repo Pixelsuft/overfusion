@@ -1,0 +1,15 @@
+__idea__
+.vs
+.vscode
+overfusion
+Debug
+Release
+ReleaseFast
+x64
+*.aps
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+*.xz
