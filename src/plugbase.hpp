@@ -3,12 +3,12 @@
 #include <string>
 #include <string_view>
 
-#define PLUG_REG(check_cb)                                                                         \
-    class Startup {                                                                                \
+#define PLUG_REG(plug_class, check_cb)                                                             \
+    class Startup_##plug_class {                                                                   \
     public:                                                                                        \
-        Startup() { plug::reg(check_cb); }                                                         \
+        Startup_##plug_class() { plug::reg(check_cb); }                                            \
     };                                                                                             \
-    static Startup startup;
+    static Startup_##plug_class startup_##plug_class;
 
 namespace plug {
 enum class PtrProp { PState, PNextFrame, PNextData, PSubTickStep, PIsPaused, Update };

@@ -4,13 +4,13 @@
 #include <spdlog/spdlog.h>
 // TODO: move to plugins dir from src
 
-class PlugIwt : public plug::PlugBase {
+class PlugIwtOld : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
 
 public:
-    PlugIwt() {
+    PlugIwtOld() {
         name = "I Wanna Try 1.9.8.3";
         fps = 60;
         unicode = true;
@@ -94,10 +94,10 @@ public:
 
 static void on_plugin_check(plug::PlugBase** buf, bool& check) {
     if (buf) {
-        *buf = new PlugIwt;
+        *buf = new PlugIwtOld;
     } else {
         check = mem::exe_name == "I WANNA TRY 1.9.8.3.exe";
     }
 }
 
-PLUG_REG(on_plugin_check)
+PLUG_REG(PlugIwtOld, on_plugin_check)

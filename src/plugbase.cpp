@@ -17,7 +17,7 @@ void plug::reg(plug::PlugCheckCallback callback) {
 bool plug::search_and_run() {
     PlugCheckCallback cb = nullptr;
     auto& reg = get_registry();
-    bool check_bool;
+    bool check_bool = false;
     for (const auto& temp_cb : reg) {
         temp_cb(nullptr, check_bool);
         if (check_bool) {
