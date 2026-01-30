@@ -1,5 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "timehooks.hpp"
+#include "ass.hpp"
 #include "mem.hpp"
 #include "state.hpp"
 #include "ui.hpp"
@@ -26,6 +27,16 @@ static DWORD WINAPI timeGetTimeH() {
 
 static DWORD WINAPI GetTickCountH() {
     return static_cast<DWORD>(state::get_time(state::TimeOffset::Startup));
+}
+
+static VOID GetLocalTimeH(LPSYSTEMTIME lpSystemTime) {
+    auto ms = state::get_time(state::TimeOffset::Local);
+    ULARGE_INTEGER ull;
+    ull.QuadPart = (ms + 11644473600000ULL) * 10000ULL;
+    FILETIME ft;
+    ft.dwLowDateTime = ull.LowPart;
+    ft.dwHighDateTime = ull.HighPart;
+    ASS(FileTimeToSystemTime(&ft, lpSystemTime));
 }
 
 static UINT_PTR(WINAPI* SetTimerO)(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse,
@@ -70,12 +81,30 @@ static VOID GetSystemTimeAsFileTimeH(LPFILETIME lpSystemTimeAsFileTime) {
     lpSystemTimeAsFileTime->dwHighDateTime = static_cast<DWORD>(totalTime100ns >> 32);
 }
 
+static MMRESULT(WINAPI* timeSetEventO)(UINT uDelay, UINT uResolution, void* lpTimeProc,
+                                       DWORD_PTR dwUser, UINT fuEvent);
+static MMRESULT WINAPI timeSetEventH(UINT uDelay, UINT uResolution, void* lpTimeProc,
+                                     DWORD_PTR dwUser, UINT fuEvent) {
+    auto ret = timeSetEventO(uDelay, uResolution, lpTimeProc, dwUser, fuEvent);
+    // spdlog::debug("timeSetEvent: {} {} {}", uDelay, uResolution, ret);
+    return ret;
+}
+
+static MMRESULT(WINAPI* timeKillEventO)(UINT uTimerID);
+static MMRESULT WINAPI timeKillEventH(UINT uTimerID) {
+    // spdlog::debug("timeKillEvent: {}", uTimerID);
+    return timeKillEventO(uTimerID);
+}
+
 void timehooks::init() {
     HOOK_ONLY("winmm.dll", timeGetSystemTime);
     HOOK_AUTO("winmm.dll", timeGetTime);
+    HOOK_AUTO("winmm.dll", timeSetEvent);
+    HOOK_AUTO("winmm.dll", timeKillEvent);
     HOOK_AUTO("user32.dll", SetTimer);
     HOOK_AUTO("kernel32.dll", QueryPerformanceFrequency);
     HOOK_ONLY("kernel32.dll", GetTickCount);
+    HOOK_ONLY("kernel32.dll", GetLocalTime);
 }
 
 void timehooks::update_init() {

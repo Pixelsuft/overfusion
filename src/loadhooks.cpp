@@ -31,7 +31,7 @@ static std::optional<std::string> before_load(string_view path) {
                fn == "xinput1_1.dll" || fn == "xinput9_1_0.dll") {
         return "";
     }
-    return {};
+    return plug::get().before_dll_load(path, fn);
 }
 
 static void after_load(string_view path, void* mod) {

@@ -2,11 +2,12 @@
 #include "ass.hpp"
 #include "mem.hpp"
 #include "plugbase.hpp"
-#include <spdlog/spdlog.h>
 #include <Windows.h>
+#include <spdlog/spdlog.h>
+
 // TODO: move to plugins dir from src
 
-class PlugIwtDemo : public plug::PlugBase {
+class PlugIwtDemo final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
@@ -25,6 +26,8 @@ public:
         ASS(SaveGameState != nullptr);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49f40);
         ASS(LoadGameState != nullptr);
+        return;
+        hook::enable();
         // Force /DEBUG (window title)
         *(int*)(mem::get_base() + 0xb4b48) = 1;
         // Show scene name in title
@@ -37,12 +40,31 @@ public:
         mem::write(mem::get_base() + 0x2add4, {0x90, 0x90});
         mem::write(mem::get_base() + 0x2add7, {0xeb});
         // No waiting
+        mem::write(mem::get_base() + 0x2ea5, {0xeb});
         mem::write(mem::get_base() + 0x2ee5, {0xeb});
+        mem::write(mem::get_base() + 0x2f0a, {0x90, 0x90});
         // Use high precision timer instead of ugly SetTimer
         mem::write(mem::get_base() + 0x24618, {0xeb});
+        // Save state fixes (experimental)
+        mem::write(mem::get_base() + 0x483a3, {0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x49a5e, {0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x4835c, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
+                                               0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x58227, {0x66, 0xe9, 0x94, 0x00, 0x90, 0x90});
+
+        mem::write(mem::get_base() + 0x483cd,
+                   {0x8b, 0x3d, 0x14, 0xc2, 0x48, 0x00, 0x6a, 0x00, 0x8d, 0x44, 0x24, 0x10});
     }
 
     void update_init() override {}
+
+    std::optional<std::string> before_dll_load(std::string_view path,
+                                               std::string_view fn) override {
+        if (fn == "wininet.dll")
+            return "";
+        // spdlog::info("Before load {}", fn);
+        return {};
+    }
 
     void after_dll_load(std::string_view path, std::string_view fn, void* mod) override {
         if (mod == nullptr)
@@ -55,6 +77,15 @@ public:
         } else if (fn == "Lacewing.mfx") {
             // No theading stuff
             mem::write(reinterpret_cast<size_t>(mod) + 0xb209, {0xeb});
+        } else if (fn == "Download.mfx") {
+            // No crash when blocking wininet.dll
+            mem::write(reinterpret_cast<size_t>(mod) + 0x16f9, {0xeb});
+            mem::write(reinterpret_cast<size_t>(mod) + 0x1727, {0x90, 0x90});
+        } else if (fn == "ZipObject.mfx") {
+            // No random
+            mem::write(reinterpret_cast<size_t>(mod) + 0x8eb7, {0xeb});
+            mem::write(reinterpret_cast<size_t>(mod) + 0x8ed3,
+                       {0x31, 0xc0, 0x90, 0x90, 0x90, 0x90});
         }
     };
 
@@ -81,6 +112,7 @@ public:
         // Replicating game engine mechanics
         size_t ptr = *(size_t*)(mem::get_base() + 0xb49d4);
         *(short*)(ptr + 0x436) = 0;
+        *(int*)(*(size_t*)(mem::get_base() + 0xb49d0) + 0x900) = 0;
         SaveGameState(file.get_handle());
         return true;
     }

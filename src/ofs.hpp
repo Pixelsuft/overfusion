@@ -28,6 +28,7 @@ namespace ofs {
 		}
 		bool seek(long long offset, SeekMode mode);
 		long long tell();
+		long long size();
 		inline void* get_handle() {
 			return handle;
 		}

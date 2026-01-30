@@ -4,7 +4,7 @@
 #include <spdlog/spdlog.h>
 // TODO: move to plugins dir from src
 
-class PlugIwtOld : public plug::PlugBase {
+class PlugIwtOld final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
@@ -35,7 +35,9 @@ public:
         mem::write(mem::get_base() + 0x2add4, {0x90, 0x90});
         mem::write(mem::get_base() + 0x2add7, {0xeb});
         // No waiting
+        mem::write(mem::get_base() + 0x2ea5, {0xeb});
         mem::write(mem::get_base() + 0x2ee5, {0xeb});
+        mem::write(mem::get_base() + 0x2f0a, {0x90, 0x90});
         // Use high precision timer instead of ugly SetTimer
         mem::write(mem::get_base() + 0x24618, {0xeb});
     }

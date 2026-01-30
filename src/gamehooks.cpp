@@ -22,6 +22,8 @@ static int __stdcall ProcessUpdateH() {
         hook::enable();
     }
     auto pState = plug::get().get_prop(plug::PtrProp::PState);
+    if (pState == nullptr)
+        return ProcessUpdateO();
     auto pStep = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));
     *pStep = 1;
     if (need_skip) {
@@ -43,10 +45,8 @@ static int __stdcall ProcessUpdateH() {
         if (!g) {
             spdlog::info("Save");
             g = true;
-            // ofs::File file("test.bin", 1);
-            // state::save(file);
-            auto isPaused = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PIsPaused, pState));
-            *isPaused = 1;
+            ofs::File file("test.bin", 1);
+            state::save(file);
         }
     } else
         g = false;

@@ -1,5 +1,6 @@
 #pragma once
 #include "ofs.hpp"
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -22,6 +23,7 @@ public:
     PlugBase() {}
     virtual void pre_init() {}
     virtual void update_init() {}
+    virtual std::optional<std::string> before_dll_load(std::string_view path, std::string_view fn) { return {}; }
     virtual void after_dll_load(std::string_view path, std::string_view fn, void* mod) {}
     virtual void* get_prop(PtrProp prop, void* data = nullptr) = 0;
     virtual bool save_state(ofs::File& file) = 0;

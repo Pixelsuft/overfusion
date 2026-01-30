@@ -102,6 +102,14 @@ long long File::tell() {
     return -1;
 }
 
+long long File::size() {
+    ASS(is_open());
+    LARGE_INTEGER ret;
+    if (GetFileSizeEx(handle, &ret))
+        return ret.QuadPart;
+    return -1;
+}
+
 void File::close() {
     if (is_open()) {
         ASS(CloseHandle(handle) != 0);
