@@ -54,12 +54,6 @@ static HWND WINAPI CreateWindowExAH(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR 
                                     DWORD dwStyle, int X, int Y, int nWidth, int nHeight,
                                     HWND hWndParent, HMENU hMenu, HINSTANCE hInstance,
                                     LPVOID lpParam) {
-    if (reinterpret_cast<size_t>(lpClassName) > 0xFFFF) {
-        if (strcmp(lpClassName, "mdiclient") == 0) {
-            spdlog::warn("Blocking CreateWindowEx");
-            return nullptr;
-        }
-    }
     auto ret = CreateWindowExAO(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth,
                                 nHeight, hWndParent, hMenu, hInstance, lpParam);
     if (ret && reinterpret_cast<size_t>(lpClassName) > 0xFFFF) {
@@ -74,12 +68,6 @@ static HWND WINAPI CreateWindowExWH(DWORD dwExStyle, LPCWSTR lpClassName, LPCWST
                                     DWORD dwStyle, int X, int Y, int nWidth, int nHeight,
                                     HWND hWndParent, HMENU hMenu, HINSTANCE hInstance,
                                     LPVOID lpParam) {
-    if (reinterpret_cast<size_t>(lpClassName) > 0xFFFF) {
-        if (wcscmp(lpClassName, L"mdiclient") == 0) {
-            spdlog::warn("Blocking CreateWindowEx");
-            return nullptr;
-        }
-    }
     auto ret = CreateWindowExWO(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth,
                                 nHeight, hWndParent, hMenu, hInstance, lpParam);
     if (ret && reinterpret_cast<size_t>(lpClassName) > 0xFFFF) {

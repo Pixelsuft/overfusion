@@ -36,15 +36,17 @@ static std::optional<std::string> before_load(string_view path) {
 
 static void after_load(string_view path, void* mod) {
     auto fn = get_filename(path);
-    if (fn == "mmfs2.dll") {
-        audiohooks::init();
-        hook::enable();
-    } else if (fn == "mmf2d3d9.dll") {
-        d3d9hooks::init();
-        hook::enable();
-    } else if (fn == "Lacewing.mfx") {
-        extrahooks::init_net();
-        hook::enable();
+    if (mod) {
+        if (fn == "mmfs2.dll") {
+            audiohooks::init();
+            hook::enable();
+        } else if (fn == "mmf2d3d9.dll") {
+            d3d9hooks::init();
+            hook::enable();
+        } else if (fn == "Lacewing.mfx") {
+            extrahooks::init_net();
+            hook::enable();
+        }
     }
     plug::get().after_dll_load(path, fn, mod);
 }

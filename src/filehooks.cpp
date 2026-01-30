@@ -52,5 +52,4 @@ void filehooks::init() {
     // HOOK_AUTO("kernel32.dll", SetCurrentDirectoryW);
     HOOK_ONLY("kernel32.dll", GetTempPathA);
     HOOK_ONLY("kernel32.dll", GetTempPathW);
-    // FileTimeToLocalFileTime etc kinda used only for temp files (for now)
 }

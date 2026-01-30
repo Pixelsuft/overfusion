@@ -287,6 +287,7 @@
     <ClCompile Include="src\loadhooks.cpp" />
     <ClCompile Include="src\ofs.cpp" />
     <ClCompile Include="src\plugbase.cpp" />
+    <ClCompile Include="src\plugiwtdemo.cpp" />
     <ClCompile Include="src\plugiwtold.cpp" />
     <ClCompile Include="src\state.cpp" />
     <ClCompile Include="src\timehooks.cpp" />

@@ -11,7 +11,7 @@
     static Startup startup;
 
 namespace plug {
-enum class PtrProp { Update };
+enum class PtrProp { PState, PNextFrame, PNextData, PSubTickStep, PIsPaused, Update };
 
 class PlugBase {
 public:
@@ -23,7 +23,7 @@ public:
     virtual void pre_init() {}
     virtual void update_init() {}
     virtual void after_dll_load(std::string_view path, std::string_view fn, void* mod) {}
-    virtual void* get_ptr_prop(PtrProp prop) = 0;
+    virtual void* get_prop(PtrProp prop, void* data = nullptr) = 0;
     virtual bool save_state(ofs::File& file) = 0;
     virtual bool load_state(ofs::File& file) = 0;
     virtual ~PlugBase() {}

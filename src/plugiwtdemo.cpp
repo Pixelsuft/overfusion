@@ -1,7 +1,9 @@
+#define WIN32_LEAN_AND_MEAN
 #include "ass.hpp"
 #include "mem.hpp"
 #include "plugbase.hpp"
 #include <spdlog/spdlog.h>
+#include <Windows.h>
 // TODO: move to plugins dir from src
 
 class PlugIwt : public plug::PlugBase {
@@ -11,7 +13,7 @@ private:
 
 public:
     PlugIwt() {
-        name = "I Wanna Try 1.9.8.3";
+        name = "I WANNA TRY - A New Adventure Demo";
         fps = 60;
         unicode = true;
         SaveGameState = nullptr;
@@ -24,20 +26,20 @@ public:
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49f40);
         ASS(LoadGameState != nullptr);
         // Force /DEBUG (window title)
-        *(int*)(mem::get_base() + 0xb4b48) = 1;
+        // *(int*)(mem::get_base() + 0xb4b48) = 1;
         // Show scene name in title
-        mem::write(mem::get_base() + 0x273a8, {0x90, 0x90});
+        // mem::write(mem::get_base() + 0x273a8, {0x90, 0x90});
         // No __security_check_cookie
-        mem::write(mem::get_base() + 0x6d696, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        // mem::write(mem::get_base() + 0x6d696, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         // No window hooks (already patched but for 0.00001 fps boost)
-        mem::write(mem::get_base() + 0x5a9d, {0xeb});
+        // mem::write(mem::get_base() + 0x5a9d, {0xeb});
         // No internal input recording overhead
-        mem::write(mem::get_base() + 0x2add4, {0x90, 0x90});
-        mem::write(mem::get_base() + 0x2add7, {0xeb});
+        // mem::write(mem::get_base() + 0x2add4, {0x90, 0x90});
+        // mem::write(mem::get_base() + 0x2add7, {0xeb});
         // No waiting
-        mem::write(mem::get_base() + 0x2ee5, {0xeb});
+        // mem::write(mem::get_base() + 0x2ee5, {0xeb});
         // Use high precision timer instead of ugly SetTimer
-        mem::write(mem::get_base() + 0x24618, {0xeb});
+        // mem::write(mem::get_base() + 0x24618, {0xeb});
     }
 
     void update_init() override {}
@@ -47,12 +49,12 @@ public:
             return;
         if (fn == "mmfs2.dll") {
             // No __security_check_cookie
-            mem::write(mem::get_base() + 0x6d696, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+            // mem::write(mem::get_base() + 0x6d696, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
             // Somehow fixes game state save
-            mem::write(reinterpret_cast<size_t>(mod) + 0x14928, {0x90, 0x90});
+            // mem::write(reinterpret_cast<size_t>(mod) + 0x14928, {0x90, 0x90});
         } else if (fn == "Lacewing.mfx") {
             // No theading stuff
-            mem::write(reinterpret_cast<size_t>(mod) + 0xb209, {0xeb});
+            // mem::write(reinterpret_cast<size_t>(mod) + 0xb209, {0xeb});
         }
     };
 
@@ -96,7 +98,7 @@ static void on_plugin_check(plug::PlugBase** buf, bool& check) {
     if (buf) {
         *buf = new PlugIwt;
     } else {
-        check = mem::exe_name == "I WANNA TRY 1.9.8.3.exe";
+        check = mem::exe_name == "I WANNA TRY - A New Adventure Demo.exe";
     }
 }
 

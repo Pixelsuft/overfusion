@@ -21,6 +21,9 @@ static int __stdcall ProcessUpdateH() {
         timehooks::update_init();
         hook::enable();
     }
+    auto pState = plug::get().get_prop(plug::PtrProp::PState);
+    auto pStep = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));
+    *pStep = 1;
     if (need_skip) {
         need_skip = false;
         return ProcessUpdateO();
@@ -40,8 +43,10 @@ static int __stdcall ProcessUpdateH() {
         if (!g) {
             spdlog::info("Save");
             g = true;
-            ofs::File file("test.bin", 1);
-            state::save(file);
+            // ofs::File file("test.bin", 1);
+            // state::save(file);
+            auto isPaused = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PIsPaused, pState));
+            *isPaused = 1;
         }
     } else
         g = false;
@@ -58,7 +63,8 @@ static int __stdcall ProcessUpdateH() {
 }
 
 void gamehooks::init() {
-    auto temp_ptr = plug::get().get_ptr_prop(plug::PtrProp::Update);
+    auto temp_ptr = plug::get().get_prop(plug::PtrProp::Update);
     ASS(temp_ptr != nullptr);
-    hook::hook(temp_ptr, ProcessUpdateH, &ProcessUpdateO);
+    if (temp_ptr != nullptr)
+        hook::hook(temp_ptr, ProcessUpdateH, &ProcessUpdateO);
 }
