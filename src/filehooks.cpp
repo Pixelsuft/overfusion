@@ -12,6 +12,8 @@ using std::string;
 static string real_cwd;
 static string temp_path;
 
+std::string_view filehooks::get_cwd() { return real_cwd; }
+
 BOOL(WINAPI* SetCurrentDirectoryWO)(LPCWSTR lpPathName);
 BOOL WINAPI SetCurrentDirectoryWH(LPCWSTR lpPathName) {
     spdlog::info("SetCurrentDirectoryWH: {}", uconv::from_utf16(lpPathName));
@@ -41,6 +43,12 @@ DWORD WINAPI GetTempPathWH(DWORD nBufferLength, LPWSTR lpBuffer) {
 }
 
 void filehooks::init() {
+    // HOOK_AUTO("kernel32.dll", SetCurrentDirectoryW);
+    HOOK_ONLY("kernel32.dll", GetTempPathA);
+    HOOK_ONLY("kernel32.dll", GetTempPathW);
+}
+
+void filehooks::pre_init() {
     [] {
         wchar_t buffer[MAX_PATH];
         auto len_ret = GetCurrentDirectoryW(MAX_PATH, buffer);
@@ -49,7 +57,4 @@ void filehooks::init() {
         real_cwd = uconv::from_utf16(buffer);
         temp_path = real_cwd + "\\temp";
     }();
-    // HOOK_AUTO("kernel32.dll", SetCurrentDirectoryW);
-    HOOK_ONLY("kernel32.dll", GetTempPathA);
-    HOOK_ONLY("kernel32.dll", GetTempPathW);
 }

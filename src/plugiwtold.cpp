@@ -1,5 +1,6 @@
 #include "ass.hpp"
 #include "mem.hpp"
+#include "config.hpp"
 #include "plugbase.hpp"
 #include <spdlog/spdlog.h>
 // TODO: move to plugins dir from src
@@ -12,13 +13,15 @@ private:
 public:
     PlugIwtOld() {
         name = "I Wanna Try 1.9.8.3";
-        fps = 60;
         unicode = true;
         SaveGameState = nullptr;
         LoadGameState = nullptr;
     }
 
     void pre_init() override {
+        auto& cfg = conf::get();
+        if (cfg.fps <= 0)
+            cfg.fps = 60;
         SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x48350);
         ASS(SaveGameState != nullptr);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49f40);

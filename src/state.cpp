@@ -2,6 +2,7 @@
 #include "ass.hpp"
 #include "ofs.hpp"
 #include "plugbase.hpp"
+#include "config.hpp"
 #include <spdlog/spdlog.h>
 
 static bool success = true;
@@ -11,6 +12,7 @@ public:
     uint64_t system_offset;
     uint64_t local_offset;
     uint64_t startup_offset;
+    int fps;
     int frames;
 
     State() { clear_values(); }
@@ -18,12 +20,13 @@ public:
     void clear_values() {
         system_offset = local_offset = startup_offset = 0;
         frames = 0;
+        fps = 0;
     }
 };
 
 static State st;
 
-void state::init() {}
+void state::init() { st.fps = conf::get().fps; }
 
 void state::invalidate_process() { success = false; }
 
@@ -36,7 +39,7 @@ int64_t state::get_utc_offset() {
 }
 
 uint64_t state::get_time(TimeOffset offset) {
-    auto fps = plug::get().fps;
+    auto fps = st.fps;
     uint64_t ret = static_cast<uint64_t>(st.frames) * 1000 / fps;
     switch (offset) {
     case TimeOffset::None:

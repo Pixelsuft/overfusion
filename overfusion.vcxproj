@@ -99,22 +99,22 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(VC_IncludePath)imgui;$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(SolutionDir)json\include;$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(VC_IncludePath)imgui;$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(VC_IncludePath)imgui;$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(SolutionDir)json\include;$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(VC_IncludePath)imgui;$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseFast|Win32'">
-    <IncludePath>$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(VC_IncludePath)imgui;$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(SolutionDir)json\include;$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(VC_IncludePath)imgui;$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(VC_IncludePath)imgui;$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(SolutionDir)json\include;$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(VC_IncludePath)imgui;$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(VC_IncludePath)imgui;$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(SolutionDir)json\include;$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(VC_IncludePath)imgui;$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseFast|x64'">
-    <IncludePath>$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(VC_IncludePath)imgui;$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(SolutionDir)json\include;$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(VC_IncludePath)imgui;$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -276,6 +276,7 @@
     <ClCompile Include="spdlog\src\spdlog.cpp" />
     <ClCompile Include="spdlog\src\stdout_sinks.cpp" />
     <ClCompile Include="src\audiohooks.cpp" />
+    <ClCompile Include="src\config.cpp" />
     <ClCompile Include="src\d3d9hooks.cpp" />
     <ClCompile Include="src\darkmode.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
@@ -301,6 +302,7 @@
   <ItemGroup>
     <ClInclude Include="src\ass.hpp" />
     <ClInclude Include="src\audiohooks.hpp" />
+    <ClInclude Include="src\config.hpp" />
     <ClInclude Include="src\d3d9hooks.hpp" />
     <ClInclude Include="src\extrahooks.hpp" />
     <ClInclude Include="src\filehooks.hpp" />

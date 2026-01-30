@@ -135,6 +135,9 @@
     <ClCompile Include="src\plugiwtdemo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\config.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest">
@@ -188,6 +191,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\gamehooks.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\config.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

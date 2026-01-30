@@ -10,8 +10,8 @@
 
 static bool MyKeyState(int k) { return GetKeyState(k) & 128; }
 
-static int(__stdcall* ProcessUpdateO)();
-static int __stdcall ProcessUpdateH() {
+static int(__stdcall* UpdateGameFrameO)();
+static int __stdcall UpdateGameFrameH() {
     static bool inited = false;
     static bool need_skip = false;
     if (!inited) {
@@ -23,12 +23,12 @@ static int __stdcall ProcessUpdateH() {
     }
     auto pState = plug::get().get_prop(plug::PtrProp::PState);
     if (pState == nullptr)
-        return ProcessUpdateO();
+        return UpdateGameFrameO();
     auto pStep = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));
     *pStep = 1;
     if (need_skip) {
         need_skip = false;
-        return ProcessUpdateO();
+        return UpdateGameFrameO();
     }
     static bool f = false;
     if (MyKeyState('F')) {
@@ -50,7 +50,7 @@ static int __stdcall ProcessUpdateH() {
         }
     } else
         g = false;
-    auto ret = ProcessUpdateO();
+    auto ret = UpdateGameFrameO();
     if (ret == 3) {
         spdlog::debug("Scene change");
         need_skip = true;
@@ -65,6 +65,8 @@ static int __stdcall ProcessUpdateH() {
 void gamehooks::init() {
     auto temp_ptr = plug::get().get_prop(plug::PtrProp::Update);
     ASS(temp_ptr != nullptr);
-    if (temp_ptr != nullptr)
-        hook::hook(temp_ptr, ProcessUpdateH, &ProcessUpdateO);
+    if (temp_ptr == nullptr)
+        spdlog::error("UpdateGameFrame was not hooked");
+    else
+        hook::hook(temp_ptr, UpdateGameFrameH, &UpdateGameFrameO);
 }

@@ -3,7 +3,7 @@
 #include <spdlog/spdlog.h>
 #include <vector>
 
-plug::PlugBase* plug::_cur_plug;
+static plug::PlugBase* _cur_plug;
 
 static std::vector<plug::PlugCheckCallback>& get_registry() {
     static std::vector<plug::PlugCheckCallback> registry;
@@ -39,4 +39,9 @@ bool plug::search_and_run() {
     }
     spdlog::info("Plugin initialized: {}", _cur_plug->name);
     return true;
+}
+
+plug::PlugBase& plug::get() {
+    __assume(_cur_plug != nullptr);
+    return *_cur_plug;
 }

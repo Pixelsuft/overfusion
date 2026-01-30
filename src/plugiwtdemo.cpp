@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include "ass.hpp"
 #include "mem.hpp"
+#include "config.hpp"
 #include "plugbase.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
@@ -15,13 +16,15 @@ private:
 public:
     PlugIwtDemo() {
         name = "I WANNA TRY - A New Adventure Demo";
-        fps = 60;
         unicode = true;
         SaveGameState = nullptr;
         LoadGameState = nullptr;
     }
 
     void pre_init() override {
+        auto& cfg = conf::get();
+        if (cfg.fps <= 0)
+            cfg.fps = 60;
         SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x48350);
         ASS(SaveGameState != nullptr);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49f40);

@@ -17,10 +17,9 @@ enum class PtrProp { PState, PNextFrame, PNextData, PSubTickStep, PIsPaused, Upd
 class PlugBase {
 public:
     std::string name;
-    int fps;
     bool unicode;
 
-    PlugBase() {}
+    PlugBase() : name("Abstract plugin"), unicode(false) {}
     virtual void pre_init() {}
     virtual void update_init() {}
     virtual std::optional<std::string> before_dll_load(std::string_view path, std::string_view fn) { return {}; }
@@ -32,12 +31,8 @@ public:
 };
 
 using PlugCheckCallback = void (*)(PlugBase** buf, bool& check);
-extern plug::PlugBase* _cur_plug;
 
 bool search_and_run();
 void reg(plug::PlugCheckCallback callback);
-inline PlugBase& get() {
-    __assume(_cur_plug != nullptr);
-    return *_cur_plug;
-}
+PlugBase& get();
 } // namespace plug

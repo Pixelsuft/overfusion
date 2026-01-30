@@ -9,6 +9,7 @@
 #include "timehooks.hpp"
 #include "gamehooks.hpp"
 #include "ui.hpp"
+#include "config.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
@@ -20,8 +21,11 @@ static void of_main() {
     spdlog::set_level(spdlog::level::debug);
 #endif
     spdlog::info("OverFusion injected!");
+    conf::init();
     mem::init();
     ui::init();
+    filehooks::pre_init();
+    conf::get().read();
     if (!plug::search_and_run())
         mem::terminate();
     plug::get().pre_init();
