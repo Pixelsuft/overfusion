@@ -20,7 +20,7 @@ static MMRESULT WINAPI timeGetSystemTimeH(LPMMTIME pmmt, UINT cbmmt) {
 static DWORD(WINAPI* timeGetTimeO)();
 static DWORD WINAPI timeGetTimeH() {
     // Only temporary
-    return timeGetTimeO();
+    // return timeGetTimeO();
     // FIXME
     return static_cast<DWORD>(state::get_time(state::TimeOffset::Startup));
 }

@@ -26,8 +26,6 @@ public:
         ASS(SaveGameState != nullptr);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49f40);
         ASS(LoadGameState != nullptr);
-        return;
-        hook::enable();
         // Force /DEBUG (window title)
         *(int*)(mem::get_base() + 0xb4b48) = 1;
         // Show scene name in title
@@ -51,9 +49,6 @@ public:
         mem::write(mem::get_base() + 0x4835c, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
                                                0x90, 0x90, 0x90, 0x90, 0x90});
         mem::write(mem::get_base() + 0x58227, {0x66, 0xe9, 0x94, 0x00, 0x90, 0x90});
-
-        mem::write(mem::get_base() + 0x483cd,
-                   {0x8b, 0x3d, 0x14, 0xc2, 0x48, 0x00, 0x6a, 0x00, 0x8d, 0x44, 0x24, 0x10});
     }
 
     void update_init() override {}
@@ -71,7 +66,8 @@ public:
             return;
         if (fn == "mmfs2.dll") {
             // No __security_check_cookie
-            mem::write(mem::get_base() + 0x483cc, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+            mem::write(reinterpret_cast<size_t>(mod) + 0x483cc,
+                       {0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
             // Somehow fixes game state save
             // mem::write(reinterpret_cast<size_t>(mod) + 0x14928, {0x90, 0x90});
         } else if (fn == "Lacewing.mfx") {
@@ -85,7 +81,7 @@ public:
             // No random
             mem::write(reinterpret_cast<size_t>(mod) + 0x8eb7, {0xeb});
             mem::write(reinterpret_cast<size_t>(mod) + 0x8ed3,
-                       {0x31, 0xc0, 0x90, 0x90, 0x90, 0x90});
+                      {0x31, 0xc0, 0x90, 0x90, 0x90, 0x90});
         }
     };
 
