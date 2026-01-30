@@ -108,7 +108,6 @@ public:
         // Replicating game engine mechanics
         size_t ptr = *(size_t*)(mem::get_base() + 0xb49d4);
         *(short*)(ptr + 0x436) = 0;
-        *(int*)(*(size_t*)(mem::get_base() + 0xb49d0) + 0x900) = 0;
         SaveGameState(file.get_handle());
         return true;
     }
