@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
 #include "extrahooks.hpp"
 #include "mem.hpp"
@@ -133,6 +134,16 @@ static int WINAPI WSAStartupH(WORD wVersionRequired, LPWSADATA lpWSAData) {
 
 static int WINAPI bindH(SOCKET s, const sockaddr* addr, int namelen) { return SOCKET_ERROR; }
 
+static BOOL __stdcall GetUserNameAH(LPSTR lpBuffer, LPDWORD pcbBuffer) {
+    strcpy(lpBuffer, "OverFusion");
+    return TRUE;
+}
+
+static BOOL __stdcall GetUserNameWH(LPWSTR lpBuffer, LPDWORD pcbBuffer) {
+    wcscpy(lpBuffer, L"OverFusion");
+    return TRUE;
+}
+
 void extrahooks::init() {
     HOOK_AUTO("user32.dll", MessageBoxA);
     HOOK_AUTO("user32.dll", MessageBoxW);
@@ -159,4 +170,9 @@ void extrahooks::init() {
 void extrahooks::init_net() {
     HOOK_ONLY("ws2_32.dll", WSAStartup);
     HOOK_ONLY("ws2_32.dll", bind);
+}
+
+void extrahooks::init_adv() {
+    HOOK_ONLY("advapi32.dll", GetUserNameA);
+    HOOK_ONLY("advapi32.dll", GetUserNameW);
 }

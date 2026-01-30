@@ -8,6 +8,13 @@
 #include <spdlog/spdlog.h>
 #include <timeapi.h>
 
+struct my_timeb {
+    time_t time;
+    unsigned short millitm;
+    short timezone;
+    short dstflag;
+};
+
 static MMRESULT WINAPI timeGetSystemTimeH(LPMMTIME pmmt, UINT cbmmt) {
     if (pmmt == NULL || cbmmt < sizeof(MMTIME))
         return TIMERR_NOCANDO;
@@ -81,6 +88,22 @@ static VOID GetSystemTimeAsFileTimeH(LPFILETIME lpSystemTimeAsFileTime) {
     lpSystemTimeAsFileTime->dwHighDateTime = static_cast<DWORD>(totalTime100ns >> 32);
 }
 
+static time_t __cdecl timeH(time_t* tloc) {
+    if (tloc)
+        *tloc = state::get_time(state::TimeOffset::System) / 1000;
+    return state::get_time(state::TimeOffset::System) / 1000;
+}
+
+static void __cdecl _ftimeH(struct my_timeb* timeptr) {
+    if (timeptr) {
+        auto ms_timestamp = state::get_time(state::TimeOffset::System);
+        timeptr->time = (time_t)(ms_timestamp / 1000);
+        timeptr->millitm = (unsigned short)(ms_timestamp % 1000);
+        timeptr->timezone = -1;
+        timeptr->dstflag = -1;
+    }
+}
+
 static MMRESULT(WINAPI* timeSetEventO)(UINT uDelay, UINT uResolution, void* lpTimeProc,
                                        DWORD_PTR dwUser, UINT fuEvent);
 static MMRESULT WINAPI timeSetEventH(UINT uDelay, UINT uResolution, void* lpTimeProc,
@@ -105,6 +128,8 @@ void timehooks::init() {
     HOOK_AUTO("kernel32.dll", QueryPerformanceFrequency);
     HOOK_ONLY("kernel32.dll", GetTickCount);
     HOOK_ONLY("kernel32.dll", GetLocalTime);
+    HOOK_ONLY("msvcrt.dll", time);
+    HOOK_ONLY("msvcrt.dll", _ftime);
 }
 
 void timehooks::update_init() {
