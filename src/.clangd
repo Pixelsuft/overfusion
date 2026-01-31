@@ -4,6 +4,7 @@ CompileFlags:
     - "-I../minhook/include"
     - "-I../spdlog/include"
     - "-I../json/include"
+    - "-I../BackportCpp/include"
     - "-std=c++20"
 Completion:
   HeaderInsertion: Never
