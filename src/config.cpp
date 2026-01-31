@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <map>
 #include <nlohmann/json.hpp>
+#include <spdlog/fmt/ranges.h>
 #include <spdlog/spdlog.h>
 
 using conf::Config, std::string, ost::string_view;
@@ -178,6 +179,8 @@ static int vk_from_string(string_view sv) {
     return it->second;
 }
 
+constexpr bool is_valid_vk(int vk) { return vk > 0; }
+
 static conf::Task task_from_string(string_view sv) {
     static std::map<std::string_view, conf::Task> task_map = {
         {"save_state", conf::Task::SaveState}, {"load_state", conf::Task::LoadState}};
@@ -212,18 +215,45 @@ void Config::read() {
                 bind.key = vk_from_string(skey);
                 if (bind.key == 0)
                     continue;
-            } else if (val["key"].is_number_integer())
+            } else if (val["key"].is_number_integer()) {
                 bind.key = val["key"];
-            if (bind.key <= 0) {
-                spdlog::warn("Invalid bind key setting");
+                if (!is_valid_vk(bind.key)) {
+                    spdlog::warn("Invalid bind key value: {}", bind.key);
+                    continue;
+                }
+            } else {
+                spdlog::warn("Invalid bind key type");
                 continue;
             }
             bind.task = task_from_string(val["task"]);
             bind.extra = 0;
             if (bind.task == Task::None)
                 continue;
+            if (val["mods"].is_array()) {
+                for (auto& mod : val["mods"]) {
+                    if (mod.is_string()) {
+                        string skey = mod;
+                        std::transform(skey.begin(), skey.end(), skey.begin(),
+                                       [](int c) { return std::tolower(c); });
+                        auto key = vk_from_string(skey);
+                        if (key != 0)
+                            bind.mods.push_back(key);
+                    } else if (mod.is_number_integer()) {
+                        int key = mod;
+                        if (is_valid_vk(key))
+                            bind.mods.push_back(key);
+                        else
+                            spdlog::warn("Invalid key mod value: {}", key);
+                    } else
+                        spdlog::warn("Invalid key mod value type");
+                }
+            }
+            spdlog::debug("Bind (task={}, extra={}, key={}, mods={})", static_cast<int>(bind.task),
+                          bind.extra, bind.key, bind.mods);
             binds.push_back(bind);
         }
+        std::sort(binds.begin(), binds.end(),
+                  [](const auto& a, const auto& b) { return a.key < b.key; });
     }
 }
 

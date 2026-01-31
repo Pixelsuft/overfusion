@@ -3,9 +3,9 @@
 
 namespace conf {
 enum class Task {
-    None,
-    SaveState,
-    LoadState
+    None = 0,
+    SaveState = 1,
+    LoadState = 2
 };
 
 struct Bind {
