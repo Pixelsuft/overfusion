@@ -24,6 +24,8 @@ class Config {
 public:
     std::vector<Bind> binds;
     int fps;
+    bool show_info;
+    bool show_menu;
 
     Config();
     void read();
