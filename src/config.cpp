@@ -5,7 +5,7 @@
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
-using conf::Config;
+using conf::Config, std::string;
 
 static Config* _conf_ptr;
 
@@ -18,7 +18,7 @@ static nlohmann::json read_config_file() {
         return {};
     }
     auto size = file.size();
-    if (size < 2 || size > (1024 * 1024)) {
+    if (size < 2 || size > (1024 * 1024 * 25)) {
         spdlog::error("Invalid config file size");
         return {};
     }
@@ -48,6 +48,13 @@ void Config::read() {
     auto data = read_config_file();
     if (data["fps"].is_number_integer() && data["fps"].is_number_unsigned())
         fps = data["fps"];
+    if (data["binds"].is_array()) {
+        for (auto& val : data["binds"]) {
+            if (!val.is_object())
+                continue;
+            spdlog::info("TODO: read bind");
+        }
+    }
 }
 
 void conf::init() { _conf_ptr = new Config; }

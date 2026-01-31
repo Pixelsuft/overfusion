@@ -1,8 +1,8 @@
 #pragma once
-#include <string_view>
+#include "sv.hpp"
 
 namespace filehooks {
 void pre_init();
 void init();
-std::string_view get_cwd();
+ost::string_view get_cwd();
 }

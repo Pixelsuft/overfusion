@@ -12,7 +12,7 @@ using std::string;
 static string real_cwd;
 static string temp_path;
 
-std::string_view filehooks::get_cwd() { return real_cwd; }
+ost::string_view filehooks::get_cwd() { return real_cwd; }
 
 BOOL(WINAPI* SetCurrentDirectoryWO)(LPCWSTR lpPathName);
 BOOL WINAPI SetCurrentDirectoryWH(LPCWSTR lpPathName) {

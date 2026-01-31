@@ -5,6 +5,8 @@
 #include <spdlog/spdlog.h>
 // TODO: move to plugins dir from src
 
+using ost::string_view;
+
 class PlugIwtOld final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
@@ -47,7 +49,7 @@ public:
 
     void update_init() override {}
 
-    void after_dll_load(std::string_view path, std::string_view fn, void* mod) override {
+    void after_dll_load(string_view path, string_view fn, void* mod) override {
         if (mod == nullptr)
             return;
         if (fn == "mmfs2.dll") {

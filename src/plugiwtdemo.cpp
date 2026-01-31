@@ -1,12 +1,13 @@
 #define WIN32_LEAN_AND_MEAN
 #include "ass.hpp"
-#include "mem.hpp"
 #include "config.hpp"
+#include "mem.hpp"
 #include "plugbase.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
-
 // TODO: move to plugins dir from src
+
+using ost::string_view;
 
 class PlugIwtDemo final : public plug::PlugBase {
 private:
@@ -56,15 +57,14 @@ public:
 
     void update_init() override {}
 
-    std::optional<std::string> before_dll_load(std::string_view path,
-                                               std::string_view fn) override {
+    std::optional<std::string> before_dll_load(string_view path, string_view fn) override {
         if (fn == "wininet.dll")
             return "";
         // spdlog::info("Before load {}", fn);
         return {};
     }
 
-    void after_dll_load(std::string_view path, std::string_view fn, void* mod) override {
+    void after_dll_load(string_view path, string_view fn, void* mod) override {
         if (mod == nullptr)
             return;
         if (fn == "mmfs2.dll") {
@@ -84,7 +84,7 @@ public:
             // No random
             mem::write(reinterpret_cast<size_t>(mod) + 0x8eb7, {0xeb});
             mem::write(reinterpret_cast<size_t>(mod) + 0x8ed3,
-                      {0x31, 0xc0, 0x90, 0x90, 0x90, 0x90});
+                       {0x31, 0xc0, 0x90, 0x90, 0x90, 0x90});
         }
     };
 

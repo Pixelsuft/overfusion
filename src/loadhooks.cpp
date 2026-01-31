@@ -5,13 +5,13 @@
 #include "extrahooks.hpp"
 #include "mem.hpp"
 #include "plugbase.hpp"
+#include "sv.hpp"
 #include "uconv.hpp"
 #include <Windows.h>
 #include <optional>
 #include <spdlog/spdlog.h>
-#include <string_view>
 
-using std::string, std::string_view;
+using std::string, ost::string_view;
 
 constexpr string_view get_filename(string_view path) noexcept {
     auto last_slash = path.find_last_of("/\\");
