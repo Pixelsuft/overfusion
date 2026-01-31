@@ -1,23 +1,30 @@
 #define WIN32_LEAN_AND_MEAN
 #include "input.hpp"
+#include "ass.hpp"
+#include "config.hpp"
 #include "mem.hpp"
-#include "ui.hpp"
 #include "state.hpp"
+#include "ui.hpp"
 #include <Windows.h>
+#include <algorithm>
 #include <spdlog/spdlog.h>
 
-static SHORT(WINAPI* GetKeyStateO)(int nVirtKey);
-static SHORT WINAPI GetKeyStateH(int nVirtKey) {
-    if (ui::processing)
-        return GetKeyStateO(nVirtKey);
-    return state::get_key_state(nVirtKey) ? -32767 : 0;
-}
+static bool kbd_state[256] = {0};
 
 static SHORT(WINAPI* GetAsyncKeyStateO)(int nVirtKey);
 static SHORT WINAPI GetAsyncKeyStateH(int nVirtKey) {
-    // not used by imgui for now
+    ASS(nVirtKey > 0 && nVirtKey < 256);
+    // not used by imgui (for now)
     // if (ui::processing)
     //     return GetAsyncKeyStateO(nVirtKey);
+    return state::get_key_state(nVirtKey) ? -32767 : 0;
+}
+
+static SHORT(WINAPI* GetKeyStateO)(int nVirtKey);
+static SHORT WINAPI GetKeyStateH(int nVirtKey) {
+    ASS(nVirtKey > 0 && nVirtKey < 256);
+    if (ui::processing)
+        return kbd_state[nVirtKey];
     return state::get_key_state(nVirtKey) ? -32767 : 0;
 }
 
@@ -81,4 +88,61 @@ void input::init() {
     HOOK_ONLY("user32.dll", SendInput);
     HOOK_ONLY("user32.dll", SetCursorPos);
     HOOK_ONLY("user32.dll", SetForegroundWindow);
+}
+
+void input::process_input(int vk, bool pressed) {
+    ASS(vk > 0 && vk < 256);
+    auto& cfg = conf::get();
+    auto it = std::lower_bound(cfg.binds.begin(), cfg.binds.end(), vk,
+                               [](const auto& a, int key) { return a.key > key; });
+    bool prev = kbd_state[vk];
+    kbd_state[vk] = pressed;
+    while (it != cfg.binds.end() && it->key == vk) {
+        auto& bind = *it;
+        bool matches_mod = true;
+        for (auto& mod : bind.mods) {
+            if (!kbd_state[mod]) {
+                matches_mod = false;
+                break;
+            }
+        }
+        if ((pressed && !matches_mod) || (!pressed && !prev)) {
+			it++;
+			continue;
+		}
+        switch (bind.task) {
+            case conf::Task::SaveState: {
+                // TODO
+                break;
+            }
+            case conf::Task::LoadState: {
+                // TODO
+                break;
+            }
+            case conf::Task::Advance: {
+                // TODO
+                break;
+            }
+            case conf::Task::Play: {
+                // TODO
+                break;
+            }
+            case conf::Task::FastForward: {
+                // TODO
+                break;
+            }
+            case conf::Task::Map: {
+                if (prev || (pressed && cfg.show_menu))
+                    break;
+                state::set_key_down(vk, pressed);
+                break;
+            }
+            case conf::Task::None:
+            default: {
+                __assume(false);
+                break;
+            }
+        }
+        it++;
+    }
 }

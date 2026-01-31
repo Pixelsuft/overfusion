@@ -27,6 +27,7 @@ public:
     bool show_info;
     bool show_menu;
     bool is_replay;
+    bool paused;
 
     Config();
     void read();

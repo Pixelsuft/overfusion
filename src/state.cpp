@@ -100,3 +100,12 @@ bool state::get_key_state(int vk) {
     auto& vec = conf::get().is_replay ? repl_holding : holding;
     return std::find(vec.begin(), vec.end(), vk) != vec.end();
 }
+
+void state::set_key_down(int vk, bool down) {
+    ASS(vk > 0 && vk < 256);
+    auto it = std::find(holding.begin(), holding.end(), vk);
+    if (down && it == holding.end())
+        holding.push_back(vk);
+    else if (!down && it != holding.end())
+        holding.erase(it);
+}

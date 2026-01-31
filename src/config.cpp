@@ -179,7 +179,7 @@ static int vk_from_string(string_view sv) {
     return it->second;
 }
 
-constexpr bool is_valid_vk(int vk) { return vk > 0; }
+constexpr bool is_valid_vk(int vk) { return vk > 0 && vk < 256; }
 
 static conf::Task task_from_string(string_view sv) {
     static std::map<string_view, conf::Task> task_map = {
@@ -195,7 +195,12 @@ static conf::Task task_from_string(string_view sv) {
     return it->second;
 }
 
-Config::Config() { fps = 60; show_menu = show_info = true; is_replay = false; }
+Config::Config() {
+    fps = 60;
+    show_menu = show_info = true;
+    is_replay = false;
+    paused = true;
+}
 
 void Config::read() {
     auto data = read_config_file();
@@ -269,15 +274,13 @@ void Config::read() {
                     bind.extra = vk_from_string(skey);
                     if (bind.extra == 0)
                         continue;
-                }
-                else if (val["target"].is_number_integer()) {
+                } else if (val["target"].is_number_integer()) {
                     bind.extra = val["target"];
                     if (!is_valid_vk(bind.extra)) {
                         spdlog::warn("Invalid bind map target {}", bind.extra);
                         continue;
                     }
-                }
-                else {
+                } else {
                     spdlog::warn("Skipped bind without target");
                     continue;
                 }
@@ -287,7 +290,7 @@ void Config::read() {
             binds.push_back(bind);
         }
         std::sort(binds.begin(), binds.end(),
-                  [](const auto& a, const auto& b) { return a.key < b.key; });
+                  [](const auto& a, const auto& b) { return a.key > b.key; });
     }
 }
 
