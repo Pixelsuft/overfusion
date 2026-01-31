@@ -26,6 +26,7 @@ public:
     int fps;
     bool show_info;
     bool show_menu;
+    bool is_replay;
 
     Config();
     void read();

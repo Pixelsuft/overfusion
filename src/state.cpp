@@ -6,7 +6,7 @@
 #include <spdlog/spdlog.h>
 #include <vector>
 
-static bool success = true;
+using std::string;
 
 struct Event {
     int frame;
@@ -44,10 +44,16 @@ public:
 };
 
 static State st;
+static std::vector<int> holding;
+static std::vector<int> repl_holding;
+static string last_msg;
+static bool success;
 
 void state::init() {
+    last_msg = "";
+    success = false;
     st.fps = conf::get().fps;
-    spdlog::info("Init FPS: {}", st.fps);
+    spdlog::debug("Init FPS: {}", st.fps);
 }
 
 void state::invalidate_process() { success = false; }
@@ -88,4 +94,9 @@ bool state::load(ofs::File& file) {
     ASS(file.is_open());
     success = true;
     return plug::get().load_state(file) && success;
+}
+
+bool state::get_key_state(int vk) {
+    auto& vec = conf::get().is_replay ? repl_holding : holding;
+    return std::find(vec.begin(), vec.end(), vk) != vec.end();
 }

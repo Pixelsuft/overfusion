@@ -114,7 +114,7 @@
     <ClCompile Include="src\ui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\inputhooks.cpp">
+    <ClCompile Include="src\input.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\audiohooks.cpp">
@@ -175,7 +175,7 @@
     <ClInclude Include="src\ui.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\inputhooks.hpp">
+    <ClInclude Include="src\input.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\audiohooks.hpp">

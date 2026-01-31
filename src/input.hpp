@@ -1,5 +1,5 @@
 #pragma once
 
-namespace inputhooks {
+namespace input {
     void init();
 }

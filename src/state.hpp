@@ -18,4 +18,5 @@ namespace state {
     bool load(ofs::File& file);
     uint64_t get_time(TimeOffset offset);
     int64_t get_utc_offset();
+    bool get_key_state(int vk);
 }

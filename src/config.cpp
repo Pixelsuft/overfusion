@@ -195,7 +195,7 @@ static conf::Task task_from_string(string_view sv) {
     return it->second;
 }
 
-Config::Config() { fps = 60; show_menu = show_info = true; }
+Config::Config() { fps = 60; show_menu = show_info = true; is_replay = false; }
 
 void Config::read() {
     auto data = read_config_file();

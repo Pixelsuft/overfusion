@@ -1,7 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include "extrahooks.hpp"
 #include "filehooks.hpp"
-#include "inputhooks.hpp"
+#include "input.hpp"
 #include "loadhooks.hpp"
 #include "mem.hpp"
 #include "plugbase.hpp"
@@ -34,7 +34,7 @@ static void of_main() {
     winhooks::init();
     filehooks::init();
     timehooks::init();
-    inputhooks::init();
+    input::init();
     extrahooks::init();
     gamehooks::init();
     hook::enable();

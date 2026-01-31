@@ -1,14 +1,15 @@
 #define WIN32_LEAN_AND_MEAN
-#include "inputhooks.hpp"
+#include "input.hpp"
 #include "mem.hpp"
 #include "ui.hpp"
+#include "state.hpp"
 #include <Windows.h>
 
 static SHORT(WINAPI* GetKeyStateO)(int nVirtKey);
 static SHORT WINAPI GetKeyStateH(int nVirtKey) {
     if (ui::processing)
         return GetKeyStateO(nVirtKey);
-    return GetKeyStateO(nVirtKey);
+    return state::get_key_state(nVirtKey) ? -32767 : 0;
 }
 
 static SHORT(WINAPI* GetAsyncKeyStateO)(int nVirtKey);
@@ -16,7 +17,7 @@ static SHORT WINAPI GetAsyncKeyStateH(int nVirtKey) {
     // not used by imgui for now
     // if (ui::processing)
     //     return GetAsyncKeyStateO(nVirtKey);
-    return GetKeyStateO(nVirtKey);
+    return state::get_key_state(nVirtKey) ? -32767 : 0;
 }
 
 static BOOL(WINAPI* GetCursorPosO)(LPPOINT lpPoint);
@@ -64,7 +65,7 @@ static BOOL WINAPI SetCursorPosH(int X, int Y) { return FALSE; }
 
 static BOOL WINAPI SetForegroundWindowH(HWND hWnd) { return FALSE; }
 
-void inputhooks::init() {
+void input::init() {
     HOOK_AUTO("user32.dll", GetKeyState);
     HOOK_AUTO("user32.dll", GetAsyncKeyState);
     HOOK_AUTO("user32.dll", GetCursorPos);

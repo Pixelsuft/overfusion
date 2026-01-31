@@ -29,6 +29,11 @@
       "target": "lshift"
     },
     {
+      "key": "Enter",
+      "task": "map",
+      "target": "Enter"
+    },
+    {
       "key": "R",
       "task": "map",
       "target": "R"
