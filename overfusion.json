@@ -1,7 +1,7 @@
 {
   "fps": 60,
-  "show_menu": true,
-  "show_info": false,
+  "show_menu": false,
+  "show_info": true,
   "binds": [
     {
       "key": "left",

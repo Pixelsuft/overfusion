@@ -4,6 +4,7 @@
 #include "ui.hpp"
 #include "state.hpp"
 #include <Windows.h>
+#include <spdlog/spdlog.h>
 
 static SHORT(WINAPI* GetKeyStateO)(int nVirtKey);
 static SHORT WINAPI GetKeyStateH(int nVirtKey) {

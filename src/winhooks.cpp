@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include "winhooks.hpp"
 #include "ass.hpp"
+#include "input.hpp"
 #include "mem.hpp"
 #include "plugbase.hpp"
 #include "uconv.hpp"
@@ -22,10 +23,10 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     if (uMsg == WM_DROPFILES)
         return 0;
     ui::processing = true;
-    ImGui_ImplWin32_WndProcHandler(::hwnd, uMsg, wParam, lParam);
+    ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
     ui::processing = false;
-    // TODO: avoid GetKeyState so we can skip WM_KEYDOWN and WM_KEYUP
-    if (uMsg == WM_MOUSEMOVE || uMsg == WM_MOUSELEAVE || uMsg == WM_MOUSEHWHEEL || uMsg == WM_CHAR)
+    if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP || uMsg == WM_MOUSEMOVE || uMsg == WM_MOUSELEAVE ||
+        uMsg == WM_MOUSEHWHEEL || uMsg == WM_CHAR)
         return FALSE;
     auto ret = MainWindowProcO(hWnd, uMsg, wParam, lParam);
     return ret;
@@ -36,7 +37,7 @@ static LRESULT __stdcall EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     if (uMsg == WM_DROPFILES)
         return 0;
     ui::processing = true;
-    ImGui_ImplWin32_WndProcHandler(::mhwnd, uMsg, wParam, lParam);
+    ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
     ui::processing = false;
     if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP || uMsg == WM_MOUSELEAVE || uMsg == WM_MOUSEHWHEEL ||
         uMsg == WM_CHAR)

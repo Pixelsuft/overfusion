@@ -16,9 +16,9 @@ static int __stdcall UpdateGameFrameH() {
     static bool need_skip = false;
     if (!inited) {
         inited = true;
-        plug::get().update_init();
         winhooks::after_ui_init();
         timehooks::update_init();
+        plug::get().update_init();
         hook::enable();
     }
     auto pState = plug::get().get_prop(plug::PtrProp::PState);
