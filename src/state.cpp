@@ -3,6 +3,7 @@
 #include "config.hpp"
 #include "ofs.hpp"
 #include "plugbase.hpp"
+#include <imgui.h>
 #include <spdlog/spdlog.h>
 #include <vector>
 
@@ -58,7 +59,14 @@ void state::init() {
 
 void state::invalidate_process() { success = false; }
 
-void state::after_update() { st.frames++; }
+void state::before_update() {
+    // TODO
+}
+
+void state::after_update() {
+    st.frames++;
+    st.total = std::max(st.total, st.frames);
+}
 
 int64_t state::get_utc_offset() {
     return static_cast<int64_t>(st.local_offset) - static_cast<int64_t>(st.system_offset);
@@ -109,3 +117,5 @@ void state::set_key_down(int vk, bool down) {
     else if (!down && it != holding.end())
         holding.erase(it);
 }
+
+void state::draw_info() { ImGui::Text("Frames: %i / %i", st.frames, st.total); }

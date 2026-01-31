@@ -1,4 +1,5 @@
 #include "ui.hpp"
+#include "state.hpp"
 #include "config.hpp"
 #include <imgui.h>
 
@@ -13,7 +14,7 @@ static void draw_info() {
         ImGui::End();
         return;
     }
-    ImGui::Text("TODO");
+    state::draw_info();
     ImGui::End();
 }
 

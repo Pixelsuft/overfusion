@@ -153,10 +153,24 @@ static BOOL WINAPI GetMonitorInfoWH(HMONITOR hMonitor, LPMONITORINFO lpmi) {
     return FALSE;
 }
 
+static INT_PTR WINAPI DialogBoxParamAH(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent,
+                                      DLGPROC lpDialogFunc, LPARAM dwInitParam) {
+    spdlog::warn("Failing DialogBoxParamA");
+    return static_cast<INT_PTR>(-1);
+}
+
+static INT_PTR WINAPI DialogBoxParamWH(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent,
+                                      DLGPROC lpDialogFunc, LPARAM dwInitParam) {
+    spdlog::warn("Failing DialogBoxParamW");
+    return static_cast<INT_PTR>(-1);
+}
+
 void winhooks::init() {
     hwnd = mhwnd = nullptr;
     HOOK_AUTO("user32.dll", CreateWindowExW);
     HOOK_AUTO("user32.dll", CreateWindowExA);
+    HOOK_ONLY("user32.dll", DialogBoxParamA);
+    HOOK_ONLY("user32.dll", DialogBoxParamW);
     HOOK_AUTO("user32.dll", GetFocus);
     HOOK_AUTO("user32.dll", GetForegroundWindow);
     HOOK_AUTO("user32.dll", GetActiveWindow);

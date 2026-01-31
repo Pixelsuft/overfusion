@@ -13,6 +13,7 @@ namespace state {
 
     void init();
     void invalidate_process();
+    void before_update();
     void after_update();
     bool save(ofs::File& file);
     bool load(ofs::File& file);
@@ -20,4 +21,5 @@ namespace state {
     int64_t get_utc_offset();
     bool get_key_state(int vk);
     void set_key_down(int vk, bool down);
+    void draw_info();
 }

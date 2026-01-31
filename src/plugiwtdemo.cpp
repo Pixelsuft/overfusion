@@ -13,6 +13,7 @@ class PlugIwtDemo final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
+    void(__fastcall* UpdateInternalKeyStateDown)(int vk);
 
 public:
     PlugIwtDemo() {
@@ -20,6 +21,7 @@ public:
         unicode = true;
         SaveGameState = nullptr;
         LoadGameState = nullptr;
+        UpdateInternalKeyStateDown = nullptr;
     }
 
     void pre_init() override {
@@ -30,6 +32,9 @@ public:
         ASS(SaveGameState != nullptr);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49f40);
         ASS(LoadGameState != nullptr);
+        UpdateInternalKeyStateDown =
+            reinterpret_cast<decltype(UpdateInternalKeyStateDown)>(mem::get_base() + 0x58680);
+        ASS(UpdateInternalKeyStateDown != nullptr);
         // Force /DEBUG (window title)
         *(int*)(mem::get_base() + 0xb4b48) = 1;
         // Show scene name in title
@@ -53,9 +58,19 @@ public:
         mem::write(mem::get_base() + 0x4835c, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
                                                0x90, 0x90, 0x90, 0x90, 0x90});
         mem::write(mem::get_base() + 0x58227, {0x66, 0xe9, 0x94, 0x00, 0x90, 0x90});
+        // By saying pause I mean pause
+        mem::write(mem::get_base() + 0x2aaf8, {0xeb});
+        mem::write(mem::get_base() + 0x586ab, {0xeb});
+        mem::write(mem::get_base() + 0x586f1, {0xeb});
+        // No extra win32 event logic
+        mem::write(mem::get_base() + 0x42176, {0xeb});
+        // No hotkeys
+        mem::write(mem::get_base() + 0x51633, {0x66, 0xe9, 0xc2, 0x00, 0x90, 0x90});
     }
 
-    void update_init() override {}
+    void update_init() override {
+        // TODO: check UpdateInternalKeyStateDown
+    }
 
     std::optional<std::string> before_dll_load(string_view path, string_view fn) override {
         if (fn == "wininet.dll")
@@ -105,6 +120,11 @@ public:
         default:
             return nullptr;
         }
+    }
+
+    void on_key_state(int vk, bool down) override {
+        if (down)
+            UpdateInternalKeyStateDown(vk);
     }
 
     bool save_state(ofs::File& file) override {

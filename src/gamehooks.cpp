@@ -3,6 +3,7 @@
 #include "mem.hpp"
 #include "plugbase.hpp"
 #include "state.hpp"
+#include "config.hpp"
 #include "timehooks.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
@@ -30,26 +31,8 @@ static int __stdcall UpdateGameFrameH() {
         need_skip = false;
         return UpdateGameFrameO();
     }
-    static bool f = false;
-    if (MyKeyState('F')) {
-        if (!f) {
-            spdlog::info("Load");
-            f = true;
-            ofs::File file("test.bin", 0);
-            state::load(file);
-        }
-    } else
-        f = false;
-    static bool g = false;
-    if (MyKeyState('G')) {
-        if (!g) {
-            spdlog::info("Save");
-            g = true;
-            ofs::File file("test.bin", 1);
-            state::save(file);
-        }
-    } else
-        g = false;
+    auto& cfg = conf::get();
+    state::before_update();
     auto ret = UpdateGameFrameO();
     if (ret == 3) {
         spdlog::debug("Scene change");
