@@ -13,6 +13,7 @@ namespace state {
 
     void init();
     void invalidate_process();
+    void early_update();
     void before_update();
     void after_update();
     bool save(ofs::File& file);

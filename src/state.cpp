@@ -49,21 +49,53 @@ static std::vector<int> holding;
 static std::vector<int> repl_holding;
 static string last_msg;
 static bool success;
+static bool updating;
+static void(__fastcall* UpdateInternalKeyStateDown)(int vk);
 
 void state::init() {
+    UpdateInternalKeyStateDown = reinterpret_cast<decltype(UpdateInternalKeyStateDown)>(
+        plug::get().get_prop(plug::PtrProp::PHandleKeydown));
     last_msg = "";
     success = false;
+    updating = false;
     st.fps = conf::get().fps;
     spdlog::debug("Init FPS: {}", st.fps);
 }
 
 void state::invalidate_process() { success = false; }
 
+void state::early_update() {}
+
 void state::before_update() {
-    // TODO
+    updating = true;
+    auto& cfg = conf::get();
+    if (cfg.is_replay) {
+
+    }
+    else {
+        for (auto it = holding.begin(); it != holding.end(); it++) {
+			auto pit = std::find(st.prev.begin(), st.prev.end(), *it);
+			if (pit == st.prev.end()) {
+			    // Down event
+				if (UpdateInternalKeyStateDown)
+				    UpdateInternalKeyStateDown(*it);
+				spdlog::info("TODO: down {}", *it);
+			}
+		}
+		for (auto pit = st.prev.begin(); pit != st.prev.end(); pit++) {
+			auto it = std::find(holding.begin(), holding.end(), *pit);
+			if (it == holding.end()) {
+				// Up event
+				spdlog::info("TODO: up {}", *it);
+			}
+		}
+    }
+    st.prev = cfg.is_replay ? repl_holding : holding;
 }
 
 void state::after_update() {
+    ASS(updating);
+    updating = false;
     st.frames++;
     st.total = std::max(st.total, st.frames);
 }
@@ -105,7 +137,7 @@ bool state::load(ofs::File& file) {
 }
 
 bool state::get_key_state(int vk) {
-    auto& vec = conf::get().is_replay ? repl_holding : holding;
+    auto& vec = updating ? (conf::get().is_replay ? repl_holding : holding) : st.prev;
     return std::find(vec.begin(), vec.end(), vk) != vec.end();
 }
 

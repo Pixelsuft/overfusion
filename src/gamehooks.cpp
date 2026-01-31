@@ -22,6 +22,7 @@ static int __stdcall UpdateGameFrameH() {
         plug::get().update_init();
         hook::enable();
     }
+    state::early_update();
     auto pState = plug::get().get_prop(plug::PtrProp::PState);
     if (pState == nullptr)
         return UpdateGameFrameO();
@@ -29,9 +30,10 @@ static int __stdcall UpdateGameFrameH() {
     *pStep = 1;
     if (need_skip) {
         need_skip = false;
-        return UpdateGameFrameO();
+        auto ret = UpdateGameFrameO();
+        state::after_update();
+        return ret;
     }
-    auto& cfg = conf::get();
     state::before_update();
     auto ret = UpdateGameFrameO();
     if (ret == 3) {

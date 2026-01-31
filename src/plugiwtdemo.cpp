@@ -13,7 +13,6 @@ class PlugIwtDemo final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
-    void(__fastcall* UpdateInternalKeyStateDown)(int vk);
 
 public:
     PlugIwtDemo() {
@@ -21,7 +20,6 @@ public:
         unicode = true;
         SaveGameState = nullptr;
         LoadGameState = nullptr;
-        UpdateInternalKeyStateDown = nullptr;
     }
 
     void pre_init() override {
@@ -32,9 +30,6 @@ public:
         ASS(SaveGameState != nullptr);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49f40);
         ASS(LoadGameState != nullptr);
-        UpdateInternalKeyStateDown =
-            reinterpret_cast<decltype(UpdateInternalKeyStateDown)>(mem::get_base() + 0x58680);
-        ASS(UpdateInternalKeyStateDown != nullptr);
         // Force /DEBUG (window title)
         *(int*)(mem::get_base() + 0xb4b48) = 1;
         // Show scene name in title
@@ -117,14 +112,11 @@ public:
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x178);
         case plug::PtrProp::Update:
             return reinterpret_cast<void*>(mem::get_base() + 0x462e0);
+        case plug::PtrProp::PHandleKeydown:
+            return reinterpret_cast<void*>(mem::get_base() + 0x58680);
         default:
             return nullptr;
         }
-    }
-
-    void on_key_state(int vk, bool down) override {
-        if (down)
-            UpdateInternalKeyStateDown(vk);
     }
 
     bool save_state(ofs::File& file) override {
