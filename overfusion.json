@@ -1,0 +1,174 @@
+{
+  "fps": 60,
+  "binds": [
+    {
+      "key": "left",
+      "task": "map",
+      "target": "left"
+    },
+    {
+      "key": "right",
+      "task": "map",
+      "target": "right"
+    },
+    {
+      "key": "up",
+      "task": "map",
+      "target": "up"
+    },
+    {
+      "key": "down",
+      "task": "map",
+      "target": "down"
+    },
+    {
+      "key": "lshift",
+      "task": "map",
+      "target": "lshift"
+    },
+    {
+      "key": "R",
+      "task": "map",
+      "target": "R"
+    },
+    {
+      "key": "S",
+      "task": "map",
+      "target": "S"
+    },
+    {
+      "key": "Z",
+      "task": "map",
+      "target": "Z"
+    },
+    {
+      "key": "X",
+      "task": "map",
+      "target": "X"
+    },
+    {
+      "key": "I",
+      "task": "map",
+      "target": "F2"
+    },
+    {
+      "key": "O",
+      "task": "map",
+      "target": "F3"
+    },
+    {
+      "key": "P",
+      "task": "map",
+      "target": "Esc"
+    },
+    {
+      "key": "TAB",
+      "task": "fast",
+      "toggle": false
+    },
+    {
+      "key": "Pause",
+      "task": "play",
+      "toggle": true
+    },
+    {
+      "key": "Space",
+      "task": "play",
+      "toggle": false
+    },
+    {
+      "key": "V",
+      "task": "advance"
+    },
+    {
+      "key": "F1",
+      "task": "save",
+      "slot": 1
+    },
+    {
+      "key": "1",
+      "task": "load",
+      "slot": 1
+    },
+    {
+      "key": "F2",
+      "task": "save",
+      "slot": 2
+    },
+    {
+      "key": "2",
+      "task": "load",
+      "slot": 2
+    },
+    {
+      "key": "F3",
+      "task": "save",
+      "slot": 3
+    },
+    {
+      "key": "3",
+      "task": "load",
+      "slot": 3
+    },
+    {
+      "key": "F4",
+      "task": "save",
+      "slot": 4
+    },
+    {
+      "key": "4",
+      "task": "load",
+      "slot": 4
+    },
+    {
+      "key": "F5",
+      "task": "save",
+      "slot": 5
+    },
+    {
+      "key": "5",
+      "task": "load",
+      "slot": 5
+    },
+    {
+      "key": "F6",
+      "task": "save",
+      "slot": 6
+    },
+    {
+      "key": "6",
+      "task": "load",
+      "slot": 6
+    },
+    {
+      "key": "F7",
+      "task": "save",
+      "slot": 7
+    },
+    {
+      "key": "7",
+      "task": "load",
+      "slot": 7
+    },
+    {
+      "key": "F8",
+      "task": "save",
+      "slot": 8
+    },
+    {
+      "key": "8",
+      "task": "load",
+      "slot": 8
+    },
+    {
+      "key": "F9",
+      "task": "save",
+      "slot": 9
+    },
+    {
+      "key": "9",
+      "task": "load",
+      "slot": 9
+    }
+  ]
+}

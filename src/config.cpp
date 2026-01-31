@@ -45,7 +45,7 @@ static nlohmann::json read_config_file() {
 }
 
 static int vk_from_string(string_view sv) {
-    static std::map<std::string_view, int> vk_map = {
+    static std::map<string_view, int> vk_map = {
         {"f1", VK_F1},
         {"f2", VK_F2},
         {"f3", VK_F3},
@@ -182,8 +182,11 @@ static int vk_from_string(string_view sv) {
 constexpr bool is_valid_vk(int vk) { return vk > 0; }
 
 static conf::Task task_from_string(string_view sv) {
-    static std::map<std::string_view, conf::Task> task_map = {
-        {"save_state", conf::Task::SaveState}, {"load_state", conf::Task::LoadState}};
+    static std::map<string_view, conf::Task> task_map = {
+        {"save", conf::Task::SaveState},   {"load", conf::Task::LoadState},
+        {"advance", conf::Task::Advance},  {"play", conf::Task::Play},
+        {"fast", conf::Task::FastForward}, {"map", conf::Task::Map},
+        {"menu", conf::Task::Menu}};
     auto it = task_map.find(sv);
     if (it == task_map.end()) {
         spdlog::warn("Unknown task: {}", sv);
@@ -226,7 +229,6 @@ void Config::read() {
                 continue;
             }
             bind.task = task_from_string(val["task"]);
-            bind.extra = 0;
             if (bind.task == Task::None)
                 continue;
             if (val["mods"].is_array()) {
@@ -246,6 +248,34 @@ void Config::read() {
                             spdlog::warn("Invalid key mod value: {}", key);
                     } else
                         spdlog::warn("Invalid key mod value type");
+                }
+            }
+            bind.extra = 0;
+            if ((bind.task == Task::SaveState || bind.task == Task::LoadState) &&
+                val["slot"].is_number_integer())
+                bind.extra = val["slot"];
+            else if ((bind.task == Task::Play || bind.task == Task::FastForward) &&
+                     val["toggle"].is_boolean())
+                bind.extra = val["toggle"];
+            else if (bind.task == Task::Map) {
+                if (val["target"].is_string()) {
+                    string skey = val["target"];
+                    std::transform(skey.begin(), skey.end(), skey.begin(),
+                                   [](int c) { return std::tolower(c); });
+                    bind.extra = vk_from_string(skey);
+                    if (bind.extra == 0)
+                        continue;
+                }
+                else if (val["target"].is_number_integer()) {
+                    bind.extra = val["target"];
+                    if (!is_valid_vk(bind.extra)) {
+                        spdlog::warn("Invalid bind map target {}", bind.extra);
+                        continue;
+                    }
+                }
+                else {
+                    spdlog::warn("Skipped bind without target");
+                    continue;
                 }
             }
             spdlog::debug("Bind (task={}, extra={}, key={}, mods={})", static_cast<int>(bind.task),

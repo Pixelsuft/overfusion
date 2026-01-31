@@ -4,8 +4,13 @@
 namespace conf {
 enum class Task {
     None = 0,
-    SaveState = 1,
-    LoadState = 2
+    SaveState,
+    LoadState,
+    Advance,
+    Play,
+    FastForward,
+    Map,
+    Menu
 };
 
 struct Bind {

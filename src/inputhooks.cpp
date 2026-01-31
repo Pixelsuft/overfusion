@@ -42,8 +42,9 @@ static HKL WINAPI GetKeyboardLayoutH(DWORD idThread) {
 }
 
 static BOOL WINAPI GetKeyboardStateH(PBYTE lpKeyState) {
+    memset(lpKeyState, 0, sizeof(BYTE) * 256);
     // Maybe impl cuz engine doesnt handle errors?
-    return FALSE;
+    return TRUE;
 }
 
 static BOOL WINAPI SetKeyboardStateH(LPBYTE lpKeyState) { return FALSE; }

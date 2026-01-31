@@ -24,6 +24,9 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     ui::processing = true;
     ImGui_ImplWin32_WndProcHandler(::hwnd, uMsg, wParam, lParam);
     ui::processing = false;
+    // TODO: avoid GetKeyState so we can skip WM_KEYDOWN and WM_KEYUP
+    if (uMsg == WM_MOUSEMOVE || uMsg == WM_MOUSELEAVE || uMsg == WM_MOUSEHWHEEL || uMsg == WM_CHAR)
+        return FALSE;
     auto ret = MainWindowProcO(hWnd, uMsg, wParam, lParam);
     return ret;
 }
@@ -35,6 +38,9 @@ static LRESULT __stdcall EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     ui::processing = true;
     ImGui_ImplWin32_WndProcHandler(::mhwnd, uMsg, wParam, lParam);
     ui::processing = false;
+    if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP || uMsg == WM_MOUSELEAVE || uMsg == WM_MOUSEHWHEEL ||
+        uMsg == WM_CHAR)
+        return FALSE;
     auto ret = EditWindowProcO(hWnd, uMsg, wParam, lParam);
     return ret;
 }
