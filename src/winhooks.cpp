@@ -44,6 +44,7 @@ static LRESULT __stdcall EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
     ui::processing = false;
     if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP) {
+        // lParam = 0;
         input::process_input(wParam, uMsg == WM_KEYDOWN);
         return FALSE;
     }
@@ -203,5 +204,5 @@ void winhooks::after_ui_init() {
 }
 
 void winhooks::sim_key_event(int vk, bool down) {
-    MainWindowProcO(::hwnd, down ? WM_KEYDOWN : WM_KEYUP, 0, 0);
+   MainWindowProcO(::hwnd, down ? WM_KEYDOWN : WM_KEYUP, vk, down ? 0 : ((1 << 30) | (1 << 31)));
 }

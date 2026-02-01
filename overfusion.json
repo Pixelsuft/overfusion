@@ -24,9 +24,9 @@
       "target": "down"
     },
     {
-      "key": "lshift",
+      "key": "shift",
       "task": "map",
-      "target": "lshift"
+      "target": "shift"
     },
     {
       "key": "Enter",

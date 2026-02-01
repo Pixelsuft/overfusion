@@ -3,6 +3,7 @@
 #include "config.hpp"
 #include "ofs.hpp"
 #include "plugbase.hpp"
+#include "winhooks.hpp"
 #include <imgui.h>
 #include <spdlog/spdlog.h>
 #include <vector>
@@ -50,12 +51,10 @@ static std::vector<int> repl_holding;
 static string last_msg;
 static bool success;
 static bool updating;
-static void(__fastcall* UpdateInternalKeyStateDown)(int vk);
+static bool need_key_msg;
 
 void state::init() {
-    // TODO: handle WM_SYSKEYDOWN
-    UpdateInternalKeyStateDown = reinterpret_cast<decltype(UpdateInternalKeyStateDown)>(
-        plug::get().get_prop(plug::PtrProp::PHandleKeydown));
+    need_key_msg = plug::get().get_bool_prop(plug::BoolProp::NeedKeyMsg);
     last_msg = "";
     success = false;
     updating = false;
@@ -72,24 +71,23 @@ void state::before_update() {
     auto& cfg = conf::get();
     if (cfg.is_replay) {
 
-    }
-    else {
+    } else {
         for (auto it = holding.begin(); it != holding.end(); it++) {
-			auto pit = std::find(st.prev.begin(), st.prev.end(), *it);
-			if (pit == st.prev.end()) {
-			    // Down event
-				spdlog::info("TODO: down {}", *it);
-				if (UpdateInternalKeyStateDown)
-				    UpdateInternalKeyStateDown(*it);
-			}
-		}
-		for (auto pit = st.prev.begin(); pit != st.prev.end(); pit++) {
-			auto it = std::find(holding.begin(), holding.end(), *pit);
-			if (it == holding.end()) {
-				// Up event
-				spdlog::info("TODO: up {}", *pit);
-			}
-		}
+            auto pit = std::find(st.prev.begin(), st.prev.end(), *it);
+            if (pit == st.prev.end()) {
+                // Down event
+                if (need_key_msg)
+                    winhooks::sim_key_event(*it, true);
+            }
+        }
+        for (auto pit = st.prev.begin(); pit != st.prev.end(); pit++) {
+            auto it = std::find(holding.begin(), holding.end(), *pit);
+            if (it == holding.end()) {
+                // Up event
+                if (need_key_msg)
+                    winhooks::sim_key_event(*pit, false);
+            }
+        }
     }
     st.prev = cfg.is_replay ? repl_holding : holding;
 }
@@ -139,7 +137,8 @@ bool state::load(ofs::File& file) {
 
 bool state::get_key_state(int vk) {
     auto& vec = updating ? (conf::get().is_replay ? repl_holding : holding) : st.prev;
-    return std::find(vec.begin(), vec.end(), vk) != vec.end();
+    auto ret = std::find(vec.begin(), vec.end(), vk) != vec.end();
+    return ret;
 }
 
 void state::set_key_down(int vk, bool down) {

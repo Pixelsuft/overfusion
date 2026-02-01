@@ -12,7 +12,8 @@
     static Startup_##plug_class startup_##plug_class;
 
 namespace plug {
-enum class PtrProp { PState, PNextFrame, PNextData, PSubTickStep, PIsPaused, PHandleKeydown, Update };
+enum class PtrProp { PState, PNextFrame, PNextData, PSubTickStep, PIsPaused, Update };
+enum class BoolProp { NeedKeyMsg };
 
 class PlugBase {
 public:
@@ -25,6 +26,7 @@ public:
     virtual std::optional<std::string> before_dll_load(ost::string_view path, ost::string_view fn) { return {}; }
     virtual void after_dll_load(ost::string_view path, ost::string_view fn, void* mod) {}
     virtual void* get_prop(PtrProp prop, void* data = nullptr) = 0;
+    virtual bool get_bool_prop(BoolProp prop) = 0;
     virtual bool save_state(ofs::File& file) = 0;
     virtual bool load_state(ofs::File& file) = 0;
     virtual ~PlugBase() {}

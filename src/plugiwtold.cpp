@@ -1,6 +1,6 @@
 #include "ass.hpp"
-#include "mem.hpp"
 #include "config.hpp"
+#include "mem.hpp"
 #include "plugbase.hpp"
 #include <spdlog/spdlog.h>
 // TODO: move to plugins dir from src
@@ -79,6 +79,15 @@ public:
             return reinterpret_cast<void*>(mem::get_base() + 0x462e0);
         default:
             return nullptr;
+        }
+    }
+
+    bool get_bool_prop(plug::BoolProp prop) override {
+        switch (prop) {
+        case plug::BoolProp::NeedKeyMsg:
+            return true;
+        default:
+            return false;
         }
     }
 

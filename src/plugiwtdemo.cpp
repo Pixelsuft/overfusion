@@ -61,6 +61,8 @@ public:
         mem::write(mem::get_base() + 0x42176, {0xeb});
         // No hotkeys
         mem::write(mem::get_base() + 0x5162a, {0x31, 0xf6});
+        // test
+        // mem::write(mem::get_base() + 0x421ee, {0xeb});
     }
 
     void update_init() override {
@@ -112,10 +114,17 @@ public:
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x178);
         case plug::PtrProp::Update:
             return reinterpret_cast<void*>(mem::get_base() + 0x462e0);
-        case plug::PtrProp::PHandleKeydown:
-            return reinterpret_cast<void*>(mem::get_base() + 0x58680);
         default:
             return nullptr;
+        }
+    }
+
+    bool get_bool_prop(plug::BoolProp prop) override {
+        switch (prop) {
+        case plug::BoolProp::NeedKeyMsg:
+            return true;
+        default:
+            return false;
         }
     }
 
