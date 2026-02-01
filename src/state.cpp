@@ -87,7 +87,7 @@ void state::before_update() {
 			auto it = std::find(holding.begin(), holding.end(), *pit);
 			if (it == holding.end()) {
 				// Up event
-				spdlog::info("TODO: up {}", *it);
+				spdlog::info("TODO: up {}", *pit);
 			}
 		}
     }

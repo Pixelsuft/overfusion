@@ -60,7 +60,7 @@ public:
         // No extra win32 event logic
         mem::write(mem::get_base() + 0x42176, {0xeb});
         // No hotkeys
-        mem::write(mem::get_base() + 0x51633, {0x66, 0xe9, 0xc2, 0x00, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x5162a, {0x31, 0xf6});
     }
 
     void update_init() override {

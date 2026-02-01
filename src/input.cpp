@@ -71,8 +71,6 @@ static UINT WINAPI SendInputH(UINT cInputs, LPINPUT pInputs, int cbSize) { retur
 
 static BOOL WINAPI SetCursorPosH(int X, int Y) { return FALSE; }
 
-static BOOL WINAPI SetForegroundWindowH(HWND hWnd) { return FALSE; }
-
 void input::init() {
     HOOK_AUTO("user32.dll", GetKeyState);
     HOOK_AUTO("user32.dll", GetAsyncKeyState);
@@ -87,7 +85,6 @@ void input::init() {
     HOOK_ONLY("user32.dll", mouse_event);
     HOOK_ONLY("user32.dll", SendInput);
     HOOK_ONLY("user32.dll", SetCursorPos);
-    HOOK_ONLY("user32.dll", SetForegroundWindow);
 }
 
 void input::process_input(int vk, bool pressed) {
@@ -132,7 +129,7 @@ void input::process_input(int vk, bool pressed) {
                 break;
             }
             case conf::Task::Map: {
-                if (prev || (pressed && cfg.show_menu))
+                if (pressed && (prev || cfg.show_menu))
                     break;
                 state::set_key_down(vk, pressed);
                 break;

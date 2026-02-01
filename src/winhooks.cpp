@@ -25,9 +25,11 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     ui::processing = true;
     ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
     ui::processing = false;
-    if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP)
+    if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP) {
         input::process_input(wParam, uMsg == WM_KEYDOWN);
-    if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP || uMsg == WM_MOUSEMOVE || uMsg == WM_MOUSELEAVE ||
+        return FALSE;
+    }
+    if (uMsg == WM_MOUSEMOVE || uMsg == WM_MOUSELEAVE ||
         uMsg == WM_MOUSEHWHEEL || uMsg == WM_CHAR)
         return FALSE;
     auto ret = MainWindowProcO(hWnd, uMsg, wParam, lParam);
@@ -41,9 +43,11 @@ static LRESULT __stdcall EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     ui::processing = true;
     ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
     ui::processing = false;
-    if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP)
+    if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP) {
         input::process_input(wParam, uMsg == WM_KEYDOWN);
-    if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP || uMsg == WM_MOUSELEAVE || uMsg == WM_MOUSEHWHEEL ||
+        return FALSE;
+    }
+    if (uMsg == WM_MOUSELEAVE || uMsg == WM_MOUSEHWHEEL ||
         uMsg == WM_CHAR)
         return FALSE;
     auto ret = EditWindowProcO(hWnd, uMsg, wParam, lParam);
@@ -100,6 +104,8 @@ static HWND WINAPI GetForegroundWindowH() {
         return GetForegroundWindowO();
     return ::hwnd;
 }
+
+static BOOL WINAPI SetForegroundWindowH(HWND hWnd) { return FALSE; }
 
 static HWND(WINAPI* GetActiveWindowO)();
 static HWND WINAPI GetActiveWindowH() {
@@ -173,6 +179,7 @@ void winhooks::init() {
     HOOK_ONLY("user32.dll", DialogBoxParamW);
     HOOK_AUTO("user32.dll", GetFocus);
     HOOK_AUTO("user32.dll", GetForegroundWindow);
+    HOOK_ONLY("user32.dll", SetForegroundWindow);
     HOOK_AUTO("user32.dll", GetActiveWindow);
     HOOK_ONLY("user32.dll", SetWindowsHookExA);
     HOOK_ONLY("user32.dll", SetWindowsHookExW);
@@ -193,4 +200,8 @@ void winhooks::after_ui_init() {
     EditWindowProcO = reinterpret_cast<WNDPROC>((use_w ? SetWindowLongPtrW : SetWindowLongPtrA)(
         ::mhwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(EditWindowProcH)));
     ASS(EditWindowProcO != nullptr);
+}
+
+void winhooks::sim_key_event(int vk, bool down) {
+    MainWindowProcO(::hwnd, down ? WM_KEYDOWN : WM_KEYUP, 0, 0);
 }
