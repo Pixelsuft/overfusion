@@ -199,17 +199,20 @@ Config::Config() {
     fps = 60;
     show_menu = show_info = true;
     is_replay = false;
-    paused = true;
+    is_paused = true;
 }
+
+#define READ_BOOL(name)                                                                            \
+    if (data[#name].is_boolean() || data[#name].is_number_integer())                               \
+    name = data[#name]
 
 void Config::read() {
     auto data = read_config_file();
     if (data["fps"].is_number_integer() && data["fps"].is_number_unsigned())
         fps = data["fps"];
-    if (data["show_info"].is_boolean() || data["show_info"].is_number_integer())
-        show_info = data["show_info"];
-    if (data["show_menu"].is_boolean() || data["show_menu"].is_number_integer())
-        show_menu = data["show_menu"];
+    READ_BOOL(show_info);
+    READ_BOOL(show_menu);
+    READ_BOOL(is_paused);
     if (data["binds"].is_array()) {
         for (auto& val : data["binds"]) {
             if (!val.is_object())

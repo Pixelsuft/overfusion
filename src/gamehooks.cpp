@@ -2,6 +2,7 @@
 #include "ass.hpp"
 #include "mem.hpp"
 #include "plugbase.hpp"
+#include "input.hpp"
 #include "state.hpp"
 #include "config.hpp"
 #include "timehooks.hpp"
@@ -22,6 +23,7 @@ static int __stdcall UpdateGameFrameH() {
         plug::get().update_init();
         hook::enable();
     }
+    input::process_update();
     state::early_update();
     auto pState = plug::get().get_prop(plug::PtrProp::PState);
     if (pState == nullptr)

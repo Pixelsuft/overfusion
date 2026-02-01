@@ -8,8 +8,10 @@
 #include <Windows.h>
 #include <algorithm>
 #include <spdlog/spdlog.h>
+#include <vector>
 
 static bool kbd_state[256] = {0};
+static std::vector<std::pair<int, bool>> kbd_que;
 
 static SHORT(WINAPI* GetAsyncKeyStateO)(int nVirtKey);
 static SHORT WINAPI GetAsyncKeyStateH(int nVirtKey) {
@@ -87,7 +89,15 @@ void input::init() {
     HOOK_ONLY("user32.dll", SetCursorPos);
 }
 
-void input::handle_input(int vk, bool pressed) {
+void input::handle_input(int vk, bool pressed) { kbd_que.push_back({vk, pressed}); }
+
+void input::process_update() {
+    for (auto& val : kbd_que)
+        handle_input_real(val.first, val.second);
+    kbd_que.clear();
+}
+
+void input::handle_input_real(int vk, bool pressed) {
     ASS(vk > 0 && vk < 256);
     auto& cfg = conf::get();
     auto it = std::lower_bound(cfg.binds.begin(), cfg.binds.end(), vk,
@@ -104,41 +114,41 @@ void input::handle_input(int vk, bool pressed) {
             }
         }
         if ((pressed && !matches_mod) || (!pressed && !prev)) {
-			it++;
-			continue;
-		}
+            it++;
+            continue;
+        }
         switch (bind.task) {
-            case conf::Task::SaveState: {
-                // TODO
+        case conf::Task::SaveState: {
+            // TODO
+            break;
+        }
+        case conf::Task::LoadState: {
+            // TODO
+            break;
+        }
+        case conf::Task::Advance: {
+            // TODO
+            break;
+        }
+        case conf::Task::Play: {
+            // TODO
+            break;
+        }
+        case conf::Task::FastForward: {
+            // TODO
+            break;
+        }
+        case conf::Task::Map: {
+            if (pressed && (prev || cfg.show_menu))
                 break;
-            }
-            case conf::Task::LoadState: {
-                // TODO
-                break;
-            }
-            case conf::Task::Advance: {
-                // TODO
-                break;
-            }
-            case conf::Task::Play: {
-                // TODO
-                break;
-            }
-            case conf::Task::FastForward: {
-                // TODO
-                break;
-            }
-            case conf::Task::Map: {
-                if (pressed && (prev || cfg.show_menu))
-                    break;
-                state::set_key_down(vk, pressed);
-                break;
-            }
-            case conf::Task::None:
-            default: {
-                __assume(false);
-                break;
-            }
+            state::set_key_down(vk, pressed);
+            break;
+        }
+        case conf::Task::None:
+        default: {
+            __assume(false);
+            break;
+        }
         }
         it++;
     }
