@@ -53,6 +53,7 @@ static bool updating;
 static void(__fastcall* UpdateInternalKeyStateDown)(int vk);
 
 void state::init() {
+    // TODO: handle WM_SYSKEYDOWN
     UpdateInternalKeyStateDown = reinterpret_cast<decltype(UpdateInternalKeyStateDown)>(
         plug::get().get_prop(plug::PtrProp::PHandleKeydown));
     last_msg = "";
@@ -77,9 +78,9 @@ void state::before_update() {
 			auto pit = std::find(st.prev.begin(), st.prev.end(), *it);
 			if (pit == st.prev.end()) {
 			    // Down event
+				spdlog::info("TODO: down {}", *it);
 				if (UpdateInternalKeyStateDown)
 				    UpdateInternalKeyStateDown(*it);
-				spdlog::info("TODO: down {}", *it);
 			}
 		}
 		for (auto pit = st.prev.begin(); pit != st.prev.end(); pit++) {
@@ -148,6 +149,12 @@ void state::set_key_down(int vk, bool down) {
         holding.push_back(vk);
     else if (!down && it != holding.end())
         holding.erase(it);
+}
+
+void state::fill_kbd_state(unsigned char* data) {
+    auto& vec = updating ? (conf::get().is_replay ? repl_holding : holding) : st.prev;
+    for (auto& val : vec)
+        data[val] = 1;
 }
 
 void state::draw_info() { ImGui::Text("Frames: %i / %i", st.frames, st.total); }

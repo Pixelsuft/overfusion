@@ -22,5 +22,6 @@ namespace state {
     int64_t get_utc_offset();
     bool get_key_state(int vk);
     void set_key_down(int vk, bool down);
+    void fill_kbd_state(unsigned char* data);
     void draw_info();
 }

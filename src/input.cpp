@@ -52,7 +52,7 @@ static HKL WINAPI GetKeyboardLayoutH(DWORD idThread) {
 
 static BOOL WINAPI GetKeyboardStateH(PBYTE lpKeyState) {
     memset(lpKeyState, 0, sizeof(BYTE) * 256);
-    // Maybe impl cuz engine doesnt handle errors?
+    state::fill_kbd_state(lpKeyState);
     return TRUE;
 }
 
