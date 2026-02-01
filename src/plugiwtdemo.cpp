@@ -61,8 +61,6 @@ public:
         mem::write(mem::get_base() + 0x42176, {0xeb});
         // No hotkeys
         mem::write(mem::get_base() + 0x5162a, {0x31, 0xf6});
-        // test
-        // mem::write(mem::get_base() + 0x421ee, {0xeb});
     }
 
     void update_init() override {

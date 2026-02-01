@@ -87,7 +87,7 @@ void input::init() {
     HOOK_ONLY("user32.dll", SetCursorPos);
 }
 
-void input::process_input(int vk, bool pressed) {
+void input::handle_input(int vk, bool pressed) {
     ASS(vk > 0 && vk < 256);
     auto& cfg = conf::get();
     auto it = std::lower_bound(cfg.binds.begin(), cfg.binds.end(), vk,

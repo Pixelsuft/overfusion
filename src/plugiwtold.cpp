@@ -45,6 +45,20 @@ public:
         mem::write(mem::get_base() + 0x2f0a, {0x90, 0x90});
         // Use high precision timer instead of ugly SetTimer
         mem::write(mem::get_base() + 0x24618, {0xeb});
+        // Save state fixes (experimental)
+        mem::write(mem::get_base() + 0x483a3, {0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x49a5e, {0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x4835c, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
+                                               0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x58227, {0x66, 0xe9, 0x94, 0x00, 0x90, 0x90});
+        // By saying pause I mean pause
+        mem::write(mem::get_base() + 0x2aaf8, {0xeb});
+        mem::write(mem::get_base() + 0x586ab, {0xeb});
+        mem::write(mem::get_base() + 0x586f1, {0xeb});
+        // No extra win32 event logic
+        mem::write(mem::get_base() + 0x42176, {0xeb});
+        // No hotkeys
+        mem::write(mem::get_base() + 0x5162a, {0x31, 0xf6});
     }
 
     void update_init() override {}

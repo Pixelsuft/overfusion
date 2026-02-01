@@ -2,5 +2,5 @@
 
 namespace input {
     void init();
-    void process_input(int vk, bool pressed);
+    void handle_input(int vk, bool pressed);
 }

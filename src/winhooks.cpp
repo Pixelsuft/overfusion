@@ -26,7 +26,7 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
     ui::processing = false;
     if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP) {
-        input::process_input(wParam, uMsg == WM_KEYDOWN);
+        input::handle_input(wParam, uMsg == WM_KEYDOWN);
         return FALSE;
     }
     if (uMsg == WM_MOUSEMOVE || uMsg == WM_MOUSELEAVE ||
@@ -45,7 +45,7 @@ static LRESULT __stdcall EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     ui::processing = false;
     if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP) {
         // lParam = 0;
-        input::process_input(wParam, uMsg == WM_KEYDOWN);
+        input::handle_input(wParam, uMsg == WM_KEYDOWN);
         return FALSE;
     }
     if (uMsg == WM_MOUSELEAVE || uMsg == WM_MOUSEHWHEEL ||
