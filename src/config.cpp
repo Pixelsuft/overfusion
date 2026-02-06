@@ -200,6 +200,8 @@ Config::Config() {
     show_menu = show_info = true;
     is_replay = false;
     is_paused = true;
+    need_advance = false;
+    fast_forward = false;
 }
 
 #define READ_BOOL(name)                                                                            \

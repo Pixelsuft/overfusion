@@ -28,6 +28,8 @@ public:
     bool show_menu;
     bool is_replay;
     bool is_paused;
+    bool need_advance;
+    bool fast_forward;
 
     Config();
     void read();

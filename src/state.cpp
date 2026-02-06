@@ -53,6 +53,24 @@ static bool success;
 static bool updating;
 static bool need_key_msg;
 
+void state::save_state(int slot) {
+    ofs::File file(string("state_") + std::to_string(slot) + ".ostate", 1);
+    if (!file.is_open()) {
+        spdlog::warn("Failed to open state slot {} for writing", slot);
+        return;
+    }
+    plug::get().save_state(file);
+}
+
+void state::load_state(int slot) {
+    ofs::File file(string("state_") + std::to_string(slot) + ".ostate", 0);
+    if (!file.is_open()) {
+        spdlog::warn("Failed to open state slot {} for reading", slot);
+        return;
+    }
+    plug::get().load_state(file);
+}
+
 void state::init() {
     need_key_msg = plug::get().get_bool_prop(plug::BoolProp::NeedKeyMsg);
     last_msg = "";

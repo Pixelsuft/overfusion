@@ -119,23 +119,37 @@ void input::handle_input_real(int vk, bool pressed) {
         }
         switch (bind.task) {
         case conf::Task::SaveState: {
-            // TODO
+            if (pressed && !prev)
+                state::save_state(bind.extra);
             break;
         }
         case conf::Task::LoadState: {
-            // TODO
+            if (pressed && !prev)
+                state::load_state(bind.extra);
             break;
         }
         case conf::Task::Advance: {
-            // TODO
+            if (pressed && cfg.show_menu)
+                break;
+            conf::get().need_advance = pressed;
             break;
         }
         case conf::Task::Play: {
-            // TODO
+            if (pressed && cfg.show_menu)
+                break;
+            if (!bind.extra)
+                cfg.is_paused = !pressed;
+            else if (pressed)
+                cfg.is_paused = !cfg.is_paused;
             break;
         }
         case conf::Task::FastForward: {
-            // TODO
+            if (pressed && cfg.show_menu)
+                break;
+            if (!bind.extra)
+                cfg.fast_forward = !pressed;
+            else if (pressed)
+                cfg.fast_forward = !cfg.fast_forward;
             break;
         }
         case conf::Task::Map: {
