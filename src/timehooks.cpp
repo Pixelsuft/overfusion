@@ -58,7 +58,7 @@ static UINT_PTR WINAPI SetTimerH(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse,
     return SetTimerO(hWnd, nIDEvent, uElapse, lpTimerFunc);
 }
 
-static BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency);
+BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency);
 static BOOL WINAPI QueryPerformanceFrequencyH(LARGE_INTEGER* lpFrequency) {
     if (ui::processing)
         return QueryPerformanceFrequencyO(lpFrequency);
@@ -66,7 +66,7 @@ static BOOL WINAPI QueryPerformanceFrequencyH(LARGE_INTEGER* lpFrequency) {
     return TRUE;
 }
 
-static BOOL(WINAPI* QueryPerformanceCounterO)(LARGE_INTEGER* lpFrequency);
+BOOL(WINAPI* QueryPerformanceCounterO)(LARGE_INTEGER* lpFrequency);
 static BOOL WINAPI QueryPerformanceCounterH(LARGE_INTEGER* lpFrequency) {
     if (ui::processing)
         return QueryPerformanceCounterO(lpFrequency);
@@ -120,6 +120,8 @@ static MMRESULT WINAPI timeKillEventH(UINT uTimerID) {
 }
 
 void timehooks::init() {
+    QueryPerformanceFrequencyO = QueryPerformanceFrequency;
+    QueryPerformanceCounterO = QueryPerformanceCounter;
     HOOK_ONLY("winmm.dll", timeGetSystemTime);
     HOOK_AUTO("winmm.dll", timeGetTime);
     HOOK_AUTO("winmm.dll", timeSetEvent);

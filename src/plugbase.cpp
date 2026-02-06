@@ -42,6 +42,6 @@ bool plug::search_and_run() {
 }
 
 plug::PlugBase& plug::get() {
-    __assume(_cur_plug != nullptr);
+    ASS(_cur_plug != nullptr);
     return *_cur_plug;
 }

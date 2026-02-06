@@ -1,14 +1,21 @@
+#define WIN32_LEAN_AND_MEAN
 #include "state.hpp"
 #include "ass.hpp"
 #include "config.hpp"
 #include "ofs.hpp"
 #include "plugbase.hpp"
 #include "winhooks.hpp"
+#include <Windows.h>
 #include <imgui.h>
 #include <spdlog/spdlog.h>
 #include <vector>
+#undef max
+#undef min
 
 using std::string;
+
+extern BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency);
+extern BOOL(WINAPI* QueryPerformanceCounterO)(LARGE_INTEGER* lpFrequency);
 
 struct Event {
     int frame;
@@ -48,10 +55,28 @@ public:
 static State st;
 static std::vector<int> holding;
 static std::vector<int> repl_holding;
+static LARGE_INTEGER last_counter;
+static double const_dt;
+static double to_wait;
+static double freq;
 static string last_msg;
 static bool success;
 static bool updating;
 static bool need_key_msg;
+
+void state::init() {
+    need_key_msg = plug::get().get_bool_prop(plug::BoolProp::NeedKeyMsg);
+    last_msg = "";
+    success = false;
+    updating = false;
+    st.fps = conf::get().fps;
+    const_dt = 1.0 / (double)st.fps;
+    to_wait = 0.0;
+    spdlog::debug("Init FPS: {}", st.fps);
+    QueryPerformanceFrequencyO(&last_counter);
+    freq = (double)last_counter.QuadPart;
+    QueryPerformanceCounterO(&last_counter);
+}
 
 void state::save_state(int slot) {
     ofs::File file(string("state_") + std::to_string(slot) + ".ostate", 1);
@@ -59,7 +84,8 @@ void state::save_state(int slot) {
         spdlog::warn("Failed to open state slot {} for writing", slot);
         return;
     }
-    plug::get().save_state(file);
+    if (!save_game(file))
+        spdlog::warn("Failed to save game state to slot {}", slot);
 }
 
 void state::load_state(int slot) {
@@ -68,16 +94,8 @@ void state::load_state(int slot) {
         spdlog::warn("Failed to open state slot {} for reading", slot);
         return;
     }
-    plug::get().load_state(file);
-}
-
-void state::init() {
-    need_key_msg = plug::get().get_bool_prop(plug::BoolProp::NeedKeyMsg);
-    last_msg = "";
-    success = false;
-    updating = false;
-    st.fps = conf::get().fps;
-    spdlog::debug("Init FPS: {}", st.fps);
+    if (!load_game(file))
+        spdlog::warn("Failed to load game state from slot {}", slot);
 }
 
 void state::invalidate_process() { success = false; }
@@ -85,8 +103,10 @@ void state::invalidate_process() { success = false; }
 void state::early_update() {}
 
 void state::before_update() {
-    updating = true;
     auto& cfg = conf::get();
+    if (cfg.is_paused)
+        return;
+    updating = true;
     if (cfg.is_replay) {
 
     } else {
@@ -111,10 +131,26 @@ void state::before_update() {
 }
 
 void state::after_update() {
-    ASS(updating);
-    updating = false;
-    st.frames++;
-    st.total = std::max(st.total, st.frames);
+    auto& cfg = conf::get();
+    if (updating) {
+        updating = false;
+        st.frames++;
+        st.total = std::max(st.total, st.frames);
+    }
+    if (cfg.fast_forward)
+        return;
+    if (to_wait < 0.0)
+        to_wait = 0.0;
+    to_wait += const_dt;
+    if (to_wait > 1.0)
+        to_wait = 1.0;
+    while (to_wait > 0.0) {
+        LARGE_INTEGER now_counter;
+        QueryPerformanceCounterO(&now_counter);
+        double dt = (double)(now_counter.QuadPart - last_counter.QuadPart) / freq;
+        last_counter = now_counter;
+        to_wait -= dt;
+    }
 }
 
 int64_t state::get_utc_offset() {
@@ -136,18 +172,18 @@ uint64_t state::get_time(TimeOffset offset) {
     case TimeOffset::Reminder:
         return static_cast<uint64_t>(st.frames) * 1000 % fps;
     default:
-        __assume(false);
+        ASS(false);
         return 0;
     }
 }
 
-bool state::save(ofs::File& file) {
+bool state::save_game(ofs::File& file) {
     ASS(file.is_open());
     success = true;
     return plug::get().save_state(file) && success;
 }
 
-bool state::load(ofs::File& file) {
+bool state::load_game(ofs::File& file) {
     ASS(file.is_open());
     success = true;
     return plug::get().load_state(file) && success;

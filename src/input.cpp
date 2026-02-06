@@ -147,7 +147,7 @@ void input::handle_input_real(int vk, bool pressed) {
             if (pressed && cfg.show_menu)
                 break;
             if (!bind.extra)
-                cfg.fast_forward = !pressed;
+                cfg.fast_forward = pressed;
             else if (pressed)
                 cfg.fast_forward = !cfg.fast_forward;
             break;
@@ -160,7 +160,7 @@ void input::handle_input_real(int vk, bool pressed) {
         }
         case conf::Task::None:
         default: {
-            __assume(false);
+            ASS(false);
             break;
         }
         }

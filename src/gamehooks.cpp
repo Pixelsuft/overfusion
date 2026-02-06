@@ -40,16 +40,17 @@ static int __stdcall UpdateGameFrameH() {
         state::after_update();
         return ret;
     }
+    state::before_update();
     if (cfg.is_paused && !cfg.need_advance) {
         auto ret = UpdateGameFrameO();
         pIsPaused = true;
         if (ProcessFrameRendering)
             ProcessFrameRendering();
+        state::after_update();
         return ret;
     }
     cfg.need_advance = false;
     pIsPaused = false;
-    state::before_update();
     auto ret = UpdateGameFrameO();
     if (ret == 3) {
         spdlog::debug("Scene change");

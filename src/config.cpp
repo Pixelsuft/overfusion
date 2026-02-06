@@ -1,5 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "config.hpp"
+#include "ass.hpp"
 #include "filehooks.hpp"
 #include "ofs.hpp"
 #include <Windows.h>
@@ -302,6 +303,6 @@ void Config::read() {
 void conf::init() { _conf_ptr = new Config; }
 
 Config& conf::get() {
-    __assume(_conf_ptr != nullptr);
+    ASS(_conf_ptr != nullptr);
     return *_conf_ptr;
 }

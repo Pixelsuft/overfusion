@@ -16,8 +16,8 @@ namespace state {
     void early_update();
     void before_update();
     void after_update();
-    bool save(ofs::File& file);
-    bool load(ofs::File& file);
+    bool save_game(ofs::File& file);
+    bool load_game(ofs::File& file);
     uint64_t get_time(TimeOffset offset);
     int64_t get_utc_offset();
     bool get_key_state(int vk);

@@ -29,11 +29,11 @@ static void of_main() {
     if (!plug::search_and_run())
         mem::terminate();
     plug::get().pre_init();
+    timehooks::init();
     state::init();
     loadhook::init();
     winhooks::init();
     filehooks::init();
-    timehooks::init();
     input::init();
     extrahooks::init();
     gamehooks::init();
