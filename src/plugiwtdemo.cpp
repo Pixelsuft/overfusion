@@ -61,10 +61,11 @@ public:
         mem::write(mem::get_base() + 0x42176, {0xeb});
         // No hotkeys
         mem::write(mem::get_base() + 0x5162a, {0x31, 0xf6});
+        // Game FPS is fine
+        mem::write(mem::get_base() + 0x2ab70, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
     }
 
     void update_init() override {
-        // TODO: check UpdateInternalKeyStateDown
     }
 
     std::optional<std::string> before_dll_load(string_view path, string_view fn) override {

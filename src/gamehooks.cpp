@@ -41,17 +41,18 @@ static int __stdcall UpdateGameFrameH() {
         return ret;
     }
     state::before_update();
+    int ret;
     if (cfg.is_paused && !cfg.need_advance) {
-        auto ret = UpdateGameFrameO();
+        ret = UpdateGameFrameO();
         pIsPaused = true;
         if (ProcessFrameRendering)
             ProcessFrameRendering();
-        state::after_update();
-        return ret;
     }
-    cfg.need_advance = false;
-    pIsPaused = false;
-    auto ret = UpdateGameFrameO();
+    else {
+        cfg.need_advance = false;
+        pIsPaused = false;
+        ret = UpdateGameFrameO();
+    }
     if (ret == 3) {
         spdlog::debug("Scene change");
         need_skip = true;

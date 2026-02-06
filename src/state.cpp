@@ -104,7 +104,7 @@ void state::early_update() {}
 
 void state::before_update() {
     auto& cfg = conf::get();
-    if (cfg.is_paused)
+    if (cfg.is_paused && !cfg.need_advance)
         return;
     updating = true;
     if (cfg.is_replay) {

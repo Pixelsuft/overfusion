@@ -129,9 +129,10 @@ void input::handle_input_real(int vk, bool pressed) {
             break;
         }
         case conf::Task::Advance: {
-            if (pressed && cfg.show_menu)
-                break;
-            conf::get().need_advance = pressed;
+            if (pressed && !cfg.show_menu) {
+                cfg.need_advance = true;
+                cfg.is_paused = true;
+            }
             break;
         }
         case conf::Task::Play: {
