@@ -31,6 +31,7 @@ static int __stdcall UpdateGameFrameH() {
     if (pState == nullptr)
         return UpdateGameFrameO();
     auto& cfg = conf::get();
+    // Assuming they are not nullptrs
     auto& pStep = *reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));
     auto& pIsPaused = *reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PIsPaused, pState));
     pStep = 1;
@@ -40,11 +41,12 @@ static int __stdcall UpdateGameFrameH() {
         state::after_update();
         return ret;
     }
+    pIsPaused = false;
     state::before_update();
     int ret;
     if (cfg.is_paused && !cfg.need_advance) {
-        ret = UpdateGameFrameO();
         pIsPaused = true;
+        ret = UpdateGameFrameO();
         if (ProcessFrameRendering)
             ProcessFrameRendering();
     }
