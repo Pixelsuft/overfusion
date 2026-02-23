@@ -21,6 +21,10 @@ static void of_main() {
     spdlog::set_level(spdlog::level::debug);
 #endif
     spdlog::info("OverFusion injected!");
+#if 0
+    while (!IsDebuggerPresent())
+        Sleep(500);
+#endif
     conf::init();
     mem::init();
     ui::init();

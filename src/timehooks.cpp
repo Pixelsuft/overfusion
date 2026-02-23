@@ -129,7 +129,6 @@ void timehooks::init() {
     HOOK_AUTO("user32.dll", SetTimer);
     HOOK_AUTO("kernel32.dll", QueryPerformanceFrequency);
     HOOK_ONLY("kernel32.dll", GetTickCount);
-    HOOK_ONLY("kernel32.dll", GetLocalTime);
     HOOK_ONLY("msvcrt.dll", time);
     HOOK_ONLY("msvcrt.dll", _ftime);
 }
@@ -138,4 +137,6 @@ void timehooks::update_init() {
     HOOK_AUTO("kernel32.dll", QueryPerformanceCounter);
     // This breaks fontembed.mfx if hooked earlier
     HOOK_ONLY("kernel32.dll", GetSystemTimeAsFileTime);
+    // This breaks Nvidia driver if hooked earlier
+    HOOK_ONLY("kernel32.dll", GetLocalTime);
 }
