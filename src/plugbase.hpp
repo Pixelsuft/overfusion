@@ -1,8 +1,8 @@
 #pragma once
 #include "ofs.hpp"
+#include "sv.hpp"
 #include <optional>
 #include <string>
-#include "sv.hpp"
 
 #define PLUG_REG(plug_class, check_cb)                                                             \
     class Startup_##plug_class {                                                                   \
@@ -23,12 +23,15 @@ public:
     PlugBase() : name("Abstract plugin"), unicode(false) {}
     virtual void pre_init() {}
     virtual void update_init() {}
-    virtual std::optional<std::string> before_dll_load(ost::string_view path, ost::string_view fn) { return {}; }
+    virtual std::optional<std::string> before_dll_load(ost::string_view path, ost::string_view fn) {
+        return {};
+    }
     virtual void after_dll_load(ost::string_view path, ost::string_view fn, void* mod) {}
     virtual void* get_prop(PtrProp prop, void* data = nullptr) = 0;
     virtual bool get_bool_prop(BoolProp prop) = 0;
     virtual bool save_state(ofs::File& file) = 0;
     virtual bool load_state(ofs::File& file) = 0;
+    virtual std::pair<const char*, int> get_scene_info() { return {"undefined", 0}; };
     virtual ~PlugBase() {}
 };
 

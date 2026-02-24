@@ -144,6 +144,11 @@ public:
         LoadGameState(file.get_handle(), &outframe);
         return true;
     }
+
+    std::pair<const char*, int> get_scene_info() override {
+        // TODO
+        return {"undefined", 0};
+    }
 };
 
 static void on_plugin_check(plug::PlugBase** buf, bool& check) {

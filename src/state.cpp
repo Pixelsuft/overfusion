@@ -224,6 +224,9 @@ void state::fill_kbd_state(unsigned char* data) {
 }
 
 void state::draw_info() {
+    // TODO
     ImGui::Text("Frames: %i / %i", st.frames, st.total);
+    auto scene_info = plug::get().get_scene_info();
+    ImGui::Text("Scene: %i (%s)", scene_info.second, scene_info.first);
     ImGui::Text("Message: %s", last_msg.c_str());
 }
