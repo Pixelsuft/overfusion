@@ -5,6 +5,7 @@
 #include "ofs.hpp"
 #include "plugbase.hpp"
 #include "winhooks.hpp"
+#include "uconv.hpp"
 #include <Windows.h>
 #include <imgui.h>
 #include <spdlog/spdlog.h>
@@ -226,8 +227,7 @@ void state::fill_kbd_state(unsigned char* data) {
 void state::draw_info() {
     void* pState = plug::get().get_prop(plug::PtrProp::PState);
     int* scene_id = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSceneID, pState));
-    char* scene_name = reinterpret_cast<char*>(plug::get().get_prop(plug::PtrProp::PSceneName, pState));
     ImGui::Text("Frames: %i / %i", st.frames, st.total);
-    ImGui::Text("Scene: %i (%s)", scene_id ? *scene_id : -1, scene_name ? scene_name : "undefined");
+    ImGui::Text("Scene: %i", 0);
     ImGui::Text("Message: %s", last_msg.c_str());
 }

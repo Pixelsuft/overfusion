@@ -102,6 +102,8 @@ public:
         switch (prop) {
         case plug::PtrProp::PState:
             return *reinterpret_cast<void**>(mem::get_base() + 0xb49d4);
+        case plug::PtrProp::PGlobalApp:
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb49cc);
         case plug::PtrProp::PNextFrame:
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x30);
         case plug::PtrProp::PNextData:
@@ -111,8 +113,6 @@ public:
         case plug::PtrProp::PIsPaused:
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x178);
         case plug::PtrProp::PSceneID: // TODO
-            return nullptr;
-        case plug::PtrProp::PSceneName: // TODO
             return nullptr;
         case plug::PtrProp::Update:
             return reinterpret_cast<void*>(mem::get_base() + 0x462e0);
