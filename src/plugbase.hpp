@@ -12,7 +12,7 @@
     static Startup_##plug_class startup_##plug_class;
 
 namespace plug {
-enum class PtrProp { PState, PNextFrame, PNextData, PSubTickStep, PIsPaused, Update, Render };
+enum class PtrProp { PState, PNextFrame, PNextData, PSubTickStep, PIsPaused, PSceneID, PSceneName, Update, Render };
 enum class BoolProp { NeedKeyMsg };
 
 class PlugBase {
@@ -31,7 +31,6 @@ public:
     virtual bool get_bool_prop(BoolProp prop) = 0;
     virtual bool save_state(ofs::File& file) = 0;
     virtual bool load_state(ofs::File& file) = 0;
-    virtual std::pair<const char*, int> get_scene_info() { return {"undefined", 0}; };
     virtual ~PlugBase() {}
 };
 

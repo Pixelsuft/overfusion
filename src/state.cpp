@@ -224,9 +224,10 @@ void state::fill_kbd_state(unsigned char* data) {
 }
 
 void state::draw_info() {
-    // TODO
+    void* pState = plug::get().get_prop(plug::PtrProp::PState);
+    int* scene_id = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSceneID, pState));
+    char* scene_name = reinterpret_cast<char*>(plug::get().get_prop(plug::PtrProp::PSceneName, pState));
     ImGui::Text("Frames: %i / %i", st.frames, st.total);
-    auto scene_info = plug::get().get_scene_info();
-    ImGui::Text("Scene: %i (%s)", scene_info.second, scene_info.first);
+    ImGui::Text("Scene: %i (%s)", scene_id ? *scene_id : -1, scene_name ? scene_name : "undefined");
     ImGui::Text("Message: %s", last_msg.c_str());
 }

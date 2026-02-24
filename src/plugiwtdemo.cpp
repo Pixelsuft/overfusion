@@ -65,8 +65,7 @@ public:
         mem::write(mem::get_base() + 0x2ab70, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
     }
 
-    void update_init() override {
-    }
+    void update_init() override {}
 
     std::optional<std::string> before_dll_load(string_view path, string_view fn) override {
         if (fn == "wininet.dll")
@@ -111,6 +110,10 @@ public:
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x4d8);
         case plug::PtrProp::PIsPaused:
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x178);
+        case plug::PtrProp::PSceneID: // TODO
+            return nullptr;
+        case plug::PtrProp::PSceneName: // TODO
+            return nullptr;
         case plug::PtrProp::Update:
             return reinterpret_cast<void*>(mem::get_base() + 0x462e0);
         case plug::PtrProp::Render:
@@ -143,11 +146,6 @@ public:
         *(short*)(ptr + 0x30) = 0;
         LoadGameState(file.get_handle(), &outframe);
         return true;
-    }
-
-    std::pair<const char*, int> get_scene_info() override {
-        // TODO
-        return {"undefined", 0};
     }
 };
 
