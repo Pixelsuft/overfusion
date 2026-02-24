@@ -1,7 +1,9 @@
 #include "ui.hpp"
-#include "state.hpp"
 #include "config.hpp"
+#include "state.hpp"
 #include <imgui.h>
+
+constexpr bool ui_save_sets = true;
 
 bool ui::processing;
 
@@ -9,8 +11,9 @@ void ui::init() { processing = false; }
 
 static void draw_info() {
     if (!ImGui::Begin("OverFusion Info", nullptr,
-                      ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar |
-                          ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar)) {
+                      (ui_save_sets ? 0 : ImGuiWindowFlags_NoSavedSettings) |
+                          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                          ImGuiWindowFlags_NoScrollbar)) {
         ImGui::End();
         return;
     }
@@ -19,7 +22,8 @@ static void draw_info() {
 }
 
 static void draw_menu() {
-    if (!ImGui::Begin("OverFusion", nullptr, ImGuiWindowFlags_NoSavedSettings)) {
+    if (!ImGui::Begin("OverFusion", nullptr,
+                      (ui_save_sets ? 0: ImGuiWindowFlags_NoSavedSettings))) {
         ImGui::End();
         return;
     }

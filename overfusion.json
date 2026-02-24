@@ -88,6 +88,10 @@
       "task": "advance"
     },
     {
+      "key": "Insert",
+      "task": "menu"
+    },
+    {
       "key": "F1",
       "task": "save",
       "slot": 1

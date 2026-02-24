@@ -132,7 +132,7 @@ static int vk_from_string(string_view sv) {
         {"esc", VK_ESCAPE},
         {"enter", VK_RETURN},
         {"backspace", VK_BACK},
-        {"ins", VK_INSERT},
+        {"insert", VK_INSERT},
         {"del", VK_DELETE},
         {"home", VK_HOME},
         {"end", VK_END},

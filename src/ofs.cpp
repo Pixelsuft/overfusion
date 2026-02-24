@@ -3,6 +3,7 @@
 #include "ass.hpp"
 #include "uconv.hpp"
 #include <Windows.h>
+#include <spdlog/spdlog.h>
 
 using std::string, std::string_view, ofs::File;
 
@@ -115,4 +116,14 @@ void File::close() {
         ASS(CloseHandle(handle) != 0);
         handle = INVALID_HANDLE_VALUE;
     }
+}
+
+bool ofs::remove_file(string_view path) {
+    wchar_t* w_path = uconv::to_utf16(path);
+    ASS(w_path != nullptr);
+    bool ret = (DeleteFileW(w_path) != 0);
+    if (!ret && GetLastError() != ERROR_FILE_NOT_FOUND)
+        spdlog::error("Failed to remove file: {}", path);
+    std::free(w_path);
+    return ret;
 }

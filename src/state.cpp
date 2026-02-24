@@ -12,6 +12,8 @@
 #undef max
 #undef min
 
+constexpr int save_version = 1;
+
 using std::string;
 
 extern BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency);
@@ -50,6 +52,13 @@ public:
         temp_ev.clear();
         prev.clear();
     }
+
+    void trim() {
+        total = frames;
+        // TODO: optimize
+        while (!ev.empty() && (ev.end() - 1)->frame >= frames)
+            ev.erase(ev.end() - 1);
+    }
 };
 
 static State st;
@@ -66,7 +75,7 @@ static bool need_key_msg;
 
 void state::init() {
     need_key_msg = plug::get().get_bool_prop(plug::BoolProp::NeedKeyMsg);
-    last_msg = "";
+    last_msg = "None";
     success = false;
     updating = false;
     st.fps = conf::get().fps;
@@ -79,13 +88,17 @@ void state::init() {
 }
 
 void state::save_state(int slot) {
-    ofs::File file(string("state_") + std::to_string(slot) + ".ostate", 1);
+    string fp = string("state_") + std::to_string(slot) + ".ostate";
+    ofs::File file(fp, 1);
     if (!file.is_open()) {
         spdlog::warn("Failed to open state slot {} for writing", slot);
         return;
     }
-    if (!save_game(file))
+    if (!save_game(file)) {
         spdlog::warn("Failed to save game state to slot {}", slot);
+        file.close();
+        ofs::remove_file(fp);
+    }
 }
 
 void state::load_state(int slot) {
@@ -210,4 +223,7 @@ void state::fill_kbd_state(unsigned char* data) {
         data[val] = 1;
 }
 
-void state::draw_info() { ImGui::Text("Frames: %i / %i", st.frames, st.total); }
+void state::draw_info() {
+    ImGui::Text("Frames: %i / %i", st.frames, st.total);
+    ImGui::Text("Message: %s", last_msg.c_str());
+}

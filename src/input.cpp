@@ -159,7 +159,15 @@ void input::handle_input_real(int vk, bool pressed) {
             state::set_key_down(vk, pressed);
             break;
         }
-        case conf::Task::None:
+        case conf::Task::Menu: {
+            if (pressed)
+                cfg.show_menu = !cfg.show_menu;
+            break;
+        }
+        case conf::Task::None: {
+            ASS(false);
+            break;
+        }
         default: {
             ASS(false);
             break;
