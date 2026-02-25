@@ -12,7 +12,18 @@
     static Startup_##plug_class startup_##plug_class;
 
 namespace plug {
-enum class PtrProp { PState, PGlobalApp, PNextFrame, PNextData, PSubTickStep, PIsPaused, PSceneID, PSceneName, Update, Render };
+enum class PtrProp {
+    PState,
+    PGlobalApp,
+    PSubTickStep,
+    PIsPaused,
+    PSceneID,
+    PNextFrame,
+    PNextFrameData,
+    PSceneName,
+    Update,
+    Render
+};
 enum class BoolProp { NeedKeyMsg };
 
 class PlugBase {
