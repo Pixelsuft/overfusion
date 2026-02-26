@@ -85,7 +85,7 @@ public:
             return *reinterpret_cast<void**>(mem::get_base() + 0xb49d4);
         case plug::PtrProp::PGlobalApp:
             return *reinterpret_cast<void**>(mem::get_base() + 0xb49cc);
-        case plug::PtrProp::PNextFrame:
+        case plug::PtrProp::PNextFrameTask:
             // From pState
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x30);
         case plug::PtrProp::PNextFrameData:

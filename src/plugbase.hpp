@@ -18,7 +18,7 @@ enum class PtrProp {
     PSubTickStep,
     PIsPaused,
     PSceneID,
-    PNextFrame,
+    PNextFrameTask,
     PNextFrameData,
     PSceneName,
     Update,
