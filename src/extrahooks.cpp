@@ -41,10 +41,11 @@ static BOOL ShellExecuteExWH(SHELLEXECUTEINFOW* pExecInfo) {
     return FALSE;
 }
 
-static int(WINAPI* MessageBoxAO)(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType);
-static int WINAPI MessageBoxAH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) {
+static int(WINAPI* MessageBoxAO)(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
+static int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
     if (ui::processing)
         return MessageBoxAO(hWnd, lpText, lpCaption, uType);
+    spdlog::info("MessageBoxA: {} - {}", uconv::from_ansi(lpCaption), uconv::from_ansi(lpText));
     auto ret = MessageBoxAO(hWnd, lpText, lpCaption, uType);
     if (uType == 0x30)
         state::invalidate_process();
@@ -55,6 +56,7 @@ static int(WINAPI* MessageBoxWO)(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, U
 static int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) {
     if (ui::processing)
         return MessageBoxWO(hWnd, lpText, lpCaption, uType);
+    spdlog::info("MessageBoxW: {} - {}", uconv::from_utf16(lpCaption), uconv::from_utf16(lpText));
     auto ret = MessageBoxWO(hWnd, lpText, lpCaption, uType);
     if (uType == 0x30)
         state::invalidate_process();
@@ -122,7 +124,7 @@ static MMRESULT WINAPI joyGetDevCapsWH(UINT_PTR uJoyID, LPJOYCAPSW pjc, UINT cbj
 static MMRESULT WINAPI joyGetPosExH(UINT uJoyID, LPJOYINFOEX pji) { return MMSYSERR_NODRIVER; }
 
 static BOOL WINAPI BeepH(DWORD dwFreq, DWORD dwDuration) {
-    spdlog::info("Beep");
+    spdlog::info("Beep (freq={}, duration={})", dwFreq, dwDuration);
     return FALSE;
 }
 
@@ -138,15 +140,75 @@ static int WINAPI WSAStartupH(WORD wVersionRequired, LPWSADATA lpWSAData) {
 static int WINAPI bindH(SOCKET s, const sockaddr* addr, int namelen) { return SOCKET_ERROR; }
 
 static BOOL __stdcall GetUserNameAH(LPSTR lpBuffer, LPDWORD pcbBuffer) {
-    spdlog::info("Querying user name: OverFusion");
+    spdlog::info("Faking user name: OverFusion");
     strcpy(lpBuffer, "OverFusion");
     return TRUE;
 }
 
 static BOOL __stdcall GetUserNameWH(LPWSTR lpBuffer, LPDWORD pcbBuffer) {
-    spdlog::info("Querying user name: OverFusion");
+    spdlog::info("Faking user name: OverFusion");
     wcscpy(lpBuffer, L"OverFusion");
     return TRUE;
+}
+
+static LSTATUS WINAPI RegOpenKeyExAH(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
+    spdlog::warn("RegOpenKeyExA: Blocked access to {}", lpSubKey ? uconv::from_ansi(lpSubKey) : "nullptr");
+    return ERROR_ACCESS_DENIED;
+}
+
+static LSTATUS WINAPI RegOpenKeyExWH(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
+    spdlog::warn("RegOpenKeyExW: Blocked access to {}", lpSubKey ? uconv::from_utf16(lpSubKey) : "nullptr");
+    return ERROR_ACCESS_DENIED;
+}
+
+static LSTATUS WINAPI RegCreateKeyExAH(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition) {
+    spdlog::warn("RegCreateKeyExA: Blocked access to {}", lpSubKey ? uconv::from_ansi(lpSubKey) : "nullptr");
+    return ERROR_ACCESS_DENIED;
+}
+
+static LSTATUS WINAPI RegCreateKeyExWH(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition) {
+    spdlog::warn("RegCreateKeyExW: Blocked access to {}", lpSubKey ? uconv::from_utf16(lpSubKey) : "nullptr");
+    return ERROR_ACCESS_DENIED;
+}
+
+static LSTATUS WINAPI RegQueryValueExAH(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {
+    spdlog::warn("RegQueryValueExA: Blocked access to {}", lpValueName ? uconv::from_ansi(lpValueName) : "nullptr");
+    return ERROR_ACCESS_DENIED;
+}
+
+static LSTATUS WINAPI RegQueryValueExWH(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {
+    spdlog::warn("RegQueryValueExW: Blocked access to {}", lpValueName ? uconv::from_utf16(lpValueName) : "nullptr");
+    return ERROR_ACCESS_DENIED;
+}
+
+static LSTATUS WINAPI RegOpenKeyAH(HKEY hKey, LPCSTR lpSubKey, PHKEY phkResult) {
+    spdlog::warn("RegOpenKeyA: Blocked access to {}", lpSubKey ? uconv::from_ansi(lpSubKey) : "nullptr");
+    return ERROR_ACCESS_DENIED;
+}
+
+static LSTATUS WINAPI RegOpenKeyWH(HKEY hKey, LPCWSTR lpSubKey, PHKEY phkResult) {
+    spdlog::warn("RegOpenKeyW: Blocked access to {}", lpSubKey ? uconv::from_utf16(lpSubKey) : "nullptr");
+    return ERROR_ACCESS_DENIED;
+}
+
+static LSTATUS WINAPI RegQueryValueAH(HKEY hKey, LPCSTR lpSubKey, LPSTR lpData, PLONG lpcbData) {
+    spdlog::warn("RegQueryValueA: Blocked access to {}", lpSubKey ? uconv::from_ansi(lpSubKey) : "nullptr");
+    return ERROR_ACCESS_DENIED;
+}
+
+static LSTATUS WINAPI RegQueryValueWH(HKEY hKey, LPCWSTR lpSubKey, LPWSTR lpData, PLONG lpcbData) {
+    spdlog::warn("RegQueryValueW: Blocked access to {}", lpSubKey ? uconv::from_utf16(lpSubKey) : "nullptr");
+    return ERROR_ACCESS_DENIED;
+}
+
+static LSTATUS WINAPI RegCreateKeyAH(HKEY hKey, LPCSTR lpSubKey, PHKEY phkResult) {
+    spdlog::warn("RegCreateKeyA: Blocked access to {}", lpSubKey ? uconv::from_ansi(lpSubKey) : "nullptr");
+    return ERROR_ACCESS_DENIED;
+}
+
+static LSTATUS WINAPI RegCreateKeyWH(HKEY hKey, LPCWSTR lpSubKey, PHKEY phkResult) {
+    spdlog::warn("RegCreateKeyW: Blocked access to {}", lpSubKey ? uconv::from_utf16(lpSubKey) : "nullptr");
+    return ERROR_ACCESS_DENIED;
 }
 
 void extrahooks::init() {
@@ -173,4 +235,10 @@ void extrahooks::init_net() {
 
 void extrahooks::init_adv() {
     HOOK_STR_ONLY("advapi32.dll", GetUserName);
+    HOOK_STR_ONLY("advapi32.dll", RegOpenKeyEx);
+    HOOK_STR_ONLY("advapi32.dll", RegCreateKeyEx);
+    HOOK_STR_ONLY("advapi32.dll", RegQueryValueEx);
+    HOOK_STR_ONLY("advapi32.dll", RegOpenKey);
+    HOOK_STR_ONLY("advapi32.dll", RegCreateKey);
+    HOOK_STR_ONLY("advapi32.dll", RegQueryValue);
 }

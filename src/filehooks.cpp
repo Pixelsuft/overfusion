@@ -16,7 +16,7 @@ ost::string_view filehooks::get_cwd() { return real_cwd; }
 
 BOOL(WINAPI* SetCurrentDirectoryWO)(LPCWSTR lpPathName);
 BOOL WINAPI SetCurrentDirectoryWH(LPCWSTR lpPathName) {
-    spdlog::info("SetCurrentDirectoryWH: {}", uconv::from_utf16(lpPathName));
+    spdlog::info("SetCurrentDirectoryW: {}", uconv::from_utf16(lpPathName));
     return SetCurrentDirectoryWO(lpPathName);
 }
 
