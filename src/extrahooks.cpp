@@ -146,25 +146,18 @@ static BOOL __stdcall GetUserNameWH(LPWSTR lpBuffer, LPDWORD pcbBuffer) {
 
 void extrahooks::init() {
     // TODO: GetDateFormatEx, GetLocaleInfoEx, GetTimeFormatEx, GetUserDefaultLocaleName
-    HOOK_AUTO("user32.dll", MessageBoxA);
-    HOOK_AUTO("user32.dll", MessageBoxW);
+    HOOK_STR_AUTO("user32.dll", MessageBox);
     HOOK_AUTO("shell32.dll", DragAcceptFiles);
-    HOOK_ONLY("shell32.dll", DragQueryFileA);
-    HOOK_ONLY("shell32.dll", DragQueryFileW);
-    HOOK_ONLY("shell32.dll", ShellExecuteA);
-    HOOK_ONLY("shell32.dll", ShellExecuteW);
-    HOOK_ONLY("shell32.dll", ShellExecuteExA);
-    HOOK_ONLY("shell32.dll", ShellExecuteExW);
+    HOOK_STR_ONLY("shell32.dll", DragQueryFile);
+    HOOK_STR_ONLY("shell32.dll", ShellExecute);
+    HOOK_STR_ONLY("shell32.dll", ShellExecuteEx);
+    HOOK_STR_ONLY("kernel32.dll", GetVersionEx);
+    HOOK_STR_ONLY("kernel32.dll", EnumSystemLocales);
     HOOK_ONLY("shell32.dll", SHGetSpecialFolderLocation);
-    HOOK_ONLY("kernel32.dll", EnumSystemLocalesA);
-    HOOK_ONLY("kernel32.dll", EnumSystemLocalesW);
     HOOK_ONLY("kernel32.dll", GetUserDefaultLCID);
     HOOK_ONLY("kernel32.dll", GetVersion);
-    HOOK_ONLY("kernel32.dll", GetVersionExA);
-    HOOK_ONLY("kernel32.dll", GetVersionExW);
     HOOK_ONLY("kernel32.dll", Beep);
-    HOOK_ONLY("winmm.dll", joyGetDevCapsA);
-    HOOK_ONLY("winmm.dll", joyGetDevCapsW);
+    HOOK_STR_ONLY("winmm.dll", joyGetDevCaps);
     HOOK_ONLY("winmm.dll", joyGetPosEx);
 }
 
@@ -174,6 +167,5 @@ void extrahooks::init_net() {
 }
 
 void extrahooks::init_adv() {
-    HOOK_ONLY("advapi32.dll", GetUserNameA);
-    HOOK_ONLY("advapi32.dll", GetUserNameW);
+    HOOK_STR_ONLY("advapi32.dll", GetUserName);
 }

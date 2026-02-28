@@ -59,18 +59,21 @@ void* mem::get_addr(const char* obj_name, const char* func_name) {
     return reinterpret_cast<void*>(ret);
 }
 
-void mem::_write_memory(size_t addr, const void* data, size_t size) {
+bool mem::_write_memory(size_t addr, const void* data, size_t size) {
     SIZE_T bytesWritten;
     auto ret = WriteProcessMemory(hproc, reinterpret_cast<void*>(addr), data, size, &bytesWritten);
     ASS(ret && bytesWritten == size);
+    return ret && bytesWritten == size;
 }
 
-void hook::_enable_target(void* target) {
+bool hook::_enable_target(void* target) {
     auto mh_ret = MH_EnableHook(target);
     ASS(mh_ret == MH_OK);
+    return mh_ret == MH_OK;
 }
 
-void hook::_hook_target(void* pTarget, void* pDetour, void** ppOriginal) {
+bool hook::_hook_target(void* pTarget, void* pDetour, void** ppOriginal) {
     auto mh_ret = MH_CreateHook(pTarget, pDetour, ppOriginal);
     ASS(mh_ret == MH_OK);
+    return mh_ret == MH_OK;
 }

@@ -174,21 +174,17 @@ static INT_PTR WINAPI DialogBoxParamWH(HINSTANCE hInstance, LPCWSTR lpTemplateNa
 
 void winhooks::init() {
     hwnd = mhwnd = nullptr;
-    HOOK_AUTO("user32.dll", CreateWindowExW);
-    HOOK_AUTO("user32.dll", CreateWindowExA);
-    HOOK_ONLY("user32.dll", DialogBoxParamA);
-    HOOK_ONLY("user32.dll", DialogBoxParamW);
+    // HOOK_STR_ONLY("user32.dll", GetMonitorInfo);
+    HOOK_STR_AUTO("user32.dll", CreateWindowEx);
+    HOOK_STR_ONLY("user32.dll", DialogBoxParam);
+    HOOK_STR_ONLY("user32.dll", SetWindowsHookEx);
     HOOK_AUTO("user32.dll", GetFocus);
     HOOK_AUTO("user32.dll", GetForegroundWindow);
     HOOK_ONLY("user32.dll", SetForegroundWindow);
     HOOK_AUTO("user32.dll", GetActiveWindow);
-    HOOK_ONLY("user32.dll", SetWindowsHookExA);
-    HOOK_ONLY("user32.dll", SetWindowsHookExW);
     HOOK_ONLY("user32.dll", SetFocus);
     HOOK_ONLY("user32.dll", SetActiveWindow);
     HOOK_AUTO("user32.dll", GetSystemMetrics);
-    // HOOK_ONLY("user32.dll", GetMonitorInfoA);
-    // HOOK_ONLY("user32.dll", GetMonitorInfoW);
 }
 
 void winhooks::after_ui_init() {

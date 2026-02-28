@@ -28,7 +28,6 @@ static MCIERROR mciSendCommandWH(MCIDEVICEID IDDevice, UINT uMsg, DWORD_PTR fdwC
 }
 
 void audiohooks::init() {
-    HOOK_ONLY("winmm.dll", mciSendCommandA);
-    HOOK_ONLY("winmm.dll", mciSendCommandW);
+    HOOK_STR_ONLY("winmm.dll", mciSendCommand);
     HOOK_AUTO("dsound.dll", DirectSoundCreate);
 }

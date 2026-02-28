@@ -44,8 +44,7 @@ DWORD WINAPI GetTempPathWH(DWORD nBufferLength, LPWSTR lpBuffer) {
 
 void filehooks::init() {
     // HOOK_AUTO("kernel32.dll", SetCurrentDirectoryW);
-    HOOK_ONLY("kernel32.dll", GetTempPathA);
-    HOOK_ONLY("kernel32.dll", GetTempPathW);
+    HOOK_STR_ONLY("kernel32.dll", GetTempPath);
 }
 
 void filehooks::pre_init() {

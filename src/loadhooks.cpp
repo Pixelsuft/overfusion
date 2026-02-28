@@ -126,8 +126,7 @@ static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
 }
 
 void loadhook::init() {
-    HOOK_AUTO("kernel32.dll", LoadLibraryA);
-    HOOK_AUTO("kernel32.dll", LoadLibraryW);
+    HOOK_STR_AUTO("kernel32.dll", LoadLibrary);
     // TODO: don't hook later (currently for performance reasons)
 #if 0
     HOOK_AUTO("kernel32.dll", GetProcAddress);
