@@ -22,7 +22,7 @@ public:
         LoadGameState = nullptr;
     }
 
-    void pre_init() override {
+    bool pre_init() override {
         auto& cfg = conf::get();
         if (cfg.fps <= 0)
             cfg.fps = 60;
@@ -63,9 +63,10 @@ public:
         mem::write(mem::get_base() + 0x5162a, {0x31, 0xf6});
         // Game FPS is fine
         mem::write(mem::get_base() + 0x2ab70, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        return true;
     }
 
-    void update_init() override {}
+    bool update_init() override { return true; }
 
     std::optional<std::string> before_dll_load(string_view path, string_view fn) override {
         if (fn == "wininet.dll")

@@ -32,8 +32,8 @@ public:
     bool unicode;
 
     PlugBase() : name("Abstract plugin"), unicode(false) {}
-    virtual void pre_init() {}
-    virtual void update_init() {}
+    virtual bool pre_init() { return true; }
+    virtual bool update_init() { return true; }
     virtual std::optional<std::string> before_dll_load(ost::string_view path, ost::string_view fn) {
         return {};
     }

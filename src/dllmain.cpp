@@ -32,7 +32,10 @@ static void of_main() {
     conf::get().read();
     if (!plug::search_and_run())
         mem::terminate();
-    plug::get().pre_init();
+    if (!plug::get().pre_init()) {
+        spdlog::error("Failed to init plugin: {}", plug::get().name);
+        return;
+    }
     timehooks::init();
     state::init();
     loadhook::init();
