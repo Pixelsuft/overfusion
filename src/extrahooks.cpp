@@ -145,6 +145,7 @@ static BOOL __stdcall GetUserNameWH(LPWSTR lpBuffer, LPDWORD pcbBuffer) {
 }
 
 void extrahooks::init() {
+    // TODO: GetDateFormatEx, GetLocaleInfoEx, GetTimeFormatEx, GetUserDefaultLocaleName
     HOOK_AUTO("user32.dll", MessageBoxA);
     HOOK_AUTO("user32.dll", MessageBoxW);
     HOOK_AUTO("shell32.dll", DragAcceptFiles);

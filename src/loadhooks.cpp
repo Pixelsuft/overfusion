@@ -93,7 +93,35 @@ static HMODULE WINAPI LoadLibraryWH(LPCWSTR lpLibFileName) {
     return ret;
 }
 
+static FARPROC(WINAPI* GetProcAddressO)(HMODULE hModule, LPCSTR lpProcName);
+static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
+    if (!hModule || !lpProcName)
+        return GetProcAddressO(hModule, lpProcName);
+    void* temp_ret = reinterpret_cast<void*>(GetProcAddressO(hModule, lpProcName));
+    if (reinterpret_cast<ULONG_PTR>(lpProcName) > 0xFFFF) {
+        ost::string_view proc(lpProcName);
+        if (proc == "SaveRunObject" && !temp_ret) {
+            char obj_path[MAX_PATH];
+            size_t obj_len = GetModuleFileNameA(hModule, obj_path, MAX_PATH);
+            obj_path[obj_len] = '\0';
+            char* ptr = obj_path + obj_len;
+            while (ptr > obj_path) {
+                ptr--;
+                if (*ptr == '\\') {
+                    ptr++;
+                    break;
+                }
+            }
+            spdlog::warn("This object does not support state save/load: {}", ptr);
+        }
+        // spdlog::debug("GetProcAddress: {}", lpProcName);
+    }
+    temp_ret = plug::get().after_proc_get(hModule, lpProcName, temp_ret);
+    return reinterpret_cast<FARPROC>(temp_ret);
+}
+
 void loadhook::init() {
     HOOK_AUTO("kernel32.dll", LoadLibraryA);
     HOOK_AUTO("kernel32.dll", LoadLibraryW);
+    HOOK_AUTO("kernel32.dll", GetProcAddress);
 }

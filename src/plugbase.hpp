@@ -38,6 +38,7 @@ public:
         return {};
     }
     virtual void after_dll_load(ost::string_view path, ost::string_view fn, void* mod) {}
+    virtual void* after_proc_get(void* module, const char* proc, void* ret) { return ret; }
     virtual void* get_prop(PtrProp prop, void* data = nullptr) = 0;
     virtual bool get_bool_prop(BoolProp prop) = 0;
     virtual bool save_state(ofs::File& file) = 0;
