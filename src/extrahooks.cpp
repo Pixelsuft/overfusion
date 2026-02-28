@@ -121,25 +121,30 @@ static MMRESULT WINAPI joyGetDevCapsWH(UINT_PTR uJoyID, LPJOYCAPSW pjc, UINT cbj
 
 static MMRESULT WINAPI joyGetPosExH(UINT uJoyID, LPJOYINFOEX pji) { return MMSYSERR_NODRIVER; }
 
-static BOOL WINAPI BeepH(DWORD dwFreq, DWORD dwDuration) { return FALSE; }
+static BOOL WINAPI BeepH(DWORD dwFreq, DWORD dwDuration) {
+    spdlog::info("Beep");
+    return FALSE;
+}
 
 static HRESULT SHGetSpecialFolderLocationH(HWND hwnd, int csidl, void* ppidl) {
     return static_cast<HRESULT>(1);
 }
 
 static int WINAPI WSAStartupH(WORD wVersionRequired, LPWSADATA lpWSAData) {
-    // spdlog::warn("Failing WSAStartupH");
+    spdlog::warn("Networking is not supported - Failing WSAStartup");
     return WSAVERNOTSUPPORTED;
 }
 
 static int WINAPI bindH(SOCKET s, const sockaddr* addr, int namelen) { return SOCKET_ERROR; }
 
 static BOOL __stdcall GetUserNameAH(LPSTR lpBuffer, LPDWORD pcbBuffer) {
+    spdlog::info("Querying user name: OverFusion");
     strcpy(lpBuffer, "OverFusion");
     return TRUE;
 }
 
 static BOOL __stdcall GetUserNameWH(LPWSTR lpBuffer, LPDWORD pcbBuffer) {
+    spdlog::info("Querying user name: OverFusion");
     wcscpy(lpBuffer, L"OverFusion");
     return TRUE;
 }

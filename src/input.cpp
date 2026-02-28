@@ -53,14 +53,21 @@ static HKL WINAPI GetKeyboardLayoutH(DWORD idThread) {
 }
 
 static BOOL WINAPI GetKeyboardStateH(PBYTE lpKeyState) {
+    // spdlog::info("GetKeyboardState");
     memset(lpKeyState, 0, sizeof(BYTE) * 256);
     state::fill_kbd_state(lpKeyState);
     return TRUE;
 }
 
-static BOOL WINAPI SetKeyboardStateH(LPBYTE lpKeyState) { return FALSE; }
+static BOOL WINAPI SetKeyboardStateH(LPBYTE lpKeyState) {
+    spdlog::info("SetKeyboardState");
+    return FALSE;
+}
 
-static BOOL WINAPI OpenClipboardH(HWND hWndNewOwner) { return FALSE; }
+static BOOL WINAPI OpenClipboardH(HWND hWndNewOwner) {
+    spdlog::info("OpenClipboard");
+    return FALSE;
+}
 
 static BOOL WINAPI IsClipboardFormatAvailableH(UINT format) { return FALSE; }
 

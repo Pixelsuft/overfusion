@@ -10,7 +10,7 @@ static HRESULT(WINAPI* DirectSoundCreateO)(LPCGUID guid, LPDIRECTSOUND* ds, LPUN
 static HRESULT WINAPI DirectSoundCreateH(LPCGUID guid, LPDIRECTSOUND* ds, LPUNKNOWN unk) {
     HRESULT hr = DirectSoundCreateO(guid, ds, unk);
     if (SUCCEEDED(hr) && ds && *ds) {
-        spdlog::debug("DirectSoundCreateH");
+        spdlog::debug("TODO: DirectSoundCreateH");
     }
     return hr;
 }
