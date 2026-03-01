@@ -238,6 +238,68 @@ static BOOL WINAPI WriteFileH(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfByt
     return TRUE;
 }
 
+static BOOL(WINAPI* ReadFileExO)(HANDLE, LPVOID, DWORD, LPOVERLAPPED,
+                                 LPOVERLAPPED_COMPLETION_ROUTINE) = ReadFileEx;
+static BOOL WINAPI ReadFileExH(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
+                               LPOVERLAPPED lpOverlapped,
+                               LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
+    lock::CSLock mylock(cs);
+    auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
+    if (it == our_handles.end())
+        return ReadFileExO(hFile, lpBuffer, nNumberOfBytesToRead, lpOverlapped,
+                           lpCompletionRoutine);
+    auto h = *it;
+    mylock.unlock();
+    if (!h->reading) {
+        SetLastError(ERROR_ACCESS_DENIED);
+        return FALSE;
+    }
+    DWORD bytesRead = 0;
+    ReadFileH(hFile, lpBuffer, nNumberOfBytesToRead, &bytesRead, nullptr);
+    if (lpOverlapped) {
+        unsigned long long next_pos = (unsigned long long)h->pos;
+        lpOverlapped->Offset = (DWORD)(next_pos & 0xFFFFFFFF);
+        lpOverlapped->OffsetHigh = (DWORD)(next_pos >> 32);
+        lpOverlapped->Internal = 0;
+        lpOverlapped->InternalHigh = bytesRead;
+    }
+    if (lpCompletionRoutine) {
+        lpCompletionRoutine(0, bytesRead, lpOverlapped);
+    }
+    return TRUE;
+}
+
+static BOOL(WINAPI* WriteFileExO)(HANDLE, LPCVOID, DWORD, LPOVERLAPPED,
+                                  LPOVERLAPPED_COMPLETION_ROUTINE) = WriteFileEx;
+static BOOL WINAPI WriteFileExH(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
+                                LPOVERLAPPED lpOverlapped,
+                                LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
+    lock::CSLock mylock(cs);
+    auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
+    if (it == our_handles.end())
+        return WriteFileExO(hFile, lpBuffer, nNumberOfBytesToWrite, lpOverlapped,
+                            lpCompletionRoutine);
+    auto h = *it;
+    mylock.unlock();
+    if (!h->writing) {
+        SetLastError(ERROR_ACCESS_DENIED);
+        return FALSE;
+    }
+    DWORD bytesWritten = 0;
+    WriteFileH(hFile, lpBuffer, nNumberOfBytesToWrite, &bytesWritten, nullptr);
+    if (lpOverlapped) {
+        unsigned long long next_pos = (unsigned long long)h->pos;
+        lpOverlapped->Offset = (DWORD)(next_pos & 0xFFFFFFFF);
+        lpOverlapped->OffsetHigh = (DWORD)(next_pos >> 32);
+        lpOverlapped->Internal = 0;
+        lpOverlapped->InternalHigh = bytesWritten;
+    }
+    if (lpCompletionRoutine) {
+        lpCompletionRoutine(0, bytesWritten, lpOverlapped);
+    }
+    return TRUE;
+}
+
 static DWORD(WINAPI* SetFilePointerO)(HANDLE, LONG, PLONG, DWORD) = SetFilePointer;
 static DWORD WINAPI SetFilePointerH(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh,
                                     DWORD dwMoveMethod) {
@@ -422,7 +484,9 @@ void filehooks::init() {
     // HOOK_STR_AUTO("kernel32.dll", GetPrivateProfileString);
     HOOK_ONLY("kernel32.dll", OpenFile);
     HOOK_AUTO("kernel32.dll", ReadFile);
+    HOOK_AUTO("kernel32.dll", ReadFileEx);
     HOOK_AUTO("kernel32.dll", WriteFile);
+    HOOK_AUTO("kernel32.dll", WriteFileEx);
     HOOK_AUTO("kernel32.dll", SetFilePointer);
     HOOK_AUTO("kernel32.dll", SetFilePointerEx);
     HOOK_AUTO("kernel32.dll", GetFileSize);
