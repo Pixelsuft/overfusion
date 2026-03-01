@@ -123,7 +123,8 @@ static bool try_read_file(FileData& ret, std::string_view path) {
     return false;
 }
 
-static bool create_file_data(FileData& ret, std::string_view path, DWORD dwCreationDisposition) {
+static bool create_file_data(FileData& ret, std::string_view path, DWORD dwCreationDisposition,
+                             bool exists) {
     // TODO: more accurate CREATE_NEW, TRUNCATE_EXISTING, OPEN_EXISTING
     switch (dwCreationDisposition) {
     case CREATE_ALWAYS:
@@ -140,12 +141,20 @@ static bool create_file_data(FileData& ret, std::string_view path, DWORD dwCreat
         break;
     case OPEN_ALWAYS:
     case OPEN_EXISTING:
+        if (exists && !ret.data) {
+            ret.data = std::malloc(1);
+            ret.size = 0;
+            break;
+        }
         if (!ret.data && !try_read_file(ret, path)) {
+            ret.size = 0;
             SetLastError(ERROR_ACCESS_DENIED);
             return false;
         }
         break;
     default:
+        ret.data = nullptr;
+        ret.size = 0;
         ASS(false);
         return false;
     }
@@ -179,7 +188,7 @@ static std::optional<void*> handle_file_open(std::string_view path, bool for_rea
     }
     if (for_write && it == file_map.end()) {
         file_map[norm_fp] = FileData();
-        if (!create_file_data(file_map[norm_fp], norm_fp, dwCreationDisposition))
+        if (!create_file_data(file_map[norm_fp], norm_fp, dwCreationDisposition, false))
             return INVALID_HANDLE_VALUE;
     } else {
         FileData& data = it->second;
@@ -190,7 +199,7 @@ static std::optional<void*> handle_file_open(std::string_view path, bool for_rea
                 return INVALID_HANDLE_VALUE;
             }
         }
-        if (!create_file_data(data, norm_fp, dwCreationDisposition))
+        if (!create_file_data(data, norm_fp, dwCreationDisposition, true))
             return INVALID_HANDLE_VALUE;
     }
     FileData& dp = file_map[norm_fp];
