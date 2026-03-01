@@ -8,9 +8,9 @@
 #include "uconv.hpp"
 #include <Windows.h>
 #include <algorithm>
+#include <imgui.h>
 #include <map>
 #include <spdlog/spdlog.h>
-#include <imgui.h>
 #undef min
 #undef max
 
@@ -103,12 +103,50 @@ DWORD WINAPI GetTempPathWH(DWORD nBufferLength, LPWSTR lpBuffer) {
     return static_cast<DWORD>(temp_path.size());
 }
 
+static bool try_read_file(FileData& ret, std::string_view path) {
+    ofs::File file(path, 0);
+    if (!file.is_open())
+        return false;
+    auto temp_size = file.size();
+    if (temp_size < 0) {
+        spdlog::warn("Failed to get file size on disk: {}", path);
+        return false;
+    }
+    ret.size = static_cast<size_t>(temp_size);
+    ret.data = ret.data ? std::realloc(ret.data, ret.size) : std::malloc(ret.size);
+    ASS(ret.data != nullptr);
+    if (file.read(ret.data, ret.size))
+        return true;
+    spdlog::warn("Failed to read file from disk: {}", path);
+    std::free(ret.data);
+    ret.data = nullptr;
+    return false;
+}
+
 static bool create_file_data(FileData& ret, std::string_view path, DWORD dwCreationDisposition) {
+    switch (dwCreationDisposition) {
+    case CREATE_ALWAYS:
+    case CREATE_NEW: // TODO: more accurate
+    case TRUNCATE_EXISTING: // TODO: more accurate
+        if (ret.data)
+            std::free(ret.data);
+        ret.data = std::malloc(1);
+        ret.size = 0;
+        break;
+    case OPEN_ALWAYS:
+    case OPEN_EXISTING: // TODO: more accurate
+        if (!ret.data && !try_read_file(ret, path))
+            return false;
+        break;
+    default:
+        ASS(false);
+        return false;
+    }
     if (!ret.data) {
         ret.data = std::malloc(1);
-        ASS(ret.data != nullptr);
         ret.allow_read = ret.allow_write = true;
     }
+    ASS(ret.data != nullptr);
     return true;
 }
 
@@ -141,6 +179,7 @@ static std::optional<void*> handle_file_open(std::string_view path, bool for_rea
         if (!create_file_data(file_map[norm_fp], norm_fp, dwCreationDisposition))
             return INVALID_HANDLE_VALUE;
     } else {
+        // TODO: check ERROR_ACCESS_DENIED before creating data
         FileData& data = it->second;
         if (!create_file_data(data, norm_fp, dwCreationDisposition))
             return INVALID_HANDLE_VALUE;
@@ -497,8 +536,7 @@ void files::init() {
 }
 
 void files::draw_ui() {
-    ImGui::Text("Opened hanles: %i", static_cast<int>(our_handles.size()));
-    for (auto& it : file_map) {
+    ImGui::Text("Opened handles: %i", static_cast<int>(our_handles.size()));
+    for (auto& it : file_map)
         ImGui::Text("%s: %i bytes", it.first.c_str(), static_cast<int>(it.second.size));
-    }
 }
