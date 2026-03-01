@@ -14,6 +14,12 @@ using std::string;
 struct FileData {
     char* data;
     size_t size;
+    int security;
+};
+
+struct FileHandle {
+    char* data;
+    int pos;
     int mode;
 };
 
@@ -21,6 +27,36 @@ static lock::CriticalSection cs;
 static string real_cwd;
 static string temp_path;
 static std::map<std::string, FileData> file_map;
+
+static HANDLE(WINAPI* CreateFileWO)(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
+                                    LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+                                    DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
+                                    HANDLE hTemplateFile);
+static std::string normalize_path(ost::string_view path_view) {
+    wchar_t* path_buf = uconv::to_utf16(path_view);
+    HANDLE hFile = CreateFileWO(path_buf, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                                nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
+    std::free(path_buf);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        return "";
+    }
+    DWORD dwSize = GetFinalPathNameByHandleW(hFile, nullptr, 0, VOLUME_NAME_DOS);
+    if (dwSize == 0) {
+        CloseHandle(hFile);
+        return "";
+    }
+
+    path_buf = new wchar_t[dwSize + 1];
+    auto temp_ret = GetFinalPathNameByHandleW(hFile, path_buf, dwSize + 1, VOLUME_NAME_DOS);
+    ASS(temp_ret != 0);
+    CloseHandle(hFile);
+    path_buf[dwSize] = L'\0';
+
+    auto ret = uconv::from_utf16(path_buf);
+    delete[] path_buf;
+
+    return ret;
+}
 
 ost::string_view filehooks::get_cwd() { return real_cwd; }
 
@@ -71,22 +107,21 @@ static HANDLE WINAPI CreateFileAH(LPCSTR lpFileName, DWORD dwDesiredAccess, DWOR
                                   LPSECURITY_ATTRIBUTES lpSecurityAttributes,
                                   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                                   HANDLE hTemplateFile) {
+    ASS(lpFileName != nullptr);
     lock::CSLock mylock(cs);
-    spdlog::debug("CreateFileA: {}", lpFileName);
+    // spdlog::debug("CreateFileA: {}", lpFileName);
     return CreateFileAO(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
                         dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
 
-static HANDLE(WINAPI* CreateFileWO)(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
-                                    LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-                                    DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
-                                    HANDLE hTemplateFile);
 static HANDLE WINAPI CreateFileWH(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                                   LPSECURITY_ATTRIBUTES lpSecurityAttributes,
                                   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                                   HANDLE hTemplateFile) {
+    ASS(lpFileName != nullptr);
     lock::CSLock mylock(cs);
-    // spdlog::debug("CreateFileW: {}", uconv::from_utf16(lpFileName));
+    auto fp = normalize_path(uconv::from_utf16(lpFileName));
+    spdlog::debug("CreateFileW: {}", fp);
     return CreateFileWO(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
                         dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
@@ -164,8 +199,8 @@ void filehooks::init() {
     // HOOK_AUTO("kernel32.dll", SetCurrentDirectoryW);
     HOOK_STR_ONLY("kernel32.dll", GetTempPath);
     HOOK_STR_AUTO("kernel32.dll", CreateFile);
-    //HOOK_STR_AUTO("kernel32.dll", WritePrivateProfileString);
-    //HOOK_STR_AUTO("kernel32.dll", GetPrivateProfileString);
-    HOOK_AUTO("kernel32.dll", OpenFile);
+    // HOOK_STR_AUTO("kernel32.dll", WritePrivateProfileString);
+    // HOOK_STR_AUTO("kernel32.dll", GetPrivateProfileString);
+    // HOOK_AUTO("kernel32.dll", OpenFile);
     HOOK_AUTO("kernel32.dll", CloseHandle);
 }
