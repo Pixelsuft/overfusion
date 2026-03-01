@@ -196,5 +196,8 @@
     <ClInclude Include="src\config.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\lock.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -309,6 +309,7 @@
     <ClInclude Include="src\gamehooks.hpp" />
     <ClInclude Include="src\input.hpp" />
     <ClInclude Include="src\loadhooks.hpp" />
+    <ClInclude Include="src\lock.hpp" />
     <ClInclude Include="src\mem.hpp" />
     <ClInclude Include="src\ofs.hpp" />
     <ClInclude Include="src\plugbase.hpp" />
