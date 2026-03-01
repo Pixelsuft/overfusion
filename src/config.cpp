@@ -1,7 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include "config.hpp"
 #include "ass.hpp"
-#include "filehooks.hpp"
+#include "files.hpp"
 #include "ofs.hpp"
 #include <Windows.h>
 #include <algorithm>

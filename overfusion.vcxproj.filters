@@ -99,7 +99,7 @@
     <ClCompile Include="src\winhooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\filehooks.cpp">
+    <ClCompile Include="src\files.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\timehooks.cpp">
@@ -163,7 +163,7 @@
     <ClInclude Include="src\winhooks.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\filehooks.hpp">
+    <ClInclude Include="src\files.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\timehooks.hpp">

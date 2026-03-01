@@ -1,6 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "extrahooks.hpp"
-#include "filehooks.hpp"
+#include "files.hpp"
 #include "input.hpp"
 #include "loadhooks.hpp"
 #include "mem.hpp"

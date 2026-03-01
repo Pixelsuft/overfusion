@@ -281,7 +281,7 @@
     <ClCompile Include="src\darkmode.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\extrahooks.cpp" />
-    <ClCompile Include="src\filehooks.cpp" />
+    <ClCompile Include="src\files.cpp" />
     <ClCompile Include="src\gamehooks.cpp" />
     <ClCompile Include="src\input.cpp" />
     <ClCompile Include="src\mem.cpp" />
@@ -305,7 +305,7 @@
     <ClInclude Include="src\config.hpp" />
     <ClInclude Include="src\d3d9hooks.hpp" />
     <ClInclude Include="src\extrahooks.hpp" />
-    <ClInclude Include="src\filehooks.hpp" />
+    <ClInclude Include="src\files.hpp" />
     <ClInclude Include="src\gamehooks.hpp" />
     <ClInclude Include="src\input.hpp" />
     <ClInclude Include="src\loadhooks.hpp" />
