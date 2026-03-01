@@ -103,14 +103,13 @@ DWORD WINAPI GetTempPathWH(DWORD nBufferLength, LPWSTR lpBuffer) {
     return static_cast<DWORD>(temp_path.size());
 }
 
-static FileData create_file_data(std::string_view path, DWORD dwCreationDisposition) {
-    // TODO: respect create_mode
-    FileData ret;
-    ret.data = std::malloc(1);
-    ASS(ret.data != nullptr);
-    ret.allow_read = ret.allow_write = true;
-    ret.size = 0;
-    return ret;
+static bool create_file_data(FileData& ret, std::string_view path, DWORD dwCreationDisposition) {
+    if (!ret.data) {
+        ret.data = std::malloc(1);
+        ASS(ret.data != nullptr);
+        ret.allow_read = ret.allow_write = true;
+    }
+    return true;
 }
 
 static bool is_allowed_file(std::string_view path) {
@@ -138,9 +137,13 @@ static std::optional<void*> handle_file_open(std::string_view path, bool for_rea
         return {};
     }
     if (for_write && it == file_map.end()) {
-        file_map[norm_fp] = create_file_data(path, dwCreationDisposition);
+        file_map[norm_fp] = FileData();
+        if (!create_file_data(file_map[norm_fp], norm_fp, dwCreationDisposition))
+            return INVALID_HANDLE_VALUE;
     } else {
         FileData& data = it->second;
+        if (!create_file_data(data, norm_fp, dwCreationDisposition))
+            return INVALID_HANDLE_VALUE;
         if (data.refcount != 0) {
             if ((for_read && !data.allow_read) || (for_write && !data.allow_write)) {
                 spdlog::warn("Access denied for file: {}", path);
