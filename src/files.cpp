@@ -114,7 +114,9 @@ static FileData create_file_data(std::string_view path, int create_mode) {
 static bool is_allowed_file(std::string_view path) {
     // spdlog::debug("file: {}", path);
     // TODO
-    return path.ends_with(".ini");
+    return !path.ends_with(".mfx") && !path.ends_with(".mvx") && !path.ends_with(".dll") &&
+           !path.ends_with(".sft") && !path.ends_with(".ift") && !path.ends_with(".exe") &&
+           !path.ends_with(".bin");
 }
 
 static std::optional<void*> handle_file_open(std::string_view path, bool for_read, bool for_write,
@@ -130,7 +132,7 @@ static std::optional<void*> handle_file_open(std::string_view path, bool for_rea
     lock::CSLock mylock(cs);
     auto it = file_map.find(norm_fp);
     if (!for_write && it == file_map.end()) {
-        spdlog::debug("Passing through file opened for reading: {}", path);
+        // spdlog::debug("Passing through file opened for reading: {}", path);
         return {};
     }
     if (for_write && it == file_map.end()) {
@@ -150,7 +152,7 @@ static std::optional<void*> handle_file_open(std::string_view path, bool for_rea
     dp.allow_write = false;
     auto handle = new FileHandle(dp, for_read, for_write);
     our_handles.push_back(handle);
-    spdlog::debug("Started file emulation: {}", norm_fp);
+    // spdlog::debug("Started file emulation: {}", norm_fp);
     return handle;
 }
 
