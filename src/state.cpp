@@ -75,7 +75,7 @@ static bool updating;
 static bool need_key_msg;
 
 void state::init() {
-    need_key_msg = plug::get().get_bool_prop(plug::BoolProp::NeedKeyMsg);
+    need_key_msg = plug::get().need_key_message;
     last_msg = "None";
     success = false;
     updating = false;

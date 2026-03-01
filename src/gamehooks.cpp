@@ -10,8 +10,6 @@
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-static bool MyKeyState(int k) { return GetKeyState(k) & 128; }
-
 static void (__stdcall* ProcessFrameRendering)(void);
 
 static int(__stdcall* UpdateGameFrameO)();

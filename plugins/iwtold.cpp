@@ -16,6 +16,7 @@ public:
     PlugIwtOld() {
         name = "I Wanna Try 1.9.8.3";
         unicode = true;
+        need_key_message = true;
         SaveGameState = nullptr;
         LoadGameState = nullptr;
     }
@@ -107,15 +108,6 @@ public:
             return reinterpret_cast<void*>(mem::get_base() + 0x2c3f0);
         default:
             return nullptr;
-        }
-    }
-
-    bool get_bool_prop(plug::BoolProp prop) override {
-        switch (prop) {
-        case plug::BoolProp::NeedKeyMsg:
-            return true;
-        default:
-            return false;
         }
     }
 
