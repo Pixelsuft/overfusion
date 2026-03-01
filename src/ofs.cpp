@@ -7,6 +7,9 @@
 
 using std::string, std::string_view, ofs::File;
 
+extern HANDLE(WINAPI* CreateFileWO)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD,
+                                    HANDLE);
+
 File::File() noexcept { handle = INVALID_HANDLE_VALUE; }
 
 File::File(string_view path, int mode) noexcept {
@@ -31,9 +34,9 @@ bool File::open(string_view path, int mode) {
     wchar_t* w_path = uconv::to_utf16(path);
     ASS(w_path != nullptr);
     handle = static_cast<void*>(
-        CreateFileW(w_path, mode == 1 ? (GENERIC_WRITE | DELETE) : GENERIC_READ,
-                    mode == 1 ? 0 : FILE_SHARE_READ, nullptr,
-                    mode == 1 ? CREATE_ALWAYS : OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
+        CreateFileWO(w_path, mode == 1 ? (GENERIC_WRITE | DELETE) : GENERIC_READ,
+                     mode == 1 ? 0 : FILE_SHARE_READ, nullptr,
+                     mode == 1 ? CREATE_ALWAYS : OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
     std::free(w_path);
     return is_open();
 }

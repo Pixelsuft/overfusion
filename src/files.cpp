@@ -4,34 +4,41 @@
 #include "ass.hpp"
 #include "lock.hpp"
 #include "mem.hpp"
+#include "ofs.hpp"
 #include "uconv.hpp"
 #include <Windows.h>
+#include <algorithm>
 #include <map>
 #include <spdlog/spdlog.h>
 
 using std::string;
 
 struct FileData {
-    char* data;
+    void* data;
     size_t size;
-    int security;
+    bool allow_read;
+    bool allow_write;
 };
 
 struct FileHandle {
-    char* data;
-    int pos;
-    int mode;
+    FileData& data;
+    size_t pos;
+    bool allow_read;
+    bool allow_write;
+
+    FileHandle(FileData& _data, bool _allow_read, bool _allow_write)
+        : data(_data), allow_read(_allow_read), allow_write(_allow_write), pos(0) {}
 };
 
 static lock::CriticalSection cs;
 static string real_cwd;
 static string temp_path;
 static std::map<std::string, FileData> file_map;
+static std::vector<FileHandle*> our_handles;
 
-static HANDLE(WINAPI* CreateFileWO)(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
-                                    LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-                                    DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
-                                    HANDLE hTemplateFile);
+HANDLE(WINAPI* CreateFileWO)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD,
+                             HANDLE) = CreateFileW;
+
 static std::string normalize_path(ost::string_view path_view) {
     // TODO: actually return unique fp but the same for each file
     return string(path_view);
@@ -78,6 +85,43 @@ DWORD WINAPI GetTempPathWH(DWORD nBufferLength, LPWSTR lpBuffer) {
     return static_cast<DWORD>(temp_path.size());
 }
 
+static FileData create_file_data(std::string_view path, int create_mode) {
+    // TODO: respect create_mode
+    FileData ret;
+    ret.data = std::malloc(1);
+    ASS(ret.data != nullptr);
+    ret.allow_read = ret.allow_write = false;
+    ret.size = 0;
+    return ret;
+}
+
+static std::optional<void*> handle_file_open(std::string_view path, bool for_read, bool for_write,
+                                             int create_mode) {
+    string norm_fp = normalize_path(path);
+    if (!for_read && !for_write) {
+        spdlog::warn("Attempted to open a file without permissions (WTF?), failing: {}", path);
+        SetLastError(ERROR_ACCESS_DENIED);
+        return INVALID_HANDLE_VALUE;
+    }
+    lock::CSLock mylock(cs);
+    auto it = file_map.find(norm_fp);
+    if (!for_write && it == file_map.end()) {
+        spdlog::debug("Passing through file opened for reading: {}", path);
+        return {};
+    }
+    FileData data;
+    if (for_write && it == file_map.end()) {
+        data = create_file_data(path, create_mode);
+        data.allow_write = true;
+        file_map[norm_fp] = data;
+    } else {
+        data = it->second;
+    }
+    auto handle = new FileHandle(file_map[norm_fp], for_read, for_write);
+    our_handles.push_back(handle);
+    return handle;
+}
+
 static HANDLE(WINAPI* CreateFileAO)(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                                     LPSECURITY_ATTRIBUTES lpSecurityAttributes,
                                     DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
@@ -87,8 +131,10 @@ static HANDLE WINAPI CreateFileAH(LPCSTR lpFileName, DWORD dwDesiredAccess, DWOR
                                   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                                   HANDLE hTemplateFile) {
     ASS(lpFileName != nullptr);
-    lock::CSLock mylock(cs);
-    // spdlog::debug("CreateFileA: {}", lpFileName);
+    auto temp_ret = handle_file_open(uconv::from_ansi(lpFileName), dwDesiredAccess & GENERIC_READ,
+                                     dwDesiredAccess & GENERIC_WRITE, 0);
+    if (temp_ret.has_value())
+        return reinterpret_cast<HANDLE>(temp_ret.value());
     return CreateFileAO(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
                         dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
@@ -98,24 +144,28 @@ static HANDLE WINAPI CreateFileWH(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWO
                                   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                                   HANDLE hTemplateFile) {
     ASS(lpFileName != nullptr);
-    lock::CSLock mylock(cs);
-    auto fp = normalize_path(uconv::from_utf16(lpFileName));
-    spdlog::debug("CreateFileW: {}", fp);
+    auto temp_ret = handle_file_open(uconv::from_utf16(lpFileName), dwDesiredAccess & GENERIC_READ,
+                                     dwDesiredAccess & GENERIC_WRITE, 0);
+    if (temp_ret.has_value())
+        return reinterpret_cast<HANDLE>(temp_ret.value());
     return CreateFileWO(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
                         dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
 
-static HFILE(WINAPI* OpenFileO)(LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT uStyle);
 static HFILE WINAPI OpenFileH(LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT uStyle) {
-    lock::CSLock mylock(cs);
-    spdlog::info("OpenFile: {}", lpFileName);
-    return OpenFileO(lpFileName, lpReOpenBuff, uStyle);
+    spdlog::warn("Attempted to use old OpenFile, failing: {}", uconv::from_ansi(lpFileName));
+    return HFILE_ERROR;
 }
 
 static BOOL(WINAPI* CloseHandleO)(HANDLE hObject);
 static BOOL WINAPI CloseHandleH(HANDLE hObject) {
     lock::CSLock mylock(cs);
-    return CloseHandleO(hObject);
+    auto it = std::find(our_handles.begin(), our_handles.end(), hObject);
+    if (it == our_handles.end())
+        return CloseHandleO(hObject);
+    delete *it;
+    our_handles.erase(it);
+    return TRUE;
 }
 
 static BOOL(WINAPI* WritePrivateProfileStringAO)(LPCSTR lpAppName, LPCSTR lpKeyName,
@@ -180,6 +230,6 @@ void filehooks::init() {
     HOOK_STR_AUTO("kernel32.dll", CreateFile);
     // HOOK_STR_AUTO("kernel32.dll", WritePrivateProfileString);
     // HOOK_STR_AUTO("kernel32.dll", GetPrivateProfileString);
-    // HOOK_AUTO("kernel32.dll", OpenFile);
+    HOOK_ONLY("kernel32.dll", OpenFile);
     HOOK_AUTO("kernel32.dll", CloseHandle);
 }
