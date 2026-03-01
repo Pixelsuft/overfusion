@@ -19,6 +19,8 @@ struct FileData {
     int refcount;
     bool allow_read;
     bool allow_write;
+
+    FileData() : data(nullptr), size(0), refcount(0), allow_read(false), allow_write(false) {}
 };
 
 struct FileHandle {
@@ -106,7 +108,7 @@ static FileData create_file_data(std::string_view path, int create_mode) {
 
 static bool is_allowed_file(std::string_view path) {
     // spdlog::debug("file: {}", path);
-    return path.ends_with("Box2DBase.txt");
+    return path.ends_with("SaveFile1.ini");
 }
 
 static std::optional<void*> handle_file_open(std::string_view path, bool for_read, bool for_write,
@@ -155,6 +157,7 @@ static HANDLE WINAPI CreateFileAH(LPCSTR lpFileName, DWORD dwDesiredAccess, DWOR
                                   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                                   HANDLE hTemplateFile) {
     ASS(lpFileName != nullptr);
+    // TODO: proper create mode
     auto temp_ret = handle_file_open(uconv::from_ansi(lpFileName), dwDesiredAccess & GENERIC_READ,
                                      dwDesiredAccess & GENERIC_WRITE, 0);
     if (temp_ret.has_value())
@@ -168,6 +171,7 @@ static HANDLE WINAPI CreateFileWH(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWO
                                   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                                   HANDLE hTemplateFile) {
     ASS(lpFileName != nullptr);
+    // TODO: proper create mode
     auto temp_ret = handle_file_open(uconv::from_utf16(lpFileName), dwDesiredAccess & GENERIC_READ,
                                      dwDesiredAccess & GENERIC_WRITE, 0);
     if (temp_ret.has_value())
