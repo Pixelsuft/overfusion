@@ -9,6 +9,7 @@ using std::string, std::string_view, ofs::File;
 
 extern HANDLE(WINAPI* CreateFileWO)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD,
                                     HANDLE);
+extern BOOL(WINAPI* CloseHandleO)(HANDLE hObject);
 
 File::File() noexcept { handle = INVALID_HANDLE_VALUE; }
 
@@ -116,7 +117,7 @@ long long File::size() {
 
 void File::close() {
     if (is_open()) {
-        ASS(CloseHandle(handle) != 0);
+        ASS(CloseHandleO(handle));
         handle = INVALID_HANDLE_VALUE;
     }
 }
@@ -124,7 +125,7 @@ void File::close() {
 bool ofs::remove_file(string_view path) {
     wchar_t* w_path = uconv::to_utf16(path);
     ASS(w_path != nullptr);
-    bool ret = (DeleteFileW(w_path) != 0);
+    bool ret = (DeleteFileW(w_path) != FALSE);
     if (!ret && GetLastError() != ERROR_FILE_NOT_FOUND)
         spdlog::error("Failed to remove file: {}", path);
     std::free(w_path);

@@ -55,6 +55,7 @@ static std::vector<FileHandle*> our_handles;
 
 HANDLE(WINAPI* CreateFileWO)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD,
                              HANDLE) = CreateFileW;
+BOOL(WINAPI* CloseHandleO)(HANDLE hObject) = CloseHandle;
 
 static std::string normalize_path(string_view path_view) {
     // TODO: actually return unique fp but the same for each file
@@ -408,7 +409,6 @@ static HFILE WINAPI OpenFileH(LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT u
     return HFILE_ERROR;
 }
 
-static BOOL(WINAPI* CloseHandleO)(HANDLE hObject);
 static BOOL WINAPI CloseHandleH(HANDLE hObject) {
     lock::CSLock mylock(cs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hObject);
