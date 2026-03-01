@@ -10,12 +10,15 @@
 #include <spdlog/spdlog.h>
 #include <vector>
 
-static bool kbd_state[256] = {0};
+static bool kbd_state[256];
 static std::vector<std::pair<int, bool>> kbd_que;
 
 static SHORT(WINAPI* GetAsyncKeyStateO)(int nVirtKey);
 static SHORT WINAPI GetAsyncKeyStateH(int nVirtKey) {
-    ASS(nVirtKey > 0 && nVirtKey < 256);
+    if (nVirtKey < 0 || nVirtKey >= 256) {
+        spdlog::warn("Invalid nVirtKey for GetAsyncKeyState");
+        return 0;
+    }
     // not used by imgui (for now)
     // if (ui::processing)
     //     return GetAsyncKeyStateO(nVirtKey);
@@ -24,7 +27,10 @@ static SHORT WINAPI GetAsyncKeyStateH(int nVirtKey) {
 
 static SHORT(WINAPI* GetKeyStateO)(int nVirtKey);
 static SHORT WINAPI GetKeyStateH(int nVirtKey) {
-    ASS(nVirtKey > 0 && nVirtKey < 256);
+    if (nVirtKey < 0 || nVirtKey >= 256) {
+        spdlog::warn("Invalid nVirtKey for GetKeyState");
+        return 0;
+    }
     if (ui::processing)
         return kbd_state[nVirtKey];
     return state::get_key_state(nVirtKey) ? -32767 : 0;
@@ -81,6 +87,7 @@ static UINT WINAPI SendInputH(UINT cInputs, LPINPUT pInputs, int cbSize) { retur
 static BOOL WINAPI SetCursorPosH(int X, int Y) { return FALSE; }
 
 void input::init() {
+    std::memset(kbd_state, 0, sizeof(bool) * 256);
     HOOK_AUTO("user32.dll", GetKeyState);
     HOOK_AUTO("user32.dll", GetAsyncKeyState);
     HOOK_AUTO("user32.dll", GetCursorPos);
