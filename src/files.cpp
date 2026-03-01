@@ -10,7 +10,10 @@
 #include <algorithm>
 #include <map>
 #include <spdlog/spdlog.h>
+#undef min
+#undef max
 
+using ost::string_view;
 using std::string;
 
 struct FileData {
@@ -50,12 +53,12 @@ static std::vector<FileHandle*> our_handles;
 HANDLE(WINAPI* CreateFileWO)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD,
                              HANDLE) = CreateFileW;
 
-static std::string normalize_path(ost::string_view path_view) {
+static std::string normalize_path(string_view path_view) {
     // TODO: actually return unique fp but the same for each file
     return string(path_view);
 }
 
-ost::string_view filehooks::get_cwd() { return real_cwd; }
+string_view filehooks::get_cwd() { return real_cwd; }
 
 void filehooks::pre_init() {
     [] {
@@ -144,7 +147,7 @@ static std::optional<void*> handle_file_open(std::string_view path, bool for_rea
     dp.allow_write = false;
     auto handle = new FileHandle(dp, for_read, for_write);
     our_handles.push_back(handle);
-    spdlog::warn("TODO: {}", norm_fp);
+    spdlog::debug("Started file emulation: {}", norm_fp);
     return handle;
 }
 
@@ -178,6 +181,109 @@ static HANDLE WINAPI CreateFileWH(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWO
         return reinterpret_cast<HANDLE>(temp_ret.value());
     return CreateFileWO(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
                         dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+}
+
+static BOOL(WINAPI* ReadFileO)(HANDLE, LPVOID, DWORD, LPDWORD, LPOVERLAPPED) = ReadFile;
+static BOOL WINAPI ReadFileH(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
+                             LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped) {
+    lock::CSLock mylock(cs);
+    auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
+    if (it == our_handles.end())
+        return ReadFileO(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
+    auto h = *it;
+    if (!h->reading) {
+        SetLastError(ERROR_ACCESS_DENIED);
+        return FALSE;
+    }
+    size_t available = h->data.size > h->pos ? h->data.size - h->pos : 0;
+    size_t to_read = std::min((size_t)nNumberOfBytesToRead, available);
+    if (to_read > 0) {
+        memcpy(lpBuffer, (char*)h->data.data + h->pos, to_read);
+        h->pos += to_read;
+    }
+    if (lpNumberOfBytesRead)
+        *lpNumberOfBytesRead = (DWORD)to_read;
+    return TRUE;
+}
+
+static BOOL(WINAPI* WriteFileO)(HANDLE, LPCVOID, DWORD, LPDWORD, LPOVERLAPPED) = WriteFile;
+static BOOL WINAPI WriteFileH(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
+                              LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped) {
+    lock::CSLock mylock(cs);
+    auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
+    if (it == our_handles.end())
+        return WriteFileO(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten,
+                          lpOverlapped);
+    auto h = *it;
+    if (!h->writing) {
+        SetLastError(ERROR_ACCESS_DENIED);
+        return FALSE;
+    }
+    size_t needed_size = h->pos + nNumberOfBytesToWrite;
+    if (needed_size > h->data.size) {
+        void* new_data = std::realloc(h->data.data, needed_size);
+        ASS(new_data != nullptr);
+        h->data.data = new_data;
+        h->data.size = needed_size;
+    }
+    memcpy((char*)h->data.data + h->pos, lpBuffer, nNumberOfBytesToWrite);
+    h->pos += nNumberOfBytesToWrite;
+    if (lpNumberOfBytesWritten)
+        *lpNumberOfBytesWritten = nNumberOfBytesToWrite;
+    return TRUE;
+}
+
+static DWORD(WINAPI* SetFilePointerO)(HANDLE, LONG, PLONG, DWORD) = SetFilePointer;
+static DWORD WINAPI SetFilePointerH(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh,
+                                    DWORD dwMoveMethod) {
+    lock::CSLock mylock(cs);
+    auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
+    if (it == our_handles.end())
+        return SetFilePointerO(hFile, lDistanceToMove, lpDistanceToMoveHigh, dwMoveMethod);
+    auto h = *it;
+    long long offset = lDistanceToMove;
+    if (lpDistanceToMoveHigh)
+        offset |= ((long long)*lpDistanceToMoveHigh << 32);
+    long long new_pos = h->pos;
+    switch (dwMoveMethod) {
+    case FILE_BEGIN:
+        new_pos = offset;
+        break;
+    case FILE_CURRENT:
+        new_pos += offset;
+        break;
+    case FILE_END:
+        new_pos = (long long)h->data.size + offset;
+        break;
+    default:
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return INVALID_SET_FILE_POINTER;
+    }
+    if (new_pos < 0) {
+        SetLastError(ERROR_NEGATIVE_SEEK);
+        return INVALID_SET_FILE_POINTER;
+    }
+    h->pos = (size_t)new_pos;
+    if (lpDistanceToMoveHigh)
+        *lpDistanceToMoveHigh = (LONG)(new_pos >> 32);
+    return (DWORD)(new_pos & 0xFFFFFFFF);
+}
+
+static DWORD(WINAPI* GetFileSizeO)(HANDLE, LPDWORD) = GetFileSize;
+static DWORD WINAPI GetFileSizeH(HANDLE hFile, LPDWORD lpFileSizeHigh) {
+    lock::CSLock mylock(cs);
+    auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
+    if (it == our_handles.end())
+        return GetFileSizeO(hFile, lpFileSizeHigh);
+    auto h = *it;
+    unsigned long long full_size = (unsigned long long)h->data.size;
+    if (lpFileSizeHigh)
+        *lpFileSizeHigh = (DWORD)(full_size >> 32);
+    DWORD low_part = (DWORD)(full_size & 0xFFFFFFFF);
+    if (low_part == INVALID_FILE_SIZE) {
+        SetLastError(NO_ERROR);
+    }
+    return low_part;
 }
 
 static HFILE WINAPI OpenFileH(LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT uStyle) {
@@ -259,5 +365,9 @@ void filehooks::init() {
     // HOOK_STR_AUTO("kernel32.dll", WritePrivateProfileString);
     // HOOK_STR_AUTO("kernel32.dll", GetPrivateProfileString);
     HOOK_ONLY("kernel32.dll", OpenFile);
+    HOOK_AUTO("kernel32.dll", ReadFile);
+    HOOK_AUTO("kernel32.dll", WriteFile);
+    HOOK_AUTO("kernel32.dll", SetFilePointer);
+    HOOK_AUTO("kernel32.dll", GetFileSize);
     HOOK_AUTO("kernel32.dll", CloseHandle);
 }
