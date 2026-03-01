@@ -8,13 +8,13 @@
 
 using ost::string_view;
 
-class PlugIwtDemo final : public plug::PlugBase {
+class PlugIwbtb final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
 
 public:
-    PlugIwtDemo() {
+    PlugIwbtb() {
         name = "I Wanna Be The Boshy";
         unicode = false;
         need_key_message = false;
@@ -134,10 +134,10 @@ public:
 
 static void on_plugin_check(plug::PlugBase** buf, bool& check) {
     if (buf) {
-        *buf = new PlugIwtDemo;
+        *buf = new PlugIwbtb;
     } else {
         check = mem::exe_name == "I Wanna Be The Boshy.exe";
     }
 }
 
-PLUG_REG(PlugIwtDemo, on_plugin_check)
+PLUG_REG(PlugIwbtb, on_plugin_check)
