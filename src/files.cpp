@@ -13,6 +13,8 @@
 #undef min
 #undef max
 
+// TODO: implement other filesystem functions
+
 using ost::string_view;
 using std::string;
 
@@ -111,7 +113,8 @@ static FileData create_file_data(std::string_view path, int create_mode) {
 
 static bool is_allowed_file(std::string_view path) {
     // spdlog::debug("file: {}", path);
-    return path.ends_with("SaveFile1.ini");
+    // TODO
+    return path.ends_with(".ini");
 }
 
 static std::optional<void*> handle_file_open(std::string_view path, bool for_read, bool for_write,
@@ -286,6 +289,57 @@ static DWORD WINAPI GetFileSizeH(HANDLE hFile, LPDWORD lpFileSizeHigh) {
     return low_part;
 }
 
+static BOOL(WINAPI* SetFilePointerExO)(HANDLE, LARGE_INTEGER, PLARGE_INTEGER,
+                                       DWORD) = SetFilePointerEx;
+static BOOL WINAPI SetFilePointerExH(HANDLE hFile, LARGE_INTEGER liDistanceToMove,
+                                     PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod) {
+    lock::CSLock mylock(cs);
+    auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
+    if (it == our_handles.end())
+        return SetFilePointerExO(hFile, liDistanceToMove, lpNewFilePointer, dwMoveMethod);
+    auto h = *it;
+    long long offset = liDistanceToMove.QuadPart;
+    long long new_pos = 0;
+    switch (dwMoveMethod) {
+    case FILE_BEGIN:
+        new_pos = offset;
+        break;
+    case FILE_CURRENT:
+        new_pos = (long long)h->pos + offset;
+        break;
+    case FILE_END:
+        new_pos = (long long)h->data.size + offset;
+        break;
+    default:
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (new_pos < 0) {
+        SetLastError(ERROR_NEGATIVE_SEEK);
+        return FALSE;
+    }
+    h->pos = (size_t)new_pos;
+    if (lpNewFilePointer) {
+        lpNewFilePointer->QuadPart = new_pos;
+    }
+    return TRUE;
+}
+
+static BOOL(WINAPI* GetFileSizeExO)(HANDLE, PLARGE_INTEGER) = GetFileSizeEx;
+static BOOL WINAPI GetFileSizeExH(HANDLE hFile, PLARGE_INTEGER lpFileSize) {
+    lock::CSLock mylock(cs);
+    auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
+    if (it == our_handles.end())
+        return GetFileSizeExO(hFile, lpFileSize);
+    auto h = *it;
+    if (!lpFileSize) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    lpFileSize->QuadPart = (long long)h->data.size;
+    return TRUE;
+}
+
 static HFILE WINAPI OpenFileH(LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT uStyle) {
     spdlog::warn("Attempted to use old OpenFile, failing: {}", uconv::from_ansi(lpFileName));
     return HFILE_ERROR;
@@ -368,6 +422,8 @@ void filehooks::init() {
     HOOK_AUTO("kernel32.dll", ReadFile);
     HOOK_AUTO("kernel32.dll", WriteFile);
     HOOK_AUTO("kernel32.dll", SetFilePointer);
+    HOOK_AUTO("kernel32.dll", SetFilePointerEx);
     HOOK_AUTO("kernel32.dll", GetFileSize);
+    HOOK_AUTO("kernel32.dll", GetFileSizeEx);
     HOOK_AUTO("kernel32.dll", CloseHandle);
 }
