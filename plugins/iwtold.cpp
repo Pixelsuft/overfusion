@@ -1,9 +1,9 @@
-#include "ass.hpp"
-#include "config.hpp"
-#include "mem.hpp"
-#include "plugbase.hpp"
+#define WIN32_LEAN_AND_MEAN
+#include "../src/ass.hpp"
+#include "../src/config.hpp"
+#include "../src/mem.hpp"
+#include "../src/plugbase.hpp"
 #include <spdlog/spdlog.h>
-// TODO: move to plugins dir from src
 
 using ost::string_view;
 

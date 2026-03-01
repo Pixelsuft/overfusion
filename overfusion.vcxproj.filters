@@ -22,6 +22,9 @@
     <Filter Include="SpdLog">
       <UniqueIdentifier>{f36b3fc1-93f1-4a59-b72e-c3c6f3847958}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Plugins">
+      <UniqueIdentifier>{1346ad6c-faff-482b-82f9-9bb877338a14}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -90,9 +93,6 @@
     <ClCompile Include="src\mem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\plugiwtold.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\plugbase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -132,11 +132,17 @@
     <ClCompile Include="src\gamehooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\plugiwtdemo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\config.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="plugins\iwtold.cpp">
+      <Filter>Plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="plugins\iwtdemo.cpp">
+      <Filter>Plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="plugins\iwbtb.cpp">
+      <Filter>Plugins</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

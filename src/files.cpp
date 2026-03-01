@@ -16,6 +16,7 @@ using std::string;
 struct FileData {
     void* data;
     size_t size;
+    int refcount;
     bool allow_read;
     bool allow_write;
 };
@@ -23,11 +24,19 @@ struct FileData {
 struct FileHandle {
     FileData& data;
     size_t pos;
-    bool allow_read;
-    bool allow_write;
+    bool reading;
+    bool writing;
 
     FileHandle(FileData& _data, bool _allow_read, bool _allow_write)
-        : data(_data), allow_read(_allow_read), allow_write(_allow_write), pos(0) {}
+        : data(_data), reading(_allow_read), writing(_allow_write), pos(0) {
+        data.refcount++;
+    }
+    ~FileHandle() {
+        data.refcount--;
+        if (data.refcount == 0) {
+            data.allow_read = data.allow_write = true;
+        }
+    }
 };
 
 static lock::CriticalSection cs;
@@ -90,14 +99,21 @@ static FileData create_file_data(std::string_view path, int create_mode) {
     FileData ret;
     ret.data = std::malloc(1);
     ASS(ret.data != nullptr);
-    ret.allow_read = ret.allow_write = false;
+    ret.allow_read = ret.allow_write = true;
     ret.size = 0;
     return ret;
+}
+
+static bool is_allowed_file(std::string_view path) {
+    // spdlog::debug("file: {}", path);
+    return path.ends_with("Box2DBase.txt");
 }
 
 static std::optional<void*> handle_file_open(std::string_view path, bool for_read, bool for_write,
                                              int create_mode) {
     string norm_fp = normalize_path(path);
+    if (!is_allowed_file(norm_fp))
+        return {};
     if (!for_read && !for_write) {
         spdlog::warn("Attempted to open a file without permissions (WTF?), failing: {}", path);
         SetLastError(ERROR_ACCESS_DENIED);
@@ -109,16 +125,24 @@ static std::optional<void*> handle_file_open(std::string_view path, bool for_rea
         spdlog::debug("Passing through file opened for reading: {}", path);
         return {};
     }
-    FileData data;
     if (for_write && it == file_map.end()) {
-        data = create_file_data(path, create_mode);
-        data.allow_write = true;
-        file_map[norm_fp] = data;
+        file_map[norm_fp] = create_file_data(path, create_mode);
     } else {
-        data = it->second;
+        FileData& data = it->second;
+        if (data.refcount != 0) {
+            if ((for_read && !data.allow_read) || (for_write && !data.allow_write)) {
+                spdlog::warn("Access denied for file: {}", path);
+                SetLastError(ERROR_ACCESS_DENIED);
+                return INVALID_HANDLE_VALUE;
+            }
+        }
     }
-    auto handle = new FileHandle(file_map[norm_fp], for_read, for_write);
+    FileData& dp = file_map[norm_fp];
+    dp.allow_read = !for_write;
+    dp.allow_write = false;
+    auto handle = new FileHandle(dp, for_read, for_write);
     our_handles.push_back(handle);
+    spdlog::warn("TODO: {}", norm_fp);
     return handle;
 }
 
