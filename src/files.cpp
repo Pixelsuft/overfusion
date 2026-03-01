@@ -33,29 +33,8 @@ static HANDLE(WINAPI* CreateFileWO)(LPCWSTR lpFileName, DWORD dwDesiredAccess, D
                                     DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                                     HANDLE hTemplateFile);
 static std::string normalize_path(ost::string_view path_view) {
-    wchar_t* path_buf = uconv::to_utf16(path_view);
-    HANDLE hFile = CreateFileWO(path_buf, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                                nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
-    std::free(path_buf);
-    if (hFile == INVALID_HANDLE_VALUE) {
-        return "";
-    }
-    DWORD dwSize = GetFinalPathNameByHandleW(hFile, nullptr, 0, VOLUME_NAME_DOS);
-    if (dwSize == 0) {
-        CloseHandle(hFile);
-        return "";
-    }
-
-    path_buf = new wchar_t[dwSize + 1];
-    auto temp_ret = GetFinalPathNameByHandleW(hFile, path_buf, dwSize + 1, VOLUME_NAME_DOS);
-    ASS(temp_ret != 0);
-    CloseHandle(hFile);
-    path_buf[dwSize] = L'\0';
-
-    auto ret = uconv::from_utf16(path_buf);
-    delete[] path_buf;
-
-    return ret;
+    // TODO: actually return unique fp but the same for each file
+    return string(path_view);
 }
 
 ost::string_view filehooks::get_cwd() { return real_cwd; }
