@@ -15,7 +15,7 @@ using conf::Config, std::string, ost::string_view;
 static Config* _conf_ptr;
 
 static nlohmann::json read_config_file() {
-    auto path = std::string(filehooks::get_cwd()) + "\\overfusion.json";
+    auto path = std::string(files::get_cwd()) + "\\overfusion.json";
     spdlog::debug("Config path: {}", path);
     ofs::File file(path, 0);
     if (!file.is_open()) {

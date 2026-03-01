@@ -1,5 +1,6 @@
 #include "ui.hpp"
 #include "config.hpp"
+#include "files.hpp"
 #include "state.hpp"
 #include <imgui.h>
 
@@ -23,11 +24,16 @@ static void draw_info() {
 
 static void draw_menu() {
     if (!ImGui::Begin("OverFusion", nullptr,
-                      (ui_save_sets ? 0: ImGuiWindowFlags_NoSavedSettings))) {
+                      (ui_save_sets ? 0 : ImGuiWindowFlags_NoSavedSettings))) {
         ImGui::End();
         return;
     }
-    ImGui::Text("Created by Pixelsuft");
+    if (ImGui::CollapsingHeader("Virtual Filesystem")) {
+        files::draw_ui();
+    }
+    if (ImGui::CollapsingHeader("About")) {
+        ImGui::Text("Created by Pixelsuft");
+    }
     ImGui::End();
 }
 

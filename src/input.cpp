@@ -133,12 +133,12 @@ void input::handle_input_real(int vk, bool pressed) {
         }
         switch (bind.task) {
         case conf::Task::SaveState: {
-            if (pressed && !prev)
+            if (pressed && !prev && !cfg.show_menu)
                 state::save_state(bind.extra);
             break;
         }
         case conf::Task::LoadState: {
-            if (pressed && !prev)
+            if (pressed && !prev && !cfg.show_menu)
                 state::load_state(bind.extra);
             break;
         }

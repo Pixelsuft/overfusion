@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <map>
 #include <spdlog/spdlog.h>
+#include <imgui.h>
 #undef min
 #undef max
 
@@ -60,9 +61,9 @@ static std::string normalize_path(string_view path_view) {
     return string(path_view);
 }
 
-string_view filehooks::get_cwd() { return real_cwd; }
+string_view files::get_cwd() { return real_cwd; }
 
-void filehooks::pre_init() {
+void files::pre_init() {
     [] {
         wchar_t buffer[MAX_PATH];
         auto len_ret = GetCurrentDirectoryW(MAX_PATH, buffer);
@@ -101,7 +102,7 @@ DWORD WINAPI GetTempPathWH(DWORD nBufferLength, LPWSTR lpBuffer) {
     return static_cast<DWORD>(temp_path.size());
 }
 
-static FileData create_file_data(std::string_view path, int create_mode) {
+static FileData create_file_data(std::string_view path, DWORD dwCreationDisposition) {
     // TODO: respect create_mode
     FileData ret;
     ret.data = std::malloc(1);
@@ -120,7 +121,7 @@ static bool is_allowed_file(std::string_view path) {
 }
 
 static std::optional<void*> handle_file_open(std::string_view path, bool for_read, bool for_write,
-                                             int create_mode) {
+                                             DWORD dwCreationDisposition) {
     string norm_fp = normalize_path(path);
     if (!is_allowed_file(norm_fp))
         return {};
@@ -136,7 +137,7 @@ static std::optional<void*> handle_file_open(std::string_view path, bool for_rea
         return {};
     }
     if (for_write && it == file_map.end()) {
-        file_map[norm_fp] = create_file_data(path, create_mode);
+        file_map[norm_fp] = create_file_data(path, dwCreationDisposition);
     } else {
         FileData& data = it->second;
         if (data.refcount != 0) {
@@ -165,9 +166,8 @@ static HANDLE WINAPI CreateFileAH(LPCSTR lpFileName, DWORD dwDesiredAccess, DWOR
                                   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                                   HANDLE hTemplateFile) {
     ASS(lpFileName != nullptr);
-    // TODO: proper create mode
     auto temp_ret = handle_file_open(uconv::from_ansi(lpFileName), dwDesiredAccess & GENERIC_READ,
-                                     dwDesiredAccess & GENERIC_WRITE, 0);
+                                     dwDesiredAccess & GENERIC_WRITE, dwCreationDisposition);
     if (temp_ret.has_value())
         return reinterpret_cast<HANDLE>(temp_ret.value());
     return CreateFileAO(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
@@ -179,9 +179,8 @@ static HANDLE WINAPI CreateFileWH(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWO
                                   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                                   HANDLE hTemplateFile) {
     ASS(lpFileName != nullptr);
-    // TODO: proper create mode
     auto temp_ret = handle_file_open(uconv::from_utf16(lpFileName), dwDesiredAccess & GENERIC_READ,
-                                     dwDesiredAccess & GENERIC_WRITE, 0);
+                                     dwDesiredAccess & GENERIC_WRITE, dwCreationDisposition);
     if (temp_ret.has_value())
         return reinterpret_cast<HANDLE>(temp_ret.value());
     return CreateFileWO(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
@@ -476,7 +475,7 @@ static DWORD WINAPI GetPrivateProfileStringWH(LPCWSTR lpAppName, LPCWSTR lpKeyNa
     return ret;
 }
 
-void filehooks::init() {
+void files::init() {
     // HOOK_AUTO("kernel32.dll", SetCurrentDirectoryW);
     HOOK_STR_ONLY("kernel32.dll", GetTempPath);
     HOOK_STR_AUTO("kernel32.dll", CreateFile);
@@ -492,4 +491,11 @@ void filehooks::init() {
     HOOK_AUTO("kernel32.dll", GetFileSize);
     HOOK_AUTO("kernel32.dll", GetFileSizeEx);
     HOOK_AUTO("kernel32.dll", CloseHandle);
+}
+
+void files::draw_ui() {
+    ImGui::Text("Opened hanles: %i", static_cast<int>(our_handles.size()));
+    for (auto& it : file_map) {
+        ImGui::Text("%s: %i bytes", it.first.c_str(), static_cast<int>(it.second.size));
+    }
 }

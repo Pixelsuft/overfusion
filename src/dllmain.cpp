@@ -28,7 +28,7 @@ static void of_main() {
     conf::init();
     mem::init();
     ui::init();
-    filehooks::pre_init();
+    files::pre_init();
     conf::get().read();
     if (!plug::search_and_run())
         mem::terminate();
@@ -40,7 +40,7 @@ static void of_main() {
     state::init();
     loadhook::init();
     winhooks::init();
-    filehooks::init();
+    files::init();
     input::init();
     extrahooks::init();
     gamehooks::init();
