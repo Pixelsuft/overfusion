@@ -124,27 +124,30 @@ static bool try_read_file(FileData& ret, std::string_view path) {
 }
 
 static bool create_file_data(FileData& ret, std::string_view path, DWORD dwCreationDisposition) {
+    // TODO: more accurate CREATE_NEW, TRUNCATE_EXISTING, OPEN_EXISTING
     switch (dwCreationDisposition) {
     case CREATE_ALWAYS:
-    case CREATE_NEW: // TODO: more accurate
-    case TRUNCATE_EXISTING: // TODO: more accurate
+    case CREATE_NEW:
+    case TRUNCATE_EXISTING:
+        if (ret.data && !ret.allow_write) {
+            SetLastError(ERROR_ACCESS_DENIED);
+            return false;
+        }
         if (ret.data)
             std::free(ret.data);
         ret.data = std::malloc(1);
         ret.size = 0;
         break;
     case OPEN_ALWAYS:
-    case OPEN_EXISTING: // TODO: more accurate
-        if (!ret.data && !try_read_file(ret, path))
+    case OPEN_EXISTING:
+        if (!ret.data && !try_read_file(ret, path)) {
+            SetLastError(ERROR_ACCESS_DENIED);
             return false;
+        }
         break;
     default:
         ASS(false);
         return false;
-    }
-    if (!ret.data) {
-        ret.data = std::malloc(1);
-        ret.allow_read = ret.allow_write = true;
     }
     ASS(ret.data != nullptr);
     return true;
@@ -179,10 +182,7 @@ static std::optional<void*> handle_file_open(std::string_view path, bool for_rea
         if (!create_file_data(file_map[norm_fp], norm_fp, dwCreationDisposition))
             return INVALID_HANDLE_VALUE;
     } else {
-        // TODO: check ERROR_ACCESS_DENIED before creating data
         FileData& data = it->second;
-        if (!create_file_data(data, norm_fp, dwCreationDisposition))
-            return INVALID_HANDLE_VALUE;
         if (data.refcount != 0) {
             if ((for_read && !data.allow_read) || (for_write && !data.allow_write)) {
                 spdlog::warn("Access denied for file: {}", path);
@@ -190,6 +190,8 @@ static std::optional<void*> handle_file_open(std::string_view path, bool for_rea
                 return INVALID_HANDLE_VALUE;
             }
         }
+        if (!create_file_data(data, norm_fp, dwCreationDisposition))
+            return INVALID_HANDLE_VALUE;
     }
     FileData& dp = file_map[norm_fp];
     dp.allow_read = !for_write;
