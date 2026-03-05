@@ -6,6 +6,7 @@ Debug
 Release
 ReleaseFast
 x64
+joined.txt
 *.aps
 *.zip
 *.rar
