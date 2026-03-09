@@ -27,11 +27,11 @@ static int __stdcall UpdateGameFrameH() {
         plug::get().update_init();
         hook::enable();
     }
-    input::process_update();
-    state::early_update();
     auto pState = plug::get().get_prop(plug::PtrProp::PState);
     if (pState == nullptr)
         return UpdateGameFrameO();
+    input::process_update();
+    state::early_update();
     auto& cfg = conf::get();
     // Assuming they are not nullptrs
     auto& pStep = *reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));

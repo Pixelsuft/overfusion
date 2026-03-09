@@ -58,8 +58,16 @@ HANDLE(WINAPI* CreateFileWO)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD
 BOOL(WINAPI* CloseHandleO)(HANDLE hObject) = CloseHandle;
 
 static std::string normalize_path(string_view path_view) {
-    // TODO: actually return unique fp but the same for each file
-    return string(path_view);
+    if (path_view.empty())
+        return "";
+    string ret(path_view);
+    // TODO: UTF-8 support
+    std::transform(ret.begin(), ret.end(), ret.begin(),
+                   [](unsigned char c) { return c != '/' ? std::tolower(c) : '\\'; });
+    // std::replace(ret.begin(), ret.end(), '/', '\\');
+    if (ret[0] == '\\')
+        ret.insert(0, string() + static_cast<char>(std::tolower(real_cwd[0])) + ':');
+    return ret;
 }
 
 string_view files::get_cwd() { return real_cwd; }
