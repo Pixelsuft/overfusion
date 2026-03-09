@@ -4,8 +4,10 @@
 #include "plugbase.hpp"
 #include "input.hpp"
 #include "state.hpp"
+#include "files.hpp"
 #include "config.hpp"
 #include "timehooks.hpp"
+#include "extrahooks.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
@@ -20,6 +22,8 @@ static int __stdcall UpdateGameFrameH() {
         inited = true;
         winhooks::after_ui_init();
         timehooks::update_init();
+        extrahooks::init_adv();
+        files::hook_fs();
         plug::get().update_init();
         hook::enable();
     }

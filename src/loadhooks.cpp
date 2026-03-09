@@ -119,6 +119,9 @@ static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
         if (proc == "SaveRunObject" && !temp_ret) {
             string path = get_module_path(hModule);
             spdlog::warn("This object does not support state save/load: {}", get_filename(path));
+        } else if (proc == "SaveRunObject" && GetProcAddressO(hModule, "LoadRunObject") == nullptr) {
+            string path = get_module_path(hModule);
+            spdlog::warn("This object does support state save but doesn't support load (WHAT?): {}", get_filename(path));        
         }
         // spdlog::debug("GetProcAddress: {}", lpProcName);
     }
@@ -127,8 +130,5 @@ static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
 
 void loadhook::init() {
     HOOK_STR_AUTO("kernel32.dll", LoadLibrary);
-    // TODO: don't hook later (currently for performance reasons)
-#if 0
     HOOK_AUTO("kernel32.dll", GetProcAddress);
-#endif
 }

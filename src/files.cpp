@@ -68,7 +68,7 @@ void files::pre_init() {
     [] {
         wchar_t buffer[MAX_PATH];
         auto len_ret = GetCurrentDirectoryW(MAX_PATH, buffer);
-        ASS(len_ret > 0);
+        ASS(len_ret > 0 && len_ret < MAX_PATH);
         buffer[len_ret] = L'\0';
         real_cwd = uconv::from_utf16(buffer);
         temp_path = real_cwd + "\\temp";
@@ -163,6 +163,7 @@ static bool create_file_data(FileData& ret, std::string_view path, DWORD dwCreat
 }
 
 static bool is_allowed_file(std::string_view path) {
+    return true;
     // spdlog::debug("file: {}", path);
     // TODO
     return !path.ends_with(".mfx") && !path.ends_with(".mvx") && !path.ends_with(".dll") &&
@@ -531,6 +532,9 @@ static DWORD WINAPI GetPrivateProfileStringWH(LPCWSTR lpAppName, LPCWSTR lpKeyNa
 void files::init() {
     // HOOK_AUTO("kernel32.dll", SetCurrentDirectoryW);
     HOOK_STR_ONLY("kernel32.dll", GetTempPath);
+}
+
+void files::hook_fs() {
     HOOK_STR_AUTO("kernel32.dll", CreateFile);
     // HOOK_STR_AUTO("kernel32.dll", WritePrivateProfileString);
     // HOOK_STR_AUTO("kernel32.dll", GetPrivateProfileString);
