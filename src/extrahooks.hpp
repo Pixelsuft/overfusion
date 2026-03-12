@@ -2,6 +2,7 @@
 
 namespace extrahooks {
 void init();
-void init_net();
+void init_ws32();
+void init_inet();
 void init_adv();
 }

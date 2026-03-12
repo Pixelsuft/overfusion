@@ -211,6 +211,11 @@ static LSTATUS WINAPI RegCreateKeyWH(HKEY hKey, LPCWSTR lpSubKey, PHKEY phkResul
     return ERROR_ACCESS_DENIED;
 }
 
+static BOOL __stdcall InternetGetConnectedStateH(LPDWORD lpdwFlags, DWORD dwReserved) {
+    *lpdwFlags = 0x20;
+    return FALSE;
+}
+
 void extrahooks::init() {
     // TODO: GetDateFormatEx, GetLocaleInfoEx, GetTimeFormatEx, GetUserDefaultLocaleName
     HOOK_STR_AUTO("user32.dll", MessageBox);
@@ -228,9 +233,13 @@ void extrahooks::init() {
     HOOK_ONLY("winmm.dll", joyGetPosEx);
 }
 
-void extrahooks::init_net() {
+void extrahooks::init_ws32() {
     HOOK_ONLY("ws2_32.dll", WSAStartup);
     HOOK_ONLY("ws2_32.dll", bind);
+}
+
+void extrahooks::init_inet() {
+    HOOK_ONLY("wininet.dll", InternetGetConnectedState);
 }
 
 void extrahooks::init_adv() {

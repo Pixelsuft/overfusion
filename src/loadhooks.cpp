@@ -59,7 +59,10 @@ static void after_load(string_view path, void* mod) {
             d3d9hooks::init();
             hook::enable();
         } else if (fn == "Lacewing.mfx") {
-            extrahooks::init_net();
+            extrahooks::init_ws32();
+            hook::enable();
+        } else if (fn == "Yaso.mfx") {
+            extrahooks::init_inet();
             hook::enable();
         }
     }
@@ -119,9 +122,11 @@ static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
         if (proc == "SaveRunObject" && !temp_ret) {
             string path = get_module_path(hModule);
             spdlog::warn("This object does not support state save/load: {}", get_filename(path));
-        } else if (proc == "SaveRunObject" && GetProcAddressO(hModule, "LoadRunObject") == nullptr) {
+        } else if (proc == "SaveRunObject" &&
+                   GetProcAddressO(hModule, "LoadRunObject") == nullptr) {
             string path = get_module_path(hModule);
-            spdlog::warn("This object does support state save but doesn't support load (WHAT?): {}", get_filename(path));        
+            spdlog::warn("This object does support state save but doesn't support load (WHAT?): {}",
+                         get_filename(path));
         }
         // spdlog::debug("GetProcAddress: {}", lpProcName);
     }

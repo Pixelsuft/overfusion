@@ -203,6 +203,7 @@ Config::Config() {
     is_paused = true;
     need_advance = false;
     fast_forward = false;
+    emulate_timers = false;
 }
 
 #define READ_BOOL(name)                                                                            \
@@ -215,7 +216,7 @@ void Config::read() {
         fps = data["fps"];
     READ_BOOL(show_info);
     READ_BOOL(show_menu);
-    READ_BOOL(is_paused);
+    READ_BOOL(emulate_timers);
     if (data["binds"].is_array()) {
         for (auto& val : data["binds"]) {
             if (!val.is_object())
