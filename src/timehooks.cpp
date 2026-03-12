@@ -1,10 +1,12 @@
 #define WIN32_LEAN_AND_MEAN
 #include "timehooks.hpp"
 #include "ass.hpp"
+#include "config.hpp"
 #include "mem.hpp"
 #include "state.hpp"
 #include "ui.hpp"
 #include <Windows.h>
+#include <map>
 #include <spdlog/spdlog.h>
 #include <timeapi.h>
 
@@ -14,6 +16,20 @@ struct my_timeb {
     short timezone;
     short dstflag;
 };
+
+struct UserTimer {
+    HWND hwnd;
+    UINT_PTR event;
+    UINT elapse;
+    UINT counter;
+    TIMERPROC cb;
+
+    UserTimer() : hwnd(nullptr), event(0), elapse(0), counter(0), cb(nullptr) {}
+    UserTimer(HWND hwnd, UINT_PTR event, UINT elapse, TIMERPROC cb)
+        : hwnd(hwnd), event(event), elapse(elapse), cb(cb), counter(0) {}
+};
+
+static std::map<UINT_PTR, UserTimer> user_timers;
 
 static MMRESULT WINAPI timeGetSystemTimeH(LPMMTIME pmmt, UINT cbmmt) {
     if (pmmt == NULL || cbmmt < sizeof(MMTIME))
@@ -44,18 +60,6 @@ static VOID GetLocalTimeH(LPSYSTEMTIME lpSystemTime) {
     ft.dwLowDateTime = ull.LowPart;
     ft.dwHighDateTime = ull.HighPart;
     ASS(FileTimeToSystemTime(&ft, lpSystemTime));
-}
-
-static UINT_PTR(WINAPI* SetTimerO)(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse,
-                                   TIMERPROC lpTimerFunc);
-static UINT_PTR WINAPI SetTimerH(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse,
-                                 TIMERPROC lpTimerFunc) {
-    if (nIDEvent == 0xb) {
-        spdlog::warn("Detected use of SetTimer for frame sync, expect problems");
-    }
-    // TODO: more research
-    // spdlog::debug("SetTimer: {} {}", nIDEvent, uElapse);
-    return SetTimerO(hWnd, nIDEvent, uElapse, lpTimerFunc);
 }
 
 BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency);
@@ -119,6 +123,41 @@ static MMRESULT WINAPI timeKillEventH(UINT uTimerID) {
     return timeKillEventO(uTimerID);
 }
 
+static UINT_PTR(WINAPI* SetTimerO)(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse,
+                                   TIMERPROC lpTimerFunc);
+static UINT_PTR WINAPI SetTimerH(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse,
+                                 TIMERPROC lpTimerFunc) {
+    if (nIDEvent == 0xb) {
+        spdlog::warn("Detected use of SetTimer for frame sync, expect problems");
+    }
+    // TODO: support different hwnd with the same event (I think this is unused)
+    if (uElapse < USER_TIMER_MINIMUM)
+        uElapse = USER_TIMER_MINIMUM;
+    else if (uElapse > USER_TIMER_MAXIMUM)
+        uElapse = USER_TIMER_MAXIMUM;
+    for (auto& timer : user_timers) {
+        if ((hWnd == nullptr || timer.second.hwnd == hWnd) && nIDEvent == timer.second.event) {
+            timer.second.counter = 0;
+            timer.second.elapse = uElapse;
+            timer.second.cb = lpTimerFunc;
+            return timer.first;
+        }
+    }
+    user_timers[nIDEvent] = UserTimer(hWnd, nIDEvent, uElapse, lpTimerFunc);
+    // spdlog::debug("SetTimer: {} {} -> {}", nIDEvent, uElapse, nIDEvent);
+    return nIDEvent;
+}
+
+static BOOL(WINAPI* KillTimerO)(HWND hWnd, UINT_PTR uIDEvent);
+static BOOL WINAPI KillTimerH(HWND hWnd, UINT_PTR uIDEvent) {
+    auto it = user_timers.find(uIDEvent);
+    if (it == user_timers.end())
+        return FALSE;
+    // spdlog::debug("KillTimer: {}", uIDEvent);
+    user_timers.erase(it);
+    return TRUE;
+}
+
 void timehooks::init() {
     QueryPerformanceFrequencyO = QueryPerformanceFrequency;
     QueryPerformanceCounterO = QueryPerformanceCounter;
@@ -126,11 +165,15 @@ void timehooks::init() {
     HOOK_AUTO("winmm.dll", timeGetTime);
     HOOK_AUTO("winmm.dll", timeSetEvent);
     HOOK_AUTO("winmm.dll", timeKillEvent);
-    HOOK_AUTO("user32.dll", SetTimer);
     HOOK_AUTO("kernel32.dll", QueryPerformanceFrequency);
     HOOK_ONLY("kernel32.dll", GetTickCount);
     HOOK_ONLY("msvcrt.dll", time);
     HOOK_ONLY("msvcrt.dll", _ftime);
+    if (conf::get().emulate_timers) {
+        // TODO: actually support emulation
+        HOOK_AUTO("user32.dll", SetTimer);
+        HOOK_AUTO("user32.dll", KillTimer);
+    }
 }
 
 void timehooks::update_init() {
