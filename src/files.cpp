@@ -53,8 +53,8 @@ static string temp_path;
 static std::map<std::string, FileData> file_map;
 static std::vector<FileHandle*> our_handles;
 
-HANDLE(WINAPI* CreateFileWO)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD,
-                             HANDLE) = CreateFileW;
+HANDLE(WINAPI* CreateFileWO)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD, HANDLE) = CreateFileW;
+HANDLE(WINAPI* CreateFileAO)(LPCSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD, HANDLE) = CreateFileA;
 BOOL(WINAPI* CloseHandleO)(HANDLE hObject) = CloseHandle;
 
 static std::string normalize_path(string_view path_view) {
@@ -220,10 +220,6 @@ static std::optional<void*> handle_file_open(std::string_view path, bool for_rea
     return handle;
 }
 
-static HANDLE(WINAPI* CreateFileAO)(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
-                                    LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-                                    DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
-                                    HANDLE hTemplateFile);
 static HANDLE WINAPI CreateFileAH(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                                   LPSECURITY_ATTRIBUTES lpSecurityAttributes,
                                   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
