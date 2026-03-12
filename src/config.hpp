@@ -30,7 +30,7 @@ public:
     bool is_paused;
     bool need_advance;
     bool fast_forward;
-    bool emulate_timers;
+    bool emulate_user_timers;
 
     Config();
     void read();

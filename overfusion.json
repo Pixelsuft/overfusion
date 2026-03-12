@@ -2,7 +2,7 @@
   "fps": 0,
   "show_menu": false,
   "show_info": true,
-  "emulate_timers": true,
+  "emulate_user_timers": true,
   "binds": [
     {
       "key": "left",

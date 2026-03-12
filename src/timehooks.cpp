@@ -169,7 +169,7 @@ void timehooks::init() {
     HOOK_ONLY("kernel32.dll", GetTickCount);
     HOOK_ONLY("msvcrt.dll", time);
     HOOK_ONLY("msvcrt.dll", _ftime);
-    if (conf::get().emulate_timers) {
+    if (conf::get().emulate_user_timers) {
         // TODO: actually support emulation
         HOOK_AUTO("user32.dll", SetTimer);
         HOOK_AUTO("user32.dll", KillTimer);
