@@ -159,12 +159,12 @@ static MMRESULT WINAPI timeSetEventH(UINT uDelay, UINT uResolution, LPTIMECALLBA
     while ((mm_timers.find(mm_timer_counter) != mm_timers.end()) || mm_timer_counter == 0)
         mm_timer_counter++;
     mm_timers[mm_timer_counter] = MMTimer(lpTimeProc, dwUser, uDelay, fuEvent);
-    spdlog::debug("timeSetEvent: {} {} -> {}", uDelay, uResolution, mm_timer_counter);
+    // spdlog::debug("timeSetEvent: {} {} -> {}", uDelay, uResolution, mm_timer_counter);
     return mm_timer_counter++;
 }
 
 static MMRESULT WINAPI timeKillEventH(UINT uTimerID) {
-    spdlog::debug("timeKillEvent: {}", uTimerID);
+    // spdlog::debug("timeKillEvent: {}", uTimerID);
     auto it = mm_timers.find(uTimerID);
     if (it == mm_timers.end())
         return MMSYSERR_INVALPARAM;
