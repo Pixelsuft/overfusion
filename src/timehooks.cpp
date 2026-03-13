@@ -18,18 +18,17 @@ struct my_timeb {
 };
 
 struct UserTimer {
-    HWND hwnd;
     UINT_PTR event;
     UINT elapse;
     UINT counter;
     TIMERPROC cb;
 
-    UserTimer() : hwnd(nullptr), event(0), elapse(0), counter(0), cb(nullptr) {}
-    UserTimer(HWND hwnd, UINT_PTR event, UINT elapse, TIMERPROC cb)
-        : hwnd(hwnd), event(event), elapse(elapse), cb(cb), counter(0) {}
+    UserTimer() : event(0), elapse(0), counter(0), cb(nullptr) {}
+    UserTimer(UINT_PTR event, UINT elapse, TIMERPROC cb)
+        : event(event), elapse(elapse), cb(cb), counter(0) {}
 };
 
-static std::map<UINT_PTR, UserTimer> user_timers;
+static std::map<std::pair<HWND, UINT_PTR>, UserTimer> user_timers;
 
 static MMRESULT WINAPI timeGetSystemTimeH(LPMMTIME pmmt, UINT cbmmt) {
     if (pmmt == NULL || cbmmt < sizeof(MMTIME))
@@ -123,34 +122,30 @@ static MMRESULT WINAPI timeKillEventH(UINT uTimerID) {
     return timeKillEventO(uTimerID);
 }
 
-static UINT_PTR(WINAPI* SetTimerO)(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse,
-                                   TIMERPROC lpTimerFunc);
 static UINT_PTR WINAPI SetTimerH(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse,
                                  TIMERPROC lpTimerFunc) {
-    if (nIDEvent == 0xb) {
+    if (nIDEvent == 0xb)
         spdlog::warn("Detected use of SetTimer for frame sync, expect problems");
-    }
-    // TODO: support different hwnd with the same event (I think this is unused)
     if (uElapse < USER_TIMER_MINIMUM)
         uElapse = USER_TIMER_MINIMUM;
     else if (uElapse > USER_TIMER_MAXIMUM)
         uElapse = USER_TIMER_MAXIMUM;
+    // spdlog::debug("SetTimer: {} {} {}", nIDEvent, uElapse, reinterpret_cast<void*>(lpTimerFunc));
+    // Who needs thread safety, lul
     for (auto& timer : user_timers) {
-        if ((hWnd == nullptr || timer.second.hwnd == hWnd) && nIDEvent == timer.second.event) {
+        if ((hWnd == nullptr || timer.first.first == hWnd) && nIDEvent == timer.second.event) {
             timer.second.counter = 0;
             timer.second.elapse = uElapse;
             timer.second.cb = lpTimerFunc;
-            return timer.first;
+            return timer.first.second;
         }
     }
-    user_timers[nIDEvent] = UserTimer(hWnd, nIDEvent, uElapse, lpTimerFunc);
-    // spdlog::debug("SetTimer: {} {} -> {}", nIDEvent, uElapse, nIDEvent);
+    user_timers[{ hWnd, nIDEvent }] = UserTimer(nIDEvent, uElapse, lpTimerFunc);
     return nIDEvent;
 }
 
-static BOOL(WINAPI* KillTimerO)(HWND hWnd, UINT_PTR uIDEvent);
 static BOOL WINAPI KillTimerH(HWND hWnd, UINT_PTR uIDEvent) {
-    auto it = user_timers.find(uIDEvent);
+    auto it = user_timers.find({ hWnd, uIDEvent });
     if (it == user_timers.end())
         return FALSE;
     // spdlog::debug("KillTimer: {}", uIDEvent);
@@ -169,10 +164,10 @@ void timehooks::init() {
     HOOK_ONLY("kernel32.dll", GetTickCount);
     HOOK_ONLY("msvcrt.dll", time);
     HOOK_ONLY("msvcrt.dll", _ftime);
-    if (conf::get().emulate_user_timers) {
-        // TODO: actually support emulation
-        HOOK_AUTO("user32.dll", SetTimer);
-        HOOK_AUTO("user32.dll", KillTimer);
+    auto& cfg = conf::get();
+    if (cfg.emulate_user_timers) {
+        HOOK_ONLY("user32.dll", SetTimer);
+        HOOK_ONLY("user32.dll", KillTimer);
     }
 }
 
@@ -182,4 +177,17 @@ void timehooks::update_init() {
     HOOK_ONLY("kernel32.dll", GetSystemTimeAsFileTime);
     // This breaks Nvidia driver if hooked earlier
     HOOK_ONLY("kernel32.dll", GetLocalTime);
+}
+
+void timehooks::update(int dt) {
+    for (auto& timer : user_timers) {
+        timer.second.counter += static_cast<UINT>(dt);
+        while (timer.second.counter >= timer.second.elapse) {
+            timer.second.counter -= timer.second.elapse;
+            state::set_time_offset(-static_cast<int>(timer.second.counter));
+            if (timer.second.cb)
+                timer.second.cb(timer.first.first, WM_TIMER, timer.second.event, GetTickCountH());
+            state::set_time_offset(0);
+        }
+    }
 }

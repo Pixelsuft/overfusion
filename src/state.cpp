@@ -4,7 +4,7 @@
 #include "config.hpp"
 #include "ofs.hpp"
 #include "plugbase.hpp"
-#include "uconv.hpp"
+#include "timehooks.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
 #include <imgui.h>
@@ -70,6 +70,7 @@ static double const_dt;
 static double to_wait;
 static double freq;
 static string last_msg;
+static int64_t time_offset;
 static bool success;
 static bool updating;
 static bool need_key_msg;
@@ -82,6 +83,7 @@ void state::init() {
     st.fps = conf::get().fps;
     const_dt = 1.0 / (double)st.fps;
     to_wait = 0.0;
+    time_offset = 0;
     spdlog::debug("Init FPS: {}", st.fps);
     QueryPerformanceFrequencyO(&last_counter);
     freq = (double)last_counter.QuadPart;
@@ -148,7 +150,9 @@ void state::after_update() {
     auto& cfg = conf::get();
     if (updating) {
         updating = false;
+        auto prev_time = get_time(TimeOffset::None);
         st.frames++;
+        timehooks::update(static_cast<int>(get_time(TimeOffset::None) - prev_time));
         st.total = std::max(st.total, st.frames);
     }
     if (cfg.fast_forward)
@@ -173,7 +177,8 @@ int64_t state::get_utc_offset() {
 
 uint64_t state::get_time(TimeOffset offset) {
     auto fps = st.fps;
-    uint64_t ret = static_cast<uint64_t>(st.frames) * 1000 / fps;
+    uint64_t ret = static_cast<uint64_t>(static_cast<int64_t>(st.frames) * 1000 / fps + time_offset);
+
     switch (offset) {
     case TimeOffset::None:
         return ret;
@@ -189,6 +194,10 @@ uint64_t state::get_time(TimeOffset offset) {
         ASS(false);
         return 0;
     }
+}
+
+void state::set_time_offset(int ms) {
+    time_offset = static_cast<int64_t>(ms);
 }
 
 bool state::save_game(ofs::File& file) {
