@@ -196,7 +196,7 @@ uint64_t state::get_time(TimeOffset offset) {
     }
 }
 
-void state::set_time_offset(int ms) {
+void state::set_temp_time_offset(int ms) {
     time_offset = static_cast<int64_t>(ms);
 }
 

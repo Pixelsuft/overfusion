@@ -206,14 +206,22 @@ void timehooks::update(int dt) {
         timer.second.counter += static_cast<UINT>(dt);
         while (timer.second.counter >= timer.second.elapse) {
             timer.second.counter -= timer.second.elapse;
-            state::set_time_offset(-static_cast<int>(timer.second.counter));
+            state::set_temp_time_offset(-static_cast<int>(timer.second.counter));
             // FIXME
             if (timer.second.cb && 0)
                 timer.second.cb(timer.first.first, WM_TIMER, timer.second.event, GetTickCountH());
-            state::set_time_offset(0);
+            state::set_temp_time_offset(0);
         }
     }
     for (auto& timer : mm_timers) {
-        // TODO
+        timer.second.counter += static_cast<UINT>(dt);
+        while (timer.second.counter >= timer.second.elapse) {
+            timer.second.counter -= timer.second.elapse;
+            state::set_temp_time_offset(-static_cast<int>(timer.second.counter));
+            if (timer.second.cb)
+                timer.second.cb(timer.first, WM_TIMER, timer.second.data, 0, 0);
+            state::set_temp_time_offset(0);
+            // TODO: support one-shot timers
+        }
     }
 }

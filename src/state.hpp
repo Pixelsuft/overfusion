@@ -20,7 +20,7 @@ namespace state {
     bool load_game(ofs::File& file);
     uint64_t get_time(TimeOffset offset);
     int64_t get_utc_offset();
-    void set_time_offset(int ms);
+    void set_temp_time_offset(int ms);
     bool get_key_state(int vk);
     void set_key_down(int vk, bool down);
     void fill_kbd_state(unsigned char* data);
