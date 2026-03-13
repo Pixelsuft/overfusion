@@ -7,6 +7,7 @@
 #include "ui.hpp"
 #include <Windows.h>
 #include <map>
+#include <mmsystem.h>
 #include <spdlog/spdlog.h>
 #include <timeapi.h>
 
@@ -107,21 +108,6 @@ static void __cdecl _ftimeH(struct my_timeb* timeptr) {
     }
 }
 
-static MMRESULT(WINAPI* timeSetEventO)(UINT uDelay, UINT uResolution, void* lpTimeProc,
-                                       DWORD_PTR dwUser, UINT fuEvent);
-static MMRESULT WINAPI timeSetEventH(UINT uDelay, UINT uResolution, void* lpTimeProc,
-                                     DWORD_PTR dwUser, UINT fuEvent) {
-    auto ret = timeSetEventO(uDelay, uResolution, lpTimeProc, dwUser, fuEvent);
-    // spdlog::debug("timeSetEvent: {} {} {}", uDelay, uResolution, ret);
-    return ret;
-}
-
-static MMRESULT(WINAPI* timeKillEventO)(UINT uTimerID);
-static MMRESULT WINAPI timeKillEventH(UINT uTimerID) {
-    // spdlog::debug("timeKillEvent: {}", uTimerID);
-    return timeKillEventO(uTimerID);
-}
-
 static UINT_PTR WINAPI SetTimerH(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse,
                                  TIMERPROC lpTimerFunc) {
     if (nIDEvent == 0xb)
@@ -140,12 +126,12 @@ static UINT_PTR WINAPI SetTimerH(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse,
             return timer.first.second;
         }
     }
-    user_timers[{ hWnd, nIDEvent }] = UserTimer(nIDEvent, uElapse, lpTimerFunc);
+    user_timers[{hWnd, nIDEvent}] = UserTimer(nIDEvent, uElapse, lpTimerFunc);
     return nIDEvent;
 }
 
 static BOOL WINAPI KillTimerH(HWND hWnd, UINT_PTR uIDEvent) {
-    auto it = user_timers.find({ hWnd, uIDEvent });
+    auto it = user_timers.find({hWnd, uIDEvent});
     if (it == user_timers.end())
         return FALSE;
     // spdlog::debug("KillTimer: {}", uIDEvent);
@@ -153,13 +139,22 @@ static BOOL WINAPI KillTimerH(HWND hWnd, UINT_PTR uIDEvent) {
     return TRUE;
 }
 
+static MMRESULT WINAPI timeSetEventH(UINT uDelay, UINT uResolution, LPTIMECALLBACK lpTimeProc,
+                                     DWORD_PTR dwUser, UINT fuEvent) {
+    spdlog::debug("timeSetEvent: {} {}", uDelay, uResolution);
+    return 0;
+}
+
+static MMRESULT WINAPI timeKillEventH(UINT uTimerID) {
+    // spdlog::debug("timeKillEvent: {}", uTimerID);
+    return 0;
+}
+
 void timehooks::init() {
     QueryPerformanceFrequencyO = QueryPerformanceFrequency;
     QueryPerformanceCounterO = QueryPerformanceCounter;
     HOOK_ONLY("winmm.dll", timeGetSystemTime);
     HOOK_AUTO("winmm.dll", timeGetTime);
-    HOOK_AUTO("winmm.dll", timeSetEvent);
-    HOOK_AUTO("winmm.dll", timeKillEvent);
     HOOK_AUTO("kernel32.dll", QueryPerformanceFrequency);
     HOOK_ONLY("kernel32.dll", GetTickCount);
     HOOK_ONLY("msvcrt.dll", time);
@@ -168,6 +163,10 @@ void timehooks::init() {
     if (cfg.emulate_user_timers) {
         HOOK_ONLY("user32.dll", SetTimer);
         HOOK_ONLY("user32.dll", KillTimer);
+    }
+    if (cfg.emulate_mm_timers) {
+        HOOK_ONLY("winmm.dll", timeSetEvent);
+        HOOK_ONLY("winmm.dll", timeKillEvent);
     }
 }
 
@@ -185,7 +184,8 @@ void timehooks::update(int dt) {
         while (timer.second.counter >= timer.second.elapse) {
             timer.second.counter -= timer.second.elapse;
             state::set_time_offset(-static_cast<int>(timer.second.counter));
-            if (timer.second.cb)
+            // FIXME
+            if (timer.second.cb && 0)
                 timer.second.cb(timer.first.first, WM_TIMER, timer.second.event, GetTickCountH());
             state::set_time_offset(0);
         }

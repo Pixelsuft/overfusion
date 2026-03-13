@@ -31,6 +31,7 @@ public:
     bool need_advance;
     bool fast_forward;
     bool emulate_user_timers;
+    bool emulate_mm_timers;
 
     Config();
     void read();
