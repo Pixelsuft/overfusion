@@ -19,17 +19,31 @@ struct my_timeb {
 };
 
 struct UserTimer {
+    TIMERPROC cb;
     UINT_PTR event;
     UINT elapse;
     UINT counter;
-    TIMERPROC cb;
 
     UserTimer() : event(0), elapse(0), counter(0), cb(nullptr) {}
     UserTimer(UINT_PTR event, UINT elapse, TIMERPROC cb)
         : event(event), elapse(elapse), cb(cb), counter(0) {}
 };
 
+struct MMTimer {
+    LPTIMECALLBACK cb;
+    DWORD_PTR data;
+    UINT elapse;
+    UINT counter;
+    UINT flags;
+
+    MMTimer() : cb(nullptr), data(0), elapse(0), counter(0), flags(0) {}
+    MMTimer(LPTIMECALLBACK cb, DWORD_PTR data, UINT elapse, UINT flags)
+        : cb(cb), data(data), elapse(elapse), flags(flags), counter(0) {}
+};
+
 static std::map<std::pair<HWND, UINT_PTR>, UserTimer> user_timers;
+static std::map<MMRESULT, MMTimer> mm_timers;
+static MMRESULT mm_timer_counter;
 
 static MMRESULT WINAPI timeGetSystemTimeH(LPMMTIME pmmt, UINT cbmmt) {
     if (pmmt == NULL || cbmmt < sizeof(MMTIME))
@@ -141,16 +155,25 @@ static BOOL WINAPI KillTimerH(HWND hWnd, UINT_PTR uIDEvent) {
 
 static MMRESULT WINAPI timeSetEventH(UINT uDelay, UINT uResolution, LPTIMECALLBACK lpTimeProc,
                                      DWORD_PTR dwUser, UINT fuEvent) {
-    spdlog::debug("timeSetEvent: {} {}", uDelay, uResolution);
-    return 0;
+    // Who needs thread safety, lul
+    while ((mm_timers.find(mm_timer_counter) != mm_timers.end()) || mm_timer_counter == 0)
+        mm_timer_counter++;
+    mm_timers[mm_timer_counter] = MMTimer(lpTimeProc, dwUser, uDelay, fuEvent);
+    spdlog::debug("timeSetEvent: {} {} -> {}", uDelay, uResolution, mm_timer_counter);
+    return mm_timer_counter++;
 }
 
 static MMRESULT WINAPI timeKillEventH(UINT uTimerID) {
-    // spdlog::debug("timeKillEvent: {}", uTimerID);
-    return 0;
+    spdlog::debug("timeKillEvent: {}", uTimerID);
+    auto it = mm_timers.find(uTimerID);
+    if (it == mm_timers.end())
+        return MMSYSERR_INVALPARAM;
+    mm_timers.erase(it);
+    return TIMERR_NOERROR;
 }
 
 void timehooks::init() {
+    mm_timer_counter = 1;
     QueryPerformanceFrequencyO = QueryPerformanceFrequency;
     QueryPerformanceCounterO = QueryPerformanceCounter;
     HOOK_ONLY("winmm.dll", timeGetSystemTime);
@@ -189,5 +212,8 @@ void timehooks::update(int dt) {
                 timer.second.cb(timer.first.first, WM_TIMER, timer.second.event, GetTickCountH());
             state::set_time_offset(0);
         }
+    }
+    for (auto& timer : mm_timers) {
+        // TODO
     }
 }
