@@ -77,3 +77,14 @@ bool hook::_hook_target(void* pTarget, void* pDetour, void** ppOriginal) {
     ASS(mh_ret == MH_OK);
     return mh_ret == MH_OK;
 }
+
+void hook::_patch_vtable(void** vtable, int index, void* new_func, void** old_func) {
+    DWORD old_protect;
+    if (!VirtualProtect(&vtable[index], sizeof(void*), PAGE_EXECUTE_READWRITE, &old_protect))
+        spdlog::error("VirtualProtect failed");
+    if (old_func)
+        *old_func = vtable[index];
+    vtable[index] = new_func;
+    if (!VirtualProtect(&vtable[index], sizeof(void*), old_protect, &old_protect))
+        spdlog::error("VirtualProtect failed");
+}

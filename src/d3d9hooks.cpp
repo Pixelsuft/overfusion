@@ -18,21 +18,6 @@ static HRESULT(WINAPI* CreateDeviceO)(IDirect3D9*, UINT, D3DDEVTYPE, HWND, DWORD
 
 extern HWND hwnd;
 
-static void patch_vtable(void** vtable, int index, void* new_func, void** old_func) {
-    DWORD old_protect;
-    // Разрешаем запись в страницу памяти, где лежит vtable
-    VirtualProtect(&vtable[index], sizeof(void*), PAGE_EXECUTE_READWRITE, &old_protect);
-    FlushInstructionCache(GetCurrentProcess(), &vtable[index], sizeof(void*));
-    // Сохраняем оригинал и подменяем
-    if (old_func) *old_func = vtable[index];
-    vtable[index] = new_func;
-    FlushInstructionCache(GetCurrentProcess(), &vtable[index], sizeof(void*));
-
-    // Возвращаем исходные права доступа
-    VirtualProtect(&vtable[index], sizeof(void*), old_protect, &old_protect);
-    FlushInstructionCache(GetCurrentProcess(), &vtable[index], sizeof(void*));
-}
-
 static HRESULT WINAPI DirectDrawCreateH(void* lpGUID, void** lplpDD, void* pUnkOuter) {
     spdlog::error("DirectDraw is not supported, failing to create it");
     return 0x8007000E;
@@ -75,9 +60,9 @@ static long __stdcall EndSceneH(LPDIRECT3DDEVICE9 pDevice) {
 }
 
 static HRESULT WINAPI CreateDeviceH(IDirect3D9* pD3D, UINT Adapter, D3DDEVTYPE DeviceType,
-                             HWND hFocusWindow, DWORD BehaviorFlags,
-                             D3DPRESENT_PARAMETERS* pPresentationParameters,
-                             IDirect3DDevice9** ppReturnedDeviceInterface) {
+                                    HWND hFocusWindow, DWORD BehaviorFlags,
+                                    D3DPRESENT_PARAMETERS* pPresentationParameters,
+                                    IDirect3DDevice9** ppReturnedDeviceInterface) {
 
     HRESULT hr = CreateDeviceO(pD3D, Adapter, DeviceType, hFocusWindow, BehaviorFlags,
                                pPresentationParameters, ppReturnedDeviceInterface);
@@ -98,7 +83,7 @@ static IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {
     auto ret = Direct3DCreate9O(SDKVersion);
     if (SUCCEEDED(ret) && !CreateDeviceO) {
         void** vtable = *(void***)ret;
-        patch_vtable(vtable, 16, (void*)CreateDeviceH, (void**)&CreateDeviceO);
+        hook::patch_vtable(vtable, 16, CreateDeviceH, &CreateDeviceO);
     }
     return ret;
 }

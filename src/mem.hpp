@@ -28,6 +28,7 @@ bool write(size_t addr, const T& value) {
 namespace hook {
 bool _enable_target(void* target);
 bool _hook_target(void* pTarget, void* pDetour, void** ppOriginal);
+void _patch_vtable(void** vtable, int index, void* new_func, void** old_func);
 
 template <typename A, typename F> inline bool hook(A pTarget, F* pDetour) {
     return _hook_target(reinterpret_cast<void*>(pTarget), reinterpret_cast<void*>(pDetour), nullptr);
@@ -41,6 +42,11 @@ inline bool hook(A pTarget, F* pDetour, T** ppOriginal) {
 
 template <typename T> inline bool enable(T target) {
     return _enable_target(reinterpret_cast<void*>(target));
+}
+
+template <typename A, typename B>
+inline void patch_vtable(void** vtable, int index, A* new_func, B** old_func) {
+    _patch_vtable(vtable, index, reinterpret_cast<void*>(new_func), reinterpret_cast<void**>(old_func));
 }
 
 inline bool enable() { return _enable_target(nullptr); }
