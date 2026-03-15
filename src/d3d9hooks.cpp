@@ -9,16 +9,31 @@
 #include <d3d9.h>
 #include <spdlog/spdlog.h>
 
-static long(__stdcall* ResetO)(LPDIRECT3DDEVICE9, D3DPRESENT_PARAMETERS*);
+static long(__stdcall* ResetO)(LPDIRECT3DDEVICE9, D3DPRESENT_PARAMETERS*) = nullptr;
 
-static long(__stdcall* EndSceneO)(LPDIRECT3DDEVICE9);
+static long(__stdcall* EndSceneO)(LPDIRECT3DDEVICE9) = nullptr;
 
 static HRESULT(WINAPI* CreateDeviceO)(IDirect3D9*, UINT, D3DDEVTYPE, HWND, DWORD,
-                                      D3DPRESENT_PARAMETERS*, IDirect3DDevice9**);
+                                      D3DPRESENT_PARAMETERS*, IDirect3DDevice9**) = nullptr;
 
 extern HWND hwnd;
 
-HRESULT WINAPI DirectDrawCreateH(void* lpGUID, void** lplpDD, void* pUnkOuter) {
+static void patch_vtable(void** vtable, int index, void* new_func, void** old_func) {
+    DWORD old_protect;
+    // Разрешаем запись в страницу памяти, где лежит vtable
+    VirtualProtect(&vtable[index], sizeof(void*), PAGE_EXECUTE_READWRITE, &old_protect);
+    FlushInstructionCache(GetCurrentProcess(), &vtable[index], sizeof(void*));
+    // Сохраняем оригинал и подменяем
+    if (old_func) *old_func = vtable[index];
+    vtable[index] = new_func;
+    FlushInstructionCache(GetCurrentProcess(), &vtable[index], sizeof(void*));
+
+    // Возвращаем исходные права доступа
+    VirtualProtect(&vtable[index], sizeof(void*), old_protect, &old_protect);
+    FlushInstructionCache(GetCurrentProcess(), &vtable[index], sizeof(void*));
+}
+
+static HRESULT WINAPI DirectDrawCreateH(void* lpGUID, void** lplpDD, void* pUnkOuter) {
     spdlog::error("DirectDraw is not supported, failing to create it");
     return 0x8007000E;
 }
@@ -59,7 +74,7 @@ static long __stdcall EndSceneH(LPDIRECT3DDEVICE9 pDevice) {
     return ret;
 }
 
-HRESULT WINAPI CreateDeviceH(IDirect3D9* pD3D, UINT Adapter, D3DDEVTYPE DeviceType,
+static HRESULT WINAPI CreateDeviceH(IDirect3D9* pD3D, UINT Adapter, D3DDEVTYPE DeviceType,
                              HWND hFocusWindow, DWORD BehaviorFlags,
                              D3DPRESENT_PARAMETERS* pPresentationParameters,
                              IDirect3DDevice9** ppReturnedDeviceInterface) {
@@ -70,6 +85,7 @@ HRESULT WINAPI CreateDeviceH(IDirect3D9* pD3D, UINT Adapter, D3DDEVTYPE DeviceTy
     if (SUCCEEDED(hr) && ppReturnedDeviceInterface && *ppReturnedDeviceInterface) {
         IDirect3DDevice9* pDevice = *ppReturnedDeviceInterface;
         void** vtable = *(void***)pDevice;
+        // Should be called once, right?
         hook::hook(vtable[16], ResetH, &ResetO);
         hook::hook(vtable[42], EndSceneH, &EndSceneO);
         hook::enable();
@@ -77,13 +93,12 @@ HRESULT WINAPI CreateDeviceH(IDirect3D9* pD3D, UINT Adapter, D3DDEVTYPE DeviceTy
     return hr;
 }
 
-IDirect3D9*(WINAPI* Direct3DCreate9O)(UINT SDKVersion);
-IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {
+static IDirect3D9*(WINAPI* Direct3DCreate9O)(UINT SDKVersion);
+static IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {
     auto ret = Direct3DCreate9O(SDKVersion);
     if (SUCCEEDED(ret) && !CreateDeviceO) {
         void** vtable = *(void***)ret;
-        hook::hook(vtable[16], CreateDeviceH, &CreateDeviceO);
-        hook::enable();
+        patch_vtable(vtable, 16, (void*)CreateDeviceH, (void**)&CreateDeviceO);
     }
     return ret;
 }
