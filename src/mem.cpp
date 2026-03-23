@@ -53,6 +53,7 @@ void* mem::get_addr(const char* obj_name, const char* func_name) {
         spdlog::error("Failed to get module \"{}\"", obj_name);
         return nullptr;
     }
+    // TODO: no conflicts with loadhooks
     auto ret = GetProcAddress(obj, func_name);
     if (ret == nullptr)
         spdlog::error("Failed to get \"{}\" address of the module \"{}\"", func_name, obj_name);

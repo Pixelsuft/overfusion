@@ -11,6 +11,9 @@
 #include <shellapi.h>
 #include <spdlog/spdlog.h>
 
+static char my_argv_a[MAX_PATH * 2];
+static wchar_t my_argv_w[MAX_PATH * 2];
+
 static void(WINAPI* DragAcceptFilesO)(HWND hWnd, BOOL fAccept);
 static void WINAPI DragAcceptFilesH(HWND hWnd, BOOL fAccept) { DragAcceptFilesO(hWnd, FALSE); }
 
@@ -19,24 +22,24 @@ static UINT DragQueryFileAH(HDROP hDrop, UINT iFile, LPSTR lpszFile, UINT cch) {
 
 static HINSTANCE ShellExecuteAH(HWND hwnd, LPCSTR op, LPCSTR file, LPCSTR params, LPCSTR dir,
                                 INT show) {
-    spdlog::info("ShellExecuteA: {} \"{}\"", uconv::from_ansi(op), uconv::from_ansi(file));
+    spdlog::info("ShellExecuteA: {} {}", uconv::from_ansi(op), uconv::from_ansi(file));
     return reinterpret_cast<HINSTANCE>(SE_ERR_ACCESSDENIED);
 }
 
 static HINSTANCE ShellExecuteWH(HWND hwnd, LPCWSTR op, LPCWSTR file, LPCWSTR params, LPCWSTR dir,
                                 INT show) {
-    spdlog::info("ShellExecuteW: {} \"{}\"", uconv::from_utf16(op), uconv::from_utf16(file));
+    spdlog::info("ShellExecuteW: {} {}", uconv::from_utf16(op), uconv::from_utf16(file));
     return reinterpret_cast<HINSTANCE>(SE_ERR_ACCESSDENIED);
 }
 
 static BOOL ShellExecuteExAH(SHELLEXECUTEINFOA* pExecInfo) {
-    spdlog::info("ShellExecuteExA: {} \"{}\"", uconv::from_ansi(pExecInfo->lpVerb),
+    spdlog::info("ShellExecuteExA: {} {}", uconv::from_ansi(pExecInfo->lpVerb),
                  uconv::from_ansi(pExecInfo->lpFile));
     return FALSE;
 }
 
 static BOOL ShellExecuteExWH(SHELLEXECUTEINFOW* pExecInfo) {
-    spdlog::info("ShellExecuteExW: {} \"{}\"", uconv::from_utf16(pExecInfo->lpVerb),
+    spdlog::info("ShellExecuteExW: {} {}", uconv::from_utf16(pExecInfo->lpVerb),
                  uconv::from_utf16(pExecInfo->lpFile));
     return FALSE;
 }
@@ -151,63 +154,85 @@ static BOOL __stdcall GetUserNameWH(LPWSTR lpBuffer, LPDWORD pcbBuffer) {
     return TRUE;
 }
 
-static LSTATUS WINAPI RegOpenKeyExAH(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
-    spdlog::warn("RegOpenKeyExA: Blocked access to {}", lpSubKey ? uconv::from_ansi(lpSubKey) : "nullptr");
+static LSTATUS WINAPI RegOpenKeyExAH(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired,
+                                     PHKEY phkResult) {
+    spdlog::warn("RegOpenKeyExA: Blocked access to {}",
+                 lpSubKey ? uconv::from_ansi(lpSubKey) : "nullptr");
     return ERROR_ACCESS_DENIED;
 }
 
-static LSTATUS WINAPI RegOpenKeyExWH(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
-    spdlog::warn("RegOpenKeyExW: Blocked access to {}", lpSubKey ? uconv::from_utf16(lpSubKey) : "nullptr");
+static LSTATUS WINAPI RegOpenKeyExWH(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions,
+                                     REGSAM samDesired, PHKEY phkResult) {
+    spdlog::warn("RegOpenKeyExW: Blocked access to {}",
+                 lpSubKey ? uconv::from_utf16(lpSubKey) : "nullptr");
     return ERROR_ACCESS_DENIED;
 }
 
-static LSTATUS WINAPI RegCreateKeyExAH(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition) {
-    spdlog::warn("RegCreateKeyExA: Blocked access to {}", lpSubKey ? uconv::from_ansi(lpSubKey) : "nullptr");
+static LSTATUS WINAPI RegCreateKeyExAH(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass,
+                                       DWORD dwOptions, REGSAM samDesired,
+                                       LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult,
+                                       LPDWORD lpdwDisposition) {
+    spdlog::warn("RegCreateKeyExA: Blocked access to {}",
+                 lpSubKey ? uconv::from_ansi(lpSubKey) : "nullptr");
     return ERROR_ACCESS_DENIED;
 }
 
-static LSTATUS WINAPI RegCreateKeyExWH(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition) {
-    spdlog::warn("RegCreateKeyExW: Blocked access to {}", lpSubKey ? uconv::from_utf16(lpSubKey) : "nullptr");
+static LSTATUS WINAPI RegCreateKeyExWH(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass,
+                                       DWORD dwOptions, REGSAM samDesired,
+                                       LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult,
+                                       LPDWORD lpdwDisposition) {
+    spdlog::warn("RegCreateKeyExW: Blocked access to {}",
+                 lpSubKey ? uconv::from_utf16(lpSubKey) : "nullptr");
     return ERROR_ACCESS_DENIED;
 }
 
-static LSTATUS WINAPI RegQueryValueExAH(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {
-    spdlog::warn("RegQueryValueExA: Blocked access to {}", lpValueName ? uconv::from_ansi(lpValueName) : "nullptr");
+static LSTATUS WINAPI RegQueryValueExAH(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved,
+                                        LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {
+    spdlog::warn("RegQueryValueExA: Blocked access to {}",
+                 lpValueName ? uconv::from_ansi(lpValueName) : "nullptr");
     return ERROR_ACCESS_DENIED;
 }
 
-static LSTATUS WINAPI RegQueryValueExWH(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {
-    spdlog::warn("RegQueryValueExW: Blocked access to {}", lpValueName ? uconv::from_utf16(lpValueName) : "nullptr");
+static LSTATUS WINAPI RegQueryValueExWH(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved,
+                                        LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {
+    spdlog::warn("RegQueryValueExW: Blocked access to {}",
+                 lpValueName ? uconv::from_utf16(lpValueName) : "nullptr");
     return ERROR_ACCESS_DENIED;
 }
 
 static LSTATUS WINAPI RegOpenKeyAH(HKEY hKey, LPCSTR lpSubKey, PHKEY phkResult) {
-    spdlog::warn("RegOpenKeyA: Blocked access to {}", lpSubKey ? uconv::from_ansi(lpSubKey) : "nullptr");
+    spdlog::warn("RegOpenKeyA: Blocked access to {}",
+                 lpSubKey ? uconv::from_ansi(lpSubKey) : "nullptr");
     return ERROR_ACCESS_DENIED;
 }
 
 static LSTATUS WINAPI RegOpenKeyWH(HKEY hKey, LPCWSTR lpSubKey, PHKEY phkResult) {
-    spdlog::warn("RegOpenKeyW: Blocked access to {}", lpSubKey ? uconv::from_utf16(lpSubKey) : "nullptr");
+    spdlog::warn("RegOpenKeyW: Blocked access to {}",
+                 lpSubKey ? uconv::from_utf16(lpSubKey) : "nullptr");
     return ERROR_ACCESS_DENIED;
 }
 
 static LSTATUS WINAPI RegQueryValueAH(HKEY hKey, LPCSTR lpSubKey, LPSTR lpData, PLONG lpcbData) {
-    spdlog::warn("RegQueryValueA: Blocked access to {}", lpSubKey ? uconv::from_ansi(lpSubKey) : "nullptr");
+    spdlog::warn("RegQueryValueA: Blocked access to {}",
+                 lpSubKey ? uconv::from_ansi(lpSubKey) : "nullptr");
     return ERROR_ACCESS_DENIED;
 }
 
 static LSTATUS WINAPI RegQueryValueWH(HKEY hKey, LPCWSTR lpSubKey, LPWSTR lpData, PLONG lpcbData) {
-    spdlog::warn("RegQueryValueW: Blocked access to {}", lpSubKey ? uconv::from_utf16(lpSubKey) : "nullptr");
+    spdlog::warn("RegQueryValueW: Blocked access to {}",
+                 lpSubKey ? uconv::from_utf16(lpSubKey) : "nullptr");
     return ERROR_ACCESS_DENIED;
 }
 
 static LSTATUS WINAPI RegCreateKeyAH(HKEY hKey, LPCSTR lpSubKey, PHKEY phkResult) {
-    spdlog::warn("RegCreateKeyA: Blocked access to {}", lpSubKey ? uconv::from_ansi(lpSubKey) : "nullptr");
+    spdlog::warn("RegCreateKeyA: Blocked access to {}",
+                 lpSubKey ? uconv::from_ansi(lpSubKey) : "nullptr");
     return ERROR_ACCESS_DENIED;
 }
 
 static LSTATUS WINAPI RegCreateKeyWH(HKEY hKey, LPCWSTR lpSubKey, PHKEY phkResult) {
-    spdlog::warn("RegCreateKeyW: Blocked access to {}", lpSubKey ? uconv::from_utf16(lpSubKey) : "nullptr");
+    spdlog::warn("RegCreateKeyW: Blocked access to {}",
+                 lpSubKey ? uconv::from_utf16(lpSubKey) : "nullptr");
     return ERROR_ACCESS_DENIED;
 }
 
@@ -216,13 +241,35 @@ static BOOL __stdcall InternetGetConnectedStateH(LPDWORD lpdwFlags, DWORD dwRese
     return FALSE;
 }
 
+static LPSTR GetCommandLineAH() {
+    // spdlog::debug("GetCommandLineAH {}", my_argv_a);
+    return my_argv_a;
+}
+
+static LPWSTR GetCommandLineWH() {
+    // spdlog::debug("GetCommandLineWH {}", uconv::from_utf16(my_argv_w));
+    return my_argv_w;
+}
+
 void extrahooks::init() {
+    [] {
+        strcpy(my_argv_a, GetCommandLineA());
+        wcscpy(my_argv_w, GetCommandLineW());
+        strcat(my_argv_a, " /D3D9 /DEBUG /NOF /NOVSYNC");
+        wcscat(my_argv_w, L" /D3D9 /DEBUG /NOF /NOVSYNC");
+        // TODO: better way than GetModuleHandleA
+        *reinterpret_cast<char**>(GetProcAddress(GetModuleHandleA("msvcrt.dll"), "_acmdln")) =
+            my_argv_a;
+        *reinterpret_cast<wchar_t**>(GetProcAddress(GetModuleHandleA("msvcrt.dll"), "_wcmdln")) =
+            my_argv_w;
+    }();
     // TODO: GetDateFormatEx, GetLocaleInfoEx, GetTimeFormatEx, GetUserDefaultLocaleName
     HOOK_STR_AUTO("user32.dll", MessageBox);
     HOOK_AUTO("shell32.dll", DragAcceptFiles);
     HOOK_STR_ONLY("shell32.dll", DragQueryFile);
     HOOK_STR_ONLY("shell32.dll", ShellExecute);
     HOOK_STR_ONLY("shell32.dll", ShellExecuteEx);
+    HOOK_STR_ONLY("kernel32.dll", GetCommandLine);
     HOOK_STR_ONLY("kernel32.dll", GetVersionEx);
     HOOK_STR_ONLY("kernel32.dll", EnumSystemLocales);
     HOOK_ONLY("shell32.dll", SHGetSpecialFolderLocation);
@@ -238,9 +285,7 @@ void extrahooks::init_ws32() {
     HOOK_ONLY("ws2_32.dll", bind);
 }
 
-void extrahooks::init_inet() {
-    HOOK_ONLY("wininet.dll", InternetGetConnectedState);
-}
+void extrahooks::init_inet() { HOOK_ONLY("wininet.dll", InternetGetConnectedState); }
 
 void extrahooks::init_adv() {
     HOOK_STR_ONLY("advapi32.dll", GetUserName);
