@@ -19,6 +19,7 @@ static int __stdcall UpdateGameFrameH() {
     static bool inited = false;
     static bool need_skip = false;
     if (!inited) {
+        spdlog::debug("UpdateGameFrame first call");
         inited = true;
         winhooks::after_ui_init();
         timehooks::update_init();
@@ -27,9 +28,13 @@ static int __stdcall UpdateGameFrameH() {
         plug::get().update_init();
         hook::enable();
     }
+    // TODO
+    spdlog::debug("update");
     auto pState = plug::get().get_prop(plug::PtrProp::PState);
-    if (pState == nullptr)
+    if (pState == nullptr) {
+        spdlog::warn("pState is nullptr");
         return UpdateGameFrameO();
+    }
     input::process_update();
     state::early_update();
     auto& cfg = conf::get();

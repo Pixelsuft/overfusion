@@ -17,7 +17,7 @@ public:
     PlugFnaf() {
         name = "Five Nights at Freddy's";
         unicode = true;
-        need_key_message = true;
+        need_key_message = false;
         SaveGameState = nullptr;
         LoadGameState = nullptr;
     }
@@ -31,37 +31,17 @@ public:
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49060);
         ASS(LoadGameState != nullptr);
         return true;
-        // Show scene name in title
-        mem::write(mem::get_base() + 0x273a8, {0x90, 0x90});
-        // No __security_check_cookie
-        mem::write(mem::get_base() + 0x6d696, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
-        // No window hooks (already patched but for 0.00001 fps boost)
-        mem::write(mem::get_base() + 0x5a9d, {0xeb});
-        // No internal input recording overhead
-        mem::write(mem::get_base() + 0x2add4, {0x90, 0x90});
-        mem::write(mem::get_base() + 0x2add7, {0xeb});
         // No waiting
-        mem::write(mem::get_base() + 0x2ea5, {0xeb});
-        mem::write(mem::get_base() + 0x2ee5, {0xeb});
-        mem::write(mem::get_base() + 0x2f0a, {0x90, 0x90});
+        // mem::write(mem::get_base() + 0x2ea5, {0xeb});
+        mem::write(mem::get_base() + 0x2f28, {0xeb});
+        mem::write(mem::get_base() + 0x2f57, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         // Use high precision timer instead of ugly SetTimer
-        mem::write(mem::get_base() + 0x24618, {0xeb});
-        // Save state fixes (experimental)
-        mem::write(mem::get_base() + 0x483a3, {0x90, 0x90, 0x90, 0x90, 0x90});
-        mem::write(mem::get_base() + 0x49a5e, {0x90, 0x90, 0x90, 0x90, 0x90});
-        mem::write(mem::get_base() + 0x4835c, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
-                                               0x90, 0x90, 0x90, 0x90, 0x90});
-        mem::write(mem::get_base() + 0x58227, {0x66, 0xe9, 0x94, 0x00, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x23b88, {0xeb});
         // By saying pause I mean pause
-        mem::write(mem::get_base() + 0x2aaf8, {0xeb});
-        mem::write(mem::get_base() + 0x586ab, {0xeb});
-        mem::write(mem::get_base() + 0x586f1, {0xeb});
-        // No extra win32 event logic
-        mem::write(mem::get_base() + 0x42176, {0xeb});
-        // No hotkeys
-        mem::write(mem::get_base() + 0x5162a, {0x31, 0xf6});
+        mem::write(mem::get_base() + 0x5784b, {0xeb});
+        mem::write(mem::get_base() + 0x57891, {0xeb});
         // Game FPS is fine
-        mem::write(mem::get_base() + 0x2ab70, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x29f7a, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         return true;
     }
 
@@ -77,14 +57,11 @@ public:
         case plug::PtrProp::PState:
             return *reinterpret_cast<void**>(mem::get_base() + 0xac9b4);
         case plug::PtrProp::PGlobalApp:
-            return nullptr;
-            return *reinterpret_cast<void**>(mem::get_base() + 0xb49cc);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xac9ac);
         case plug::PtrProp::PNextFrameTask:
-            return nullptr;
             // From pState
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x30);
         case plug::PtrProp::PNextFrameData:
-            return nullptr;
             // From pState
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x38);
         case plug::PtrProp::PSubTickStep:
@@ -94,7 +71,6 @@ public:
             // From pState
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x178);
         case plug::PtrProp::PSceneID:
-            return nullptr;
             // From pGlobalApp
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x1ec);
         case plug::PtrProp::Update:
