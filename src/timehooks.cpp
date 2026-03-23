@@ -77,6 +77,10 @@ static VOID GetLocalTimeH(LPSYSTEMTIME lpSystemTime) {
     ASS(FileTimeToSystemTime(&ft, lpSystemTime));
 }
 
+static BOOL SetLocalTimeH(const SYSTEMTIME *lpSystemTime) {
+    return FALSE;
+}
+
 BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency);
 static BOOL WINAPI QueryPerformanceFrequencyH(LARGE_INTEGER* lpFrequency) {
     if (ui::processing)
@@ -181,6 +185,7 @@ void timehooks::init() {
     HOOK_AUTO("winmm.dll", timeGetTime);
     HOOK_AUTO("kernel32.dll", QueryPerformanceFrequency);
     HOOK_ONLY("kernel32.dll", GetTickCount);
+    HOOK_ONLY("kernel32.dll", SetLocalTime);
     HOOK_ONLY("msvcrt.dll", time);
     HOOK_ONLY("msvcrt.dll", _ftime);
     auto& cfg = conf::get();
@@ -199,7 +204,8 @@ void timehooks::update_init() {
     // This breaks fontembed.mfx if hooked earlier
     HOOK_ONLY("kernel32.dll", GetSystemTimeAsFileTime);
     // This breaks Nvidia driver if hooked earlier
-    HOOK_ONLY("kernel32.dll", GetLocalTime);
+    // FIXME: This also crashes FNAF (WTF?)
+    // HOOK_ONLY("kernel32.dll", GetLocalTime);
 }
 
 void timehooks::update(int dt) {

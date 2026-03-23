@@ -272,7 +272,7 @@ void extrahooks::init() {
     HOOK_STR_ONLY("kernel32.dll", GetCommandLine);
     HOOK_STR_ONLY("kernel32.dll", GetVersionEx);
     HOOK_STR_ONLY("kernel32.dll", EnumSystemLocales);
-    // FIXME: crashes FNAF
+    // FIXME: crashes FNAF (kcini.mfx)
     // HOOK_ONLY("shell32.dll", SHGetSpecialFolderLocation);
     HOOK_ONLY("kernel32.dll", GetUserDefaultLCID);
     HOOK_ONLY("kernel32.dll", GetVersion);
