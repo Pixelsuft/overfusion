@@ -103,7 +103,12 @@ void input::init() {
     HOOK_ONLY("user32.dll", SetCursorPos);
 }
 
-void input::handle_input(int vk, bool pressed) { kbd_que.push_back({vk, pressed}); }
+void input::handle_input(int vk, bool pressed) {
+    if (1)
+        kbd_que.push_back({vk, pressed});
+    else
+        handle_input_real(vk, pressed);
+}
 
 void input::process_update() {
     for (auto& val : kbd_que)

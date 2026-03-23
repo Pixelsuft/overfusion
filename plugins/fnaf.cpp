@@ -30,7 +30,6 @@ public:
         ASS(SaveGameState != nullptr);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49060);
         ASS(LoadGameState != nullptr);
-        return true;
         // No waiting
         // mem::write(mem::get_base() + 0x2ea5, {0xeb});
         mem::write(mem::get_base() + 0x2f28, {0xeb});
@@ -48,7 +47,12 @@ public:
     void after_dll_load(string_view path, string_view fn, void* mod) override {
         if (mod == nullptr)
             return;
+        size_t base = reinterpret_cast<size_t>(mod);
         if (fn == "mmfs2.dll") {
+        }
+        else if (fn == "cctrans.dll") {
+            // FIXME
+            mem::write(base + 0x78b8, {0xeb});
         }
     };
 

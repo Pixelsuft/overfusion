@@ -59,6 +59,7 @@ static DWORD WINAPI timeGetTimeH() {
     // Only temporary
     // return timeGetTimeO();
     // FIXME
+    // spdlog::debug("timeGetTime");
     return static_cast<DWORD>(state::get_time(state::TimeOffset::Startup));
 }
 

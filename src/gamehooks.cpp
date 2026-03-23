@@ -28,8 +28,6 @@ static int __stdcall UpdateGameFrameH() {
         plug::get().update_init();
         hook::enable();
     }
-    // TODO
-    spdlog::debug("update");
     auto pState = plug::get().get_prop(plug::PtrProp::PState);
     if (pState == nullptr) {
         spdlog::warn("pState is nullptr");
