@@ -30,8 +30,6 @@ public:
         ASS(SaveGameState != nullptr);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49f40);
         ASS(LoadGameState != nullptr);
-        // Force /DEBUG (window title)
-        *(int*)(mem::get_base() + 0xb4b48) = 1;
         // Show scene name in title
         mem::write(mem::get_base() + 0x273a8, {0x90, 0x90});
         // No __security_check_cookie
