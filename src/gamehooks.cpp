@@ -1,18 +1,17 @@
 #include "gamehooks.hpp"
-#include "ass.hpp"
+#include "config.hpp"
+#include "extrahooks.hpp"
+#include "files.hpp"
+#include "input.hpp"
 #include "mem.hpp"
 #include "plugbase.hpp"
-#include "input.hpp"
 #include "state.hpp"
-#include "files.hpp"
-#include "config.hpp"
 #include "timehooks.hpp"
-#include "extrahooks.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-static void (__stdcall* ProcessFrameRendering)(void);
+static void(__stdcall* ProcessFrameRendering)(void);
 
 static int(__stdcall* UpdateGameFrameO)();
 static int __stdcall UpdateGameFrameH() {
@@ -20,6 +19,9 @@ static int __stdcall UpdateGameFrameH() {
     static bool need_skip = false;
     if (!inited) {
         spdlog::debug("UpdateGameFrame first call");
+        if (conf::get().custom_window) {
+            spdlog::error("TODO: implement custom child d3d9 window");
+        }
         inited = true;
         winhooks::after_ui_init();
         timehooks::update_init();
@@ -37,8 +39,10 @@ static int __stdcall UpdateGameFrameH() {
     state::early_update();
     auto& cfg = conf::get();
     // Assuming they are not nullptrs
-    auto& pStep = *reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));
-    auto& pIsPaused = *reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PIsPaused, pState));
+    auto& pStep =
+        *reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));
+    auto& pIsPaused =
+        *reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PIsPaused, pState));
     pStep = 1;
     if (need_skip) {
         need_skip = false;
@@ -54,8 +58,7 @@ static int __stdcall UpdateGameFrameH() {
         ret = UpdateGameFrameO();
         if (ProcessFrameRendering)
             ProcessFrameRendering();
-    }
-    else {
+    } else {
         cfg.need_advance = false;
         pIsPaused = false;
         ret = UpdateGameFrameO();
@@ -63,8 +66,7 @@ static int __stdcall UpdateGameFrameH() {
     if (ret == 3) {
         spdlog::debug("Scene change");
         need_skip = true;
-    }
-    else {
+    } else {
         // spdlog::debug("After update change");
         state::after_update();
     }
@@ -77,7 +79,8 @@ void gamehooks::init() {
         spdlog::error("UpdateGameFrame was not hooked");
     else
         hook::hook(temp_ptr, UpdateGameFrameH, &UpdateGameFrameO);
-    ProcessFrameRendering = reinterpret_cast<decltype(ProcessFrameRendering)>(plug::get().get_prop(plug::PtrProp::Render));
+    ProcessFrameRendering = reinterpret_cast<decltype(ProcessFrameRendering)>(
+        plug::get().get_prop(plug::PtrProp::Render));
     if (ProcessFrameRendering == nullptr)
         spdlog::error("ProcessFrameRendering was not loaded");
 }

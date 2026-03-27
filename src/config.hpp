@@ -33,6 +33,7 @@ public:
     bool emulate_user_timers;
     bool emulate_mm_timers;
     bool is_unicode;
+    bool custom_window;
 
     Config();
     void read();

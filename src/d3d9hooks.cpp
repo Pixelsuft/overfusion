@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include "d3d9hooks.hpp"
 #include "ass.hpp"
+#include "config.hpp"
 #include "mem.hpp"
 #include "ui.hpp"
 #include <Windows.h>
@@ -35,6 +36,8 @@ static long __stdcall EndSceneH(LPDIRECT3DDEVICE9 pDevice) {
     ui::processing = true;
     static bool inited = false;
     if (!inited) {
+        inited = true;
+        conf::get().custom_window = false;
         D3DDEVICE_CREATION_PARAMETERS params;
         pDevice->GetCreationParameters(&params);
         ASS(::hwnd == params.hFocusWindow);
@@ -45,7 +48,6 @@ static long __stdcall EndSceneH(LPDIRECT3DDEVICE9 pDevice) {
         io.IniFilename = nullptr;
         ImGui_ImplWin32_Init(hwnd);
         ImGui_ImplDX9_Init(pDevice);
-        inited = true;
     }
     ImGui_ImplDX9_NewFrame();
     ImGui_ImplWin32_NewFrame();

@@ -206,6 +206,7 @@ Config::Config() {
     emulate_user_timers = false;
     emulate_mm_timers = false;
     is_unicode = false;
+    custom_window = true;
 }
 
 #define READ_BOOL(name)                                                                            \
