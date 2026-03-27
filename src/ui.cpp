@@ -1,20 +1,18 @@
 #include "ui.hpp"
 #include "config.hpp"
 #include "files.hpp"
-#include "state.hpp"
 #include "plugbase.hpp"
-#include <imgui.h>
-#include <backends/imgui_impl_win32.h>
+#include "state.hpp"
 #include <backends/imgui_impl_dx9.h>
+#include <backends/imgui_impl_win32.h>
+#include <imgui.h>
 #include <spdlog/spdlog.h>
 
 constexpr bool ui_save_sets = true;
 
 bool ui::processing;
 
-void ui::init() {
-    processing = false;
-}
+void ui::init() { processing = false; }
 
 bool ui::init_imgui_context() {
     processing = true;
@@ -43,19 +41,28 @@ bool ui::init_imgui_platform(HWND hwnd, LPDIRECT3DDEVICE9 device) {
     return true;
 }
 
-static void draw_info() {
-    if (!ImGui::Begin("OverFusion Info", nullptr,
-                      (ui_save_sets ? 0 : ImGuiWindowFlags_NoSavedSettings) |
-                          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
-                          ImGuiWindowFlags_NoScrollbar)) {
+static void draw_info(bool custom_window) {
+    ImGuiWindowFlags flags = (ui_save_sets ? 0 : ImGuiWindowFlags_NoSavedSettings) |
+                             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                             ImGuiWindowFlags_NoScrollbar;
+    if (custom_window) {
+        flags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
+    }
+    if (!ImGui::Begin("OverFusion Info", nullptr, flags)) {
         ImGui::End();
         return;
+    }
+    if (custom_window) {
+        ImGui::SetWindowPos(ImVec2(0, 0));
+        auto& io = ImGui::GetIO();
+        ImGui::SetWindowSize(io.DisplaySize);
     }
     state::draw_info();
     ImGui::End();
 }
 
 static void draw_menu() {
+    ImGui::SetNextWindowFocus();
     if (!ImGui::Begin("OverFusion", nullptr,
                       (ui_save_sets ? 0 : ImGuiWindowFlags_NoSavedSettings))) {
         ImGui::End();
@@ -74,8 +81,7 @@ static void draw_menu() {
         short* ptr =
             reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
         *ptr = 3;
-        ptr =
-            reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
+        ptr = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
         *ptr = static_cast<short>(frame_id) | 0x8000;
         spdlog::info("doing...");
     }
@@ -86,7 +92,7 @@ void ui::draw() {
     auto& cfg = conf::get();
     if (cfg.show_info) {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        draw_info();
+        draw_info(cfg.custom_window);
         ImGui::PopStyleVar();
     }
     if (cfg.show_menu)

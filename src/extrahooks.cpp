@@ -255,8 +255,8 @@ void extrahooks::init() {
     [] {
         strcpy(my_argv_a, GetCommandLineA());
         wcscpy(my_argv_w, GetCommandLineW());
-        strcat(my_argv_a, " /DIB3 /DEBUG /NOF /NOVSYNC");
-        wcscat(my_argv_w, L" /DIB3 /DEBUG /NOF /NOVSYNC");
+        strcat(my_argv_a, " /D3D9 /DEBUG /NOF /NOVSYNC");
+        wcscat(my_argv_w, L" /D3D9 /DEBUG /NOF /NOVSYNC");
         // TODO: better way than GetModuleHandleA
         *reinterpret_cast<char**>(GetProcAddress(GetModuleHandleA("msvcrt.dll"), "_acmdln")) =
             my_argv_a;

@@ -142,6 +142,7 @@ bool customwindow::init() {
     winhooks::fix_win32_theme(g_hwnd);
     ShowWindow(g_hwnd, SW_SHOWDEFAULT);
     UpdateWindow(g_hwnd);
+    SetWindowPos(g_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
     spdlog::info("Custom window initialized successfully");
     return true;
