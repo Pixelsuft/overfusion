@@ -57,7 +57,7 @@ static void on_win_create(HWND hwnd, string_view class_name, bool unicode) {
     if (class_name == "Mf2MainClassTh") {
         conf::get().is_unicode = unicode;
         ::hwnd = hwnd;
-        winhooks::fix_win32_theme();
+        winhooks::fix_win32_theme(hwnd);
     } else if (class_name == "Mf2EditClassTh") {
         ::mhwnd = hwnd;
     }

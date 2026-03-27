@@ -5,6 +5,7 @@
 #include "extrahooks.hpp"
 #include "mem.hpp"
 #include "plugbase.hpp"
+#include "config.hpp"
 #include "sv.hpp"
 #include "uconv.hpp"
 #include <Windows.h>
@@ -56,6 +57,7 @@ static void after_load(string_view path, void* mod) {
             audiohooks::init();
             hook::enable();
         } else if (fn == "mmf2d3d9.dll") {
+            conf::get().custom_window = false;
             d3d9hooks::init();
             hook::enable();
         } else if (fn == "Lacewing.mfx") {

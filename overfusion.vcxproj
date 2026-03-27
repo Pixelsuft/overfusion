@@ -281,6 +281,7 @@
     <ClCompile Include="spdlog\src\stdout_sinks.cpp" />
     <ClCompile Include="src\audiohooks.cpp" />
     <ClCompile Include="src\config.cpp" />
+    <ClCompile Include="src\customwindow.cpp" />
     <ClCompile Include="src\d3d9hooks.cpp" />
     <ClCompile Include="src\darkmode.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
@@ -305,6 +306,7 @@
     <ClInclude Include="src\ass.hpp" />
     <ClInclude Include="src\audiohooks.hpp" />
     <ClInclude Include="src\config.hpp" />
+    <ClInclude Include="src\customwindow.hpp" />
     <ClInclude Include="src\d3d9hooks.hpp" />
     <ClInclude Include="src\extrahooks.hpp" />
     <ClInclude Include="src\files.hpp" />

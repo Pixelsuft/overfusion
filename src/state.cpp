@@ -240,16 +240,4 @@ void state::draw_info() {
     ImGui::Text("Frames: %i / %i", st.frames, st.total);
     ImGui::Text("Scene: %i", scene_id ? *scene_id : -1);
     ImGui::Text("Message: %s", last_msg.c_str());
-    static int frame_id = 0;
-    ImGui::InputInt("Next frame id", &frame_id);
-    if (ImGui::Button("Switch")) {
-        void* pState = plug::get().get_prop(plug::PtrProp::PState);
-        short* ptr =
-            reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
-        *ptr = 3;
-        ptr =
-            reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
-        *ptr = static_cast<short>(frame_id) | 0x8000;
-        spdlog::info("doing...");
-    }
 }

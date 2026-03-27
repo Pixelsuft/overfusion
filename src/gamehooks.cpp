@@ -1,5 +1,6 @@
 #include "gamehooks.hpp"
 #include "config.hpp"
+#include "customwindow.hpp"
 #include "extrahooks.hpp"
 #include "files.hpp"
 #include "input.hpp"
@@ -17,10 +18,14 @@ static int(__stdcall* UpdateGameFrameO)();
 static int __stdcall UpdateGameFrameH() {
     static bool inited = false;
     static bool need_skip = false;
+    auto& cfg = conf::get();
     if (!inited) {
         spdlog::debug("UpdateGameFrame first call");
-        if (conf::get().custom_window) {
-            spdlog::error("TODO: implement custom child d3d9 window");
+        if (cfg.custom_window) {
+            spdlog::info("Initializing custom window for software renderer");
+            if (!customwindow::init()) {
+                spdlog::error("Failed to initialize custom window");
+            }
         }
         inited = true;
         winhooks::after_ui_init();
@@ -37,7 +42,6 @@ static int __stdcall UpdateGameFrameH() {
     }
     input::process_update();
     state::early_update();
-    auto& cfg = conf::get();
     // Assuming they are not nullptrs
     auto& pStep =
         *reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));
@@ -56,12 +60,17 @@ static int __stdcall UpdateGameFrameH() {
     if (cfg.is_paused && !cfg.need_advance) {
         pIsPaused = true;
         ret = UpdateGameFrameO();
+        if (cfg.custom_window)
+            customwindow::render();
         if (ProcessFrameRendering)
             ProcessFrameRendering();
     } else {
         cfg.need_advance = false;
         pIsPaused = false;
         ret = UpdateGameFrameO();
+        // TODO: hook ProcessFrameRendering to inject custom window render here
+        if (cfg.custom_window)
+            customwindow::render();
     }
     if (ret == 3) {
         spdlog::debug("Scene change");

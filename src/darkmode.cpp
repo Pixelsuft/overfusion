@@ -107,9 +107,8 @@ typedef struct {
 	DWORD build_num;
 } win_shit_type;
 
-extern HWND hwnd;
-
-bool winhooks::fix_win32_theme() {
+bool winhooks::fix_win32_theme(void* _hwnd) {
+    auto hwnd = reinterpret_cast<HWND>(_hwnd);
 	// Just copy-pasted code from my game
 	win_shit_type win_shit;
 	win_shit.uxtheme_handle = nullptr;

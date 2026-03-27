@@ -2,6 +2,7 @@
 #include "d3d9hooks.hpp"
 #include "ass.hpp"
 #include "config.hpp"
+
 #include "mem.hpp"
 #include "ui.hpp"
 #include <Windows.h>
@@ -37,7 +38,15 @@ static long __stdcall EndSceneH(LPDIRECT3DDEVICE9 pDevice) {
     static bool inited = false;
     if (!inited) {
         inited = true;
-        conf::get().custom_window = false;
+        // Check if we're using custom window
+        if (conf::get().custom_window) {
+            // Custom window is handled separately, don't initialize here
+            // ImGui for the game's D3D9 device
+            ui::processing = false;
+            auto ret = EndSceneO(pDevice);
+            return ret;
+        }
+
         D3DDEVICE_CREATION_PARAMETERS params;
         pDevice->GetCreationParameters(&params);
         ASS(::hwnd == params.hFocusWindow);
