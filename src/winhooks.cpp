@@ -1,9 +1,9 @@
 #define WIN32_LEAN_AND_MEAN
 #include "winhooks.hpp"
 #include "ass.hpp"
+#include "config.hpp"
 #include "input.hpp"
 #include "mem.hpp"
-#include "plugbase.hpp"
 #include "uconv.hpp"
 #include "ui.hpp"
 #include <Windows.h>
@@ -29,8 +29,7 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
         input::handle_input(wParam, uMsg == WM_KEYDOWN);
         return FALSE;
     }
-    if (uMsg == WM_MOUSEMOVE || uMsg == WM_MOUSELEAVE ||
-        uMsg == WM_MOUSEHWHEEL || uMsg == WM_CHAR)
+    if (uMsg == WM_MOUSEMOVE || uMsg == WM_MOUSELEAVE || uMsg == WM_MOUSEHWHEEL || uMsg == WM_CHAR)
         return FALSE;
     auto ret = MainWindowProcO(hWnd, uMsg, wParam, lParam);
     return ret;
@@ -48,15 +47,15 @@ static LRESULT __stdcall EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
         input::handle_input(wParam, uMsg == WM_KEYDOWN);
         return FALSE;
     }
-    if (uMsg == WM_MOUSELEAVE || uMsg == WM_MOUSEHWHEEL ||
-        uMsg == WM_CHAR)
+    if (uMsg == WM_MOUSELEAVE || uMsg == WM_MOUSEHWHEEL || uMsg == WM_CHAR)
         return FALSE;
     auto ret = EditWindowProcO(hWnd, uMsg, wParam, lParam);
     return ret;
 }
 
-static void on_win_create(HWND hwnd, string_view class_name) {
+static void on_win_create(HWND hwnd, string_view class_name, bool unicode) {
     if (class_name == "Mf2MainClassTh") {
+        conf::get().is_unicode = unicode;
         ::hwnd = hwnd;
         winhooks::fix_win32_theme();
     } else if (class_name == "Mf2EditClassTh") {
@@ -73,7 +72,7 @@ static HWND WINAPI CreateWindowExAH(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR 
     auto ret = CreateWindowExAO(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth,
                                 nHeight, hWndParent, hMenu, hInstance, lpParam);
     if (ret && reinterpret_cast<size_t>(lpClassName) > 0xFFFF) {
-        on_win_create(ret, uconv::from_ansi(lpClassName));
+        on_win_create(ret, uconv::from_ansi(lpClassName), false);
     }
     return ret;
 }
@@ -87,7 +86,7 @@ static HWND WINAPI CreateWindowExWH(DWORD dwExStyle, LPCWSTR lpClassName, LPCWST
     auto ret = CreateWindowExWO(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth,
                                 nHeight, hWndParent, hMenu, hInstance, lpParam);
     if (ret && reinterpret_cast<size_t>(lpClassName) > 0xFFFF) {
-        on_win_create(ret, uconv::from_utf16(lpClassName));
+        on_win_create(ret, uconv::from_utf16(lpClassName), true);
     }
     return ret;
 }
@@ -161,13 +160,13 @@ static BOOL WINAPI GetMonitorInfoWH(HMONITOR hMonitor, LPMONITORINFO lpmi) {
 }
 
 static INT_PTR WINAPI DialogBoxParamAH(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent,
-                                      DLGPROC lpDialogFunc, LPARAM dwInitParam) {
+                                       DLGPROC lpDialogFunc, LPARAM dwInitParam) {
     spdlog::warn("Failing DialogBoxParamA");
     return static_cast<INT_PTR>(-1);
 }
 
 static INT_PTR WINAPI DialogBoxParamWH(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent,
-                                      DLGPROC lpDialogFunc, LPARAM dwInitParam) {
+                                       DLGPROC lpDialogFunc, LPARAM dwInitParam) {
     spdlog::warn("Failing DialogBoxParamW");
     return static_cast<INT_PTR>(-1);
 }
@@ -188,7 +187,7 @@ void winhooks::init() {
 }
 
 void winhooks::after_ui_init() {
-    bool use_w = plug::get().unicode;
+    bool use_w = conf::get().is_unicode;
     ASS(hwnd != nullptr);
     ASS(mhwnd != nullptr);
     MainWindowProcO = reinterpret_cast<WNDPROC>((use_w ? SetWindowLongPtrW : SetWindowLongPtrA)(
@@ -200,5 +199,5 @@ void winhooks::after_ui_init() {
 }
 
 void winhooks::sim_key_event(int vk, bool down) {
-   MainWindowProcO(::hwnd, down ? WM_KEYDOWN : WM_KEYUP, vk, down ? 0 : ((1 << 30) | (1 << 31)));
+    MainWindowProcO(::hwnd, down ? WM_KEYDOWN : WM_KEYUP, vk, down ? 0 : ((1 << 30) | (1 << 31)));
 }

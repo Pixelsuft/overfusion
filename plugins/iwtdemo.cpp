@@ -16,7 +16,6 @@ private:
 public:
     PlugIwtDemo() {
         name = "I WANNA TRY - A New Adventure Demo";
-        unicode = true;
         need_key_message = true;
         SaveGameState = nullptr;
         LoadGameState = nullptr;

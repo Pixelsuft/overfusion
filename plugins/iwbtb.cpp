@@ -16,7 +16,6 @@ private:
 public:
     PlugIwbtb() {
         name = "I Wanna Be The Boshy";
-        unicode = false;
         need_key_message = false;
         SaveGameState = nullptr;
         LoadGameState = nullptr;

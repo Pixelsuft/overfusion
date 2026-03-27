@@ -15,7 +15,6 @@ private:
 public:
     PlugIwtOld() {
         name = "I Wanna Try 1.9.8.3";
-        unicode = true;
         need_key_message = true;
         SaveGameState = nullptr;
         LoadGameState = nullptr;

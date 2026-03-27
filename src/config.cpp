@@ -205,6 +205,7 @@ Config::Config() {
     fast_forward = false;
     emulate_user_timers = false;
     emulate_mm_timers = false;
+    is_unicode = false;
 }
 
 #define READ_BOOL(name)                                                                            \

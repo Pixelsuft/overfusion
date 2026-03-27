@@ -61,7 +61,9 @@ static std::string normalize_path(string_view path_view) {
     if (path_view.empty())
         return "";
     string ret(path_view);
-    // TODO: UTF-8 support
+    // TODO:
+    // - UTF-8 support
+    // - support for '..' and '.'
     std::transform(ret.begin(), ret.end(), ret.begin(),
                    [](unsigned char c) { return c != '/' ? std::tolower(c) : '\\'; });
     // std::replace(ret.begin(), ret.end(), '/', '\\');
