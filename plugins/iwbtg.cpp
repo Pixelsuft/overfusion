@@ -12,7 +12,7 @@ class PlugIwbtg final : public plug::PlugBase {
 public:
     PlugIwbtg() {
         name = "I Wanna Be The Guy";
-        cmdline_append = " /SF \"E:\\Games\\IWBTG\\iwbtg.exe\" /SO94208 /DDRAW /DEBUG";
+        cmdline_append = " /SF \"E:\\Games\\IWBTG\\iwbtg.exe\" /SO94208 /DEBUG";
     }
 
     bool pre_init() override {
