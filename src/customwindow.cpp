@@ -48,9 +48,11 @@ static LRESULT WINAPI CustomWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
         }
         return 0;
     case WM_SYSCOMMAND:
-        if ((wParam & 0xfff0) == SC_KEYMENU)
+        if ((wParam & 0xfff0) == SC_KEYMENU || (wParam & 0xfff0) == SC_CLOSE)
             return 0;
         break;
+    case WM_CLOSE:
+        return 0;
     case WM_DESTROY:
         return 0;
     }
