@@ -58,9 +58,6 @@ static LRESULT __stdcall EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     }
     if (uMsg == WM_MOUSELEAVE || uMsg == WM_MOUSEHWHEEL || uMsg == WM_CHAR)
         return FALSE;
-    LRESULT lr = 0;
-    if (UAHWndProc(hWnd, uMsg, wParam, lParam, &lr))
-        return lr;
     auto ret = EditWindowProcO(hWnd, uMsg, wParam, lParam);
     return ret;
 }
@@ -202,6 +199,8 @@ void winhooks::after_ui_init() {
     bool use_w = conf::get().is_unicode;
     ASS(hwnd != nullptr);
     ASS(mhwnd != nullptr);
+    LRESULT lr;
+    UAHWndProc(::hwnd, WM_THEMECHANGED, 0, 0, &lr); // Hacky update for dark mode
     MainWindowProcO = reinterpret_cast<WNDPROC>((use_w ? SetWindowLongPtrW : SetWindowLongPtrA)(
         ::hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(MainWindowProcH)));
     ASS(MainWindowProcO != nullptr);

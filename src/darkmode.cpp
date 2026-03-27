@@ -165,10 +165,19 @@ typedef struct tagUAHMEASUREMENUITEM {
 } UAHMEASUREMENUITEM;
 
 static int dark_mode_enabled = -1;
+static HTHEME g_menuTheme = nullptr;
+static HBRUSH g_brBarBackground = nullptr;
+static HBRUSH g_brItemBackground = nullptr;
+static HBRUSH g_brItemBackgroundHot = nullptr;
+static HBRUSH g_brItemBackgroundSelected = nullptr;
+static HBRUSH g_brItemBorder = nullptr;
 static std::vector<HWND> cached_windows;
 
-bool winhooks::fix_win32_theme(void* _hwnd) {
-    auto hwnd = reinterpret_cast<HWND>(_hwnd);
+void winhooks::fix_win32_theme(void* _hwnd) {
+    cached_windows.push_back(reinterpret_cast<HWND>(_hwnd));
+}
+
+static bool fix_win32_theme_real(HWND hwnd) {
     // Just copy-pasted code from my game
     win_shit_type win_shit;
     win_shit.uxtheme_handle = nullptr;
@@ -233,13 +242,8 @@ bool winhooks::fix_win32_theme(void* _hwnd) {
         WINDOWCOMPOSITIONATTRIBDATA data = {WCA_USEDARKMODECOLORS, &win_dark, sizeof(win_dark)};
         win_shit.SetWindowCompositionAttribute(hwnd, &data);
     }
-    if (std::find(cached_windows.begin(), cached_windows.end(), hwnd) == cached_windows.end())
-        cached_windows.push_back(hwnd);
     return true;
 }
-
-static HTHEME g_menuTheme = nullptr;
-static HBRUSH g_brBarBackground = CreateSolidBrush(RGB(0x80, 0x80, 0xFF));
 
 void UAHDrawMenuNCBottomLine(HWND hWnd) {
     MENUBARINFO mbi = {sizeof(mbi)};
@@ -283,10 +287,6 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
     }
     case WM_UAHDRAWMENUITEM: {
         UAHDRAWMENUITEM* pUDMI = (UAHDRAWMENUITEM*)lParam;
-        static HBRUSH g_brItemBackground = CreateSolidBrush(RGB(0xC0, 0xC0, 0xFF));
-        static HBRUSH g_brItemBackgroundHot = CreateSolidBrush(RGB(0xD0, 0xD0, 0xFF));
-        static HBRUSH g_brItemBackgroundSelected = CreateSolidBrush(RGB(0xE0, 0xE0, 0xFF));
-        static HBRUSH g_brItemBorder = CreateSolidBrush(RGB(0xB0, 0xB0, 0xFF));
         HBRUSH* pbrBackground = &g_brItemBackground;
         HBRUSH* pbrBorder = &g_brItemBackground;
         wchar_t menuString[256] = {0};
@@ -332,8 +332,8 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
         }
 
         DTTOPTS opts = {sizeof(opts), DTT_TEXTCOLOR,
-                        iTextStateID != MBI_DISABLED ? RGB(0x00, 0x00, 0x20)
-                                                     : RGB(0x40, 0x40, 0x40)};
+                        iTextStateID != MBI_DISABLED ? (dark_mode_enabled == 0 ? RGB(0x00, 0x00, 0x00) : RGB(0xFF, 0xFF, 0xFF))
+                                                     : (dark_mode_enabled == 0 ? RGB(0x6D, 0x6D, 0x6D) : RGB(0x64, 0x64, 0x64))};
 
         FillRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, *pbrBackground);
         FrameRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, *pbrBorder);
@@ -349,12 +349,23 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
         return true;
     }
     case WM_THEMECHANGED: {
+        dark_mode_enabled = -1;
         if (g_menuTheme) {
             CloseThemeData(g_menuTheme);
             g_menuTheme = nullptr;
         }
         for (auto& win_hwnd : cached_windows)
-            winhooks::fix_win32_theme(win_hwnd);
+            fix_win32_theme_real(win_hwnd);
+        DeleteObject(g_brBarBackground);
+        DeleteObject(g_brItemBackground);
+        DeleteObject(g_brItemBackgroundHot);
+        DeleteObject(g_brItemBackgroundSelected);
+        DeleteObject(g_brItemBorder);
+        g_brBarBackground = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(255, 255, 255)) : CreateSolidBrush(RGB(25, 25, 25));
+        g_brItemBackground = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(255, 255, 255)) : CreateSolidBrush(RGB(25, 25, 25));
+        g_brItemBackgroundHot = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(245, 245, 245)) : CreateSolidBrush(RGB(67, 67, 67));
+        g_brItemBackgroundSelected = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(249, 249, 249)) : CreateSolidBrush(RGB(33, 33, 33));
+        g_brItemBorder = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(235, 235, 235)) : CreateSolidBrush(RGB(19, 19, 19));
         return false;
     }
     case WM_NCPAINT:
