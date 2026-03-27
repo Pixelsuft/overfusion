@@ -20,9 +20,10 @@ static HRESULT(WINAPI* CreateDeviceO)(IDirect3D9*, UINT, D3DDEVTYPE, HWND, DWORD
 
 extern HWND hwnd;
 
+static HRESULT (WINAPI* DirectDrawCreateO)(void* lpGUID, void** lplpDD, void* pUnkOuter);
 static HRESULT WINAPI DirectDrawCreateH(void* lpGUID, void** lplpDD, void* pUnkOuter) {
-    spdlog::error("DirectDraw is not supported, failing to create it");
-    return 0x8007000E;
+    spdlog::warn("The game is using DirectDraw, forcing custom window");
+    return DirectDrawCreateO(lpGUID, lplpDD, pUnkOuter);
 }
 
 static long __stdcall ResetH(LPDIRECT3DDEVICE9 pDevice,
@@ -99,7 +100,10 @@ static IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {
     return ret;
 }
 
+void d3d9hooks::pre_init() {
+    HOOK_AUTO("ddraw.dll", DirectDrawCreate);
+}
+
 void d3d9hooks::init() {
-    HOOK_ONLY("ddraw.dll", DirectDrawCreate);
     HOOK_AUTO("d3d9.dll", Direct3DCreate9);
 }

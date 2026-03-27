@@ -1,15 +1,15 @@
 #define WIN32_LEAN_AND_MEAN
+#include "config.hpp"
 #include "extrahooks.hpp"
 #include "files.hpp"
+#include "gamehooks.hpp"
 #include "input.hpp"
 #include "loadhooks.hpp"
 #include "mem.hpp"
 #include "plugbase.hpp"
 #include "state.hpp"
 #include "timehooks.hpp"
-#include "gamehooks.hpp"
 #include "ui.hpp"
-#include "config.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>

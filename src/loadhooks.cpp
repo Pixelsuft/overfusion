@@ -54,6 +54,7 @@ static void after_load(string_view path, void* mod) {
     auto fn = get_filename(path);
     if (mod) {
         if (fn == "mmfs2.dll") {
+            d3d9hooks::pre_init();
             audiohooks::init();
             hook::enable();
         } else if (fn == "mmf2d3d9.dll") {
@@ -138,4 +139,8 @@ static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
 void loadhook::init() {
     HOOK_STR_AUTO("kernel32.dll", LoadLibrary);
     HOOK_AUTO("kernel32.dll", GetProcAddress);
+    // For really old MMF2 versions
+    auto mmfs2_handle = GetModuleHandleW(L"mmfs2.dll");
+    if (mmfs2_handle != nullptr)
+        after_load("mmfs2.dll", mmfs2_handle);
 }

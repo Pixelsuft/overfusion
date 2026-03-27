@@ -3,6 +3,7 @@
 #include "extrahooks.hpp"
 #include "mem.hpp"
 #include "state.hpp"
+#include "plugbase.hpp"
 #include "uconv.hpp"
 #include "ui.hpp"
 #include <WinSock2.h>
@@ -255,8 +256,12 @@ void extrahooks::init() {
     [] {
         strcpy(my_argv_a, GetCommandLineA());
         wcscpy(my_argv_w, GetCommandLineW());
-        strcat(my_argv_a, " /D3D9 /DEBUG /NOF /NOVSYNC");
-        wcscat(my_argv_w, L" /D3D9 /DEBUG /NOF /NOVSYNC");
+        auto temp1 = uconv::to_ansi(plug::get().cmdline_append);
+        strcat(my_argv_a, temp1);
+        std::free(temp1);
+        auto temp2 = uconv::to_utf16(plug::get().cmdline_append);
+        wcscat(my_argv_w, temp2);
+        std::free(temp2);
         // TODO: better way than GetModuleHandleA
         *reinterpret_cast<char**>(GetProcAddress(GetModuleHandleA("msvcrt.dll"), "_acmdln")) =
             my_argv_a;

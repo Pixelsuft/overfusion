@@ -1,0 +1,90 @@
+#define WIN32_LEAN_AND_MEAN
+#include "../src/ass.hpp"
+#include "../src/config.hpp"
+#include "../src/mem.hpp"
+#include "../src/plugbase.hpp"
+#include <Windows.h>
+#include <spdlog/spdlog.h>
+
+using ost::string_view;
+
+class PlugIwbtg final : public plug::PlugBase {
+public:
+    PlugIwbtg() {
+        name = "I Wanna Be The Guy";
+        cmdline_append = " /SF \"E:\\Games\\IWBTG\\iwbtg.exe\" /SO94208 /DDRAW /DEBUG";
+    }
+
+    bool pre_init() override {
+        auto& cfg = conf::get();
+        if (cfg.fps <= 0)
+            cfg.fps = 50;
+        return true;
+    }
+
+    bool update_init() override { return true; }
+
+    std::optional<std::string> before_dll_load(string_view path, string_view fn) override {
+        // spdlog::info("Before load {}", fn);
+        return {};
+    }
+
+    void after_dll_load(string_view path, string_view fn, void* mod) override {
+        if (mod == nullptr)
+            return;
+        size_t base = reinterpret_cast<size_t>(mod);
+        if (fn == "mmfs2.dll") {
+            // FIXME: I don't know why this is needed
+            mem::write(base + 0x78d7, {0xeb});
+        }
+    };
+
+    void* get_prop(plug::PtrProp prop, void* data) override {
+        return nullptr;
+        switch (prop) {
+        case plug::PtrProp::PState:
+            return *reinterpret_cast<void**>(mem::get_base() + 0x59a9c);
+        case plug::PtrProp::PGlobalApp:
+            return *reinterpret_cast<void**>(mem::get_base() + 0x59a94);
+        case plug::PtrProp::PNextFrameTask:
+            // From pState
+            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x30);
+        case plug::PtrProp::PNextFrameData:
+            // From pState
+            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x38);
+        case plug::PtrProp::PSubTickStep:
+            // From pState
+            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x4d8);
+        case plug::PtrProp::PIsPaused:
+            // From pState
+            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x178);
+        case plug::PtrProp::PSceneID:
+            // From pGlobalApp
+            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x1ec);
+        case plug::PtrProp::Update:
+            return reinterpret_cast<void*>(mem::get_base() + 0x365a0);
+        case plug::PtrProp::Render:
+            return reinterpret_cast<void*>(mem::get_base() + 0x1ebf0);
+        default:
+            return nullptr;
+        }
+    }
+
+    bool save_state(ofs::File& file) override {
+        // I think that is unsupported
+        return false;
+    }
+
+    bool load_state(ofs::File& file) override { return false; }
+};
+
+static void on_plugin_check(plug::PlugBase** buf, bool& check) {
+    if (buf) {
+        *buf = new PlugIwbtg;
+    } else {
+        // FIXME
+        check = mem::exe_name == "stdrt.exe";
+    }
+}
+
+PLUG_REG(PlugIwbtg, on_plugin_check)

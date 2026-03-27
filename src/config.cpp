@@ -197,7 +197,7 @@ static conf::Task task_from_string(string_view sv) {
 }
 
 Config::Config() {
-    fps = 60;
+    fps = 0;
     show_menu = show_info = true;
     is_replay = false;
     is_paused = true;
