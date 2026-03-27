@@ -1,7 +1,9 @@
 #define WIN32_LEAN_AND_MEAN
 #include "winhooks.hpp"
 #include <Windows.h>
+#include <algorithm>
 #include <spdlog/spdlog.h>
+#include <vector>
 // Should be after Windows.h
 #include <Uxtheme.h>
 #include <vsstyle.h>
@@ -163,6 +165,7 @@ typedef struct tagUAHMEASUREMENUITEM {
 } UAHMEASUREMENUITEM;
 
 static int dark_mode_enabled = -1;
+static std::vector<HWND> cached_windows;
 
 bool winhooks::fix_win32_theme(void* _hwnd) {
     auto hwnd = reinterpret_cast<HWND>(_hwnd);
@@ -230,6 +233,8 @@ bool winhooks::fix_win32_theme(void* _hwnd) {
         WINDOWCOMPOSITIONATTRIBDATA data = {WCA_USEDARKMODECOLORS, &win_dark, sizeof(win_dark)};
         win_shit.SetWindowCompositionAttribute(hwnd, &data);
     }
+    if (std::find(cached_windows.begin(), cached_windows.end(), hwnd) == cached_windows.end())
+        cached_windows.push_back(hwnd);
     return true;
 }
 
@@ -348,7 +353,8 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
             CloseThemeData(g_menuTheme);
             g_menuTheme = nullptr;
         }
-        // TODO: apply theme to over windows
+        for (auto& win_hwnd : cached_windows)
+            winhooks::fix_win32_theme(win_hwnd);
         return false;
     }
     case WM_NCPAINT:
