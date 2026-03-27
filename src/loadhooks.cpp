@@ -39,8 +39,8 @@ static string get_module_path(HMODULE module) {
 static std::optional<std::string> before_load(string_view path) {
     auto fn = get_filename(path);
     if (fn == "mmf2d3d8.dll") {
-        spdlog::error("Direct3D8 is not supported yet, failing to load it");
-        return "";
+        spdlog::warn("Direct3D8 is not supported, a custom window will be used");
+        // return "";
     } else if (fn == "Imm32.dll" || fn == "mscoree.dll" || fn == "uxtheme.dll") {
         return "";
     } else if (fn == "xinput1_4.dll" || fn == "xinput1_3.dll" || fn == "xinput1_2.dll" ||

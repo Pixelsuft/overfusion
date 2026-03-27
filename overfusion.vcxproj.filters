@@ -147,6 +147,15 @@
     <ClCompile Include="plugins\fnaf.cpp">
       <Filter>Plugins</Filter>
     </ClCompile>
+    <ClCompile Include="plugins\iwbtg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\customwindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="plugins\iwbtbadmin.cpp">
+      <Filter>Plugins</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest">
@@ -207,6 +216,9 @@
     </ClInclude>
     <ClInclude Include="src\lock.hpp">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\customwindow.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

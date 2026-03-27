@@ -270,6 +270,7 @@
     <ClCompile Include="minhook\src\trampoline.c" />
     <ClCompile Include="plugins\fnaf.cpp" />
     <ClCompile Include="plugins\iwbtb.cpp" />
+    <ClCompile Include="plugins\iwbtbadmin.cpp" />
     <ClCompile Include="plugins\iwbtg.cpp" />
     <ClCompile Include="plugins\iwtdemo.cpp" />
     <ClCompile Include="plugins\iwtold.cpp" />
