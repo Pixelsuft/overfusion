@@ -25,6 +25,7 @@ static int __stdcall UpdateGameFrameH() {
             spdlog::info("Initializing custom window for software renderer");
             if (!customwindow::init()) {
                 spdlog::error("Failed to initialize custom window");
+                cfg.custom_window = false; // NO-OP
             }
         }
         inited = true;

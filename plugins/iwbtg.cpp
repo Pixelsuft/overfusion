@@ -1,5 +1,4 @@
 #define WIN32_LEAN_AND_MEAN
-#include "../src/ass.hpp"
 #include "../src/config.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
@@ -40,11 +39,12 @@ public:
     };
 
     void* get_prop(plug::PtrProp prop, void* data) override {
-        return nullptr;
         switch (prop) {
         case plug::PtrProp::PState:
-            return *reinterpret_cast<void**>(mem::get_base() + 0x59a9c);
+            return *reinterpret_cast<void**>(mem::get_base() + 0x48384);
         case plug::PtrProp::PGlobalApp:
+            // TODO
+            return nullptr;
             return *reinterpret_cast<void**>(mem::get_base() + 0x59a94);
         case plug::PtrProp::PNextFrameTask:
             // From pState
@@ -60,10 +60,12 @@ public:
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x178);
         case plug::PtrProp::PSceneID:
             // From pGlobalApp
+            return nullptr;
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x1ec);
         case plug::PtrProp::Update:
-            return reinterpret_cast<void*>(mem::get_base() + 0x365a0);
+            return reinterpret_cast<void*>(mem::get_base() + 0x2bf30);
         case plug::PtrProp::Render:
+            return nullptr;
             return reinterpret_cast<void*>(mem::get_base() + 0x1ebf0);
         default:
             return nullptr;

@@ -131,6 +131,9 @@ bool customwindow::init() {
         spdlog::error("Failed to create custom window");
         return false;
     }
+#ifdef _DEBUG
+    ShowWindow(g_hwnd, SW_SHOWDEFAULT);
+#endif
     if (!InitD3D9()) {
         spdlog::error("Failed to initialize D3D9");
         return false;

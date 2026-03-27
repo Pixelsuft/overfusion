@@ -263,7 +263,6 @@ void UAHDrawMenuNCBottomLine(HWND hWnd) {
 bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* lr) {
     switch (message) {
     case WM_UAHDRAWMENU: {
-        spdlog::debug("need msg");
         UAHMENU* pUDM = (UAHMENU*)lParam;
         RECT rc = {0};
         if (1) {
@@ -278,7 +277,6 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
         return true;
     }
     case WM_UAHDRAWMENUITEM: {
-        spdlog::debug("need msg");
         UAHDRAWMENUITEM* pUDMI = (UAHDRAWMENUITEM*)lParam;
         static HBRUSH g_brItemBackground = CreateSolidBrush(RGB(0xC0, 0xC0, 0xFF));
         static HBRUSH g_brItemBackgroundHot = CreateSolidBrush(RGB(0xD0, 0xD0, 0xFF));
@@ -340,34 +338,24 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
         return true;
     }
     case WM_UAHMEASUREMENUITEM: {
-        spdlog::debug("need msg");
         UAHMEASUREMENUITEM* pMmi = (UAHMEASUREMENUITEM*)lParam;
-
-        // allow the default window procedure to handle the message
-        // since we don't really care about changing the width
         *lr = DefWindowProc(hWnd, message, wParam, lParam);
-
-        // but we can modify it here to make it 1/3rd wider for example
         pMmi->mis.itemWidth = (pMmi->mis.itemWidth * 4) / 3;
-
         return true;
     }
     case WM_THEMECHANGED: {
-        spdlog::debug("need msg");
         if (g_menuTheme) {
             CloseThemeData(g_menuTheme);
             g_menuTheme = nullptr;
         }
-        // continue processing in main wndproc
+        // TODO: apply theme to over windows
         return false;
     }
     case WM_NCPAINT:
     case WM_NCACTIVATE:
-        spdlog::debug("need msg");
         *lr = DefWindowProc(hWnd, message, wParam, lParam);
         UAHDrawMenuNCBottomLine(hWnd);
         return true;
-        break;
     default:
         return false;
     }
