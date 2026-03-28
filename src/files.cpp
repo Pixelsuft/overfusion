@@ -8,6 +8,7 @@
 #include "uconv.hpp"
 #include <Windows.h>
 #include <algorithm>
+#include <fcntl.h>
 #include <imgui.h>
 #include <map>
 #include <spdlog/spdlog.h>
@@ -464,22 +465,87 @@ static BOOL WINAPI GetFileSizeExH(HANDLE hFile, PLARGE_INTEGER lpFileSize) {
     return TRUE;
 }
 
+static HFILE(WINAPI* OpenFileO)(LPCSTR, LPOFSTRUCT, UINT);
 static HFILE WINAPI OpenFileH(LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT uStyle) {
-    // TODO: implement
-    spdlog::warn("Attempted to use old OpenFile, failing: {}", uconv::from_ansi(lpFileName));
-    return HFILE_ERROR;
+    auto fp = uconv::from_ansi(lpFileName);
+    bool for_read = (uStyle & OF_WRITE) == 0;
+    bool for_write = (uStyle & (OF_WRITE | OF_READWRITE)) != 0;
+    auto temp_ret = handle_file_open(fp, for_read, for_write, OPEN_EXISTING);
+    if (temp_ret.has_value())
+        return reinterpret_cast<HFILE>(temp_ret.value());
+    return OpenFileO(lpFileName, lpReOpenBuff, uStyle);
 }
 
+static void parse_crt_flags(int oflag, bool& r, bool& w) {
+    r = (oflag & _O_WRONLY) == 0;
+    w = (oflag & (_O_WRONLY | _O_RDWR)) != 0;
+}
+
+static int (*_openO)(const char*, int, int);
 static int _openH(const char* filename, int oflag, int pmode) {
     auto fp = uconv::from_ansi(filename);
-    spdlog::warn("TODO: _open {}", fp);
-    return -1;
+    bool r, w;
+    parse_crt_flags(oflag, r, w);
+    DWORD disp = OPEN_EXISTING;
+    if (oflag & _O_CREAT)
+        disp = (oflag & _O_EXCL) ? CREATE_NEW : OPEN_ALWAYS;
+    if (oflag & _O_TRUNC)
+        disp = TRUNCATE_EXISTING;
+    auto temp_ret = handle_file_open(fp, r, w, disp);
+    if (temp_ret.has_value())
+        return static_cast<int>(reinterpret_cast<uintptr_t>(temp_ret.value()));
+    return _openO(filename, oflag, pmode);
 }
 
+static int (*_wopenO)(const wchar_t*, int, int);
 static int _wopenH(const wchar_t* filename, int oflag, int pmode) {
     auto fp = uconv::from_utf16(filename);
-    spdlog::warn("TODO: _wopen {}", fp);
-    return -1;
+    bool r, w;
+    parse_crt_flags(oflag, r, w);
+    DWORD disp = OPEN_EXISTING;
+    if (oflag & _O_CREAT)
+        disp = (oflag & _O_EXCL) ? CREATE_NEW : OPEN_ALWAYS;
+    auto temp_ret = handle_file_open(fp, r, w, disp);
+    if (temp_ret.has_value())
+        return static_cast<int>(reinterpret_cast<uintptr_t>(temp_ret.value()));
+    return _wopenO(filename, oflag, pmode);
+}
+
+static bool is_our_fd(int fd) { return fd > 1024 || fd < -1; }
+
+static int(CDECL* _readO)(int, void*, unsigned int);
+static int CDECL _readH(int fd, void* buffer, unsigned int count) {
+    if (is_our_fd(fd)) {
+        DWORD bytesRead = 0;
+        if (ReadFileH(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(fd)), buffer, count,
+                      &bytesRead, nullptr))
+            return static_cast<int>(bytesRead);
+        return -1;
+    }
+    return _readO(fd, buffer, count);
+}
+
+static int(CDECL* _writeO)(int, const void*, unsigned int);
+static int CDECL _writeH(int fd, const void* buffer, unsigned int count) {
+    if (is_our_fd(fd)) {
+        DWORD bytesWritten = 0;
+        if (WriteFileH(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(fd)), buffer, count,
+                       &bytesWritten, nullptr))
+            return static_cast<int>(bytesWritten);
+        return -1;
+    }
+    return _writeO(fd, buffer, count);
+}
+
+static long(CDECL* _lseekO)(int, long, int);
+static long CDECL _lseekH(int fd, long offset, int origin) {
+    if (is_our_fd(fd)) {
+        // origin CRT is the same with FILE_BEGIN/CURRENT/END in WinAPI (0, 1, 2)
+        DWORD res = SetFilePointerH(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(fd)), offset,
+                                    nullptr, (DWORD)origin);
+        return (res == INVALID_SET_FILE_POINTER) ? -1L : (long)res;
+    }
+    return _lseekO(fd, offset, origin);
 }
 
 static BOOL WINAPI CloseHandleH(HANDLE hObject) {
@@ -490,6 +556,16 @@ static BOOL WINAPI CloseHandleH(HANDLE hObject) {
     delete *it;
     our_handles.erase(it);
     return TRUE;
+}
+
+static int(CDECL* _closeO)(int);
+static int CDECL _closeH(int fd) {
+    if (is_our_fd(fd)) {
+        if (CloseHandleH(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(fd))))
+            return 0;
+        return -1;
+    }
+    return _closeO(fd);
 }
 
 static BOOL(WINAPI* WritePrivateProfileStringAO)(LPCSTR lpAppName, LPCSTR lpKeyName,
@@ -557,7 +633,7 @@ void files::hook_fs() {
     HOOK_STR_AUTO("kernel32.dll", CreateFile);
     HOOK_STR_AUTO("kernel32.dll", WritePrivateProfileString);
     HOOK_STR_AUTO("kernel32.dll", GetPrivateProfileString);
-    HOOK_ONLY("kernel32.dll", OpenFile);
+    HOOK_AUTO("kernel32.dll", OpenFile);
     HOOK_AUTO("kernel32.dll", ReadFile);
     HOOK_AUTO("kernel32.dll", ReadFileEx);
     HOOK_AUTO("kernel32.dll", WriteFile);
@@ -567,8 +643,13 @@ void files::hook_fs() {
     HOOK_AUTO("kernel32.dll", GetFileSize);
     HOOK_AUTO("kernel32.dll", GetFileSizeEx);
     HOOK_AUTO("kernel32.dll", CloseHandle);
-    HOOK_ONLY("msvcrt.dll", _open);
-    HOOK_ONLY("msvcrt.dll", _wopen);
+    return;
+    HOOK_AUTO("msvcrt.dll", _open);
+    HOOK_AUTO("msvcrt.dll", _wopen);
+    HOOK_AUTO("msvcrt.dll", _read);
+    HOOK_AUTO("msvcrt.dll", _write);
+    HOOK_AUTO("msvcrt.dll", _lseek);
+    HOOK_AUTO("msvcrt.dll", _close);
 }
 
 void files::draw_ui() {
