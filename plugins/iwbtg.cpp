@@ -11,14 +11,25 @@ class PlugIwbtg final : public plug::PlugBase {
 public:
     PlugIwbtg() {
         name = "I Wanna Be The Guy";
-        cmdline_append = " /SF \"E:\\Games\\IWBTG\\iwbtg.exe\" /SO94208 /DEBUG";
+        cmdline_append = " /SF \"E:\\Games\\IWBTG\\iwbtg.exe\" /SO94208 /DEBUG /MIS0 /NOVSYNC";
     }
 
     bool pre_init() override {
         auto& cfg = conf::get();
         if (cfg.fps <= 0)
             cfg.fps = 50;
+        // Idk but this fixes switching between scenes
         mem::write(mem::get_base() + 0x15af3, {0x90, 0x90});
+        // No extra time logic
+        mem::write(mem::get_base() + 0x2803, {0xeb});
+        mem::write(mem::get_base() + 0x2824, {0x90, 0x90});
+        mem::write(mem::get_base() + 0x31891, {0xeb});
+        // Window title patch
+        mem::write(mem::get_base() + 0x13123, {0xeb});
+        mem::write(mem::get_base() + 0x13143, {0x90, 0x90});
+        mem::write(mem::get_base() + 0x1314a, {0x90, 0x90});
+        mem::write(mem::get_base() + 0x1314f, {0x90, 0x90});
+        // No sleep
         return true;
     }
 
@@ -36,6 +47,11 @@ public:
         if (fn == "mmfs2.dll") {
             // I don't know why this is needed
             mem::write(base + 0x78d7, {0xeb});
+            mem::write(base + 0x6e2f, {0xeb});
+            mem::write(base + 0x6e80, {0x90, 0x90, 0x90, 0x90});
+        } else if (fn == "CCTrans.dll") {
+            // FIXME
+            mem::write(base + 0x7448, {0xeb});
         }
     };
 

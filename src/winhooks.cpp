@@ -133,13 +133,13 @@ static HWND WINAPI GetActiveWindowH() {
 static HHOOK WINAPI SetWindowsHookExAH(int idHook, HOOKPROC lpfn, HINSTANCE hmod,
                                        DWORD dwThreadId) {
     // No size/move hooks which cause desyncs
-    spdlog::info("Failing SetWindowsHookExA");
+    spdlog::debug("Failing SetWindowsHookExA");
     return nullptr;
 }
 
 static HHOOK WINAPI SetWindowsHookExWH(int idHook, HOOKPROC lpfn, HINSTANCE hmod,
                                        DWORD dwThreadId) {
-    spdlog::info("Failing SetWindowsHookExW");
+    spdlog::debug("Failing SetWindowsHookExW");
     return nullptr;
 }
 

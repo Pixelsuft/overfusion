@@ -463,6 +463,7 @@ static BOOL WINAPI GetFileSizeExH(HANDLE hFile, PLARGE_INTEGER lpFileSize) {
 }
 
 static HFILE WINAPI OpenFileH(LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT uStyle) {
+    // TODO: implement
     spdlog::warn("Attempted to use old OpenFile, failing: {}", uconv::from_ansi(lpFileName));
     return HFILE_ERROR;
 }

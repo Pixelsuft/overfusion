@@ -16,7 +16,6 @@ private:
 public:
     PlugIwbtbAdmin() {
         name = "I Wanna Be The Boshy [admin]";
-        cmdline_append = " /DEBUG /NOVSYNC";
         need_key_message = false;
         SaveGameState = nullptr;
         LoadGameState = nullptr;

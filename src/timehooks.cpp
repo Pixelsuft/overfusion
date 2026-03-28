@@ -205,6 +205,7 @@ void timehooks::update_init() {
     // This breaks Nvidia driver if hooked earlier
     // FIXME: This also crashes FNAF (WTF?)
     // HOOK_ONLY("kernel32.dll", GetLocalTime);
+    // TODO: GetSystemTime?
 }
 
 void timehooks::update(int dt) {
