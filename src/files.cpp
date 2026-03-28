@@ -465,14 +465,38 @@ static BOOL WINAPI GetFileSizeExH(HANDLE hFile, PLARGE_INTEGER lpFileSize) {
     return TRUE;
 }
 
+static DWORD of_style_to_disposition(UINT uStyle) {
+    if (uStyle & OF_CREATE) return CREATE_ALWAYS;
+    if (uStyle & OF_EXIST)  return OPEN_EXISTING;
+    return OPEN_ALWAYS;
+}
+
 static HFILE(WINAPI* OpenFileO)(LPCSTR, LPOFSTRUCT, UINT);
 static HFILE WINAPI OpenFileH(LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT uStyle) {
-    auto fp = uconv::from_ansi(lpFileName);
+    if (!lpFileName || !lpReOpenBuff) return HFILE_ERROR;
+    return OpenFileO(lpFileName, lpReOpenBuff, uStyle);
+    lpReOpenBuff->cBytes = sizeof(OFSTRUCT);
+    lpReOpenBuff->fFixedDisk = 1;
+    lpReOpenBuff->nErrCode = 0;
+    strncpy(lpReOpenBuff->szPathName, lpFileName, sizeof(lpReOpenBuff->szPathName) - 1);
+    if (uStyle & OF_DELETE) {
+        lock::CSLock mylock(cs);
+        string norm = normalize_path(uconv::from_ansi(lpFileName));
+        if (file_map.erase(norm)) return TRUE;
+        return OpenFileO(lpFileName, lpReOpenBuff, uStyle);
+    }
     bool for_read = (uStyle & OF_WRITE) == 0;
     bool for_write = (uStyle & (OF_WRITE | OF_READWRITE)) != 0;
-    auto temp_ret = handle_file_open(fp, for_read, for_write, OPEN_EXISTING);
-    if (temp_ret.has_value())
-        return reinterpret_cast<HFILE>(temp_ret.value());
+    DWORD disposition = of_style_to_disposition(uStyle);
+    auto temp_ret = handle_file_open(uconv::from_ansi(lpFileName), for_read, for_write, disposition);
+    if (temp_ret.has_value()) {
+        void* h = temp_ret.value();
+        if (h == INVALID_HANDLE_VALUE) {
+            lpReOpenBuff->nErrCode = (WORD)GetLastError();
+            return HFILE_ERROR;
+        }
+        return reinterpret_cast<HFILE>(h);
+    }
     return OpenFileO(lpFileName, lpReOpenBuff, uStyle);
 }
 
@@ -643,7 +667,6 @@ void files::hook_fs() {
     HOOK_AUTO("kernel32.dll", GetFileSize);
     HOOK_AUTO("kernel32.dll", GetFileSizeEx);
     HOOK_AUTO("kernel32.dll", CloseHandle);
-    return;
     HOOK_AUTO("msvcrt.dll", _open);
     HOOK_AUTO("msvcrt.dll", _wopen);
     HOOK_AUTO("msvcrt.dll", _read);
