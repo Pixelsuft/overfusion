@@ -466,29 +466,34 @@ static BOOL WINAPI GetFileSizeExH(HANDLE hFile, PLARGE_INTEGER lpFileSize) {
 }
 
 static DWORD of_style_to_disposition(UINT uStyle) {
-    if (uStyle & OF_CREATE) return CREATE_ALWAYS;
-    if (uStyle & OF_EXIST)  return OPEN_EXISTING;
+    if (uStyle & OF_CREATE)
+        return CREATE_ALWAYS;
+    if (uStyle & OF_EXIST)
+        return OPEN_EXISTING;
     return OPEN_ALWAYS;
 }
 
 static HFILE(WINAPI* OpenFileO)(LPCSTR, LPOFSTRUCT, UINT);
 static HFILE WINAPI OpenFileH(LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT uStyle) {
-    if (!lpFileName || !lpReOpenBuff) return HFILE_ERROR;
-    return OpenFileO(lpFileName, lpReOpenBuff, uStyle);
+    if (!lpFileName || !lpReOpenBuff)
+        return HFILE_ERROR;
+    auto fp = uconv::from_ansi(lpFileName);
     lpReOpenBuff->cBytes = sizeof(OFSTRUCT);
     lpReOpenBuff->fFixedDisk = 1;
     lpReOpenBuff->nErrCode = 0;
-    strncpy(lpReOpenBuff->szPathName, lpFileName, sizeof(lpReOpenBuff->szPathName) - 1);
+    strcpy(lpReOpenBuff->szPathName, lpFileName);
     if (uStyle & OF_DELETE) {
         lock::CSLock mylock(cs);
         string norm = normalize_path(uconv::from_ansi(lpFileName));
-        if (file_map.erase(norm)) return TRUE;
+        if (file_map.erase(norm))
+            return TRUE;
         return OpenFileO(lpFileName, lpReOpenBuff, uStyle);
     }
     bool for_read = (uStyle & OF_WRITE) == 0;
     bool for_write = (uStyle & (OF_WRITE | OF_READWRITE)) != 0;
     DWORD disposition = of_style_to_disposition(uStyle);
-    auto temp_ret = handle_file_open(uconv::from_ansi(lpFileName), for_read, for_write, disposition);
+    auto temp_ret =
+        handle_file_open(uconv::from_ansi(lpFileName), for_read, for_write, disposition);
     if (temp_ret.has_value()) {
         void* h = temp_ret.value();
         if (h == INVALID_HANDLE_VALUE) {
@@ -505,17 +510,25 @@ static void parse_crt_flags(int oflag, bool& r, bool& w) {
     w = (oflag & (_O_WRONLY | _O_RDWR)) != 0;
 }
 
+static DWORD crt_flags_to_disposition(int oflag) {
+    if (oflag & _O_CREAT) {
+        if (oflag & _O_EXCL)
+            return CREATE_NEW;
+        if (oflag & _O_TRUNC)
+            return CREATE_ALWAYS;
+        return OPEN_ALWAYS;
+    }
+    if (oflag & _O_TRUNC)
+        return TRUNCATE_EXISTING;
+    return OPEN_EXISTING;
+}
+
 static int (*_openO)(const char*, int, int);
 static int _openH(const char* filename, int oflag, int pmode) {
     auto fp = uconv::from_ansi(filename);
     bool r, w;
     parse_crt_flags(oflag, r, w);
-    DWORD disp = OPEN_EXISTING;
-    if (oflag & _O_CREAT)
-        disp = (oflag & _O_EXCL) ? CREATE_NEW : OPEN_ALWAYS;
-    if (oflag & _O_TRUNC)
-        disp = TRUNCATE_EXISTING;
-    auto temp_ret = handle_file_open(fp, r, w, disp);
+    auto temp_ret = handle_file_open(fp, r, w, crt_flags_to_disposition(oflag));
     if (temp_ret.has_value())
         return static_cast<int>(reinterpret_cast<uintptr_t>(temp_ret.value()));
     return _openO(filename, oflag, pmode);
@@ -526,16 +539,16 @@ static int _wopenH(const wchar_t* filename, int oflag, int pmode) {
     auto fp = uconv::from_utf16(filename);
     bool r, w;
     parse_crt_flags(oflag, r, w);
-    DWORD disp = OPEN_EXISTING;
-    if (oflag & _O_CREAT)
-        disp = (oflag & _O_EXCL) ? CREATE_NEW : OPEN_ALWAYS;
-    auto temp_ret = handle_file_open(fp, r, w, disp);
+    auto temp_ret = handle_file_open(fp, r, w, crt_flags_to_disposition(oflag));
     if (temp_ret.has_value())
         return static_cast<int>(reinterpret_cast<uintptr_t>(temp_ret.value()));
     return _wopenO(filename, oflag, pmode);
 }
 
-static bool is_our_fd(int fd) { return fd > 1024 || fd < -1; }
+static bool is_our_fd(int fd) {
+    // I think nobody uses it but us so we can skip extra check
+    return fd > 1024 || fd < -1;
+}
 
 static int(CDECL* _readO)(int, void*, unsigned int);
 static int CDECL _readH(int fd, void* buffer, unsigned int count) {
@@ -590,6 +603,17 @@ static int CDECL _closeH(int fd) {
         return -1;
     }
     return _closeO(fd);
+}
+
+static HFILE(WINAPI* _lcloseO)(HFILE);
+static HFILE WINAPI _lcloseH(HFILE hFile) {
+    lock::CSLock mylock(cs);
+    auto it = std::find(our_handles.begin(), our_handles.end(), reinterpret_cast<void*>(hFile));
+    if (it == our_handles.end())
+        return _lcloseO(hFile);
+    delete *it;
+    our_handles.erase(it);
+    return 0;
 }
 
 static BOOL(WINAPI* WritePrivateProfileStringAO)(LPCSTR lpAppName, LPCSTR lpKeyName,
@@ -667,6 +691,7 @@ void files::hook_fs() {
     HOOK_AUTO("kernel32.dll", GetFileSize);
     HOOK_AUTO("kernel32.dll", GetFileSizeEx);
     HOOK_AUTO("kernel32.dll", CloseHandle);
+    HOOK_AUTO("kernel32.dll", _lclose);
     HOOK_AUTO("msvcrt.dll", _open);
     HOOK_AUTO("msvcrt.dll", _wopen);
     HOOK_AUTO("msvcrt.dll", _read);
