@@ -206,7 +206,7 @@ static std::optional<void*> handle_file_open(std::string_view path, bool for_rea
         FileData& data = it->second;
         if (data.refcount != 0) {
             if ((for_read && !data.allow_read) || (for_write && !data.allow_write)) {
-                spdlog::warn("Access denied for file: {}", path);
+                spdlog::warn("Access denied for file: {} (refcount: {})", path, data.refcount);
                 SetLastError(ERROR_ACCESS_DENIED);
                 return INVALID_HANDLE_VALUE;
             }
@@ -587,7 +587,7 @@ static long CDECL _lseekH(int fd, long offset, int origin) {
 
 static BOOL WINAPI CloseHandleH(HANDLE hObject) {
     lock::CSLock mylock(cs);
-    auto it = std::find(our_handles.begin(), our_handles.end(), hObject);
+    auto it = std::find(our_handles.begin(), our_handles.end(), reinterpret_cast<FileHandle*>(hObject));
     if (it == our_handles.end())
         return CloseHandleO(hObject);
     delete *it;
@@ -608,7 +608,7 @@ static int CDECL _closeH(int fd) {
 static HFILE(WINAPI* _lcloseO)(HFILE);
 static HFILE WINAPI _lcloseH(HFILE hFile) {
     lock::CSLock mylock(cs);
-    auto it = std::find(our_handles.begin(), our_handles.end(), reinterpret_cast<void*>(hFile));
+    auto it = std::find(our_handles.begin(), our_handles.end(), reinterpret_cast<FileHandle*>(hFile));
     if (it == our_handles.end())
         return _lcloseO(hFile);
     delete *it;
