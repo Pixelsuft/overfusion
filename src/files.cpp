@@ -53,8 +53,10 @@ static string temp_path;
 static std::map<std::string, FileData> file_map;
 static std::vector<FileHandle*> our_handles;
 
-HANDLE(WINAPI* CreateFileWO)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD, HANDLE) = CreateFileW;
-HANDLE(WINAPI* CreateFileAO)(LPCSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD, HANDLE) = CreateFileA;
+HANDLE(WINAPI* CreateFileWO)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD,
+                             HANDLE) = CreateFileW;
+HANDLE(WINAPI* CreateFileAO)(LPCSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD,
+                             HANDLE) = CreateFileA;
 BOOL(WINAPI* CloseHandleO)(HANDLE hObject) = CloseHandle;
 
 static std::string normalize_path(string_view path_view) {
@@ -468,6 +470,18 @@ static HFILE WINAPI OpenFileH(LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT u
     return HFILE_ERROR;
 }
 
+static int _openH(const char* filename, int oflag, int pmode) {
+    auto fp = uconv::from_ansi(filename);
+    spdlog::warn("TODO: _open {}", fp);
+    return -1;
+}
+
+static int _wopenH(const wchar_t* filename, int oflag, int pmode) {
+    auto fp = uconv::from_utf16(filename);
+    spdlog::warn("TODO: _wopen {}", fp);
+    return -1;
+}
+
 static BOOL WINAPI CloseHandleH(HANDLE hObject) {
     lock::CSLock mylock(cs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hObject);
@@ -553,6 +567,8 @@ void files::hook_fs() {
     HOOK_AUTO("kernel32.dll", GetFileSize);
     HOOK_AUTO("kernel32.dll", GetFileSizeEx);
     HOOK_AUTO("kernel32.dll", CloseHandle);
+    HOOK_ONLY("msvcrt.dll", _open);
+    HOOK_ONLY("msvcrt.dll", _wopen);
 }
 
 void files::draw_ui() {

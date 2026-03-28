@@ -71,7 +71,7 @@ static BOOL WINAPI SetKeyboardStateH(LPBYTE lpKeyState) {
 }
 
 static BOOL WINAPI OpenClipboardH(HWND hWndNewOwner) {
-    spdlog::info("OpenClipboard");
+    spdlog::warn("failing OpenClipboard");
     return FALSE;
 }
 
@@ -92,7 +92,7 @@ static UINT WINAPI SendInputH(UINT cInputs, LPINPUT pInputs, int cbSize) {
 }
 
 static BOOL WINAPI SetCursorPosH(int X, int Y) {
-    spdlog::info("SetCursorPos");
+    spdlog::info("SetCursorPos({}, {})", X, Y);
     return FALSE;
 }
 
