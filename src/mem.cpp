@@ -10,10 +10,10 @@
 
 using std::string;
 
-static HMODULE base_module;
-static HANDLE hproc;
 namespace mem {
     string exe_name;
+    static HMODULE base_module;
+    static HANDLE hproc;
 }
 
 void mem::init() {

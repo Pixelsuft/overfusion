@@ -81,7 +81,7 @@ static BOOL SetLocalTimeH(const SYSTEMTIME *lpSystemTime) {
     return FALSE;
 }
 
-BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency);
+BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency) = QueryPerformanceFrequency;
 static BOOL WINAPI QueryPerformanceFrequencyH(LARGE_INTEGER* lpFrequency) {
     if (ui::processing)
         return QueryPerformanceFrequencyO(lpFrequency);
@@ -89,7 +89,7 @@ static BOOL WINAPI QueryPerformanceFrequencyH(LARGE_INTEGER* lpFrequency) {
     return TRUE;
 }
 
-BOOL(WINAPI* QueryPerformanceCounterO)(LARGE_INTEGER* lpFrequency);
+BOOL(WINAPI* QueryPerformanceCounterO)(LARGE_INTEGER* lpFrequency) = QueryPerformanceCounter;
 static BOOL WINAPI QueryPerformanceCounterH(LARGE_INTEGER* lpFrequency) {
     if (ui::processing)
         return QueryPerformanceCounterO(lpFrequency);
@@ -179,8 +179,6 @@ static MMRESULT WINAPI timeKillEventH(UINT uTimerID) {
 
 void timehooks::init() {
     mm_timer_counter = 1;
-    QueryPerformanceFrequencyO = QueryPerformanceFrequency;
-    QueryPerformanceCounterO = QueryPerformanceCounter;
     HOOK_ONLY("winmm.dll", timeGetSystemTime);
     HOOK_AUTO("winmm.dll", timeGetTime);
     HOOK_AUTO("kernel32.dll", QueryPerformanceFrequency);
@@ -200,6 +198,7 @@ void timehooks::init() {
 }
 
 void timehooks::update_init() {
+    // FIXME: breaks IWBTB admin mod for some reason
     HOOK_AUTO("kernel32.dll", QueryPerformanceCounter);
     // This breaks fontembed.mfx if hooked earlier
     HOOK_ONLY("kernel32.dll", GetSystemTimeAsFileTime);

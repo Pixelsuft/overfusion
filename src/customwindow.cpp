@@ -71,7 +71,7 @@ static bool RegisterCustomWindowClass(HINSTANCE hInstance) {
 }
 
 static bool CreateCustomWindow(HINSTANCE hInstance) {
-    RECT rect = {0, 0, 640, 480};
+    RECT rect = {0, 0, 320, 200};
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
     g_hwnd = CreateWindowExW(0, g_windowClassName, L"OverFusion Custom Window", WS_OVERLAPPEDWINDOW,
                              CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left,
@@ -121,6 +121,7 @@ static bool InitImGui() {
     return true;
 }
 
+extern HWND hwnd;
 bool customwindow::init() {
     HINSTANCE hInstance = GetModuleHandle(nullptr);
     if (!RegisterCustomWindowClass(hInstance)) {
@@ -146,6 +147,7 @@ bool customwindow::init() {
     ShowWindow(g_hwnd, SW_SHOWDEFAULT);
     UpdateWindow(g_hwnd);
     SetWindowPos(g_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    // SetParent(g_hwnd, hwnd);
 
     spdlog::info("Custom window initialized successfully");
     return true;

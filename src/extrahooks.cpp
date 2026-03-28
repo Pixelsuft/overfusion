@@ -2,8 +2,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include "extrahooks.hpp"
 #include "mem.hpp"
-#include "state.hpp"
 #include "plugbase.hpp"
+#include "state.hpp"
 #include "uconv.hpp"
 #include "ui.hpp"
 #include <WinSock2.h>
@@ -118,14 +118,19 @@ static BOOL WINAPI GetVersionExWH(LPOSVERSIONINFOW lpVersionInformation) {
 }
 
 static MMRESULT WINAPI joyGetDevCapsAH(UINT_PTR uJoyID, LPJOYCAPSA pjc, UINT cbjc) {
+    spdlog::warn("Failing joyGetDevCapsA");
     return MMSYSERR_NODRIVER;
 }
 
 static MMRESULT WINAPI joyGetDevCapsWH(UINT_PTR uJoyID, LPJOYCAPSW pjc, UINT cbjc) {
+    spdlog::warn("Failing joyGetDevCapsW");
     return MMSYSERR_NODRIVER;
 }
 
-static MMRESULT WINAPI joyGetPosExH(UINT uJoyID, LPJOYINFOEX pji) { return MMSYSERR_NODRIVER; }
+static MMRESULT WINAPI joyGetPosExH(UINT uJoyID, LPJOYINFOEX pji) {
+    spdlog::warn("Failing joyGetPosEx");
+    return MMSYSERR_NODRIVER;
+}
 
 static BOOL WINAPI BeepH(DWORD dwFreq, DWORD dwDuration) {
     spdlog::info("Beep (freq={}, duration={})", dwFreq, dwDuration);
@@ -238,6 +243,7 @@ static LSTATUS WINAPI RegCreateKeyWH(HKEY hKey, LPCWSTR lpSubKey, PHKEY phkResul
 }
 
 static BOOL __stdcall InternetGetConnectedStateH(LPDWORD lpdwFlags, DWORD dwReserved) {
+    spdlog::info("Faking InternetGetConnectedState returning an error");
     *lpdwFlags = 0x20;
     return FALSE;
 }

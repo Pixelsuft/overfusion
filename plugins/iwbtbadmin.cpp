@@ -16,7 +16,7 @@ private:
 public:
     PlugIwbtbAdmin() {
         name = "I Wanna Be The Boshy [admin]";
-        cmdline_append = " /DEBUG /DDRAW";
+        cmdline_append = " /DEBUG /NOVSYNC";
         need_key_message = false;
         SaveGameState = nullptr;
         LoadGameState = nullptr;
@@ -30,7 +30,15 @@ public:
         ASS(SaveGameState != nullptr);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x51610);
         ASS(LoadGameState != nullptr);
-        // From boshyst
+        // No input polling
+        mem::write(mem::get_base() + 0x2d077, {0xeb});
+        mem::write(mem::get_base() + 0x2d969, {0xeb});
+        // No waiting
+        mem::write(mem::get_base() + 0x2fbb, {0xeb});
+        mem::write(mem::get_base() + 0x302e, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        // Force input to use GetKeyState for immediate refresh
+        mem::write(mem::get_base() + 0xb912, {0xeb});
+        mem::write(mem::get_base() + 0xb9c2, {0xeb});
         return true;
     }
 

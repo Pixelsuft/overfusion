@@ -174,8 +174,6 @@ static bool create_file_data(FileData& ret, std::string_view path, DWORD dwCreat
 
 static bool is_allowed_file(std::string_view path) {
     return true;
-    // spdlog::debug("file: {}", path);
-    // TODO
     return !path.ends_with(".mfx") && !path.ends_with(".mvx") && !path.ends_with(".dll") &&
            !path.ends_with(".sft") && !path.ends_with(".ift") && !path.ends_with(".exe") &&
            !path.ends_with(".bin");
@@ -542,8 +540,8 @@ void files::init() {
 
 void files::hook_fs() {
     HOOK_STR_AUTO("kernel32.dll", CreateFile);
-    // HOOK_STR_AUTO("kernel32.dll", WritePrivateProfileString);
-    // HOOK_STR_AUTO("kernel32.dll", GetPrivateProfileString);
+    HOOK_STR_AUTO("kernel32.dll", WritePrivateProfileString);
+    HOOK_STR_AUTO("kernel32.dll", GetPrivateProfileString);
     HOOK_ONLY("kernel32.dll", OpenFile);
     HOOK_AUTO("kernel32.dll", ReadFile);
     HOOK_AUTO("kernel32.dll", ReadFileEx);

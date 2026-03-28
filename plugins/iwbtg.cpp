@@ -18,6 +18,7 @@ public:
         auto& cfg = conf::get();
         if (cfg.fps <= 0)
             cfg.fps = 50;
+        mem::write(mem::get_base() + 0x15af3, {0x90, 0x90});
         return true;
     }
 
@@ -33,7 +34,7 @@ public:
             return;
         size_t base = reinterpret_cast<size_t>(mod);
         if (fn == "mmfs2.dll") {
-            // FIXME: I don't know why this is needed
+            // I don't know why this is needed
             mem::write(base + 0x78d7, {0xeb});
         }
     };

@@ -20,7 +20,7 @@ static HRESULT(WINAPI* CreateDeviceO)(IDirect3D9*, UINT, D3DDEVTYPE, HWND, DWORD
 
 extern HWND hwnd;
 
-static HRESULT (WINAPI* DirectDrawCreateO)(void* lpGUID, void** lplpDD, void* pUnkOuter);
+static HRESULT(WINAPI* DirectDrawCreateO)(void* lpGUID, void** lplpDD, void* pUnkOuter);
 static HRESULT WINAPI DirectDrawCreateH(void* lpGUID, void** lplpDD, void* pUnkOuter) {
     spdlog::warn("The game is using DirectDraw, forcing custom window");
     return DirectDrawCreateO(lpGUID, lplpDD, pUnkOuter);
@@ -75,7 +75,7 @@ static HRESULT WINAPI CreateDeviceH(IDirect3D9* pD3D, UINT Adapter, D3DDEVTYPE D
                                     HWND hFocusWindow, DWORD BehaviorFlags,
                                     D3DPRESENT_PARAMETERS* pPresentationParameters,
                                     IDirect3DDevice9** ppReturnedDeviceInterface) {
-
+    spdlog::debug("IDirect3D9->CreateDevice");
     HRESULT hr = CreateDeviceO(pD3D, Adapter, DeviceType, hFocusWindow, BehaviorFlags,
                                pPresentationParameters, ppReturnedDeviceInterface);
 
@@ -92,6 +92,7 @@ static HRESULT WINAPI CreateDeviceH(IDirect3D9* pD3D, UINT Adapter, D3DDEVTYPE D
 
 static IDirect3D9*(WINAPI* Direct3DCreate9O)(UINT SDKVersion);
 static IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {
+    spdlog::debug("Direct3DCreate9");
     auto ret = Direct3DCreate9O(SDKVersion);
     if (SUCCEEDED(ret) && !CreateDeviceO) {
         void** vtable = *(void***)ret;
@@ -100,10 +101,6 @@ static IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {
     return ret;
 }
 
-void d3d9hooks::pre_init() {
-    HOOK_AUTO("ddraw.dll", DirectDrawCreate);
-}
+void d3d9hooks::pre_init() { HOOK_AUTO("ddraw.dll", DirectDrawCreate); }
 
-void d3d9hooks::init() {
-    HOOK_AUTO("d3d9.dll", Direct3DCreate9);
-}
+void d3d9hooks::init() { HOOK_AUTO("d3d9.dll", Direct3DCreate9); }

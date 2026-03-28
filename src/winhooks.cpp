@@ -10,6 +10,8 @@
 #include <backends/imgui_impl_win32.h>
 #include <spdlog/spdlog.h>
 
+// TODO: hook window title set
+
 using std::string, std::string_view;
 
 HWND hwnd;
@@ -67,8 +69,10 @@ static void on_win_create(HWND hwnd, string_view class_name, bool unicode) {
         conf::get().is_unicode = unicode;
         ::hwnd = hwnd;
         winhooks::fix_win32_theme(hwnd);
+        spdlog::info("Mf2MainClassTh window created");
     } else if (class_name == "Mf2EditClassTh") {
         ::mhwnd = hwnd;
+        spdlog::info("Mf2EditClassTh window created");
     }
 }
 
@@ -114,7 +118,10 @@ static HWND WINAPI GetForegroundWindowH() {
     return ::hwnd;
 }
 
-static BOOL WINAPI SetForegroundWindowH(HWND hWnd) { return FALSE; }
+static BOOL WINAPI SetForegroundWindowH(HWND hWnd) {
+    spdlog::info("Failing SetForegroundWindow");
+    return FALSE;
+}
 
 static HWND(WINAPI* GetActiveWindowO)();
 static HWND WINAPI GetActiveWindowH() {
@@ -126,17 +133,25 @@ static HWND WINAPI GetActiveWindowH() {
 static HHOOK WINAPI SetWindowsHookExAH(int idHook, HOOKPROC lpfn, HINSTANCE hmod,
                                        DWORD dwThreadId) {
     // No size/move hooks which cause desyncs
+    spdlog::info("Failing SetWindowsHookExA");
     return nullptr;
 }
 
 static HHOOK WINAPI SetWindowsHookExWH(int idHook, HOOKPROC lpfn, HINSTANCE hmod,
                                        DWORD dwThreadId) {
+    spdlog::info("Failing SetWindowsHookExW");
     return nullptr;
 }
 
-static HWND WINAPI SetFocusH(HWND hWnd) { return nullptr; }
+static HWND WINAPI SetFocusH(HWND hWnd) {
+    spdlog::info("Failing SetFocus");
+    return nullptr;
+}
 
-static HWND WINAPI SetActiveWindowH(HWND hWnd) { return nullptr; }
+static HWND WINAPI SetActiveWindowH(HWND hWnd) {
+    spdlog::info("Failing SetActiveWindow");
+    return nullptr;
+}
 
 static int(WINAPI* GetSystemMetricsO)(int nIndex);
 static int WINAPI GetSystemMetricsH(int nIndex) {

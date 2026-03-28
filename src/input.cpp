@@ -77,14 +77,24 @@ static BOOL WINAPI OpenClipboardH(HWND hWndNewOwner) {
 
 static BOOL WINAPI IsClipboardFormatAvailableH(UINT format) { return FALSE; }
 
-static VOID WINAPI keybd_eventH(BYTE bVk, BYTE bScan, DWORD dwFlags, ULONG_PTR dwExtraInfo) {}
+static VOID WINAPI keybd_eventH(BYTE bVk, BYTE bScan, DWORD dwFlags, ULONG_PTR dwExtraInfo) {
+    spdlog::info("keybd_event (vk={}, scan={}, flags={})", bVk, bScan, dwFlags);
+}
 
 static VOID WINAPI mouse_eventH(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData,
-                                ULONG_PTR dwExtraInfo) {}
+                                ULONG_PTR dwExtraInfo) {
+    spdlog::info("mouse_event (delta=({}, {}), flags={})", dx, dy, dwFlags);
+}
 
-static UINT WINAPI SendInputH(UINT cInputs, LPINPUT pInputs, int cbSize) { return 0; }
+static UINT WINAPI SendInputH(UINT cInputs, LPINPUT pInputs, int cbSize) {
+    spdlog::info("SendInput");
+    return 0;
+}
 
-static BOOL WINAPI SetCursorPosH(int X, int Y) { return FALSE; }
+static BOOL WINAPI SetCursorPosH(int X, int Y) {
+    spdlog::info("SetCursorPos");
+    return FALSE;
+}
 
 void input::init() {
     std::memset(kbd_state, 0, sizeof(bool) * 256);

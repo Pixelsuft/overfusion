@@ -8,7 +8,6 @@
 
 static HRESULT(WINAPI* DirectSoundCreateO)(LPCGUID guid, LPDIRECTSOUND* ds, LPUNKNOWN unk);
 static HRESULT WINAPI DirectSoundCreateH(LPCGUID guid, LPDIRECTSOUND* ds, LPUNKNOWN unk) {
-    return DSERR_NODRIVER;
     HRESULT hr = DirectSoundCreateO(guid, ds, unk);
     if (SUCCEEDED(hr) && ds && *ds) {
         spdlog::debug("TODO: DirectSoundCreateH");
