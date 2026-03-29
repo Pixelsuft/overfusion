@@ -34,6 +34,7 @@ public:
     bool emulate_mm_timers;
     bool is_unicode;
     bool custom_window;
+    bool virtual_fs;
 
     Config();
     void read();

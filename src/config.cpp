@@ -207,6 +207,7 @@ Config::Config() {
     emulate_mm_timers = false;
     is_unicode = false;
     custom_window = true;
+    virtual_fs = true;
 }
 
 #define READ_BOOL(name)                                                                            \
@@ -221,6 +222,7 @@ void Config::read() {
     READ_BOOL(show_menu);
     READ_BOOL(emulate_user_timers);
     READ_BOOL(emulate_mm_timers);
+    READ_BOOL(virtual_fs);
     if (data["binds"].is_array()) {
         for (auto& val : data["binds"]) {
             if (!val.is_object())

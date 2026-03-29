@@ -20,7 +20,7 @@ static int __stdcall UpdateGameFrameH() {
     static bool need_skip = false;
     auto& cfg = conf::get();
     if (!inited) {
-        spdlog::debug("UpdateGameFrame first call");
+        spdlog::info("UpdateGameFrame first call");
         if (cfg.custom_window) {
             spdlog::info("Initializing custom window for software renderer");
             if (!customwindow::init()) {
@@ -32,7 +32,8 @@ static int __stdcall UpdateGameFrameH() {
         winhooks::after_ui_init();
         timehooks::update_init();
         extrahooks::init_adv();
-        files::hook_fs();
+        if (conf::get().virtual_fs)
+            files::hook_fs();
         plug::get().update_init();
         hook::enable();
     }

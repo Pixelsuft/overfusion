@@ -505,11 +505,16 @@ static HFILE WINAPI OpenFileH(LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT u
     lpReOpenBuff->nErrCode = 0;
     strcpy(lpReOpenBuff->szPathName, lpFileName);
     if (uStyle & OF_DELETE) {
-        lock::CSLock mylock(cs);
         string norm = normalize_path(uconv::from_ansi(lpFileName));
-        if (file_map.erase(norm))
+        lock::CSLock mylock(cs);
+        auto it = file_map.find(norm);
+        if (it != file_map.end() && it->second.data) {
+            std::free(it->second.data);
+            it->second.data = nullptr;
+            it->second.size = 0;
             return TRUE;
-        return OpenFileO(lpFileName, lpReOpenBuff, uStyle);
+        }
+        return HFILE_ERROR;
     }
     bool for_read = (uStyle & OF_WRITE) == 0;
     bool for_write = (uStyle & (OF_WRITE | OF_READWRITE)) != 0;
@@ -525,6 +530,32 @@ static HFILE WINAPI OpenFileH(LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT u
         return reinterpret_cast<HFILE>(h);
     }
     return OpenFileO(lpFileName, lpReOpenBuff, uStyle);
+}
+
+static BOOL WINAPI DeleteFileAH(LPCSTR lpFileName) {
+    string norm = normalize_path(uconv::from_ansi(lpFileName));
+    lock::CSLock mylock(cs);
+    auto it = file_map.find(norm);
+    if (it != file_map.end() && it->second.data) {
+        std::free(it->second.data);
+        it->second.data = nullptr;
+        it->second.size = 0;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static BOOL WINAPI DeleteFileWH(LPCWSTR lpFileName) {
+    string norm = normalize_path(uconv::from_utf16(lpFileName));
+    lock::CSLock mylock(cs);
+    auto it = file_map.find(norm);
+    if (it != file_map.end() && it->second.data) {
+        std::free(it->second.data);
+        it->second.data = nullptr;
+        it->second.size = 0;
+        return TRUE;
+    }
+    return FALSE;
 }
 
 static void parse_crt_flags(int oflag, bool& r, bool& w) {
@@ -568,8 +599,10 @@ static int _wopenH(const wchar_t* filename, int oflag, int pmode) {
 }
 
 static bool is_our_fd(int fd) {
-    // I think nobody uses it but us so we can skip extra check
-    return fd > 1024 || fd < -1;
+    // I think nobody uses it so we can be slow
+    lock::CSLock mylock(cs);
+    auto it = std::find(our_handles.begin(), our_handles.end(), reinterpret_cast<FileHandle*>(fd));
+    return it != our_handles.end();
 }
 
 static int(CDECL* _readO)(int, void*, unsigned int);
@@ -621,6 +654,7 @@ static BOOL WINAPI CloseHandleH(HANDLE hObject) {
 static int(CDECL* _closeO)(int);
 static int CDECL _closeH(int fd) {
     if (is_our_fd(fd)) {
+        // Slow
         if (CloseHandleH(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(fd))))
             return 0;
         return -1;
@@ -740,6 +774,7 @@ void files::init() {
 }
 
 void files::hook_fs() {
+    HOOK_STR_ONLY("kernel32.dll", DeleteFile);
     HOOK_STR_AUTO("kernel32.dll", CreateFile);
     HOOK_STR_AUTO("kernel32.dll", WritePrivateProfileString);
     HOOK_STR_AUTO("kernel32.dll", GetPrivateProfileString);
@@ -763,10 +798,15 @@ void files::hook_fs() {
     HOOK_AUTO("msvcrt.dll", _close);
     HOOK_AUTO("msvcrt.dll", _access);
     HOOK_AUTO("msvcrt.dll", _waccess);
+    spdlog::info("Virtual FS hooks installed");
 }
 
 void files::draw_ui() {
     ImGui::Text("Opened handles: %i", static_cast<int>(our_handles.size()));
-    for (auto& it : file_map)
-        ImGui::Text("%s: %i bytes", it.first.c_str(), static_cast<int>(it.second.size));
+    for (auto& it : file_map) {
+        if (it.second.data != nullptr)
+            ImGui::Text("%s: %i bytes", it.first.c_str(), static_cast<int>(it.second.size));
+        else
+            ImGui::Text("%s: deleted", it.first.c_str());
+    }
 }
