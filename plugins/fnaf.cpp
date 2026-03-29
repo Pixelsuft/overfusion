@@ -57,6 +57,10 @@ public:
             // FIXME
             mem::write(base + 0x78b8, {0xeb});
         }
+        else if (fn == "Perspective.mfx") {
+            // Patch for disabling Perspective
+            // mem::write(base + 0x169d, {0x31, 0xc0, 0xc2, 0x04, 0x00});
+        }
     };
 
     void* get_prop(plug::PtrProp prop, void* data) override {
