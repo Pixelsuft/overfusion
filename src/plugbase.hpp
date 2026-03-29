@@ -31,9 +31,7 @@ public:
     std::string cmdline_append;
     bool need_key_message;
 
-    PlugBase()
-        : name("Abstract plugin"), need_key_message(false),
-          cmdline_append(" /D3D9 /DEBUG /NOF /NOVSYNC /MIS0 /NOC") {}
+    PlugBase() : name("Abstract plugin"), need_key_message(false) {}
     virtual bool pre_init() { return true; }
     virtual bool update_init() { return true; }
     virtual std::optional<std::string> before_dll_load(ost::string_view path, ost::string_view fn) {

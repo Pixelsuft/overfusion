@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
 #include "extrahooks.hpp"
+#include "config.hpp"
 #include "mem.hpp"
 #include "plugbase.hpp"
 #include "state.hpp"
@@ -262,10 +263,10 @@ void extrahooks::init() {
     [] {
         strcpy(my_argv_a, GetCommandLineA());
         wcscpy(my_argv_w, GetCommandLineW());
-        auto temp1 = uconv::to_ansi(plug::get().cmdline_append);
+        auto temp1 = uconv::to_ansi(plug::get().cmdline_append + conf::get().cmdline_append);
         strcat(my_argv_a, temp1);
         std::free(temp1);
-        auto temp2 = uconv::to_utf16(plug::get().cmdline_append);
+        auto temp2 = uconv::to_utf16(plug::get().cmdline_append + conf::get().cmdline_append);
         wcscat(my_argv_w, temp2);
         std::free(temp2);
         // TODO: better way than GetModuleHandleA

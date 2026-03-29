@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <string>
 
 namespace conf {
 enum class Task {
@@ -23,6 +24,7 @@ struct Bind {
 class Config {
 public:
     std::vector<Bind> binds;
+    std::string cmdline_append;
     int fps;
     bool show_info;
     bool show_menu;

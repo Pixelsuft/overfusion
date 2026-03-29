@@ -223,6 +223,8 @@ void Config::read() {
     READ_BOOL(emulate_user_timers);
     READ_BOOL(emulate_mm_timers);
     READ_BOOL(virtual_fs);
+    if (data["cmdline_append"].is_string())
+        cmdline_append = data["cmdline_append"];
     if (data["binds"].is_array()) {
         for (auto& val : data["binds"]) {
             if (!val.is_object())
