@@ -38,6 +38,11 @@ public:
         // Force input to use GetKeyState for immediate refresh
         mem::write(mem::get_base() + 0xb912, {0xeb});
         mem::write(mem::get_base() + 0xb9c2, {0xeb});
+        // Title
+        mem::write(mem::get_base() + 0x2cae6, {0xeb});
+        mem::write(mem::get_base() + 0x2cb14, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x2cb1f, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x2cb29, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         return true;
     }
 
@@ -74,8 +79,7 @@ public:
         case plug::PtrProp::PState:
             return *reinterpret_cast<void**>(mem::get_base() + 0xb60ec);
         case plug::PtrProp::PGlobalApp:
-            return nullptr;
-            return *reinterpret_cast<void**>(mem::get_base() + 0x59a94);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb60e4);
         case plug::PtrProp::PNextFrameTask:
             // From pState
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x30);
@@ -90,8 +94,7 @@ public:
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x178);
         case plug::PtrProp::PSceneID:
             // From pGlobalApp
-            return nullptr;
-            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x1ec);
+            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x1f0);
         case plug::PtrProp::Update:
             return reinterpret_cast<void*>(mem::get_base() + 0x4d3e0);
         case plug::PtrProp::Render:

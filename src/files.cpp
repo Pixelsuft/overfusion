@@ -118,6 +118,10 @@ DWORD WINAPI GetTempPathWH(DWORD nBufferLength, LPWSTR lpBuffer) {
 
 static bool try_read_file(FileData& ret, std::string_view path) {
     ofs::File file(path, 0);
+    if (ret.data) {
+        std::free(ret.data);
+        ret.data = nullptr;
+    }
     if (!file.is_open())
         return false;
     auto temp_size = file.size();
@@ -154,6 +158,7 @@ static bool create_file_data(FileData& ret, std::string_view path, DWORD dwCreat
         break;
     case OPEN_ALWAYS:
     case OPEN_EXISTING:
+        // FIXME
         if (exists && !ret.data) {
             ret.data = std::malloc(1);
             ret.size = 0;
@@ -310,11 +315,11 @@ static BOOL WINAPI ReadFileExH(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfByt
         return ReadFileExO(hFile, lpBuffer, nNumberOfBytesToRead, lpOverlapped,
                            lpCompletionRoutine);
     auto h = *it;
-    mylock.unlock();
     if (!h->reading) {
         SetLastError(ERROR_ACCESS_DENIED);
         return FALSE;
     }
+    mylock.unlock();
     DWORD bytesRead = 0;
     ReadFileH(hFile, lpBuffer, nNumberOfBytesToRead, &bytesRead, nullptr);
     if (lpOverlapped) {
@@ -341,11 +346,11 @@ static BOOL WINAPI WriteFileExH(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfB
         return WriteFileExO(hFile, lpBuffer, nNumberOfBytesToWrite, lpOverlapped,
                             lpCompletionRoutine);
     auto h = *it;
-    mylock.unlock();
     if (!h->writing) {
         SetLastError(ERROR_ACCESS_DENIED);
         return FALSE;
     }
+    mylock.unlock();
     DWORD bytesWritten = 0;
     WriteFileH(hFile, lpBuffer, nNumberOfBytesToWrite, &bytesWritten, nullptr);
     if (lpOverlapped) {
@@ -587,7 +592,8 @@ static long CDECL _lseekH(int fd, long offset, int origin) {
 
 static BOOL WINAPI CloseHandleH(HANDLE hObject) {
     lock::CSLock mylock(cs);
-    auto it = std::find(our_handles.begin(), our_handles.end(), reinterpret_cast<FileHandle*>(hObject));
+    auto it =
+        std::find(our_handles.begin(), our_handles.end(), reinterpret_cast<FileHandle*>(hObject));
     if (it == our_handles.end())
         return CloseHandleO(hObject);
     delete *it;
@@ -608,7 +614,8 @@ static int CDECL _closeH(int fd) {
 static HFILE(WINAPI* _lcloseO)(HFILE);
 static HFILE WINAPI _lcloseH(HFILE hFile) {
     lock::CSLock mylock(cs);
-    auto it = std::find(our_handles.begin(), our_handles.end(), reinterpret_cast<FileHandle*>(hFile));
+    auto it =
+        std::find(our_handles.begin(), our_handles.end(), reinterpret_cast<FileHandle*>(hFile));
     if (it == our_handles.end())
         return _lcloseO(hFile);
     delete *it;
