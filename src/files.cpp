@@ -6,13 +6,13 @@
 #include "mem.hpp"
 #include "ofs.hpp"
 #include "uconv.hpp"
+#include <Shlwapi.h>
 #include <Windows.h>
 #include <algorithm>
 #include <fcntl.h>
 #include <imgui.h>
 #include <map>
 #include <spdlog/spdlog.h>
-#include <Shlwapi.h>
 #undef min
 #undef max
 #pragma comment(lib, "Shlwapi.lib")
@@ -163,8 +163,8 @@ static bool create_file_data(FileData& ret, string_view path, DWORD dwCreationDi
         if (dwCreationDisposition == CREATE_NEW && (exists || real_path_exists(path))) {
             SetLastError(ERROR_ALREADY_EXISTS);
             return false;
-        }
-        else if (dwCreationDisposition == TRUNCATE_EXISTING && !exists && !real_path_exists(path)) {
+        } else if (dwCreationDisposition == TRUNCATE_EXISTING && !exists &&
+                   !real_path_exists(path)) {
             SetLastError(ERROR_FILE_NOT_FOUND);
             return false;
         }
@@ -628,6 +628,12 @@ static int CDECL _closeH(int fd) {
     return _closeO(fd);
 }
 
+static HFILE(WINAPI* _lopenO)(LPCSTR lpPathName, int iReadWrite);
+static HFILE WINAPI _lopenH(LPCSTR lpPathName, int iReadWrite) {
+    spdlog::debug("TODO: _lopen");
+    return HFILE_ERROR;
+}
+
 static HFILE(WINAPI* _lcloseO)(HFILE);
 static HFILE WINAPI _lcloseH(HFILE hFile) {
     lock::CSLock mylock(cs);
@@ -637,6 +643,38 @@ static HFILE WINAPI _lcloseH(HFILE hFile) {
         return _lcloseO(hFile);
     delete *it;
     our_handles.erase(it);
+    return 0;
+}
+
+static int (*_accessO)(const char* path, int mode);
+static int _accessH(const char* path, int mode) {
+    string norm_fp = normalize_path(uconv::from_ansi(path));
+    lock::CSLock mylock(cs);
+    auto it = file_map.find(norm_fp);
+    if (it == file_map.end()) {
+        mylock.unlock();
+        return _accessO(path, mode);
+    }
+    if ((mode == 2 || mode == 6) && !it->second.allow_write)
+        return -1;
+    if ((mode == 4 || mode == 6) && !it->second.allow_read)
+        return -1;
+    return 0;
+}
+
+static int (*_waccessO)(const wchar_t* path, int mode);
+static int _waccessH(const wchar_t* path, int mode) {
+    string norm_fp = normalize_path(uconv::from_utf16(path));
+    lock::CSLock mylock(cs);
+    auto it = file_map.find(norm_fp);
+    if (it == file_map.end()) {
+        mylock.unlock();
+        return _waccessO(path, mode);
+    }
+    if ((mode == 2 || mode == 6) && !it->second.allow_write)
+        return -1;
+    if ((mode == 4 || mode == 6) && !it->second.allow_read)
+        return -1;
     return 0;
 }
 
@@ -715,6 +753,7 @@ void files::hook_fs() {
     HOOK_AUTO("kernel32.dll", GetFileSize);
     HOOK_AUTO("kernel32.dll", GetFileSizeEx);
     HOOK_AUTO("kernel32.dll", CloseHandle);
+    HOOK_AUTO("kernel32.dll", _lopen);
     HOOK_AUTO("kernel32.dll", _lclose);
     HOOK_AUTO("msvcrt.dll", _open);
     HOOK_AUTO("msvcrt.dll", _wopen);
@@ -722,6 +761,8 @@ void files::hook_fs() {
     HOOK_AUTO("msvcrt.dll", _write);
     HOOK_AUTO("msvcrt.dll", _lseek);
     HOOK_AUTO("msvcrt.dll", _close);
+    HOOK_AUTO("msvcrt.dll", _access);
+    HOOK_AUTO("msvcrt.dll", _waccess);
 }
 
 void files::draw_ui() {
