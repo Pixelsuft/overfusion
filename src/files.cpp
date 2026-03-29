@@ -532,8 +532,10 @@ static HFILE WINAPI OpenFileH(LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT u
     return OpenFileO(lpFileName, lpReOpenBuff, uStyle);
 }
 
+static BOOL(WINAPI* DeleteFileAO)(LPCSTR lpFileName);
 static BOOL WINAPI DeleteFileAH(LPCSTR lpFileName) {
     string norm = normalize_path(uconv::from_ansi(lpFileName));
+    // spdlog::debug("DeleteFileA: {}", norm);
     lock::CSLock mylock(cs);
     auto it = file_map.find(norm);
     if (it != file_map.end() && it->second.data) {
@@ -542,11 +544,14 @@ static BOOL WINAPI DeleteFileAH(LPCSTR lpFileName) {
         it->second.size = 0;
         return TRUE;
     }
-    return FALSE;
+    // Passing through because otherwise it will break temp dir cleanup
+    return DeleteFileAO(lpFileName);
 }
 
+static BOOL(WINAPI* DeleteFileWO)(LPCWSTR lpFileName);
 static BOOL WINAPI DeleteFileWH(LPCWSTR lpFileName) {
     string norm = normalize_path(uconv::from_utf16(lpFileName));
+    // spdlog::debug("DeleteFileW: {}", norm);
     lock::CSLock mylock(cs);
     auto it = file_map.find(norm);
     if (it != file_map.end() && it->second.data) {
@@ -555,7 +560,7 @@ static BOOL WINAPI DeleteFileWH(LPCWSTR lpFileName) {
         it->second.size = 0;
         return TRUE;
     }
-    return FALSE;
+    return DeleteFileWO(lpFileName);
 }
 
 static void parse_crt_flags(int oflag, bool& r, bool& w) {
@@ -774,7 +779,7 @@ void files::init() {
 }
 
 void files::hook_fs() {
-    HOOK_STR_ONLY("kernel32.dll", DeleteFile);
+    HOOK_STR_AUTO("kernel32.dll", DeleteFile);
     HOOK_STR_AUTO("kernel32.dll", CreateFile);
     HOOK_STR_AUTO("kernel32.dll", WritePrivateProfileString);
     HOOK_STR_AUTO("kernel32.dll", GetPrivateProfileString);
