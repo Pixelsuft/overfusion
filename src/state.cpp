@@ -4,6 +4,7 @@
 #include "config.hpp"
 #include "ofs.hpp"
 #include "plugbase.hpp"
+#include "files.hpp"
 #include "timehooks.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
@@ -91,7 +92,7 @@ void state::init() {
 }
 
 void state::save_state(int slot) {
-    string fp = string("state_") + std::to_string(slot) + ".ostate";
+    string fp = string(files::get_cwd()) + "\\state_" + std::to_string(slot) + ".ostate";
     ofs::File file(fp, 1);
     if (!file.is_open()) {
         spdlog::warn("Failed to open state slot {} for writing", slot);
@@ -105,7 +106,7 @@ void state::save_state(int slot) {
 }
 
 void state::load_state(int slot) {
-    ofs::File file(string("state_") + std::to_string(slot) + ".ostate", 0);
+    ofs::File file(string(files::get_cwd()) + "\\state_" + std::to_string(slot) + ".ostate", 0);
     if (!file.is_open()) {
         spdlog::warn("Failed to open state slot {} for reading", slot);
         return;

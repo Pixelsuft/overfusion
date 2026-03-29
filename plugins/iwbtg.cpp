@@ -60,9 +60,7 @@ public:
         case plug::PtrProp::PState:
             return *reinterpret_cast<void**>(mem::get_base() + 0x48384);
         case plug::PtrProp::PGlobalApp:
-            // TODO
-            return nullptr;
-            return *reinterpret_cast<void**>(mem::get_base() + 0x59a94);
+            return *reinterpret_cast<void**>(mem::get_base() + 0x4837c);
         case plug::PtrProp::PNextFrameTask:
             // From pState
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x30);
@@ -77,8 +75,7 @@ public:
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x178);
         case plug::PtrProp::PSceneID:
             // From pGlobalApp
-            return nullptr;
-            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x1ec);
+            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x1f0);
         case plug::PtrProp::Update:
             return reinterpret_cast<void*>(mem::get_base() + 0x2bf30);
         case plug::PtrProp::Render:

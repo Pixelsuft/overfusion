@@ -40,6 +40,10 @@ public:
         mem::write(mem::get_base() + 0x57891, {0xeb});
         // Game FPS is fine
         mem::write(mem::get_base() + 0x29f7a, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        // Game title
+        mem::write(mem::get_base() + 0x268d8, {0x90, 0x90});
+        mem::write(mem::get_base() + 0x268df, {0x90, 0x90});
+        mem::write(mem::get_base() + 0x268e5, {0x90, 0x90});
         return true;
     }
 
@@ -75,7 +79,7 @@ public:
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x178);
         case plug::PtrProp::PSceneID:
             // From pGlobalApp
-            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x1ec);
+            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x1f0);
         case plug::PtrProp::Update:
             return reinterpret_cast<void*>(mem::get_base() + 0x45430);
         case plug::PtrProp::Render:

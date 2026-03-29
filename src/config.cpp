@@ -296,7 +296,7 @@ void Config::read() {
                     continue;
                 }
             }
-            spdlog::debug("Bind (task={}, extra={}, key={}, mods={})", static_cast<int>(bind.task),
+            spdlog::info("Bind (task={}, extra={}, key={}, mods={})", static_cast<int>(bind.task),
                           bind.extra, bind.key, bind.mods);
             binds.push_back(bind);
         }
