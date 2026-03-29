@@ -12,8 +12,10 @@
 #include <imgui.h>
 #include <map>
 #include <spdlog/spdlog.h>
+#include <Shlwapi.h>
 #undef min
 #undef max
+#pragma comment(lib, "Shlwapi.lib")
 
 // TODO: implement other filesystem functions
 
@@ -117,11 +119,11 @@ DWORD WINAPI GetTempPathWH(DWORD nBufferLength, LPWSTR lpBuffer) {
 }
 
 static bool try_read_file(FileData& ret, std::string_view path) {
-    ofs::File file(path, 0);
     if (ret.data) {
         std::free(ret.data);
         ret.data = nullptr;
     }
+    ofs::File file(path, 0);
     if (!file.is_open())
         return false;
     auto temp_size = file.size();
@@ -140,37 +142,52 @@ static bool try_read_file(FileData& ret, std::string_view path) {
     return false;
 }
 
-static bool create_file_data(FileData& ret, std::string_view path, DWORD dwCreationDisposition,
-                             bool exists) {
-    // TODO: more accurate CREATE_NEW, TRUNCATE_EXISTING, OPEN_EXISTING
+static bool real_path_exists(string_view path) {
+    auto temp = uconv::to_utf16(path);
+    auto ret = PathFileExistsW(temp);
+    std::free(temp);
+    return ret != FALSE;
+}
+
+static bool create_file_data(FileData& ret, string_view path, DWORD dwCreationDisposition) {
+    bool exists = ret.data != nullptr;
+    // spdlog::debug("create_file_data: {} {} {}", path, dwCreationDisposition, exists);
     switch (dwCreationDisposition) {
     case CREATE_ALWAYS:
     case CREATE_NEW:
     case TRUNCATE_EXISTING:
-        if (ret.data && !ret.allow_write) {
+        if (exists && !ret.allow_write) {
             SetLastError(ERROR_ACCESS_DENIED);
             return false;
         }
-        if (ret.data)
+        if (dwCreationDisposition == CREATE_NEW && (exists || real_path_exists(path))) {
+            SetLastError(ERROR_ALREADY_EXISTS);
+            return false;
+        }
+        else if (dwCreationDisposition == TRUNCATE_EXISTING && !exists && !real_path_exists(path)) {
+            SetLastError(ERROR_FILE_NOT_FOUND);
+            return false;
+        }
+        if (exists)
             std::free(ret.data);
         ret.data = std::malloc(1);
         ret.size = 0;
         break;
     case OPEN_ALWAYS:
     case OPEN_EXISTING:
-        // FIXME
-        if (exists && !ret.data) {
-            ret.data = std::malloc(1);
-            ret.size = 0;
-            break;
+        if (dwCreationDisposition == OPEN_EXISTING && !exists && !real_path_exists(path)) {
+            SetLastError(ERROR_FILE_NOT_FOUND);
+            return false;
         }
-        if (!ret.data && !try_read_file(ret, path)) {
+        if (!exists && !try_read_file(ret, path)) {
             ret.size = 0;
             SetLastError(ERROR_ACCESS_DENIED);
             return false;
         }
         break;
     default:
+        if (exists)
+            std::free(ret.data);
         ret.data = nullptr;
         ret.size = 0;
         ASS(false);
@@ -205,7 +222,7 @@ static std::optional<void*> handle_file_open(std::string_view path, bool for_rea
     }
     if (for_write && it == file_map.end()) {
         file_map[norm_fp] = FileData();
-        if (!create_file_data(file_map[norm_fp], norm_fp, dwCreationDisposition, false))
+        if (!create_file_data(file_map[norm_fp], norm_fp, dwCreationDisposition))
             return INVALID_HANDLE_VALUE;
     } else {
         FileData& data = it->second;
@@ -216,7 +233,7 @@ static std::optional<void*> handle_file_open(std::string_view path, bool for_rea
                 return INVALID_HANDLE_VALUE;
             }
         }
-        if (!create_file_data(data, norm_fp, dwCreationDisposition, true))
+        if (!create_file_data(data, norm_fp, dwCreationDisposition))
             return INVALID_HANDLE_VALUE;
     }
     FileData& dp = file_map[norm_fp];
