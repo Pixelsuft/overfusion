@@ -79,8 +79,7 @@ public:
         case plug::PtrProp::Update:
             return reinterpret_cast<void*>(mem::get_base() + 0x2bf30);
         case plug::PtrProp::Render:
-            return nullptr;
-            return reinterpret_cast<void*>(mem::get_base() + 0x1ebf0);
+            return reinterpret_cast<void*>(mem::get_base() + 0x17290);
         default:
             return nullptr;
         }
