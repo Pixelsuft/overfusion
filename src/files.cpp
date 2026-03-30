@@ -717,6 +717,123 @@ static int _waccessH(const wchar_t* path, int mode) {
     return 0;
 }
 
+static void parse_stdio_mode(const char* mode, bool& r, bool& w, bool& plus) {
+    r = strchr(mode, 'r') != nullptr;
+    w = (strchr(mode, 'w') != nullptr) || (strchr(mode, 'a') != nullptr);
+    plus = strchr(mode, '+') != nullptr;
+}
+
+static DWORD stdio_mode_to_disposition(const char* mode) {
+    if (strchr(mode, 'w'))
+        return CREATE_ALWAYS;
+    if (strchr(mode, 'a'))
+        return OPEN_ALWAYS;
+    if (strchr(mode, 'r'))
+        return OPEN_EXISTING;
+    return OPEN_EXISTING;
+}
+
+static FILE* (*fopenO)(const char*, const char*);
+static FILE* fopenH(const char* filename, const char* mode) {
+    bool r, w, plus;
+    parse_stdio_mode(mode, r, w, plus);
+    // spdlog::debug("fopen {} {}", uconv::from_ansi(filename), mode);
+    auto temp_ret = handle_file_open(
+        uconv::from_ansi(filename), r || plus, w || plus,
+        crt_flags_to_disposition(strchr(mode, 'w') ? _O_CREAT | _O_TRUNC : _O_RDONLY));
+    if (temp_ret.has_value()) {
+        if (temp_ret.value() == INVALID_HANDLE_VALUE)
+            return nullptr;
+        return reinterpret_cast<FILE*>(temp_ret.value());
+    }
+    return fopenO(filename, mode);
+}
+
+static FILE* (*_wfopenO)(const wchar_t*, const wchar_t*);
+static FILE* _wfopenH(const wchar_t* filename, const wchar_t* mode) {
+    bool r, w, plus;
+    auto modeA = uconv::from_utf16(mode);
+    parse_stdio_mode(modeA.c_str(), r, w, plus);
+    auto temp_ret = handle_file_open(
+        uconv::from_utf16(filename), r || plus, w || plus,
+        crt_flags_to_disposition(strchr(modeA.c_str(), 'w') ? _O_CREAT | _O_TRUNC : _O_RDONLY));
+    if (temp_ret.has_value()) {
+        if (temp_ret.value() == INVALID_HANDLE_VALUE)
+            return nullptr;
+        return reinterpret_cast<FILE*>(temp_ret.value());
+    }
+    return _wfopenO(filename, mode);
+}
+
+static size_t (*freadO)(void*, size_t, size_t, FILE*);
+static size_t freadH(void* buffer, size_t size, size_t count, FILE* stream) {
+    if (is_our_fd(reinterpret_cast<int>(stream))) {
+        DWORD read = 0;
+        if (ReadFileH(reinterpret_cast<HANDLE>(stream), buffer, size * count, &read, nullptr))
+            return (size_t)(read / size);
+        return 0;
+    }
+    return freadO(buffer, size, count, stream);
+}
+
+static size_t (*fwriteO)(const void*, size_t, size_t, FILE*);
+static size_t fwriteH(const void* buffer, size_t size, size_t count, FILE* stream) {
+    if (is_our_fd(reinterpret_cast<int>(stream))) {
+        DWORD written = 0;
+        if (WriteFileH(reinterpret_cast<HANDLE>(stream), buffer, size * count, &written, nullptr))
+            return (size_t)(written / size);
+        return 0;
+    }
+    return fwriteO(buffer, size, count, stream);
+}
+
+static int (*fseekO)(FILE*, long, int);
+static int fseekH(FILE* stream, long offset, int origin) {
+    if (is_our_fd(reinterpret_cast<int>(stream))) {
+        return (SetFilePointerH(reinterpret_cast<HANDLE>(stream), offset, nullptr, (DWORD)origin) ==
+                INVALID_SET_FILE_POINTER)
+                   ? -1
+                   : 0;
+    }
+    return fseekO(stream, offset, origin);
+}
+
+static long (*ftellO)(FILE*);
+static long ftellH(FILE* stream) {
+    if (is_our_fd(reinterpret_cast<int>(stream))) {
+        lock::CSLock mylock(cs);
+        return (long)reinterpret_cast<FileHandle*>(stream)->pos;
+    }
+    return ftellO(stream);
+}
+
+static int (*fcloseO)(FILE*);
+static int fcloseH(FILE* stream) {
+    if (is_our_fd(reinterpret_cast<int>(stream))) {
+        return CloseHandleH(reinterpret_cast<HANDLE>(stream)) ? 0 : -1;
+    }
+    return fcloseO(stream);
+}
+
+static int (*fflushO)(FILE*);
+static int fflushH(FILE* stream) {
+    if (is_our_fd(reinterpret_cast<int>(stream)))
+        return 0;
+    return fflushO(stream);
+}
+
+static int (*fgetcO)(FILE*);
+static int fgetcH(FILE* stream) {
+    if (is_our_fd(reinterpret_cast<int>(stream))) {
+        unsigned char c;
+        DWORD read = 0;
+        if (ReadFileH(reinterpret_cast<HANDLE>(stream), &c, 1, &read, nullptr) && read == 1)
+            return c;
+        return EOF;
+    }
+    return fgetcO(stream);
+}
+
 static BOOL(WINAPI* WritePrivateProfileStringAO)(LPCSTR lpAppName, LPCSTR lpKeyName,
                                                  LPCSTR lpString, LPCSTR lpFileName);
 static BOOL WINAPI WritePrivateProfileStringAH(LPCSTR lpAppName, LPCSTR lpKeyName, LPCSTR lpString,
@@ -803,6 +920,15 @@ void files::hook_fs() {
     HOOK_AUTO("msvcrt.dll", _close);
     HOOK_AUTO("msvcrt.dll", _access);
     HOOK_AUTO("msvcrt.dll", _waccess);
+    HOOK_AUTO("msvcrt.dll", fopen);
+    HOOK_AUTO("msvcrt.dll", _wfopen);
+    HOOK_AUTO("msvcrt.dll", fread);
+    HOOK_AUTO("msvcrt.dll", fwrite);
+    HOOK_AUTO("msvcrt.dll", fseek);
+    HOOK_AUTO("msvcrt.dll", ftell);
+    HOOK_AUTO("msvcrt.dll", fclose);
+    HOOK_AUTO("msvcrt.dll", fflush);
+    HOOK_AUTO("msvcrt.dll", fgetc);
     spdlog::info("Virtual FS hooks installed");
 }
 
