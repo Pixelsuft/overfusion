@@ -72,6 +72,7 @@ static BOOL WINAPI SetKeyboardStateH(LPBYTE lpKeyState) {
 
 static BOOL WINAPI OpenClipboardH(HWND hWndNewOwner) {
     spdlog::warn("failing OpenClipboard");
+    // TODO: emulation for iwbtg support
     return FALSE;
 }
 
@@ -105,7 +106,7 @@ void input::init() {
     HOOK_AUTO("user32.dll", GetKeyboardLayout);
     HOOK_ONLY("user32.dll", GetKeyboardState);
     HOOK_ONLY("user32.dll", SetKeyboardState);
-    HOOK_ONLY("user32.dll", OpenClipboard);
+    // HOOK_ONLY("user32.dll", OpenClipboard);
     HOOK_ONLY("user32.dll", IsClipboardFormatAvailable);
     HOOK_ONLY("user32.dll", keybd_event);
     HOOK_ONLY("user32.dll", mouse_event);
