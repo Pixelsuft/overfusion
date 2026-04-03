@@ -130,6 +130,28 @@ static HWND WINAPI GetActiveWindowH() {
     return ::hwnd;
 }
 
+static BOOL (WINAPI* SetWindowTextWO)(HWND hWnd, LPCWSTR lpString);
+static BOOL WINAPI SetWindowTextWH(HWND hWnd, LPCWSTR lpString) {
+    if (hWnd != ::hwnd)
+        return SetWindowTextWO(hWnd, lpString);
+    string new_title = uconv::from_utf16(lpString) + " [OverFusion]";
+    auto temp = uconv::to_utf16(new_title);
+    auto ret = SetWindowTextWO(hWnd, temp);
+    std::free(temp);
+    return ret;
+}
+
+static BOOL (WINAPI* SetWindowTextAO)(HWND hWnd, LPCSTR lpString);
+static BOOL WINAPI SetWindowTextAH(HWND hWnd, LPCSTR lpString) {
+    if (hWnd != ::hwnd)
+        return SetWindowTextAO(hWnd, lpString);
+    string new_title = uconv::from_ansi(lpString) + " [OverFusion]";
+    auto temp = uconv::to_ansi(new_title);
+    auto ret = SetWindowTextAO(hWnd, temp);
+    std::free(temp);
+    return ret;
+}
+
 static HHOOK WINAPI SetWindowsHookExAH(int idHook, HOOKPROC lpfn, HINSTANCE hmod,
                                        DWORD dwThreadId) {
     // No size/move hooks which cause desyncs
@@ -199,6 +221,7 @@ void winhooks::init() {
     hwnd = mhwnd = nullptr;
     // HOOK_STR_ONLY("user32.dll", GetMonitorInfo);
     HOOK_STR_AUTO("user32.dll", CreateWindowEx);
+    HOOK_STR_AUTO("user32.dll", SetWindowText);
     HOOK_STR_ONLY("user32.dll", DialogBoxParam);
     HOOK_STR_ONLY("user32.dll", SetWindowsHookEx);
     HOOK_AUTO("user32.dll", GetFocus);
