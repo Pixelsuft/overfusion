@@ -8,6 +8,7 @@
 #include "mem.hpp"
 #include "plugbase.hpp"
 #include "state.hpp"
+#include "threadhooks.hpp"
 #include "timehooks.hpp"
 #include "ui.hpp"
 #include "winhooks.hpp"
@@ -44,6 +45,7 @@ static void of_main() {
     input::init();
     extrahooks::init();
     gamehooks::init();
+    threadhooks::pre_init();
     hook::enable();
 }
 

@@ -244,7 +244,7 @@ static LSTATUS WINAPI RegCreateKeyWH(HKEY hKey, LPCWSTR lpSubKey, PHKEY phkResul
 }
 
 static BOOL __stdcall InternetGetConnectedStateH(LPDWORD lpdwFlags, DWORD dwReserved) {
-    spdlog::info("Faking InternetGetConnectedState returning an error");
+    spdlog::debug("Faking InternetGetConnectedState returning an error");
     *lpdwFlags = 0x20;
     return FALSE;
 }

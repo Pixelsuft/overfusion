@@ -8,6 +8,7 @@
 #include "plugbase.hpp"
 #include "state.hpp"
 #include "timehooks.hpp"
+#include "threadhooks.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
@@ -31,6 +32,7 @@ static int __stdcall UpdateGameFrameH() {
         inited = true;
         winhooks::after_ui_init();
         timehooks::update_init();
+        threadhooks::update_init();
         extrahooks::init_adv();
         if (conf::get().virtual_fs)
             files::hook_fs();
