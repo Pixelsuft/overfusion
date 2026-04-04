@@ -52,12 +52,10 @@ public:
             return;
         size_t base = reinterpret_cast<size_t>(mod);
         if (fn == "mmfs2.dll") {
-        }
-        else if (fn == "cctrans.dll") {
+        } else if (fn == "cctrans.dll") {
             // FIXME
-            mem::write(base + 0x78b8, {0xeb});
-        }
-        else if (fn == "Perspective.mfx") {
+            // mem::write(base + 0x78b8, {0xeb});
+        } else if (fn == "Perspective.mfx") {
             // Patch for disabling Perspective
             // mem::write(base + 0x169d, {0x31, 0xc0, 0xc2, 0x04, 0x00});
         }
@@ -88,6 +86,8 @@ public:
             return reinterpret_cast<void*>(mem::get_base() + 0x45430);
         case plug::PtrProp::Render:
             return reinterpret_cast<void*>(mem::get_base() + 0x2b970);
+        case plug::PtrProp::ProcessTransition:
+            return reinterpret_cast<void*>(mem::get_base() + 0x28060);
         default:
             return nullptr;
         }

@@ -22,7 +22,8 @@ enum class PtrProp {
     PNextFrameData,
     PSceneName,
     Update,
-    Render
+    Render,
+    ProcessTransition
 };
 
 class PlugBase {

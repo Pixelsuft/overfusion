@@ -51,7 +51,7 @@ public:
             mem::write(base + 0x6e80, {0x90, 0x90, 0x90, 0x90});
         } else if (fn == "CCTrans.dll") {
             // FIXME
-            mem::write(base + 0x7448, {0xeb});
+            // mem::write(base + 0x7448, {0xeb});
         }
     };
 
@@ -80,6 +80,8 @@ public:
             return reinterpret_cast<void*>(mem::get_base() + 0x2bf30);
         case plug::PtrProp::Render:
             return reinterpret_cast<void*>(mem::get_base() + 0x17290);
+        case plug::PtrProp::ProcessTransition:
+            return reinterpret_cast<void*>(mem::get_base() + 0x142e0);
         default:
             return nullptr;
         }

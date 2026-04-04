@@ -242,10 +242,12 @@ static bool fix_win32_theme_real(HWND hwnd) {
         WINDOWCOMPOSITIONATTRIBDATA data = {WCA_USEDARKMODECOLORS, &win_dark, sizeof(win_dark)};
         win_shit.SetWindowCompositionAttribute(hwnd, &data);
     }
+    // TODO
+    SetWindowTheme(hwnd, enable_dark ? L"DarkMode_Explorer" : nullptr, nullptr);
     return true;
 }
 
-void UAHDrawMenuNCBottomLine(HWND hWnd) {
+static void UAHDrawMenuNCBottomLine(HWND hWnd) {
     MENUBARINFO mbi = {sizeof(mbi)};
     if (!GetMenuBarInfo(hWnd, OBJID_MENU, 0, &mbi)) {
         return;

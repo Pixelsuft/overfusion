@@ -13,7 +13,18 @@
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-static void(__stdcall* ProcessFrameRendering)(void);
+static void(__stdcall* ProcessFrameRendering)();
+
+static int (__stdcall* ProcessTransitionO)();
+static int __stdcall ProcessTransitionH() {
+    auto& cfg = conf::get();
+    cfg.is_paused = false;
+    state::before_update();
+    auto ret = ProcessTransitionO();
+    state::after_update();
+    spdlog::debug("Transition");
+    return ret;
+}
 
 static int(__stdcall* UpdateGameFrameO)();
 static int __stdcall UpdateGameFrameH() {
@@ -92,6 +103,11 @@ void gamehooks::init() {
         spdlog::error("UpdateGameFrame was not hooked");
     else
         hook::hook(temp_ptr, UpdateGameFrameH, &UpdateGameFrameO);
+    temp_ptr = plug::get().get_prop(plug::PtrProp::ProcessTransition);
+    if (temp_ptr == nullptr)
+        spdlog::error("ProcessTransition was not hooked");
+    else
+        hook::hook(temp_ptr, ProcessTransitionH, &ProcessTransitionO);
     ProcessFrameRendering = reinterpret_cast<decltype(ProcessFrameRendering)>(
         plug::get().get_prop(plug::PtrProp::Render));
     if (ProcessFrameRendering == nullptr)
