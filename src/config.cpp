@@ -205,6 +205,8 @@ Config::Config() {
     fast_forward = false;
     emulate_user_timers = false;
     emulate_mm_timers = false;
+    disable_threads = false;
+    delay_thread_hook = false;
     is_unicode = false;
     custom_window = true;
     virtual_fs = true;
@@ -223,6 +225,8 @@ void Config::read() {
     READ_BOOL(emulate_user_timers);
     READ_BOOL(emulate_mm_timers);
     READ_BOOL(virtual_fs);
+    READ_BOOL(disable_threads);
+    READ_BOOL(delay_thread_hook);
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
     if (data["binds"].is_array()) {

@@ -1,5 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "threadhooks.hpp"
+#include "config.hpp"
 #include "mem.hpp"
 #include "uconv.hpp"
 #include <Windows.h>
@@ -11,10 +12,11 @@ static HANDLE(WINAPI* CreateThreadO)(LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_STA
 static HANDLE WINAPI CreateThreadH(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
                                    LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter,
                                    DWORD dwCreationFlags, LPDWORD lpThreadId) {
-    // return nullptr;
+    spdlog::debug("CreateThread: {}", reinterpret_cast<void*>(lpStartAddress));
+    if (conf::get().disable_threads)
+        return nullptr;
     auto ret = CreateThreadO(lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter,
                              dwCreationFlags, lpThreadId);
-    spdlog::debug("CreateThread: {}", reinterpret_cast<void*>(lpStartAddress));
     return ret;
 }
 
@@ -42,9 +44,13 @@ static BOOL WINAPI CreateProcessWH(LPCWSTR lpApplicationName, LPWSTR lpCommandLi
     return FALSE;
 }
 
-void threadhooks::update_init() {}
+void threadhooks::update_init() {
+    if (conf::get().delay_thread_hook)
+        HOOK_AUTO("kernel32.dll", CreateThread);
+}
 
 void threadhooks::pre_init() {
-    HOOK_AUTO("kernel32.dll", CreateThread);
+    if (!conf::get().delay_thread_hook)
+        HOOK_AUTO("kernel32.dll", CreateThread);
     HOOK_STR_ONLY("kernel32.dll", CreateProcess);
 }

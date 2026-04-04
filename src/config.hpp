@@ -37,6 +37,8 @@ public:
     bool is_unicode;
     bool custom_window;
     bool virtual_fs;
+    bool disable_threads;
+    bool delay_thread_hook;
 
     Config();
     void read();
