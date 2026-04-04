@@ -63,10 +63,13 @@ static int __stdcall UpdateGameFrameH() {
         spdlog::info("UpdateGameFrame first call");
         if (cfg.custom_window) {
             spdlog::info("Initializing custom window for software renderer");
+            auto prev_thread_disable = cfg.disable_threads;
+            cfg.disable_threads = false;
             if (!customwindow::init()) {
                 spdlog::error("Failed to initialize custom window");
                 cfg.custom_window = false; // NO-OP
             }
+            cfg.disable_threads = prev_thread_disable;
         }
         inited = true;
         winhooks::after_ui_init();

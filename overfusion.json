@@ -6,7 +6,7 @@
   "emulate_mm_timers": true,
   "virtual_fs": true,
   "disable_threads": true,
-  "delay_thread_hook": true,
+  "delay_thread_hook": false,
   "cmdline_append": " /D3D9 /DEBUG /NOF /NOVSYNC /MIS0 /NOC",
   "binds": [
     {
