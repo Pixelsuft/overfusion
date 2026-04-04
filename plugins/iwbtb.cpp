@@ -114,6 +114,10 @@ public:
             return reinterpret_cast<void*>(mem::get_base() + 0x365a0);
         case plug::PtrProp::Render:
             return reinterpret_cast<void*>(mem::get_base() + 0x1ebf0);
+        case plug::PtrProp::ProcessTransition:
+            return reinterpret_cast<void*>(mem::get_base() + 0x1aac0);
+        case plug::PtrProp::RenderTransition:
+            return reinterpret_cast<void*>(mem::get_base() + 0x1cd40);
         default:
             return nullptr;
         }
