@@ -53,7 +53,7 @@ public:
         size_t base = reinterpret_cast<size_t>(mod);
         if (fn == "mmfs2.dll") {
         } else if (fn == "cctrans.dll") {
-            // FIXME
+            // Disable transitions
             // mem::write(base + 0x78b8, {0xeb});
         } else if (fn == "Perspective.mfx") {
             // Patch for disabling Perspective
@@ -88,6 +88,8 @@ public:
             return reinterpret_cast<void*>(mem::get_base() + 0x2b970);
         case plug::PtrProp::ProcessTransition:
             return reinterpret_cast<void*>(mem::get_base() + 0x28060);
+        case plug::PtrProp::RenderTransition:
+            return reinterpret_cast<void*>(mem::get_base() + 0x29470);
         default:
             return nullptr;
         }

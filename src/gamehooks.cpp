@@ -7,22 +7,50 @@
 #include "mem.hpp"
 #include "plugbase.hpp"
 #include "state.hpp"
-#include "timehooks.hpp"
 #include "threadhooks.hpp"
+#include "timehooks.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
 static void(__stdcall* ProcessFrameRendering)();
+static void(__stdcall* RenderTransition)();
 
-static int (__stdcall* ProcessTransitionO)();
+static bool need_skip = false;
+
+static int(__stdcall* ProcessTransitionO)();
 static int __stdcall ProcessTransitionH() {
+    // Oh fuck another code dup
     auto& cfg = conf::get();
-    cfg.is_paused = false;
+    auto pState = plug::get().get_prop(plug::PtrProp::PState);
+    if (pState == nullptr) {
+        spdlog::warn("pState is nullptr");
+        return ProcessTransitionO();
+    }
+    input::process_update();
+    state::early_update();
+    if (need_skip) {
+        need_skip = false;
+        auto ret = ProcessTransitionO();
+        state::after_update();
+        return ret;
+    }
     state::before_update();
-    auto ret = ProcessTransitionO();
+    int ret;
+    if (cfg.is_paused && !cfg.need_advance) {
+        ret = ProcessTransitionO();
+        if (cfg.custom_window)
+            customwindow::render();
+        if (RenderTransition)
+            RenderTransition();
+    } else {
+        cfg.need_advance = false;
+        ret = ProcessTransitionO();
+        if (cfg.custom_window)
+            customwindow::render();
+    }
     state::after_update();
-    spdlog::debug("Transition");
+    // spdlog::debug("Transition {}", ret);
     return ret;
 }
 
@@ -98,6 +126,7 @@ static int __stdcall UpdateGameFrameH() {
 }
 
 void gamehooks::init() {
+    // TODO: render ONLY in ProcessFrameRendering to avoid time issues
     auto temp_ptr = plug::get().get_prop(plug::PtrProp::Update);
     if (temp_ptr == nullptr)
         spdlog::error("UpdateGameFrame was not hooked");
@@ -112,4 +141,8 @@ void gamehooks::init() {
         plug::get().get_prop(plug::PtrProp::Render));
     if (ProcessFrameRendering == nullptr)
         spdlog::error("ProcessFrameRendering was not loaded");
+    RenderTransition = reinterpret_cast<decltype(RenderTransition)>(
+        plug::get().get_prop(plug::PtrProp::RenderTransition));
+    if (RenderTransition == nullptr)
+        spdlog::error("RenderTransition was not loaded");
 }

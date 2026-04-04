@@ -50,7 +50,7 @@ public:
             mem::write(base + 0x6e2f, {0xeb});
             mem::write(base + 0x6e80, {0x90, 0x90, 0x90, 0x90});
         } else if (fn == "CCTrans.dll") {
-            // FIXME
+            // Disable transitions
             // mem::write(base + 0x7448, {0xeb});
         }
     };
