@@ -13,3 +13,6 @@
 [submodule "BackportCpp"]
 	path = BackportCpp
 	url = https://github.com/bitwizeshift/BackportCpp
+[submodule "inih"]
+	path = inih
+	url = https://github.com/benhoyt/inih
