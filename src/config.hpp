@@ -39,6 +39,7 @@ public:
     bool virtual_fs;
     bool disable_threads;
     bool delay_thread_hook;
+    bool no_ini_hooks;
 
     Config();
     void read();

@@ -9,7 +9,9 @@ using std::string, std::string_view, ofs::File;
 
 extern HANDLE(WINAPI* CreateFileWO)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD,
                                     HANDLE);
-extern BOOL(WINAPI* CloseHandleO)(HANDLE hObject);
+extern HANDLE WINAPI CreateFileWH(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD,
+                                         HANDLE);
+extern BOOL(WINAPI* CloseHandleO)(HANDLE);
 
 File::File() noexcept { handle = INVALID_HANDLE_VALUE; }
 
@@ -29,15 +31,15 @@ File& File::operator=(File&& other) noexcept {
     return *this;
 }
 
-bool File::open(string_view path, int mode) {
+bool File::open(string_view path, int mode, bool hooked) {
     if (is_open())
         close();
     wchar_t* w_path = uconv::to_utf16(path);
     ENSURE(w_path != nullptr);
-    handle = static_cast<void*>(
-        CreateFileWO(w_path, mode == 1 ? (GENERIC_WRITE | DELETE) : GENERIC_READ,
-                     mode == 1 ? 0 : FILE_SHARE_READ, nullptr,
-                     mode == 1 ? CREATE_ALWAYS : OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
+    handle = static_cast<void*>((hooked ? CreateFileWH : CreateFileWO)(
+        w_path, mode == 1 ? (GENERIC_WRITE | DELETE) : GENERIC_READ,
+        mode == 1 ? 0 : FILE_SHARE_READ, nullptr, mode == 1 ? CREATE_ALWAYS : OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL, nullptr));
     std::free(w_path);
     return is_open();
 }
@@ -117,7 +119,7 @@ long long File::size() {
 
 void File::close() {
     if (is_open()) {
-        ENSURE(CloseHandleO(handle));
+        ENSURE(CloseHandle(handle));
         handle = INVALID_HANDLE_VALUE;
     }
 }

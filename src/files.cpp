@@ -2,12 +2,13 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "files.hpp"
 #include "ass.hpp"
+#include "config.hpp"
 #include "lock.hpp"
 #include "mem.hpp"
 #include "ofs.hpp"
 #include "uconv.hpp"
-#include <INIReader.h>
 #include <Shlwapi.h>
+#include <SimpleIni.h>
 #include <Windows.h>
 #include <algorithm>
 #include <fcntl.h>
@@ -259,10 +260,9 @@ static HANDLE WINAPI CreateFileAH(LPCSTR lpFileName, DWORD dwDesiredAccess, DWOR
                         dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
 
-static HANDLE WINAPI CreateFileWH(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
-                                  LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-                                  DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
-                                  HANDLE hTemplateFile) {
+HANDLE WINAPI CreateFileWH(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
+                           LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
+                           DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
     ENSURE(lpFileName != nullptr);
     auto temp_ret = handle_file_open(uconv::from_utf16(lpFileName), dwDesiredAccess & GENERIC_READ,
                                      dwDesiredAccess & GENERIC_WRITE, dwCreationDisposition);
@@ -835,60 +835,121 @@ static int fgetcH(FILE* stream) {
     return fgetcO(stream);
 }
 
-static BOOL(WINAPI* WritePrivateProfileStringAO)(LPCSTR lpAppName, LPCSTR lpKeyName,
-                                                 LPCSTR lpString, LPCSTR lpFileName);
-static BOOL WINAPI WritePrivateProfileStringAH(LPCSTR lpAppName, LPCSTR lpKeyName, LPCSTR lpString,
-                                               LPCSTR lpFileName) {
-    lock::CSLock mylock(cs);
-    spdlog::debug("WritePrivateProfileStringA: File={}, Section=[{}], Key={}, Value={}",
-                  lpFileName ? lpFileName : "(null)", lpAppName ? lpAppName : "",
-                  lpKeyName ? lpKeyName : "", lpString ? lpString : "");
+static bool ProcessVirtualIni(std::string_view fileName, std::function<void(CSimpleIniA&)> action,
+                              bool save = false) {
+    // FIXME: why so slow
+    CSimpleIniA ini;
+    ini.SetUnicode();
 
-    return WritePrivateProfileStringAO(lpAppName, lpKeyName, lpString, lpFileName);
+    ofs::File file;
+    if (file.open(fileName, 0, true)) {
+        size_t size = static_cast<size_t>(file.size());
+        std::string content(size, '\0');
+        file.read(content.data(), size);
+        file.close();
+        if (ini.LoadData(content) < 0)
+            return false;
+    }
+
+    action(ini);
+
+    if (save) {
+        std::string out;
+        if (ini.Save(out) >= 0) {
+            if (file.open(fileName, 1, true)) {
+                file.write(out.data(), out.size());
+                file.close();
+                return true;
+            }
+        }
+        return false;
+    }
+    return true;
 }
 
-static BOOL(WINAPI* WritePrivateProfileStringWO)(LPCWSTR lpAppName, LPCWSTR lpKeyName,
-                                                 LPCWSTR lpString, LPCWSTR lpFileName);
-static BOOL WINAPI WritePrivateProfileStringWH(LPCWSTR lpAppName, LPCWSTR lpKeyName,
-                                               LPCWSTR lpString, LPCWSTR lpFileName) {
-    lock::CSLock mylock(cs);
-    spdlog::debug("WritePrivateProfileStringW: File={}, Section=[{}], Key={}, Value={}",
-                  lpFileName ? uconv::from_utf16(lpFileName) : "(null)",
-                  lpAppName ? uconv::from_utf16(lpAppName) : "",
-                  lpKeyName ? uconv::from_utf16(lpKeyName) : "",
-                  lpString ? uconv::from_utf16(lpString) : "");
-
-    return WritePrivateProfileStringWO(lpAppName, lpKeyName, lpString, lpFileName);
-}
-
-static DWORD(WINAPI* GetPrivateProfileStringAO)(LPCSTR lpAppName, LPCSTR lpKeyName,
-                                                LPCSTR lpDefault, LPSTR lpReturnedString,
-                                                DWORD nSize, LPCSTR lpFileName);
 static DWORD WINAPI GetPrivateProfileStringAH(LPCSTR lpAppName, LPCSTR lpKeyName, LPCSTR lpDefault,
                                               LPSTR lpReturnedString, DWORD nSize,
                                               LPCSTR lpFileName) {
-    lock::CSLock mylock(cs);
-    auto ret = GetPrivateProfileStringAO(lpAppName, lpKeyName, lpDefault, lpReturnedString, nSize,
-                                         lpFileName);
-    spdlog::debug("GetPrivateProfileStringA: File={}, Section=[{}], Key={}, Result={}",
-                  lpFileName ? lpFileName : "(null)", lpAppName, lpKeyName, lpReturnedString);
-    return ret;
+    if (!lpFileName || nSize == 0)
+        return 0;
+
+    std::string fn = uconv::from_ansi(lpFileName);
+    std::string result = lpDefault ? lpDefault : "";
+
+    ProcessVirtualIni(fn, [&](CSimpleIniA& ini) {
+        result = ini.GetValue(lpAppName ? lpAppName : "", lpKeyName ? lpKeyName : "",
+                              lpDefault ? lpDefault : "");
+    });
+
+    size_t len = result.copy(lpReturnedString, nSize - 1);
+    lpReturnedString[len] = '\0';
+
+    spdlog::debug("GetA: File={}, Sec=[{}], Key={}, Res={}", fn, lpAppName ? lpAppName : "",
+                  lpKeyName ? lpKeyName : "", lpReturnedString);
+    return static_cast<DWORD>(len);
 }
 
-static DWORD(WINAPI* GetPrivateProfileStringWO)(LPCWSTR lpAppName, LPCWSTR lpKeyName,
-                                                LPCWSTR lpDefault, LPWSTR lpReturnedString,
-                                                DWORD nSize, LPCWSTR lpFileName);
+static BOOL WINAPI WritePrivateProfileStringAH(LPCSTR lpAppName, LPCSTR lpKeyName, LPCSTR lpString,
+                                               LPCSTR lpFileName) {
+    if (!lpFileName || !lpAppName || !lpKeyName)
+        return FALSE;
+
+    std::string fn = uconv::from_ansi(lpFileName);
+    bool ok = ProcessVirtualIni(
+        fn, [&](CSimpleIniA& ini) { ini.SetValue(lpAppName, lpKeyName, lpString); }, true);
+
+    spdlog::debug("WriteA: File={}, Sec=[{}], Key={}, Ok={}", fn, lpAppName, lpKeyName, ok);
+    return ok ? TRUE : FALSE;
+}
+
 static DWORD WINAPI GetPrivateProfileStringWH(LPCWSTR lpAppName, LPCWSTR lpKeyName,
                                               LPCWSTR lpDefault, LPWSTR lpReturnedString,
                                               DWORD nSize, LPCWSTR lpFileName) {
-    lock::CSLock mylock(cs);
-    auto ret = GetPrivateProfileStringWO(lpAppName, lpKeyName, lpDefault, lpReturnedString, nSize,
-                                         lpFileName);
-    spdlog::debug("GetPrivateProfileStringW: File={}, Section=[{}], Key={}, Result={}",
-                  lpFileName ? uconv::from_utf16(lpFileName) : "(null)",
-                  uconv::from_utf16(lpAppName), uconv::from_utf16(lpKeyName),
-                  uconv::from_utf16(lpReturnedString));
-    return ret;
+    if (!lpFileName || nSize == 0)
+        return 0;
+
+    std::string fn = uconv::from_utf16(lpFileName);
+    std::string app = lpAppName ? uconv::from_utf16(lpAppName) : "";
+    std::string key = lpKeyName ? uconv::from_utf16(lpKeyName) : "";
+    std::string def = lpDefault ? uconv::from_utf16(lpDefault) : "";
+
+    std::string result = def;
+    ProcessVirtualIni(fn, [&](CSimpleIniA& ini) {
+        result = ini.GetValue(app.c_str(), key.c_str(), def.c_str());
+    });
+
+    wchar_t* resW = uconv::to_utf16(result.c_str());
+    size_t len = 0;
+    if (resW) {
+        std::wstring_view sv(resW);
+        len = sv.copy(lpReturnedString, nSize - 1);
+        std::free(resW);
+    }
+    lpReturnedString[len] = L'\0';
+
+    spdlog::debug("GetW: File={}, Sec=[{}], Key={}", fn, app, key);
+    return static_cast<DWORD>(len);
+}
+
+static BOOL WINAPI WritePrivateProfileStringWH(LPCWSTR lpAppName, LPCWSTR lpKeyName,
+                                               LPCWSTR lpString, LPCWSTR lpFileName) {
+    if (!lpFileName || !lpAppName || !lpKeyName)
+        return FALSE;
+
+    std::string fn = uconv::from_utf16(lpFileName);
+    std::string app = uconv::from_utf16(lpAppName);
+    std::string key = uconv::from_utf16(lpKeyName);
+    std::string val = lpString ? uconv::from_utf16(lpString) : "";
+
+    bool ok = ProcessVirtualIni(
+        fn,
+        [&](CSimpleIniA& ini) {
+            ini.SetValue(app.c_str(), key.c_str(), lpString ? val.c_str() : nullptr);
+        },
+        true);
+
+    spdlog::debug("WriteW: File={}, Sec=[{}], Key={}, Ok={}", fn, app, key, ok);
+    return ok ? TRUE : FALSE;
 }
 
 void files::init() {
@@ -899,8 +960,10 @@ void files::init() {
 void files::hook_fs() {
     HOOK_STR_AUTO("kernel32.dll", DeleteFile);
     HOOK_STR_AUTO("kernel32.dll", CreateFile);
-    HOOK_STR_AUTO("kernel32.dll", WritePrivateProfileString);
-    HOOK_STR_AUTO("kernel32.dll", GetPrivateProfileString);
+    if (!conf::get().no_ini_hooks) {
+        HOOK_STR_ONLY("kernel32.dll", WritePrivateProfileString);
+        HOOK_STR_ONLY("kernel32.dll", GetPrivateProfileString);
+    }
     HOOK_AUTO("kernel32.dll", OpenFile);
     HOOK_AUTO("kernel32.dll", ReadFile);
     HOOK_AUTO("kernel32.dll", ReadFileEx);

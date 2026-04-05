@@ -16,3 +16,6 @@
 [submodule "inih"]
 	path = inih
 	url = https://github.com/benhoyt/inih
+[submodule "simpleini"]
+	path = simpleini
+	url = https://github.com/brofield/simpleini/
