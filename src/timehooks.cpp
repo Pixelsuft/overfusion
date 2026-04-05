@@ -12,7 +12,7 @@
 #include <timeapi.h>
 
 struct my_timeb {
-    time_t time;
+    __time32_t time;
     unsigned short millitm;
     short timezone;
     short dstflag;
@@ -75,9 +75,7 @@ static VOID GetLocalTimeH(LPSYSTEMTIME lpSystemTime) {
     ENSURE(FileTimeToSystemTime(&ft, lpSystemTime));
 }
 
-static BOOL SetLocalTimeH(const SYSTEMTIME *lpSystemTime) {
-    return FALSE;
-}
+static BOOL SetLocalTimeH(const SYSTEMTIME* lpSystemTime) { return FALSE; }
 
 BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency) = QueryPerformanceFrequency;
 static BOOL WINAPI QueryPerformanceFrequencyH(LARGE_INTEGER* lpFrequency) {
@@ -117,11 +115,11 @@ static time_t __cdecl timeH(time_t* tloc) {
 
 static void __cdecl _ftimeH(struct my_timeb* timeptr) {
     if (timeptr) {
-        auto ms_timestamp = state::get_time(state::TimeOffset::System);
-        timeptr->time = (time_t)(ms_timestamp / 1000);
-        timeptr->millitm = (unsigned short)(ms_timestamp % 1000);
-        timeptr->timezone = -1;
-        timeptr->dstflag = -1;
+        timeptr->time = static_cast<__time32_t>(state::get_time(state::TimeOffset::System) / 1000);
+        timeptr->millitm = static_cast<unsigned short>(state::get_time(state::TimeOffset::System) % 1000);
+        long long diff_ms = state::get_time(state::TimeOffset::System) - state::get_time(state::TimeOffset::Local);
+        timeptr->timezone = static_cast<short>(diff_ms / 60000);
+        timeptr->dstflag = 0; // TODO: mb set it from state
     }
 }
 
@@ -182,8 +180,8 @@ void timehooks::init() {
     HOOK_AUTO("kernel32.dll", QueryPerformanceFrequency);
     HOOK_ONLY("kernel32.dll", GetTickCount);
     HOOK_ONLY("kernel32.dll", SetLocalTime);
-    HOOK_ONLY("msvcrt.dll", time);
     HOOK_ONLY("msvcrt.dll", _ftime);
+    HOOK_ONLY("msvcrt.dll", time);
     auto& cfg = conf::get();
     if (cfg.emulate_user_timers) {
         HOOK_ONLY("user32.dll", SetTimer);
