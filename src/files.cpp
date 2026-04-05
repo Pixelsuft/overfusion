@@ -83,7 +83,7 @@ void files::pre_init() {
     [] {
         wchar_t buffer[MAX_PATH];
         auto len_ret = GetCurrentDirectoryW(MAX_PATH, buffer);
-        ASS(len_ret > 0 && len_ret < MAX_PATH);
+        ENSURE(len_ret > 0 && len_ret < MAX_PATH);
         buffer[len_ret] = L'\0';
         real_cwd = uconv::from_utf16(buffer);
         temp_path = real_cwd + "\\temp";
@@ -97,22 +97,22 @@ BOOL WINAPI SetCurrentDirectoryWH(LPCWSTR lpPathName) {
 }
 
 DWORD WINAPI GetTempPathAH(DWORD nBufferLength, LPSTR lpBuffer) {
-    ASS(nBufferLength > static_cast<DWORD>(temp_path.size()));
+    ENSURE(nBufferLength > static_cast<DWORD>(temp_path.size()));
     auto temp_str = uconv::to_ansi(temp_path);
-    ASS(temp_str != nullptr);
+    ENSURE(temp_str != nullptr);
     auto create_ret = CreateDirectoryA(temp_str, nullptr);
-    ASS(create_ret || GetLastError() == ERROR_ALREADY_EXISTS);
+    ENSURE(create_ret || GetLastError() == ERROR_ALREADY_EXISTS);
     strcpy(lpBuffer, temp_str);
     std::free(temp_str);
     return static_cast<DWORD>(temp_path.size());
 }
 
 DWORD WINAPI GetTempPathWH(DWORD nBufferLength, LPWSTR lpBuffer) {
-    ASS(nBufferLength > static_cast<DWORD>(temp_path.size()));
+    ENSURE(nBufferLength > static_cast<DWORD>(temp_path.size()));
     auto temp_str = uconv::to_utf16(temp_path);
-    ASS(temp_str != nullptr);
+    ENSURE(temp_str != nullptr);
     auto create_ret = CreateDirectoryW(temp_str, nullptr);
-    ASS(create_ret || GetLastError() == ERROR_ALREADY_EXISTS);
+    ENSURE(create_ret || GetLastError() == ERROR_ALREADY_EXISTS);
     wcscpy(lpBuffer, temp_str);
     std::free(temp_str);
     return static_cast<DWORD>(temp_path.size());
@@ -133,7 +133,7 @@ static bool try_read_file(FileData& ret, std::string_view path) {
     }
     ret.size = static_cast<size_t>(temp_size);
     ret.data = ret.data ? std::realloc(ret.data, ret.size) : std::malloc(ret.size);
-    ASS(ret.data != nullptr);
+    ENSURE(ret.data != nullptr);
     if (file.read(ret.data, ret.size))
         return true;
     spdlog::warn("Failed to read file from disk: {}", path);
@@ -190,10 +190,10 @@ static bool create_file_data(FileData& ret, string_view path, DWORD dwCreationDi
             std::free(ret.data);
         ret.data = nullptr;
         ret.size = 0;
-        ASS(false);
+        ENSURE(false);
         return false;
     }
-    ASS(ret.data != nullptr);
+    ENSURE(ret.data != nullptr);
     return true;
 }
 
@@ -249,7 +249,7 @@ static HANDLE WINAPI CreateFileAH(LPCSTR lpFileName, DWORD dwDesiredAccess, DWOR
                                   LPSECURITY_ATTRIBUTES lpSecurityAttributes,
                                   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                                   HANDLE hTemplateFile) {
-    ASS(lpFileName != nullptr);
+    ENSURE(lpFileName != nullptr);
     auto temp_ret = handle_file_open(uconv::from_ansi(lpFileName), dwDesiredAccess & GENERIC_READ,
                                      dwDesiredAccess & GENERIC_WRITE, dwCreationDisposition);
     if (temp_ret.has_value())
@@ -262,7 +262,7 @@ static HANDLE WINAPI CreateFileWH(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWO
                                   LPSECURITY_ATTRIBUTES lpSecurityAttributes,
                                   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                                   HANDLE hTemplateFile) {
-    ASS(lpFileName != nullptr);
+    ENSURE(lpFileName != nullptr);
     auto temp_ret = handle_file_open(uconv::from_utf16(lpFileName), dwDesiredAccess & GENERIC_READ,
                                      dwDesiredAccess & GENERIC_WRITE, dwCreationDisposition);
     if (temp_ret.has_value())
@@ -310,7 +310,7 @@ static BOOL WINAPI WriteFileH(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfByt
     size_t needed_size = h->pos + nNumberOfBytesToWrite;
     if (needed_size > h->data.size) {
         void* new_data = std::realloc(h->data.data, needed_size);
-        ASS(new_data != nullptr);
+        ENSURE(new_data != nullptr);
         h->data.data = new_data;
         h->data.size = needed_size;
     }

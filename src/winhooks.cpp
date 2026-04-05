@@ -235,16 +235,16 @@ void winhooks::init() {
 
 void winhooks::after_ui_init() {
     bool use_w = conf::get().is_unicode;
-    ASS(hwnd != nullptr);
-    ASS(mhwnd != nullptr);
+    ENSURE(hwnd != nullptr);
+    ENSURE(mhwnd != nullptr);
     LRESULT lr;
     UAHWndProc(::hwnd, WM_THEMECHANGED, 0, 0, &lr); // Hacky update for dark mode
     MainWindowProcO = reinterpret_cast<WNDPROC>((use_w ? SetWindowLongPtrW : SetWindowLongPtrA)(
         ::hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(MainWindowProcH)));
-    ASS(MainWindowProcO != nullptr);
+    ENSURE(MainWindowProcO != nullptr);
     EditWindowProcO = reinterpret_cast<WNDPROC>((use_w ? SetWindowLongPtrW : SetWindowLongPtrA)(
         ::mhwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(EditWindowProcH)));
-    ASS(EditWindowProcO != nullptr);
+    ENSURE(EditWindowProcO != nullptr);
 }
 
 void winhooks::sim_key_event(int vk, bool down) {

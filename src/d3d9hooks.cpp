@@ -50,7 +50,7 @@ static long __stdcall EndSceneH(LPDIRECT3DDEVICE9 pDevice) {
 
         D3DDEVICE_CREATION_PARAMETERS params;
         pDevice->GetCreationParameters(&params);
-        ASS(::hwnd == params.hFocusWindow);
+        ENSURE(::hwnd == params.hFocusWindow);
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();

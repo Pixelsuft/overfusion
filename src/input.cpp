@@ -195,7 +195,7 @@ void input::handle_input_real(int vk, bool pressed) {
             break;
         }
         case conf::Task::None: {
-            ASS(false);
+            ENSURE(false);
             break;
         }
         default: {

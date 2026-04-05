@@ -72,7 +72,7 @@ static VOID GetLocalTimeH(LPSYSTEMTIME lpSystemTime) {
     FILETIME ft;
     ft.dwLowDateTime = ull.LowPart;
     ft.dwHighDateTime = ull.HighPart;
-    ASS(FileTimeToSystemTime(&ft, lpSystemTime));
+    ENSURE(FileTimeToSystemTime(&ft, lpSystemTime));
 }
 
 static BOOL SetLocalTimeH(const SYSTEMTIME *lpSystemTime) {

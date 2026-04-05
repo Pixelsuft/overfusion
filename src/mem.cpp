@@ -20,13 +20,13 @@ void mem::init() {
     base_module = GetModuleHandleW(nullptr);
     hproc = GetCurrentProcess();
     auto mh_ret = MH_Initialize();
-    ASS(base_module != nullptr);
-    ASS(hproc != nullptr);
-    ASS(mh_ret == MH_OK);
+    ENSURE(base_module != nullptr);
+    ENSURE(hproc != nullptr);
+    ENSURE(mh_ret == MH_OK);
     [] {
         wchar_t buf[MAX_PATH];
         auto ret_len = GetModuleBaseNameW(hproc, base_module, buf, MAX_PATH);
-        ASS(ret_len > 0);
+        ENSURE(ret_len > 0);
         buf[ret_len] = L'\0';
         exe_name = uconv::from_utf16(buf);
     }();
@@ -63,19 +63,19 @@ void* mem::get_addr(const char* obj_name, const char* func_name) {
 bool mem::_write_memory(size_t addr, const void* data, size_t size) {
     SIZE_T bytesWritten;
     auto ret = WriteProcessMemory(hproc, reinterpret_cast<void*>(addr), data, size, &bytesWritten);
-    ASS(ret && bytesWritten == size);
+    ENSURE(ret && bytesWritten == size);
     return ret && bytesWritten == size;
 }
 
 bool hook::_enable_target(void* target) {
     auto mh_ret = MH_EnableHook(target);
-    ASS(mh_ret == MH_OK);
+    ENSURE(mh_ret == MH_OK);
     return mh_ret == MH_OK;
 }
 
 bool hook::_hook_target(void* pTarget, void* pDetour, void** ppOriginal) {
     auto mh_ret = MH_CreateHook(pTarget, pDetour, ppOriginal);
-    ASS(mh_ret == MH_OK);
+    ENSURE(mh_ret == MH_OK);
     return mh_ret == MH_OK;
 }
 

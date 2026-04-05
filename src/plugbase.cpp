@@ -27,13 +27,13 @@ bool plug::search_and_run() {
     }
     reg.clear();
     if (cb == nullptr) {
-        ASS(false);
+        ENSURE(false);
         spdlog::error("Failed to find plugin for the game");
         return false;
     }
     cb(&_cur_plug, check_bool);
     if (!_cur_plug) {
-        ASS(false);
+        ENSURE(false);
         spdlog::error("Failed to init plugin for the game");
         return false;
     }

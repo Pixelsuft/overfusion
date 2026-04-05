@@ -43,7 +43,7 @@ static LRESULT WINAPI CustomWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
             ImGui_ImplDX9_InvalidateDeviceObjects();
             HRESULT hr = g_pd3dDevice->Reset(&g_d3dpp);
             if (hr == D3DERR_INVALIDCALL)
-                ASS(false);
+                ENSURE(false);
             ImGui_ImplDX9_CreateDeviceObjects();
         }
         return 0;

@@ -33,7 +33,7 @@ bool File::open(string_view path, int mode) {
     if (is_open())
         close();
     wchar_t* w_path = uconv::to_utf16(path);
-    ASS(w_path != nullptr);
+    ENSURE(w_path != nullptr);
     handle = static_cast<void*>(
         CreateFileWO(w_path, mode == 1 ? (GENERIC_WRITE | DELETE) : GENERIC_READ,
                      mode == 1 ? 0 : FILE_SHARE_READ, nullptr,
@@ -117,14 +117,14 @@ long long File::size() {
 
 void File::close() {
     if (is_open()) {
-        ASS(CloseHandleO(handle));
+        ENSURE(CloseHandleO(handle));
         handle = INVALID_HANDLE_VALUE;
     }
 }
 
 bool ofs::remove_file(string_view path) {
     wchar_t* w_path = uconv::to_utf16(path);
-    ASS(w_path != nullptr);
+    ENSURE(w_path != nullptr);
     bool ret = (DeleteFileW(w_path) != FALSE);
     if (!ret && GetLastError() != ERROR_FILE_NOT_FOUND)
         spdlog::error("Failed to remove file: {}", path);
