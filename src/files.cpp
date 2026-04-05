@@ -540,6 +540,8 @@ static BOOL WINAPI DeleteFileAH(LPCSTR lpFileName) {
     lock::CSLock mylock(cs);
     auto it = file_map.find(norm);
     if (it != file_map.end() && it->second.data) {
+        if (it->second.refcount != 0)
+            return FALSE; // WTF
         std::free(it->second.data);
         it->second.data = nullptr;
         it->second.size = 0;
@@ -556,6 +558,8 @@ static BOOL WINAPI DeleteFileWH(LPCWSTR lpFileName) {
     lock::CSLock mylock(cs);
     auto it = file_map.find(norm);
     if (it != file_map.end() && it->second.data) {
+        if (it->second.refcount != 0)
+            return FALSE;
         std::free(it->second.data);
         it->second.data = nullptr;
         it->second.size = 0;
@@ -961,6 +965,7 @@ void files::hook_fs() {
     HOOK_STR_AUTO("kernel32.dll", DeleteFile);
     HOOK_STR_AUTO("kernel32.dll", CreateFile);
     if (!conf::get().no_ini_hooks) {
+        // Why this shit is so slow
         HOOK_STR_ONLY("kernel32.dll", WritePrivateProfileString);
         HOOK_STR_ONLY("kernel32.dll", GetPrivateProfileString);
     }
