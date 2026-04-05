@@ -5,6 +5,7 @@ CompileFlags:
     - "-I../spdlog/include"
     - "-I../json/include"
     - "-I../BackportCpp/include"
+    - "-I../inih/cpp"
     - "-D_DEBUG"
     - "-std=c++23"
     - "-m32"

@@ -2,9 +2,9 @@
 #include "state.hpp"
 #include "ass.hpp"
 #include "config.hpp"
+#include "files.hpp"
 #include "ofs.hpp"
 #include "plugbase.hpp"
-#include "files.hpp"
 #include "timehooks.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
@@ -115,7 +115,11 @@ void state::load_state(int slot) {
         spdlog::warn("Failed to load game state from slot {}", slot);
 }
 
-void state::invalidate_process() { success = false; }
+bool state::invalidate_process() {
+    auto ret = success;
+    success = false;
+    return ret;
+}
 
 void state::early_update() {}
 
@@ -178,7 +182,8 @@ int64_t state::get_utc_offset() {
 
 uint64_t state::get_time(TimeOffset offset) {
     auto fps = st.fps;
-    uint64_t ret = static_cast<uint64_t>(static_cast<int64_t>(st.frames) * 1000 / fps + time_offset);
+    uint64_t ret =
+        static_cast<uint64_t>(static_cast<int64_t>(st.frames) * 1000 / fps + time_offset);
 
     switch (offset) {
     case TimeOffset::None:
@@ -197,9 +202,7 @@ uint64_t state::get_time(TimeOffset offset) {
     }
 }
 
-void state::set_temp_time_offset(int ms) {
-    time_offset = static_cast<int64_t>(ms);
-}
+void state::set_temp_time_offset(int ms) { time_offset = static_cast<int64_t>(ms); }
 
 bool state::save_game(ofs::File& file) {
     ASS(file.is_open());

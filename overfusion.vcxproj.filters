@@ -25,6 +25,9 @@
     <Filter Include="Plugins">
       <UniqueIdentifier>{1346ad6c-faff-482b-82f9-9bb877338a14}</UniqueIdentifier>
     </Filter>
+    <Filter Include="IniH">
+      <UniqueIdentifier>{2163bd15-cbd5-4e73-b31e-35e9f20e7323}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -158,6 +161,12 @@
     </ClCompile>
     <ClCompile Include="src\threadhooks.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="inih\ini.c">
+      <Filter>IniH</Filter>
+    </ClCompile>
+    <ClCompile Include="inih\cpp\INIReader.cpp">
+      <Filter>IniH</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

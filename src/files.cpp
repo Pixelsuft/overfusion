@@ -6,6 +6,7 @@
 #include "mem.hpp"
 #include "ofs.hpp"
 #include "uconv.hpp"
+#include <INIReader.h>
 #include <Shlwapi.h>
 #include <Windows.h>
 #include <algorithm>

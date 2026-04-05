@@ -12,7 +12,7 @@ namespace state {
     };
 
     void init();
-    void invalidate_process();
+    bool invalidate_process();
     void early_update();
     void before_update();
     void after_update();

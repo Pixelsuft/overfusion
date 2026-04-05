@@ -13,6 +13,8 @@
 #include <shellapi.h>
 #include <spdlog/spdlog.h>
 
+using ost::string_view;
+
 static char my_argv_a[MAX_PATH * 2];
 static wchar_t my_argv_w[MAX_PATH * 2];
 
@@ -46,25 +48,30 @@ static BOOL ShellExecuteExWH(SHELLEXECUTEINFOW* pExecInfo) {
     return FALSE;
 }
 
+static int process_message_box(string_view text, string_view caption, UINT uType) {
+    if (ui::processing)
+        return 0;
+    if (uType == 0x30 && state::invalidate_process())
+        return IDOK;
+    if (caption == "Microsoft Visual C++ Runtime Library")
+        return 0;
+    spdlog::info("MessageBox: {} - {}", caption, text);
+    return 0;
+}
+
 static int(WINAPI* MessageBoxAO)(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
 static int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
-    if (ui::processing)
-        return MessageBoxAO(hWnd, lpText, lpCaption, uType);
-    spdlog::info("MessageBoxA: {} - {}", uconv::from_ansi(lpCaption), uconv::from_ansi(lpText));
-    auto ret = MessageBoxAO(hWnd, lpText, lpCaption, uType);
-    if (uType == 0x30)
-        state::invalidate_process();
+    auto ret = process_message_box(uconv::from_ansi(lpText), uconv::from_ansi(lpCaption), uType);
+    if (ret == 0)
+        ret = MessageBoxAO(hWnd, lpText, lpCaption, uType);
     return ret;
 }
 
 static int(WINAPI* MessageBoxWO)(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType);
 static int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) {
-    if (ui::processing)
-        return MessageBoxWO(hWnd, lpText, lpCaption, uType);
-    spdlog::info("MessageBoxW: {} - {}", uconv::from_utf16(lpCaption), uconv::from_utf16(lpText));
-    auto ret = MessageBoxWO(hWnd, lpText, lpCaption, uType);
-    if (uType == 0x30)
-        state::invalidate_process();
+    auto ret = process_message_box(uconv::from_utf16(lpText), uconv::from_utf16(lpCaption), uType);
+    if (ret == 0)
+        ret = MessageBoxWO(hWnd, lpText, lpCaption, uType);
     return ret;
 }
 
