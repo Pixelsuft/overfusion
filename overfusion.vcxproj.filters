@@ -150,9 +150,6 @@
     <ClCompile Include="plugins\fnaf.cpp">
       <Filter>Plugins</Filter>
     </ClCompile>
-    <ClCompile Include="plugins\iwbtg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\customwindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -161,6 +158,9 @@
     </ClCompile>
     <ClCompile Include="src\threadhooks.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="plugins\iwbtg.cpp">
+      <Filter>Plugins</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

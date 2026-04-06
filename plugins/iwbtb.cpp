@@ -10,8 +10,8 @@ using ost::string_view;
 
 class PlugIwbtb final : public plug::PlugBase {
 private:
-    void(__fastcall* SaveGameState)(void* hfile);
-    void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
+    void(__cdecl* SaveGameState)(void* hfile);
+    void(__cdecl* LoadGameState)(void* hfile, unsigned int* outframe);
 
 public:
     PlugIwbtb() {
