@@ -3,4 +3,4 @@
 namespace threadhooks {
 void pre_init();
 void update_init();
-}
+} // namespace threadhooks

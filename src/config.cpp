@@ -10,7 +10,9 @@
 #include <spdlog/fmt/ranges.h>
 #include <spdlog/spdlog.h>
 
-using conf::Config, std::string, ost::string_view;
+using conf::Config;
+using ost::string_view;
+using std::string;
 
 static Config* _conf_ptr;
 
@@ -307,7 +309,7 @@ void Config::read() {
                 }
             }
             spdlog::info("Bind (task={}, extra={}, key={}, mods={})", static_cast<int>(bind.task),
-                          bind.extra, bind.key, bind.mods);
+                         bind.extra, bind.key, bind.mods);
             binds.push_back(bind);
         }
         std::sort(binds.begin(), binds.end(),

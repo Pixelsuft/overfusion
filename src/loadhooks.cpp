@@ -12,9 +12,16 @@
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-using std::string, ost::optional, ost::string_view;
+using ost::optional;
+using ost::string_view;
+using std::string;
 
-constexpr string_view get_filename(string_view path) noexcept {
+#if (defined(_MSC_VER) ? _MSVC_LANG : __cplusplus) >= 201703L
+static constexpr
+#else
+static
+#endif
+    string_view get_filename(string_view path) noexcept {
     auto last_slash = path.find_last_of("/\\");
     if (last_slash == string_view::npos)
         return path;

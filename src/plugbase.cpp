@@ -10,9 +10,7 @@ static std::vector<plug::PlugCheckCallback>& get_registry() {
     return registry;
 }
 
-void plug::reg(plug::PlugCheckCallback callback) {
-    get_registry().push_back(callback);
-}
+void plug::reg(plug::PlugCheckCallback callback) { get_registry().push_back(callback); }
 
 bool plug::search_and_run() {
     PlugCheckCallback cb = nullptr;

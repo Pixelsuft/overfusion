@@ -1,18 +1,9 @@
 #pragma once
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace conf {
-enum class Task {
-    None = 0,
-    SaveState,
-    LoadState,
-    Advance,
-    Play,
-    FastForward,
-    Map,
-    Menu
-};
+enum class Task { None = 0, SaveState, LoadState, Advance, Play, FastForward, Map, Menu };
 
 struct Bind {
     std::vector<int> mods;
@@ -47,4 +38,4 @@ public:
 
 void init();
 Config& get();
-} // namespace config
+} // namespace conf

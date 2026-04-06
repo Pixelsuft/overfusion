@@ -116,8 +116,10 @@ static time_t __cdecl timeH(time_t* tloc) {
 static void __cdecl _ftimeH(struct my_timeb* timeptr) {
     if (timeptr) {
         timeptr->time = static_cast<__time32_t>(state::get_time(state::TimeOffset::System) / 1000);
-        timeptr->millitm = static_cast<unsigned short>(state::get_time(state::TimeOffset::System) % 1000);
-        long long diff_ms = state::get_time(state::TimeOffset::System) - state::get_time(state::TimeOffset::Local);
+        timeptr->millitm =
+            static_cast<unsigned short>(state::get_time(state::TimeOffset::System) % 1000);
+        long long diff_ms =
+            state::get_time(state::TimeOffset::System) - state::get_time(state::TimeOffset::Local);
         timeptr->timezone = static_cast<short>(diff_ms / 60000);
         timeptr->dstflag = 0; // TODO: mb set it from state
     }

@@ -10,9 +10,8 @@
 #include <backends/imgui_impl_win32.h>
 #include <spdlog/spdlog.h>
 
-// TODO: hook window title set
-
-using std::string, std::string_view;
+using ost::string_view;
+using std::string;
 
 HWND hwnd;
 HWND mhwnd;
@@ -130,7 +129,7 @@ static HWND WINAPI GetActiveWindowH() {
     return ::hwnd;
 }
 
-static BOOL (WINAPI* SetWindowTextWO)(HWND hWnd, LPCWSTR lpString);
+static BOOL(WINAPI* SetWindowTextWO)(HWND hWnd, LPCWSTR lpString);
 static BOOL WINAPI SetWindowTextWH(HWND hWnd, LPCWSTR lpString) {
     if (hWnd != ::hwnd)
         return SetWindowTextWO(hWnd, lpString);
@@ -141,7 +140,7 @@ static BOOL WINAPI SetWindowTextWH(HWND hWnd, LPCWSTR lpString) {
     return ret;
 }
 
-static BOOL (WINAPI* SetWindowTextAO)(HWND hWnd, LPCSTR lpString);
+static BOOL(WINAPI* SetWindowTextAO)(HWND hWnd, LPCSTR lpString);
 static BOOL WINAPI SetWindowTextAH(HWND hWnd, LPCSTR lpString) {
     if (hWnd != ::hwnd)
         return SetWindowTextAO(hWnd, lpString);

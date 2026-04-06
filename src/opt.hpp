@@ -3,14 +3,12 @@
 #include <optional>
 
 namespace ost {
-    template <typename T>
-    using optional = std::optional<T>;
+template <typename T> using optional = std::optional<T>;
 }
 #else
 #include <bpstd/optional.hpp>
 
 namespace ost {
-    template <typename T>
-    using optional = bpstd::optional<T>;
+template <typename T> using optional = bpstd::optional<T>;
 }
 #endif

@@ -333,9 +333,11 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
             g_menuTheme = OpenThemeData(hWnd, L"Menu");
         }
 
-        DTTOPTS opts = {sizeof(opts), DTT_TEXTCOLOR,
-                        iTextStateID != MBI_DISABLED ? (dark_mode_enabled == 0 ? RGB(0x00, 0x00, 0x00) : RGB(0xFF, 0xFF, 0xFF))
-                                                     : (dark_mode_enabled == 0 ? RGB(0x6D, 0x6D, 0x6D) : RGB(0x64, 0x64, 0x64))};
+        DTTOPTS opts = {
+            sizeof(opts), DTT_TEXTCOLOR,
+            iTextStateID != MBI_DISABLED
+                ? (dark_mode_enabled == 0 ? RGB(0x00, 0x00, 0x00) : RGB(0xFF, 0xFF, 0xFF))
+                : (dark_mode_enabled == 0 ? RGB(0x6D, 0x6D, 0x6D) : RGB(0x64, 0x64, 0x64))};
 
         FillRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, *pbrBackground);
         FrameRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, *pbrBorder);
@@ -363,11 +365,16 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
         DeleteObject(g_brItemBackgroundHot);
         DeleteObject(g_brItemBackgroundSelected);
         DeleteObject(g_brItemBorder);
-        g_brBarBackground = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(255, 255, 255)) : CreateSolidBrush(RGB(25, 25, 25));
-        g_brItemBackground = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(255, 255, 255)) : CreateSolidBrush(RGB(25, 25, 25));
-        g_brItemBackgroundHot = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(245, 245, 245)) : CreateSolidBrush(RGB(67, 67, 67));
-        g_brItemBackgroundSelected = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(249, 249, 249)) : CreateSolidBrush(RGB(33, 33, 33));
-        g_brItemBorder = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(235, 235, 235)) : CreateSolidBrush(RGB(19, 19, 19));
+        g_brBarBackground = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(255, 255, 255))
+                                                   : CreateSolidBrush(RGB(25, 25, 25));
+        g_brItemBackground = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(255, 255, 255))
+                                                    : CreateSolidBrush(RGB(25, 25, 25));
+        g_brItemBackgroundHot = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(245, 245, 245))
+                                                       : CreateSolidBrush(RGB(67, 67, 67));
+        g_brItemBackgroundSelected = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(249, 249, 249))
+                                                            : CreateSolidBrush(RGB(33, 33, 33));
+        g_brItemBorder = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(235, 235, 235))
+                                                : CreateSolidBrush(RGB(19, 19, 19));
         return false;
     }
     case WM_NCPAINT:

@@ -5,7 +5,8 @@
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-using ost::string_view, ost::optional;
+using ost::string_view;
+using ost::optional;
 
 class PlugIwbtg final : public plug::PlugBase {
 public:

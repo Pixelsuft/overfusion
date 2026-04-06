@@ -1,16 +1,19 @@
 #define WIN32_LEAN_AND_MEAN
 #include "ofs.hpp"
 #include "ass.hpp"
+#include "sv.hpp"
 #include "uconv.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-using std::string, std::string_view, ofs::File;
+using ofs::File;
+using ost::string_view;
+using std::string;
 
 extern HANDLE(WINAPI* CreateFileWO)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD,
                                     HANDLE);
 extern HANDLE WINAPI CreateFileWH(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD,
-                                         HANDLE);
+                                  HANDLE);
 extern BOOL(WINAPI* CloseHandleO)(HANDLE);
 
 File::File() noexcept { handle = INVALID_HANDLE_VALUE; }

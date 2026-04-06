@@ -122,7 +122,7 @@ DWORD WINAPI GetTempPathWH(DWORD nBufferLength, LPWSTR lpBuffer) {
     return static_cast<DWORD>(temp_path.size());
 }
 
-static bool try_read_file(FileData& ret, std::string_view path) {
+static bool try_read_file(FileData& ret, string_view path) {
     if (ret.data) {
         std::free(ret.data);
         ret.data = nullptr;
@@ -201,14 +201,14 @@ static bool create_file_data(FileData& ret, string_view path, DWORD dwCreationDi
     return true;
 }
 
-static bool is_allowed_file(std::string_view path) {
+static bool is_allowed_file(string_view path) {
     return true;
     /* return !path.ends_with(".mfx") && !path.ends_with(".mvx") && !path.ends_with(".dll") &&
            !path.ends_with(".sft") && !path.ends_with(".ift") && !path.ends_with(".exe") &&
            !path.ends_with(".bin");*/
 }
 
-static optional<void*> handle_file_open(std::string_view path, bool for_read, bool for_write,
+static optional<void*> handle_file_open(string_view path, bool for_read, bool for_write,
                                         DWORD dwCreationDisposition) {
     string norm_fp = normalize_path(path);
     if (!is_allowed_file(norm_fp))
@@ -841,7 +841,7 @@ static int fgetcH(FILE* stream) {
     return fgetcO(stream);
 }
 
-static bool ProcessVirtualIni(std::string_view fileName, std::function<void(CSimpleIniA&)> action,
+static bool ProcessVirtualIni(string_view fileName, std::function<void(CSimpleIniA&)> action,
                               bool save = false) {
     // FIXME: why so slow
     CSimpleIniA ini;
@@ -851,7 +851,7 @@ static bool ProcessVirtualIni(std::string_view fileName, std::function<void(CSim
     if (file.open(fileName, 0, true)) {
         size_t size = static_cast<size_t>(file.size());
         std::string content(size, '\0');
-        file.read(content.data(), size);
+        file.read(&content[0], size);
         file.close();
         if (ini.LoadData(content) < 0)
             return false;
@@ -927,8 +927,10 @@ static DWORD WINAPI GetPrivateProfileStringWH(LPCWSTR lpAppName, LPCWSTR lpKeyNa
     wchar_t* resW = uconv::to_utf16(result.c_str());
     size_t len = 0;
     if (resW) {
-        std::wstring_view sv(resW);
-        len = sv.copy(lpReturnedString, nSize - 1);
+        len = std::wcslen(resW);
+        if (len >= nSize)
+            len = nSize - 1;
+        std::wcsncpy(lpReturnedString, resW, len);
         std::free(resW);
     }
     lpReturnedString[len] = L'\0';

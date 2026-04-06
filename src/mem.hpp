@@ -1,12 +1,16 @@
 #pragma once
 #include <initializer_list>
-#include <type_traits>
 #include <string>
+#include <type_traits>
 
 #define HOOK_AUTO(lib, func) hook::hook(mem::get_addr(lib, #func), func##H, &func##O)
 #define HOOK_ONLY(lib, func) hook::hook(mem::get_addr(lib, #func), func##H)
-#define HOOK_STR_AUTO(lib, func) (hook::hook(mem::get_addr(lib, #func "W"), func##WH, &func##WO) && hook::hook(mem::get_addr(lib, #func "A"), func##AH, &func##AO))
-#define HOOK_STR_ONLY(lib, func) (hook::hook(mem::get_addr(lib, #func "W"), func##WH) && hook::hook(mem::get_addr(lib, #func "A"), func##AH))
+#define HOOK_STR_AUTO(lib, func)                                                                   \
+    (hook::hook(mem::get_addr(lib, #func "W"), func##WH, &func##WO) &&                             \
+     hook::hook(mem::get_addr(lib, #func "A"), func##AH, &func##AO))
+#define HOOK_STR_ONLY(lib, func)                                                                   \
+    (hook::hook(mem::get_addr(lib, #func "W"), func##WH) &&                                        \
+     hook::hook(mem::get_addr(lib, #func "A"), func##AH))
 
 namespace mem {
 extern std::string exe_name;
@@ -39,13 +43,14 @@ bool _hook_target(void* pTarget, void* pDetour, void** ppOriginal);
 void _patch_vtable(void** vtable, int index, void* new_func, void** old_func);
 
 template <typename A, typename F> inline bool hook(A pTarget, F* pDetour) {
-    return _hook_target(reinterpret_cast<void*>(pTarget), reinterpret_cast<void*>(pDetour), nullptr);
+    return _hook_target(reinterpret_cast<void*>(pTarget), reinterpret_cast<void*>(pDetour),
+                        nullptr);
 }
 
 template <typename A, typename F, typename T>
 inline bool hook(A pTarget, F* pDetour, T** ppOriginal) {
     return _hook_target(reinterpret_cast<void*>(pTarget), reinterpret_cast<void*>(pDetour),
-                 reinterpret_cast<void**>(ppOriginal));
+                        reinterpret_cast<void**>(ppOriginal));
 }
 
 template <typename T> inline bool enable(T target) {
@@ -54,7 +59,8 @@ template <typename T> inline bool enable(T target) {
 
 template <typename A, typename B>
 inline void patch_vtable(void** vtable, int index, A* new_func, B** old_func) {
-    _patch_vtable(vtable, index, reinterpret_cast<void*>(new_func), reinterpret_cast<void**>(old_func));
+    _patch_vtable(vtable, index, reinterpret_cast<void*>(new_func),
+                  reinterpret_cast<void**>(old_func));
 }
 
 inline bool enable() { return _enable_target(nullptr); }

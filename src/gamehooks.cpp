@@ -89,10 +89,8 @@ static int __stdcall UpdateGameFrameH() {
     input::process_update();
     state::early_update();
     // Assuming they are not nullptrs
-    auto pStep =
-        reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));
-    auto pIsPaused =
-        reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PIsPaused, pState));
+    auto pStep = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));
+    auto pIsPaused = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PIsPaused, pState));
     *pStep = 1;
     if (need_skip) {
         need_skip = false;

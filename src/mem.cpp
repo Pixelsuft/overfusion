@@ -3,18 +3,18 @@
 #include "ass.hpp"
 #include "uconv.hpp"
 #include <MinHook.h>
-#include <spdlog/spdlog.h>
-#include <Windows.h>
 #include <Psapi.h>
+#include <Windows.h>
 #include <processthreadsapi.h>
+#include <spdlog/spdlog.h>
 
 using std::string;
 
 namespace mem {
-    string exe_name;
-    static HMODULE base_module;
-    static HANDLE hproc;
-}
+string exe_name;
+static HMODULE base_module;
+static HANDLE hproc;
+} // namespace mem
 
 void mem::init() {
     base_module = GetModuleHandleW(nullptr);

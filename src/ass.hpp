@@ -7,5 +7,7 @@
 #else
 #define ASS(expr) __assume(expr)
 // TODO
-#define ENSURE(expr) if (!(expr)) {}
+#define ENSURE(expr)                                                                               \
+    if (!(expr)) {                                                                                 \
+    }
 #endif
