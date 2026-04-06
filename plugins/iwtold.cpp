@@ -5,7 +5,7 @@
 #include "../src/plugbase.hpp"
 #include <spdlog/spdlog.h>
 
-using ost::string_view;
+using ost::string_view, ost::optional;
 
 class PlugIwtOld final : public plug::PlugBase {
 private:

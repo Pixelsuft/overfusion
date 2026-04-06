@@ -6,7 +6,7 @@
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-using ost::string_view;
+using ost::string_view, ost::optional;
 
 class PlugIwbtbAdmin final : public plug::PlugBase {
 private:
@@ -48,7 +48,7 @@ public:
 
     bool update_init() override { return true; }
 
-    std::optional<std::string> before_dll_load(string_view path, string_view fn) override {
+    optional<std::string> before_dll_load(string_view path, string_view fn) override {
         if (fn == "wininet.dll")
             return "";
         // spdlog::info("Before load {}", fn);

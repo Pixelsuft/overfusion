@@ -1,18 +1,18 @@
 #define WIN32_LEAN_AND_MEAN
 #include "loadhooks.hpp"
 #include "audiohooks.hpp"
+#include "config.hpp"
 #include "d3d9hooks.hpp"
 #include "extrahooks.hpp"
 #include "mem.hpp"
+#include "opt.hpp"
 #include "plugbase.hpp"
-#include "config.hpp"
 #include "sv.hpp"
 #include "uconv.hpp"
 #include <Windows.h>
-#include <optional>
 #include <spdlog/spdlog.h>
 
-using std::string, ost::string_view;
+using std::string, ost::optional, ost::string_view;
 
 constexpr string_view get_filename(string_view path) noexcept {
     auto last_slash = path.find_last_of("/\\");
@@ -36,7 +36,7 @@ static string get_module_path(HMODULE module) {
     return uconv::from_utf16(path);
 }
 
-static std::optional<std::string> before_load(string_view path) {
+static optional<std::string> before_load(string_view path) {
     auto fn = get_filename(path);
     if (fn == "mmf2d3d8.dll") {
         spdlog::warn("Direct3D8 is not supported, a custom window will be used");
@@ -121,7 +121,7 @@ static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
     void* temp_ret = reinterpret_cast<void*>(GetProcAddressO(hModule, lpProcName));
     temp_ret = plug::get().after_proc_get(hModule, lpProcName, temp_ret);
     if (reinterpret_cast<ULONG_PTR>(lpProcName) > 0xFFFF) {
-        ost::string_view proc(lpProcName);
+        string_view proc(lpProcName);
         if (proc == "SaveRunObject" && !temp_ret) {
             string path = get_module_path(hModule);
             spdlog::warn("This object does not support state save/load: {}", get_filename(path));

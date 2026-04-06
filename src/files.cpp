@@ -6,6 +6,7 @@
 #include "lock.hpp"
 #include "mem.hpp"
 #include "ofs.hpp"
+#include "opt.hpp"
 #include "uconv.hpp"
 #include <Shlwapi.h>
 #include <SimpleIni.h>
@@ -21,6 +22,7 @@
 
 // TODO: implement other filesystem functions
 
+using ost::optional;
 using ost::string_view;
 using std::string;
 
@@ -201,13 +203,13 @@ static bool create_file_data(FileData& ret, string_view path, DWORD dwCreationDi
 
 static bool is_allowed_file(std::string_view path) {
     return true;
-    return !path.ends_with(".mfx") && !path.ends_with(".mvx") && !path.ends_with(".dll") &&
+    /* return !path.ends_with(".mfx") && !path.ends_with(".mvx") && !path.ends_with(".dll") &&
            !path.ends_with(".sft") && !path.ends_with(".ift") && !path.ends_with(".exe") &&
-           !path.ends_with(".bin");
+           !path.ends_with(".bin");*/
 }
 
-static std::optional<void*> handle_file_open(std::string_view path, bool for_read, bool for_write,
-                                             DWORD dwCreationDisposition) {
+static optional<void*> handle_file_open(std::string_view path, bool for_read, bool for_write,
+                                        DWORD dwCreationDisposition) {
     string norm_fp = normalize_path(path);
     if (!is_allowed_file(norm_fp))
         return {};

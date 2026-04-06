@@ -5,7 +5,7 @@
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-using ost::string_view;
+using ost::string_view, ost::optional;
 
 class PlugIwbtg final : public plug::PlugBase {
 public:
@@ -35,7 +35,7 @@ public:
 
     bool update_init() override { return true; }
 
-    std::optional<std::string> before_dll_load(string_view path, string_view fn) override {
+    optional<std::string> before_dll_load(string_view path, string_view fn) override {
         // spdlog::info("Before load {}", fn);
         return {};
     }

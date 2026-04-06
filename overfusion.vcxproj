@@ -125,7 +125,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
@@ -319,6 +319,7 @@
     <ClInclude Include="src\lock.hpp" />
     <ClInclude Include="src\mem.hpp" />
     <ClInclude Include="src\ofs.hpp" />
+    <ClInclude Include="src\opt.hpp" />
     <ClInclude Include="src\plugbase.hpp" />
     <ClInclude Include="src\state.hpp" />
     <ClInclude Include="src\threadhooks.hpp" />

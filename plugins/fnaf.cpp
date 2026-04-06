@@ -6,7 +6,7 @@
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-using ost::string_view;
+using ost::string_view, ost::optional;
 
 class PlugFnaf final : public plug::PlugBase {
 private:

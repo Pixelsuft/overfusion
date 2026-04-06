@@ -1,7 +1,7 @@
 #pragma once
 #include "ofs.hpp"
+#include "opt.hpp"
 #include "sv.hpp"
-#include <optional>
 #include <string>
 
 #define PLUG_REG(plug_class, check_cb)                                                             \
@@ -36,7 +36,7 @@ public:
     PlugBase() : name("Abstract plugin"), need_key_message(false) {}
     virtual bool pre_init() { return true; }
     virtual bool update_init() { return true; }
-    virtual std::optional<std::string> before_dll_load(ost::string_view path, ost::string_view fn) {
+    virtual ost::optional<std::string> before_dll_load(ost::string_view path, ost::string_view fn) {
         return {};
     }
     virtual void after_dll_load(ost::string_view path, ost::string_view fn, void* mod) {}

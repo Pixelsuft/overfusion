@@ -1,5 +1,6 @@
 #pragma once
 #include <initializer_list>
+#include <type_traits>
 #include <string>
 
 #define HOOK_AUTO(lib, func) hook::hook(mem::get_addr(lib, #func), func##H, &func##O)
@@ -18,11 +19,18 @@ void* get_addr(const char* obj_name, const char* func_name);
 inline bool write(size_t addr, std::initializer_list<uint8_t> bytes) {
     return _write_memory(addr, bytes.begin(), bytes.size());
 }
+#if (defined(_MSC_VER) ? _MSVC_LANG : __cplusplus) >= 202002L
 template <typename T>
     requires std::is_trivially_copyable_v<T>
 bool write(size_t addr, const T& value) {
     return _write_memory(addr, std::addressof(value), sizeof(T));
 }
+#else
+template <typename T, typename = std::enable_if_t<std::is_trivially_copyable_v<T>>>
+bool write(size_t addr, const T& value) {
+    return _write_memory(addr, std::addressof(value), sizeof(T));
+}
+#endif
 } // namespace mem
 
 namespace hook {
