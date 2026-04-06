@@ -89,22 +89,22 @@ static int __stdcall UpdateGameFrameH() {
     input::process_update();
     state::early_update();
     // Assuming they are not nullptrs
-    auto& pStep =
-        *reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));
-    auto& pIsPaused =
-        *reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PIsPaused, pState));
-    pStep = 1;
+    auto pStep =
+        reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));
+    auto pIsPaused =
+        reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PIsPaused, pState));
+    *pStep = 1;
     if (need_skip) {
         need_skip = false;
         auto ret = UpdateGameFrameO();
         state::after_update();
         return ret;
     }
-    pIsPaused = false;
+    *pIsPaused = false;
     state::before_update();
     int ret;
     if (cfg.is_paused && !cfg.need_advance) {
-        pIsPaused = true;
+        *pIsPaused = true;
         ret = UpdateGameFrameO();
         if (cfg.custom_window)
             customwindow::render();
@@ -112,7 +112,7 @@ static int __stdcall UpdateGameFrameH() {
             ProcessFrameRendering();
     } else {
         cfg.need_advance = false;
-        pIsPaused = false;
+        *pIsPaused = false;
         ret = UpdateGameFrameO();
         // TODO: hook ProcessFrameRendering to inject custom window render here
         if (cfg.custom_window)
