@@ -14,9 +14,16 @@
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-static void(__stdcall* RenderTransition)();
-
 static bool need_skip = false;
+
+static void(__stdcall* RenderTransitionO)();
+static void __stdcall RenderTransitionH() {
+    auto& cfg = conf::get();
+    if (cfg.custom_window)
+        customwindow::render();
+    if (!need_skip)
+        RenderTransitionO();
+}
 
 static int(__stdcall* ProcessTransitionO)();
 static int __stdcall ProcessTransitionH() {
@@ -38,8 +45,8 @@ static int __stdcall ProcessTransitionH() {
         ret = ProcessTransitionO();
         if (cfg.custom_window)
             customwindow::render();
-        if (RenderTransition)
-            RenderTransition();
+        if (RenderTransitionO)
+            RenderTransitionO();
     } else {
         cfg.need_advance = false;
         ret = ProcessTransitionO();
@@ -52,8 +59,13 @@ static int __stdcall ProcessTransitionH() {
 }
 
 static void(__stdcall* ProcessFrameRenderingO)();
-
-static void __stdcall ProcessFrameRenderingH() { ProcessFrameRenderingO(); }
+static void __stdcall ProcessFrameRenderingH() {
+    auto& cfg = conf::get();
+    if (cfg.custom_window)
+        customwindow::render();
+    if (!need_skip)
+        ProcessFrameRenderingO();
+}
 
 static int(__stdcall* UpdateGameFrameO)();
 static int __stdcall UpdateGameFrameH() {
@@ -104,10 +116,7 @@ static int __stdcall UpdateGameFrameH() {
     if (cfg.is_paused && !cfg.need_advance) {
         *pIsPaused = true;
         ret = UpdateGameFrameO();
-        if (cfg.custom_window)
-            customwindow::render();
-        if (ProcessFrameRenderingO)
-            ProcessFrameRenderingO();
+        ProcessFrameRenderingH();
     } else {
         cfg.need_advance = false;
         *pIsPaused = false;
@@ -116,6 +125,7 @@ static int __stdcall UpdateGameFrameH() {
     if (ret == 0) {
         state::after_update();
     } else {
+        // FIXME: proper scene change vs transition etc.
         spdlog::debug("Scene change");
         need_skip = true;
     }
@@ -124,7 +134,7 @@ static int __stdcall UpdateGameFrameH() {
 
 void gamehooks::init() {
     ProcessFrameRenderingO = nullptr;
-    RenderTransition = nullptr;
+    RenderTransitionO = nullptr;
     auto temp_ptr = plug::get().get_prop(plug::PtrProp::Update);
     if (temp_ptr == nullptr)
         spdlog::error("UpdateGameFrame was not hooked");
@@ -140,8 +150,9 @@ void gamehooks::init() {
         spdlog::error("ProcessFrameRendering was not hooked");
     else
         hook::hook(temp_ptr, ProcessFrameRenderingH, &ProcessFrameRenderingO);
-    RenderTransition = reinterpret_cast<decltype(RenderTransition)>(
-        plug::get().get_prop(plug::PtrProp::RenderTransition));
-    if (RenderTransition == nullptr)
-        spdlog::error("RenderTransition was not loaded");
+    temp_ptr = plug::get().get_prop(plug::PtrProp::RenderTransition);
+    if (temp_ptr == nullptr)
+        spdlog::error("RenderTransition was not hooked");
+    else
+        hook::hook(temp_ptr, RenderTransitionH, &RenderTransitionO);
 }
