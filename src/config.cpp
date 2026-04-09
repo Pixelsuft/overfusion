@@ -213,6 +213,7 @@ Config::Config() {
     custom_window = true;
     virtual_fs = true;
     no_ini_hooks = false;
+    boxed_mode = false;
 }
 
 #define READ_BOOL(name)                                                                            \
@@ -231,6 +232,7 @@ void Config::read() {
     READ_BOOL(disable_threads);
     READ_BOOL(delay_thread_hook);
     READ_BOOL(no_ini_hooks);
+    READ_BOOL(boxed_mode);
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
     if (data["binds"].is_array()) {

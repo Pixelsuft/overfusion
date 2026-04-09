@@ -8,6 +8,7 @@
   "disable_threads": false,
   "delay_thread_hook": false,
   "no_ini_hooks": false,
+  "boxed_mode": false,
   "cmdline_append": " /D3D9 /DEBUG /NOF /NOVSYNC /MIS0 /NOC",
   "binds": [
     {

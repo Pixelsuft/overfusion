@@ -31,6 +31,7 @@ public:
     bool disable_threads;
     bool delay_thread_hook;
     bool no_ini_hooks;
+    bool boxed_mode;
 
     Config();
     void read();

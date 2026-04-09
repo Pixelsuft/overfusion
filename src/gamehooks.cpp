@@ -30,6 +30,8 @@ static int __stdcall ProcessTransitionH() {
     // TODO: check for skip
     state::before_update();
     int ret;
+    if (cfg.boxed_mode)
+        cfg.is_paused = false;
     if (cfg.is_paused && !cfg.need_advance) {
         ret = ProcessTransitionO();
         if (cfg.custom_window)
@@ -96,6 +98,8 @@ static int __stdcall UpdateGameFrameH() {
     }
     state::before_update();
     int ret;
+    if (cfg.boxed_mode)
+        cfg.is_paused = false;
     if (cfg.is_paused && !cfg.need_advance) {
         *pIsPaused = true;
         ret = UpdateGameFrameO();

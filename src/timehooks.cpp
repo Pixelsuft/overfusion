@@ -176,6 +176,9 @@ static MMRESULT WINAPI timeKillEventH(UINT uTimerID) {
 }
 
 void timehooks::init() {
+    auto& cfg = conf::get();
+    if (cfg.boxed_mode)
+        return;
     mm_timer_counter = 1;
     HOOK_ONLY("winmm.dll", timeGetSystemTime);
     HOOK_AUTO("winmm.dll", timeGetTime);
@@ -184,7 +187,6 @@ void timehooks::init() {
     HOOK_ONLY("kernel32.dll", SetLocalTime);
     HOOK_ONLY("msvcrt.dll", _ftime);
     HOOK_ONLY("msvcrt.dll", time);
-    auto& cfg = conf::get();
     if (cfg.emulate_user_timers) {
         HOOK_ONLY("user32.dll", SetTimer);
         HOOK_ONLY("user32.dll", KillTimer);
@@ -196,6 +198,9 @@ void timehooks::init() {
 }
 
 void timehooks::update_init() {
+    auto& cfg = conf::get();
+    if (cfg.boxed_mode)
+        return;
     // FIXME: breaks IWBTB admin mod for some reason
     HOOK_AUTO("kernel32.dll", QueryPerformanceCounter);
     // This breaks fontembed.mfx if hooked earlier
