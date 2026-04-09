@@ -1,12 +1,13 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/config.hpp"
+#include "../src/gamehooks.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-using ost::string_view;
 using ost::optional;
+using ost::string_view;
 
 class PlugIwbtg final : public plug::PlugBase {
 public:
@@ -19,6 +20,10 @@ public:
         auto& cfg = conf::get();
         if (cfg.fps <= 0)
             cfg.fps = 50;
+        gamehooks::hook_update_func(reinterpret_cast<void*>(mem::get_base() + 0x2bf30));
+        gamehooks::set_render_func(reinterpret_cast<void*>(mem::get_base() + 0x17290));
+        gamehooks::hook_trans_update_func(reinterpret_cast<void*>(mem::get_base() + 0x142e0));
+        gamehooks::set_trans_render_func(reinterpret_cast<void*>(mem::get_base() + 0x13e70));
         // Idk but this fixes switching between scenes
         mem::write(mem::get_base() + 0x15af3, {0x90, 0x90});
         // No extra time logic
@@ -77,12 +82,6 @@ public:
         case plug::PtrProp::PSceneID:
             // From pGlobalApp
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x1f0);
-        case plug::PtrProp::Update:
-            return reinterpret_cast<void*>(mem::get_base() + 0x2bf30);
-        case plug::PtrProp::Render:
-            return reinterpret_cast<void*>(mem::get_base() + 0x17290);
-        case plug::PtrProp::ProcessTransition:
-            return reinterpret_cast<void*>(mem::get_base() + 0x142e0);
         default:
             return nullptr;
         }

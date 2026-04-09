@@ -14,12 +14,12 @@
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-static void(__stdcall* ProcessFrameRendering)();
-static void(__stdcall* RenderTransition)();
+static void(__stdcall* RenderFrame)() = nullptr;
+static void(__stdcall* RenderTransition)() = nullptr;
 
 static bool need_skip = false;
 
-static int(__stdcall* ProcessTransitionO)();
+static int(__stdcall* ProcessTransitionO)() = nullptr;
 static int __stdcall ProcessTransitionH() {
     // Oh fuck another code dup
     auto& cfg = conf::get();
@@ -47,7 +47,7 @@ static int __stdcall ProcessTransitionH() {
     return ret;
 }
 
-static int(__stdcall* UpdateGameFrameO)();
+static int(__stdcall* UpdateGameFrameO)() = nullptr;
 static int __stdcall UpdateGameFrameH() {
     static bool inited = false;
     static bool need_skip = false;
@@ -102,8 +102,8 @@ static int __stdcall UpdateGameFrameH() {
         ret = UpdateGameFrameO();
         if (cfg.custom_window)
             customwindow::render();
-        if (ProcessFrameRendering)
-            ProcessFrameRendering();
+        if (RenderFrame)
+            RenderFrame();
     } else {
         auto pTask = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
         ASS(pTask != nullptr);
@@ -126,22 +126,28 @@ static int __stdcall UpdateGameFrameH() {
 }
 
 void gamehooks::init() {
-    auto temp_ptr = plug::get().get_prop(plug::PtrProp::Update);
-    if (temp_ptr == nullptr)
+    if (UpdateGameFrameO == nullptr)
         spdlog::error("UpdateGameFrame was not hooked");
-    else
-        hook::hook(temp_ptr, UpdateGameFrameH, &UpdateGameFrameO);
-    temp_ptr = plug::get().get_prop(plug::PtrProp::ProcessTransition);
-    if (temp_ptr == nullptr)
+    if (ProcessTransitionO == nullptr)
         spdlog::error("ProcessTransition was not hooked");
-    else
-        hook::hook(temp_ptr, ProcessTransitionH, &ProcessTransitionO);
-    ProcessFrameRendering = reinterpret_cast<decltype(ProcessFrameRendering)>(
-        plug::get().get_prop(plug::PtrProp::Render));
-    if (ProcessFrameRendering == nullptr)
-        spdlog::error("ProcessFrameRendering was not loaded");
-    RenderTransition = reinterpret_cast<decltype(RenderTransition)>(
-        plug::get().get_prop(plug::PtrProp::RenderTransition));
+    if (RenderFrame == nullptr)
+        spdlog::error("RenderFrame was not loaded");
     if (RenderTransition == nullptr)
         spdlog::error("RenderTransition was not loaded");
+}
+
+void gamehooks::hook_update_func(void* ptr) {
+    hook::hook(ptr, UpdateGameFrameH, &UpdateGameFrameO);
+}
+
+void gamehooks::set_render_func(void* ptr) {
+    RenderFrame = reinterpret_cast<decltype(RenderFrame)>(ptr);
+}
+
+void gamehooks::hook_trans_update_func(void* ptr) {
+    hook::hook(ptr, ProcessTransitionH, &ProcessTransitionO);
+}
+
+void gamehooks::set_trans_render_func(void* ptr) {
+    RenderTransition = reinterpret_cast<decltype(RenderTransition)>(ptr);
 }

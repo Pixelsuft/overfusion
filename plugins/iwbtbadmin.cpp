@@ -1,13 +1,14 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/ass.hpp"
 #include "../src/config.hpp"
+#include "../src/gamehooks.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-using ost::string_view;
 using ost::optional;
+using ost::string_view;
 
 class PlugIwbtbAdmin final : public plug::PlugBase {
 private:
@@ -30,6 +31,10 @@ public:
         ASS(SaveGameState != nullptr);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x51610);
         ASS(LoadGameState != nullptr);
+        gamehooks::hook_update_func(reinterpret_cast<void*>(mem::get_base() + 0x4d3e0));
+        gamehooks::set_render_func(reinterpret_cast<void*>(mem::get_base() + 0x31150));
+        gamehooks::hook_trans_update_func(reinterpret_cast<void*>(mem::get_base() + 0x2c860));
+        gamehooks::set_trans_render_func(reinterpret_cast<void*>(mem::get_base() + 0x2e0a0));
         // No input polling
         mem::write(mem::get_base() + 0x2d077, {0xeb});
         mem::write(mem::get_base() + 0x2d969, {0xeb});
@@ -96,14 +101,6 @@ public:
         case plug::PtrProp::PSceneID:
             // From pGlobalApp
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x1f0);
-        case plug::PtrProp::Update:
-            return reinterpret_cast<void*>(mem::get_base() + 0x4d3e0);
-        case plug::PtrProp::Render:
-            return reinterpret_cast<void*>(mem::get_base() + 0x31150);
-        case plug::PtrProp::ProcessTransition:
-            return reinterpret_cast<void*>(mem::get_base() + 0x2c860);
-        case plug::PtrProp::RenderTransition:
-            return reinterpret_cast<void*>(mem::get_base() + 0x2e0a0);
         default:
             return nullptr;
         }
