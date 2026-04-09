@@ -1,8 +1,8 @@
 #include "gamehooks.hpp"
-#include "ass.hpp"
 #include "config.hpp"
 #include "customwindow.hpp"
 #include "extrahooks.hpp"
+#include "ass.hpp"
 #include "files.hpp"
 #include "input.hpp"
 #include "mem.hpp"
@@ -14,16 +14,10 @@
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-static bool need_skip = false;
+static void(__stdcall* ProcessFrameRendering)();
+static void(__stdcall* RenderTransition)();
 
-static void(__stdcall* RenderTransitionO)();
-static void __stdcall RenderTransitionH() {
-    auto& cfg = conf::get();
-    if (cfg.custom_window)
-        customwindow::render();
-    if (!need_skip)
-        RenderTransitionO();
-}
+static bool need_skip = false;
 
 static int(__stdcall* ProcessTransitionO)();
 static int __stdcall ProcessTransitionH() {
@@ -33,20 +27,15 @@ static int __stdcall ProcessTransitionH() {
     ASS(pState != nullptr);
     input::process_update();
     state::early_update();
-    if (need_skip) {
-        need_skip = false;
-        auto ret = ProcessTransitionO();
-        state::after_update();
-        return ret;
-    }
+    // TODO: check for skip
     state::before_update();
     int ret;
     if (cfg.is_paused && !cfg.need_advance) {
         ret = ProcessTransitionO();
         if (cfg.custom_window)
             customwindow::render();
-        if (RenderTransitionO)
-            RenderTransitionO();
+        if (RenderTransition)
+            RenderTransition();
     } else {
         cfg.need_advance = false;
         ret = ProcessTransitionO();
@@ -56,15 +45,6 @@ static int __stdcall ProcessTransitionH() {
     state::after_update();
     // spdlog::debug("Transition {}", ret);
     return ret;
-}
-
-static void(__stdcall* ProcessFrameRenderingO)();
-static void __stdcall ProcessFrameRenderingH() {
-    auto& cfg = conf::get();
-    if (cfg.custom_window)
-        customwindow::render();
-    if (!need_skip)
-        ProcessFrameRenderingO();
 }
 
 static int(__stdcall* UpdateGameFrameO)();
@@ -104,37 +84,48 @@ static int __stdcall UpdateGameFrameH() {
     ASS(pStep != nullptr);
     ASS(pIsPaused != nullptr);
     *pStep = 1;
+    *pIsPaused = false;
     if (need_skip) {
         need_skip = false;
         auto ret = UpdateGameFrameO();
+        // Hacky way to skip waiting
+        auto prev_skip = cfg.fast_forward;
+        cfg.fast_forward = true;
         state::after_update();
+        cfg.fast_forward = false;
         return ret;
     }
-    *pIsPaused = false;
     state::before_update();
     int ret;
     if (cfg.is_paused && !cfg.need_advance) {
         *pIsPaused = true;
         ret = UpdateGameFrameO();
-        ProcessFrameRenderingH();
+        if (cfg.custom_window)
+            customwindow::render();
+        if (ProcessFrameRendering)
+            ProcessFrameRendering();
     } else {
+        auto pTask = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
+        ASS(pTask != nullptr);
         cfg.need_advance = false;
         *pIsPaused = false;
         ret = UpdateGameFrameO();
+        if (cfg.custom_window)
+            customwindow::render();
+        // FIXME: better way to check if skip is needed
+        // FIXME: IWBTG seems to be requires cheking it directly in ProcessFrameRendering
+        need_skip = *pTask != 0;
     }
-    if (ret == 0) {
+    if (!need_skip) {
+        // spdlog::debug("After update change");
         state::after_update();
     } else {
-        // FIXME: proper scene change vs transition etc.
         spdlog::debug("Scene change");
-        need_skip = true;
     }
     return ret;
 }
 
 void gamehooks::init() {
-    ProcessFrameRenderingO = nullptr;
-    RenderTransitionO = nullptr;
     auto temp_ptr = plug::get().get_prop(plug::PtrProp::Update);
     if (temp_ptr == nullptr)
         spdlog::error("UpdateGameFrame was not hooked");
@@ -145,14 +136,12 @@ void gamehooks::init() {
         spdlog::error("ProcessTransition was not hooked");
     else
         hook::hook(temp_ptr, ProcessTransitionH, &ProcessTransitionO);
-    temp_ptr = plug::get().get_prop(plug::PtrProp::Render);
-    if (temp_ptr == nullptr)
-        spdlog::error("ProcessFrameRendering was not hooked");
-    else
-        hook::hook(temp_ptr, ProcessFrameRenderingH, &ProcessFrameRenderingO);
-    temp_ptr = plug::get().get_prop(plug::PtrProp::RenderTransition);
-    if (temp_ptr == nullptr)
-        spdlog::error("RenderTransition was not hooked");
-    else
-        hook::hook(temp_ptr, RenderTransitionH, &RenderTransitionO);
+    ProcessFrameRendering = reinterpret_cast<decltype(ProcessFrameRendering)>(
+        plug::get().get_prop(plug::PtrProp::Render));
+    if (ProcessFrameRendering == nullptr)
+        spdlog::error("ProcessFrameRendering was not loaded");
+    RenderTransition = reinterpret_cast<decltype(RenderTransition)>(
+        plug::get().get_prop(plug::PtrProp::RenderTransition));
+    if (RenderTransition == nullptr)
+        spdlog::error("RenderTransition was not loaded");
 }
