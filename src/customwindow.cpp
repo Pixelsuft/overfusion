@@ -25,6 +25,16 @@ static LPDIRECT3D9 g_pD3D = nullptr;
 static LPDIRECT3DDEVICE9 g_pd3dDevice = nullptr;
 static D3DPRESENT_PARAMETERS g_d3dpp = {};
 
+static HICON GetWindowIcon(HWND targetHwnd) {
+    HICON hIcon = nullptr;
+    hIcon = (HICON)SendMessage(targetHwnd, WM_GETICON, ICON_BIG, 0);
+    if (hIcon == nullptr)
+        hIcon = (HICON)GetClassLongPtr(targetHwnd, GCLP_HICON);
+    if (hIcon == nullptr)
+        hIcon = (HICON)SendMessage(targetHwnd, WM_GETICON, ICON_SMALL2, 0);
+    return hIcon;
+}
+
 static LRESULT WINAPI CustomWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (msg != WM_KEYDOWN && msg != WM_KEYUP &&
         ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
@@ -133,6 +143,9 @@ bool customwindow::init() {
         return false;
     }
     winhooks::fix_win32_theme(g_hwnd);
+    auto hIcon = GetWindowIcon(::hwnd);
+    SendMessage(g_hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIcon));
+    SendMessage(g_hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIcon));
 #ifdef _DEBUG
     ShowWindow(g_hwnd, SW_SHOWDEFAULT);
 #endif
