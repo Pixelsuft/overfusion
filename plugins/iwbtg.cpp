@@ -1,4 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
+#include "../src/ass.hpp"
 #include "../src/config.hpp"
 #include "../src/gamehooks.hpp"
 #include "../src/mem.hpp"
@@ -8,6 +9,18 @@
 
 using ost::optional;
 using ost::string_view;
+
+static void(__stdcall* RenderFrameO)();
+static void __stdcall RenderFrameH() {
+    // Fix need_skip not beeing notified automatically for some reason
+    auto pState = plug::get().get_prop(plug::PtrProp::PState);
+    ASS(pState != nullptr);
+    auto pTask = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
+    ASS(pTask != nullptr);
+    if (*pTask != 0)
+        gamehooks::set_need_skip(true);
+    RenderFrameO();
+}
 
 class PlugIwbtg final : public plug::PlugBase {
 public:
@@ -20,6 +33,7 @@ public:
         auto& cfg = conf::get();
         if (cfg.fps <= 0)
             cfg.fps = 50;
+        hook::hook(mem::get_base() + 0x17290, RenderFrameH, &RenderFrameO);
         gamehooks::hook_update_func(reinterpret_cast<void*>(mem::get_base() + 0x2bf30));
         gamehooks::set_render_func(reinterpret_cast<void*>(mem::get_base() + 0x17290));
         gamehooks::hook_trans_update_func(reinterpret_cast<void*>(mem::get_base() + 0x142e0));
@@ -35,7 +49,8 @@ public:
         mem::write(mem::get_base() + 0x13143, {0x90, 0x90});
         mem::write(mem::get_base() + 0x1314a, {0x90, 0x90});
         mem::write(mem::get_base() + 0x1314f, {0x90, 0x90});
-        // No sleep
+        // No FPS limit
+        mem::write(mem::get_base() + 0x16049, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         return true;
     }
 

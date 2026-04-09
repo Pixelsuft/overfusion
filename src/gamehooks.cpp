@@ -1,8 +1,8 @@
 #include "gamehooks.hpp"
+#include "ass.hpp"
 #include "config.hpp"
 #include "customwindow.hpp"
 #include "extrahooks.hpp"
-#include "ass.hpp"
 #include "files.hpp"
 #include "input.hpp"
 #include "mem.hpp"
@@ -50,7 +50,6 @@ static int __stdcall ProcessTransitionH() {
 static int(__stdcall* UpdateGameFrameO)() = nullptr;
 static int __stdcall UpdateGameFrameH() {
     static bool inited = false;
-    static bool need_skip = false;
     auto& cfg = conf::get();
     if (!inited) {
         spdlog::info("UpdateGameFrame first call");
@@ -105,22 +104,19 @@ static int __stdcall UpdateGameFrameH() {
         if (RenderFrame)
             RenderFrame();
     } else {
-        auto pTask = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
-        ASS(pTask != nullptr);
         cfg.need_advance = false;
         *pIsPaused = false;
         ret = UpdateGameFrameO();
         if (cfg.custom_window)
             customwindow::render();
         // FIXME: better way to check if skip is needed
-        // FIXME: IWBTG seems to be requires cheking it directly in ProcessFrameRendering
-        need_skip = *pTask != 0;
+        need_skip = need_skip || (ret != 0);
     }
     if (!need_skip) {
         // spdlog::debug("After update change");
         state::after_update();
     } else {
-        spdlog::debug("Scene change");
+        spdlog::debug("Scene change {}", ret);
     }
     return ret;
 }
@@ -151,3 +147,5 @@ void gamehooks::hook_trans_update_func(void* ptr) {
 void gamehooks::set_trans_render_func(void* ptr) {
     RenderTransition = reinterpret_cast<decltype(RenderTransition)>(ptr);
 }
+
+void gamehooks::set_need_skip(bool enabled) { need_skip = enabled; }
