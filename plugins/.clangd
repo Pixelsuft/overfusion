@@ -6,6 +6,7 @@ CompileFlags:
     - "-I../json/include"
     - "-I../BackportCpp/include"
     - "-I../expected/include"
+    - "-I../optional/include"
     - "-I../simpleini"
     - "-D_DEBUG"
     - "-std=c++20"
