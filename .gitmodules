@@ -19,3 +19,6 @@
 [submodule "simpleini"]
 	path = simpleini
 	url = https://github.com/brofield/simpleini/
+[submodule "expected"]
+	path = expected
+	url = https://github.com/TartanLlama/expected

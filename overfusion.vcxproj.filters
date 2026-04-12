@@ -235,5 +235,8 @@
     <ClInclude Include="src\sv.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\expect.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

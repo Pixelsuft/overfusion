@@ -1,4 +1,5 @@
 #pragma once
+#include "expect.hpp"
 #include "ofs.hpp"
 #include "opt.hpp"
 #include "sv.hpp"
