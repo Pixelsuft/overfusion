@@ -74,15 +74,15 @@ static double freq;
 static string last_msg;
 static string state_error_text;
 static int64_t time_offset;
-static bool success;
 static bool processing_save;
+static bool updating;
 static bool need_key_msg;
 
 void state::init() {
     need_key_msg = plug::get().need_key_message;
     last_msg = "None";
-    success = false;
     processing_save = false;
+    updating = false;
     st.fps = conf::get().fps;
     const_dt = 1.0 / (double)st.fps;
     to_wait = 0.0;
@@ -93,9 +93,7 @@ void state::init() {
     QueryPerformanceCounterO(&last_counter);
 }
 
-bool state::is_processing_save() {
-    return processing_save;
-}
+bool state::is_processing_save() { return processing_save; }
 
 void state::save_state(int slot) {
     string fp = string(files::get_cwd()) + "\\state_" + std::to_string(slot) + ".ostate";
@@ -124,11 +122,11 @@ void state::load_state(int slot) {
 }
 
 bool state::invalidate_process(string_view text) {
-    if (success)
-        state_error_text = text;
-    auto ret = success;
-    success = false;
-    return ret;
+    if (!processing_save)
+        return false;
+    state_error_text = text;
+    processing_save = false;
+    return true;
 }
 
 void state::early_update() {}
@@ -137,7 +135,7 @@ void state::before_update() {
     auto& cfg = conf::get();
     if (cfg.is_paused && !cfg.need_advance)
         return;
-    processing_save = true;
+    updating = true;
     if (cfg.is_replay) {
 
     } else {
@@ -163,8 +161,8 @@ void state::before_update() {
 
 void state::after_update() {
     auto& cfg = conf::get();
-    if (processing_save) {
-        processing_save = false;
+    if (updating) {
+        updating = false;
         auto prev_time = get_time(TimeOffset::None);
         st.frames++;
         timehooks::update(static_cast<int>(get_time(TimeOffset::None) - prev_time));
@@ -216,34 +214,34 @@ void state::set_temp_time_offset(int ms) { time_offset = static_cast<int64_t>(ms
 
 ost::expected<void, string> state::save_game(ofs::File& file) {
     ASS(file.is_open());
-    success = true;
+    processing_save = true;
     auto ret = plug::get().save_state(file);
     if (!ret.has_value()) {
-        success = false;
+        processing_save = false;
         return ret;
     }
-    if (!success)
+    if (!processing_save)
         return ost::unexpected<string>(state_error_text);
-    success = false;
+    processing_save = false;
     return {};
 }
 
 ost::expected<void, string> state::load_game(ofs::File& file) {
     ASS(file.is_open());
-    success = true;
+    processing_save = true;
     auto ret = plug::get().load_state(file);
     if (!ret.has_value()) {
-        success = false;
+        processing_save = false;
         return ret;
     }
-    if (!success)
+    if (!processing_save)
         return ost::unexpected<string>(state_error_text);
-    success = false;
+    processing_save = false;
     return {};
 }
 
 bool state::get_key_state(int vk) {
-    auto& vec = processing_save ? (conf::get().is_replay ? repl_holding : holding) : st.prev;
+    auto& vec = updating ? (conf::get().is_replay ? repl_holding : holding) : st.prev;
     auto ret = std::find(vec.begin(), vec.end(), vk) != vec.end();
     return ret;
 }
@@ -258,7 +256,7 @@ void state::set_key_down(int vk, bool down) {
 }
 
 void state::fill_kbd_state(unsigned char* data) {
-    auto& vec = processing_save ? (conf::get().is_replay ? repl_holding : holding) : st.prev;
+    auto& vec = updating ? (conf::get().is_replay ? repl_holding : holding) : st.prev;
     for (auto& val : vec)
         data[val] = 1;
 }
