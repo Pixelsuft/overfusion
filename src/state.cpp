@@ -207,13 +207,13 @@ void state::set_temp_time_offset(int ms) { time_offset = static_cast<int64_t>(ms
 bool state::save_game(ofs::File& file) {
     ASS(file.is_open());
     success = true;
-    return plug::get().save_state(file) && success;
+    return plug::get().save_state(file).has_value() && success;
 }
 
 bool state::load_game(ofs::File& file) {
     ASS(file.is_open());
     success = true;
-    return plug::get().load_state(file) && success;
+    return plug::get().load_state(file).has_value() && success;
 }
 
 bool state::get_key_state(int vk) {

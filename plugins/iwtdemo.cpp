@@ -9,6 +9,7 @@
 
 using ost::optional;
 using ost::string_view;
+using std::string;
 
 class PlugIwtDemo final : public plug::PlugBase {
 private:
@@ -128,20 +129,21 @@ public:
         }
     }
 
-    bool save_state(ofs::File& file) override {
+    ost::expected<void, string> save_state(ofs::File& file) override {
         // Replicating game engine mechanics
+        // TODO: reinterpret cast
         size_t ptr = *(size_t*)(mem::get_base() + 0xb49d4);
         *(short*)(ptr + 0x436) = 0;
         SaveGameState(file.get_handle());
-        return true;
+        return {};
     }
 
-    bool load_state(ofs::File& file) override {
+    ost::expected<void, string> load_state(ofs::File& file) override {
         unsigned int outframe = 0;
         size_t ptr = *(size_t*)(mem::get_base() + 0xb49d4);
         *(short*)(ptr + 0x30) = 0;
         LoadGameState(file.get_handle(), &outframe);
-        return true;
+        return {};
     }
 };
 

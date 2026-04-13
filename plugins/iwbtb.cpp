@@ -9,6 +9,7 @@
 
 using ost::optional;
 using ost::string_view;
+using std::string;
 
 class PlugIwbtb final : public plug::PlugBase {
 private:
@@ -121,15 +122,15 @@ public:
         }
     }
 
-    bool save_state(ofs::File& file) override {
+    ost::expected<void, string> save_state(ofs::File& file) override {
         SaveGameState(file.get_handle());
-        return true;
+        return {};
     }
 
-    bool load_state(ofs::File& file) override {
+    ost::expected<void, string> load_state(ofs::File& file) override {
         unsigned int outframe = 0;
         LoadGameState(file.get_handle(), &outframe);
-        return true;
+        return {};
     }
 };
 

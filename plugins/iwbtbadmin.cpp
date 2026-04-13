@@ -8,6 +8,7 @@
 #include <spdlog/spdlog.h>
 
 using ost::optional;
+using std::string;
 using ost::string_view;
 
 class PlugIwbtbAdmin final : public plug::PlugBase {
@@ -106,15 +107,15 @@ public:
         }
     }
 
-    bool save_state(ofs::File& file) override {
+    ost::expected<void, string> save_state(ofs::File& file) override {
         SaveGameState(file.get_handle());
-        return true;
+        return {};
     }
 
-    bool load_state(ofs::File& file) override {
+    ost::expected<void, string> load_state(ofs::File& file) override {
         unsigned int outframe = 0;
         LoadGameState(file.get_handle(), &outframe);
-        return true;
+        return {};
     }
 };
 

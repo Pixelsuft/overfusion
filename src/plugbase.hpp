@@ -39,8 +39,8 @@ public:
     virtual void after_dll_load(ost::string_view path, ost::string_view fn, void* mod) {}
     virtual void* after_proc_get(void* module, const char* proc, void* ret) { return ret; }
     virtual void* get_prop(PtrProp prop, void* data = nullptr) = 0;
-    virtual bool save_state(ofs::File& file) = 0;
-    virtual bool load_state(ofs::File& file) = 0;
+    virtual ost::expected<void, std::string> save_state(ofs::File& file) = 0;
+    virtual ost::expected<void, std::string> load_state(ofs::File& file) = 0;
     virtual ~PlugBase() {}
 };
 

@@ -9,13 +9,15 @@
 
 using ost::optional;
 using ost::string_view;
+using std::string;
 
 static void(__stdcall* RenderFrameO)();
 static void __stdcall RenderFrameH() {
     // Fix need_skip not beeing notified automatically for some reason
     auto pState = plug::get().get_prop(plug::PtrProp::PState);
     ASS(pState != nullptr);
-    auto pTask = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
+    auto pTask =
+        reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
     ASS(pTask != nullptr);
     if (*pTask != 0)
         gamehooks::set_need_skip(true);
@@ -102,12 +104,14 @@ public:
         }
     }
 
-    bool save_state(ofs::File& file) override {
+    ost::expected<void, string> save_state(ofs::File& file) override {
         // I think that is unsupported
-        return false;
+        return ost::unexpected<string>("Not supported");
     }
 
-    bool load_state(ofs::File& file) override { return false; }
+    ost::expected<void, string> load_state(ofs::File& file) override {
+        return ost::unexpected<string>("Not supported");
+    }
 };
 
 static void on_plugin_check(plug::PlugBase** buf, bool& check) {
