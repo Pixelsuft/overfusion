@@ -9,6 +9,7 @@ enum class TimeOffset { None, System, Local, Startup, Reminder };
 
 void init();
 bool invalidate_process(ost::string_view text);
+bool is_processing_save();
 void early_update();
 void before_update();
 void after_update();

@@ -75,14 +75,14 @@ static string last_msg;
 static string state_error_text;
 static int64_t time_offset;
 static bool success;
-static bool updating;
+static bool processing_save;
 static bool need_key_msg;
 
 void state::init() {
     need_key_msg = plug::get().need_key_message;
     last_msg = "None";
     success = false;
-    updating = false;
+    processing_save = false;
     st.fps = conf::get().fps;
     const_dt = 1.0 / (double)st.fps;
     to_wait = 0.0;
@@ -91,6 +91,10 @@ void state::init() {
     QueryPerformanceFrequencyO(&last_counter);
     freq = (double)last_counter.QuadPart;
     QueryPerformanceCounterO(&last_counter);
+}
+
+bool state::is_processing_save() {
+    return processing_save;
 }
 
 void state::save_state(int slot) {
@@ -133,7 +137,7 @@ void state::before_update() {
     auto& cfg = conf::get();
     if (cfg.is_paused && !cfg.need_advance)
         return;
-    updating = true;
+    processing_save = true;
     if (cfg.is_replay) {
 
     } else {
@@ -159,8 +163,8 @@ void state::before_update() {
 
 void state::after_update() {
     auto& cfg = conf::get();
-    if (updating) {
-        updating = false;
+    if (processing_save) {
+        processing_save = false;
         auto prev_time = get_time(TimeOffset::None);
         st.frames++;
         timehooks::update(static_cast<int>(get_time(TimeOffset::None) - prev_time));
@@ -239,7 +243,7 @@ ost::expected<void, string> state::load_game(ofs::File& file) {
 }
 
 bool state::get_key_state(int vk) {
-    auto& vec = updating ? (conf::get().is_replay ? repl_holding : holding) : st.prev;
+    auto& vec = processing_save ? (conf::get().is_replay ? repl_holding : holding) : st.prev;
     auto ret = std::find(vec.begin(), vec.end(), vk) != vec.end();
     return ret;
 }
@@ -254,7 +258,7 @@ void state::set_key_down(int vk, bool down) {
 }
 
 void state::fill_kbd_state(unsigned char* data) {
-    auto& vec = updating ? (conf::get().is_replay ? repl_holding : holding) : st.prev;
+    auto& vec = processing_save ? (conf::get().is_replay ? repl_holding : holding) : st.prev;
     for (auto& val : vec)
         data[val] = 1;
 }
