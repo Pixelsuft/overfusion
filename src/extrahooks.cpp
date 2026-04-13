@@ -51,7 +51,7 @@ static BOOL ShellExecuteExWH(SHELLEXECUTEINFOW* pExecInfo) {
 static int process_message_box(string_view text, string_view caption, UINT uType) {
     if (ui::processing)
         return 0;
-    if (uType == 0x30 && state::invalidate_process())
+    if (uType == 0x30 && state::invalidate_process(text))
         return IDOK;
     if (caption == "Microsoft Visual C++ Runtime Library")
         return 0;

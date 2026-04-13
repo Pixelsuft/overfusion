@@ -16,6 +16,7 @@
 
 constexpr int save_version = 1;
 
+using ost::string_view;
 using std::string;
 
 extern BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency);
@@ -71,6 +72,7 @@ static double const_dt;
 static double to_wait;
 static double freq;
 static string last_msg;
+static string state_error_text;
 static int64_t time_offset;
 static bool success;
 static bool updating;
@@ -98,8 +100,9 @@ void state::save_state(int slot) {
         spdlog::warn("Failed to open state slot {} for writing", slot);
         return;
     }
-    if (!save_game(file)) {
-        spdlog::warn("Failed to save game state to slot {}", slot);
+    auto ret = save_game(file);
+    if (!ret.has_value()) {
+        spdlog::warn("Failed to save game state to slot {}: {}", slot, ret.error());
         file.close();
         ofs::remove_file(fp);
     }
@@ -111,11 +114,14 @@ void state::load_state(int slot) {
         spdlog::warn("Failed to open state slot {} for reading", slot);
         return;
     }
-    if (!load_game(file))
-        spdlog::warn("Failed to load game state from slot {}", slot);
+    auto ret = load_game(file);
+    if (!ret.has_value())
+        spdlog::warn("Failed to load game state from slot {}: {}", slot, ret.error());
 }
 
-bool state::invalidate_process() {
+bool state::invalidate_process(string_view text) {
+    if (success)
+        state_error_text = text;
     auto ret = success;
     success = false;
     return ret;
@@ -204,16 +210,32 @@ uint64_t state::get_time(TimeOffset offset) {
 
 void state::set_temp_time_offset(int ms) { time_offset = static_cast<int64_t>(ms); }
 
-bool state::save_game(ofs::File& file) {
+ost::expected<void, string> state::save_game(ofs::File& file) {
     ASS(file.is_open());
     success = true;
-    return plug::get().save_state(file).has_value() && success;
+    auto ret = plug::get().save_state(file);
+    if (!ret.has_value()) {
+        success = false;
+        return ret;
+    }
+    if (!success)
+        return ost::unexpected<string>(state_error_text);
+    success = false;
+    return {};
 }
 
-bool state::load_game(ofs::File& file) {
+ost::expected<void, string> state::load_game(ofs::File& file) {
     ASS(file.is_open());
     success = true;
-    return plug::get().load_state(file).has_value() && success;
+    auto ret = plug::get().load_state(file);
+    if (!ret.has_value()) {
+        success = false;
+        return ret;
+    }
+    if (!success)
+        return ost::unexpected<string>(state_error_text);
+    success = false;
+    return {};
 }
 
 bool state::get_key_state(int vk) {
