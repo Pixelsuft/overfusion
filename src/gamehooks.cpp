@@ -17,8 +17,6 @@
 static void(__stdcall* RenderFrame)() = nullptr;
 static void(__stdcall* RenderTransition)() = nullptr;
 
-static bool need_skip = false;
-
 static int(__stdcall* ProcessTransitionO)() = nullptr;
 static int __stdcall ProcessTransitionH() {
     // Oh fuck another code dup
@@ -86,16 +84,6 @@ static int __stdcall UpdateGameFrameH() {
     ASS(pIsPaused != nullptr);
     *pStep = 1;
     *pIsPaused = false;
-    if (need_skip) {
-        need_skip = false;
-        auto ret = UpdateGameFrameO();
-        // Hacky way to skip waiting
-        auto prev_skip = cfg.fast_forward;
-        cfg.fast_forward = true;
-        state::after_update();
-        cfg.fast_forward = false;
-        return ret;
-    }
     state::before_update();
     int ret;
     if (cfg.boxed_mode)
@@ -113,15 +101,10 @@ static int __stdcall UpdateGameFrameH() {
         ret = UpdateGameFrameO();
         if (cfg.custom_window)
             customwindow::render();
-        // FIXME: better way to check if skip is needed
-        need_skip = need_skip || (ret != 0);
     }
-    if (!need_skip) {
-        // spdlog::debug("After update change");
-        state::after_update();
-    } else {
-        spdlog::debug("Scene change {}", ret);
-    }
+    if (ret != 0)
+        spdlog::debug("UpdateGameFrame got ret={}", ret);
+    state::after_update();
     return ret;
 }
 
@@ -151,5 +134,3 @@ void gamehooks::hook_trans_update_func(void* ptr) {
 void gamehooks::set_trans_render_func(void* ptr) {
     RenderTransition = reinterpret_cast<decltype(RenderTransition)>(ptr);
 }
-
-void gamehooks::set_need_skip(bool enabled) { need_skip = enabled; }
