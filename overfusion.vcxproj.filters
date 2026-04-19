@@ -60,9 +60,6 @@
     <ClCompile Include="minhook\src\trampoline.c">
       <Filter>MinHook</Filter>
     </ClCompile>
-    <ClCompile Include="minhook\src\hde\hde64.c">
-      <Filter>MinHook</Filter>
-    </ClCompile>
     <ClCompile Include="minhook\src\hde\hde32.c">
       <Filter>MinHook</Filter>
     </ClCompile>
@@ -236,6 +233,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\expect.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\event.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

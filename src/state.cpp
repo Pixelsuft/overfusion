@@ -2,6 +2,7 @@
 #include "state.hpp"
 #include "ass.hpp"
 #include "config.hpp"
+#include "event.hpp"
 #include "files.hpp"
 #include "ofs.hpp"
 #include "plugbase.hpp"
@@ -16,17 +17,12 @@
 
 constexpr int save_version = 1;
 
+using event::Event;
 using ost::string_view;
 using std::string;
 
 extern BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency);
 extern BOOL(WINAPI* QueryPerformanceCounterO)(LARGE_INTEGER* lpFrequency);
-
-struct Event {
-    int frame;
-
-    Event() : frame(0) {}
-};
 
 class State {
 public:
@@ -58,9 +54,10 @@ public:
 
     void trim() {
         total = frames;
-        // TODO: optimize
-        while (!ev.empty() && (ev.end() - 1)->frame >= frames)
-            ev.erase(ev.end() - 1);
+        auto it = std::lower_bound(ev.begin(), ev.end(), frames,
+                                   [](const Event& e, int f) { return e.frame < f; });
+        if (it != ev.end())
+            ev.erase(it, ev.end());
     }
 };
 
@@ -102,12 +99,20 @@ void state::save_state(int slot) {
         spdlog::warn("Failed to open state slot {} for writing", slot);
         return;
     }
-    auto ret = save_game(file);
+    processing_save = true;
+    auto ret = plug::get().save_state(file);
     if (!ret.has_value()) {
-        spdlog::warn("Failed to save game state to slot {}: {}", slot, ret.error());
+        processing_save = false;
+        spdlog::warn("Failed to save state data: {}", ret.error());
         file.close();
         ofs::remove_file(fp);
+        return;
     }
+    if (!processing_save) {
+        spdlog::warn("Failed to save game state: {}", state_error_text);
+        return;
+    }
+    processing_save = false;
 }
 
 void state::load_state(int slot) {
@@ -116,9 +121,18 @@ void state::load_state(int slot) {
         spdlog::warn("Failed to open state slot {} for reading", slot);
         return;
     }
-    auto ret = load_game(file);
-    if (!ret.has_value())
-        spdlog::warn("Failed to load game state from slot {}: {}", slot, ret.error());
+    processing_save = true;
+    auto ret = plug::get().load_state(file);
+    if (!ret.has_value()) {
+        processing_save = false;
+        spdlog::warn("Failed to load state data: {}", ret.error());
+        return;
+    }
+    if (!processing_save) {
+        spdlog::warn("Failed to load game state: {}", state_error_text);
+        return;
+    }
+    processing_save = false;
 }
 
 bool state::invalidate_process(string_view text) {
@@ -189,10 +203,9 @@ int64_t state::get_utc_offset() {
 }
 
 uint64_t state::get_time(TimeOffset offset) {
-    auto fps = st.fps;
+    auto fps = static_cast<int64_t>(st.fps);
     uint64_t ret =
         static_cast<uint64_t>(static_cast<int64_t>(st.frames) * 1000 / fps + time_offset);
-
     switch (offset) {
     case TimeOffset::None:
         return ret;
@@ -211,34 +224,6 @@ uint64_t state::get_time(TimeOffset offset) {
 }
 
 void state::set_temp_time_offset(int ms) { time_offset = static_cast<int64_t>(ms); }
-
-ost::expected<void, string> state::save_game(ofs::File& file) {
-    ASS(file.is_open());
-    processing_save = true;
-    auto ret = plug::get().save_state(file);
-    if (!ret.has_value()) {
-        processing_save = false;
-        return ret;
-    }
-    if (!processing_save)
-        return ost::unexpected<string>(state_error_text);
-    processing_save = false;
-    return {};
-}
-
-ost::expected<void, string> state::load_game(ofs::File& file) {
-    ASS(file.is_open());
-    processing_save = true;
-    auto ret = plug::get().load_state(file);
-    if (!ret.has_value()) {
-        processing_save = false;
-        return ret;
-    }
-    if (!processing_save)
-        return ost::unexpected<string>(state_error_text);
-    processing_save = false;
-    return {};
-}
 
 bool state::get_key_state(int vk) {
     auto& vec = updating ? (conf::get().is_replay ? repl_holding : holding) : st.prev;

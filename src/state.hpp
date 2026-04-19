@@ -1,6 +1,4 @@
 #pragma once
-#include "expect.hpp"
-#include "ofs.hpp"
 #include "sv.hpp"
 #include <cstdint>
 
@@ -13,8 +11,6 @@ bool is_processing_save();
 void early_update();
 void before_update();
 void after_update();
-ost::expected<void, std::string> save_game(ofs::File& file);
-ost::expected<void, std::string> load_game(ofs::File& file);
 uint64_t get_time(TimeOffset offset);
 int64_t get_utc_offset();
 void set_temp_time_offset(int ms);

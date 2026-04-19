@@ -16,6 +16,7 @@ class Config {
 public:
     std::vector<Bind> binds;
     std::string cmdline_append;
+    std::string project_name;
     int fps;
     bool show_info;
     bool show_menu;

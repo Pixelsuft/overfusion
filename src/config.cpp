@@ -16,8 +16,8 @@ using std::string;
 
 static Config* _conf_ptr;
 
-static nlohmann::json read_config_file() {
-    auto path = std::string(files::get_cwd()) + "\\overfusion.json";
+static nlohmann::json read_config_file(string& proj_name) {
+    auto path = std::string(files::get_cwd()) + '\\' + proj_name + "\\overfusion.json";
     spdlog::info("Config path: {}", path);
     ofs::File file(path, 0);
     if (!file.is_open()) {
@@ -199,6 +199,7 @@ static conf::Task task_from_string(string_view sv) {
 }
 
 Config::Config() {
+    project_name = "test_proj"; // TODO: configure it
     fps = 0;
     show_menu = show_info = true;
     is_replay = false;
@@ -221,7 +222,8 @@ Config::Config() {
     name = data[#name]
 
 void Config::read() {
-    auto data = read_config_file();
+    ASS(ofs::make_dir(project_name));
+    auto data = read_config_file(project_name);
     if (data["fps"].is_number_integer() && data["fps"].is_number_unsigned())
         fps = data["fps"];
     READ_BOOL(show_info);

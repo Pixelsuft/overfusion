@@ -36,15 +36,18 @@ std::string uconv::from_ansi(const char* input) {
 }
 
 wchar_t* uconv::to_utf16(ost::string_view input) {
-    if (input.empty())
-        return nullptr;
-
+    if (input.empty()) {
+        auto ret = reinterpret_cast<wchar_t*>(std::malloc(2));
+        if (ret)
+            *ret = L'\0';
+        return ret;
+    }
     int wide_size =
         MultiByteToWideChar(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), nullptr, 0);
-    if (wide_size <= 0)
+    if (wide_size < 0)
         return nullptr;
 
-    wchar_t* buffer = (wchar_t*)std::malloc((wide_size + 1) * sizeof(wchar_t));
+    wchar_t* buffer = reinterpret_cast<wchar_t*>(std::malloc((wide_size + 1) * sizeof(wchar_t)));
     if (!buffer)
         return nullptr;
 
@@ -59,12 +62,15 @@ wchar_t* uconv::to_utf16(ost::string_view input) {
 }
 
 char* uconv::to_ansi(ost::string_view input) {
-    if (input.empty())
-        return nullptr;
-
+    if (input.empty()) {
+        auto ret = reinterpret_cast<char*>(std::malloc(1));
+        if (ret)
+            *ret = '\0';
+        return ret;
+    }
     int wide_size =
         MultiByteToWideChar(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), nullptr, 0);
-    if (wide_size <= 0)
+    if (wide_size < 0)
         return nullptr;
 
     std::vector<wchar_t> wide_buf(wide_size);
@@ -73,10 +79,10 @@ char* uconv::to_ansi(ost::string_view input) {
 
     int ansi_size =
         WideCharToMultiByte(CP_ACP, 0, wide_buf.data(), wide_size, nullptr, 0, nullptr, nullptr);
-    if (ansi_size <= 0)
+    if (ansi_size < 0)
         return nullptr;
 
-    char* buffer = (char*)std::malloc((ansi_size + 1) * sizeof(char));
+    char* buffer = reinterpret_cast<char*>(std::malloc((ansi_size + 1) * sizeof(char)));
     if (!buffer)
         return nullptr;
 

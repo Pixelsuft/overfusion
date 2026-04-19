@@ -3,6 +3,7 @@
 #include "../src/gamehooks.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
+#include "../src/state.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
@@ -91,11 +92,13 @@ public:
 
     ost::expected<void, string> save_state(ofs::File& file) override {
         // I think that is unsupported
-        return ost::unexpected<string>("Not supported");
+        state::invalidate_process("Unsupported");
+        return {};
     }
 
     ost::expected<void, string> load_state(ofs::File& file) override {
-        return ost::unexpected<string>("Not supported");
+        state::invalidate_process("Unsupported");
+        return {};
     }
 };
 

@@ -265,7 +265,6 @@
     <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="minhook\src\buffer.c" />
     <ClCompile Include="minhook\src\hde\hde32.c" />
-    <ClCompile Include="minhook\src\hde\hde64.c" />
     <ClCompile Include="minhook\src\hook.c" />
     <ClCompile Include="minhook\src\trampoline.c" />
     <ClCompile Include="plugins\fnaf.cpp" />
@@ -311,6 +310,7 @@
     <ClInclude Include="src\config.hpp" />
     <ClInclude Include="src\customwindow.hpp" />
     <ClInclude Include="src\d3d9hooks.hpp" />
+    <ClInclude Include="src\event.hpp" />
     <ClInclude Include="src\expect.hpp" />
     <ClInclude Include="src\extrahooks.hpp" />
     <ClInclude Include="src\files.hpp" />
