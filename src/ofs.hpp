@@ -18,7 +18,7 @@ public:
     bool read(void* buf, size_t size);
     bool write(const void* buf, size_t size);
     inline bool write(ost::string_view data) { return write(data.data(), data.size()); }
-    inline bool write_line(ost::string_view line) {
+    inline bool writeln(ost::string_view line) {
         return write(line.data(), line.size()) && write("\r\n", 2);
     }
     bool seek(long long offset, SeekMode mode);

@@ -211,6 +211,7 @@ static bool is_allowed_file(string_view path) {
 
 static optional<void*> handle_file_open(string_view path, bool for_read, bool for_write,
                                         DWORD dwCreationDisposition) {
+    // spdlog::debug("open file {}", path);
     string norm_fp = normalize_path(path);
     if (!is_allowed_file(norm_fp))
         return {};

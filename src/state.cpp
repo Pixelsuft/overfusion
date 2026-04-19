@@ -77,6 +77,7 @@ static int64_t time_offset;
 static bool processing_save;
 static bool updating;
 static bool need_key_msg;
+static void* temp_handle;
 
 void state::init() {
     base_path = string(files::get_cwd()) + '\\' + conf::get().project_name;
@@ -94,7 +95,7 @@ void state::init() {
     QueryPerformanceCounterO(&last_counter);
 }
 
-bool state::is_processing_save(void* handle) { return processing_save; }
+bool state::is_processing_save(void* handle) { return processing_save && handle == temp_handle; }
 
 template <typename T> static void write_bin(ofs::File& file, const std::vector<T>& data) {
     size_t size = data.size();
@@ -107,7 +108,10 @@ template <typename T> static void write_bin(ofs::File& file, const std::vector<T
     ASS(ret);
 }
 
-template <typename T> static void write_bin(ofs::File& file, const T& val) {}
+template <typename T> static void write_bin(ofs::File& file, const T& val) {
+    auto ret = file.write(&val, sizeof(T));
+    ASS(ret);
+}
 
 template <typename T> static void load_bin(ofs::File& file, std::vector<T>& data) {
     size_t size;
@@ -134,11 +138,16 @@ void state::save_state(int slot) {
         spdlog::warn("Failed to open state slot {} for writing", slot);
         return;
     }
+    temp_handle = file.get_handle();
     ASS(file.write("ofstate!", 8));
     write_bin(file, save_version);
     write_bin(file, st.scene);
     write_bin(file, st.frames);
     write_bin(file, st.total);
+    write_bin(file, st.fps);
+    write_bin(file, st.system_offset);
+    write_bin(file, st.local_offset);
+    write_bin(file, st.startup_offset);
     write_bin(file, st.prev);
     write_bin(file, st.temp_ev);
     write_bin(file, st.ev);
@@ -165,6 +174,7 @@ void state::load_state(int slot) {
         spdlog::warn("Failed to open state slot {} for reading", slot);
         return;
     }
+    temp_handle = file.get_handle();
     static char test_buf[8];
     if (!file.read(test_buf, 8) || memcmp(test_buf, "ofstate!", 8) != 0) {
         spdlog::error("Invalid state file");
@@ -180,6 +190,10 @@ void state::load_state(int slot) {
     load_bin(file, temp_state.scene);
     load_bin(file, temp_state.frames);
     load_bin(file, temp_state.total);
+    load_bin(file, temp_state.fps);
+    load_bin(file, temp_state.system_offset);
+    load_bin(file, temp_state.local_offset);
+    load_bin(file, temp_state.startup_offset);
     load_bin(file, temp_state.prev);
     load_bin(file, temp_state.temp_ev);
     load_bin(file, temp_state.ev);
