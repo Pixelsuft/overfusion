@@ -211,8 +211,6 @@ static bool is_allowed_file(string_view path) {
 
 static optional<void*> handle_file_open(string_view path, bool for_read, bool for_write,
                                         DWORD dwCreationDisposition) {
-    if (state::is_processing_save()) // Optimize save states
-        return {};
     string norm_fp = normalize_path(path);
     if (!is_allowed_file(norm_fp))
         return {};
@@ -280,7 +278,7 @@ HANDLE WINAPI CreateFileWH(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwSh
 static BOOL(WINAPI* ReadFileO)(HANDLE, LPVOID, DWORD, LPDWORD, LPOVERLAPPED) = ReadFile;
 static BOOL WINAPI ReadFileH(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
                              LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped) {
-    if (state::is_processing_save())
+    if (state::is_processing_save(hFile))
         return ReadFileO(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
     lock::CSLock mylock(cs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
@@ -305,7 +303,7 @@ static BOOL WINAPI ReadFileH(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytes
 static BOOL(WINAPI* WriteFileO)(HANDLE, LPCVOID, DWORD, LPDWORD, LPOVERLAPPED) = WriteFile;
 static BOOL WINAPI WriteFileH(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
                               LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped) {
-    if (state::is_processing_save())
+    if (state::is_processing_save(hFile))
         return WriteFileO(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten,
                           lpOverlapped);
     lock::CSLock mylock(cs);
@@ -337,7 +335,7 @@ static BOOL(WINAPI* ReadFileExO)(HANDLE, LPVOID, DWORD, LPOVERLAPPED,
 static BOOL WINAPI ReadFileExH(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
                                LPOVERLAPPED lpOverlapped,
                                LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
-    if (state::is_processing_save())
+    if (state::is_processing_save(hFile))
         return ReadFileExO(hFile, lpBuffer, nNumberOfBytesToRead, lpOverlapped,
                            lpCompletionRoutine);
     lock::CSLock mylock(cs);
@@ -371,7 +369,7 @@ static BOOL(WINAPI* WriteFileExO)(HANDLE, LPCVOID, DWORD, LPOVERLAPPED,
 static BOOL WINAPI WriteFileExH(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
                                 LPOVERLAPPED lpOverlapped,
                                 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) {
-    if (state::is_processing_save())
+    if (state::is_processing_save(hFile))
         return WriteFileExO(hFile, lpBuffer, nNumberOfBytesToWrite, lpOverlapped,
                             lpCompletionRoutine);
     lock::CSLock mylock(cs);
@@ -403,7 +401,7 @@ static BOOL WINAPI WriteFileExH(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfB
 static DWORD(WINAPI* SetFilePointerO)(HANDLE, LONG, PLONG, DWORD) = SetFilePointer;
 static DWORD WINAPI SetFilePointerH(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh,
                                     DWORD dwMoveMethod) {
-    if (state::is_processing_save())
+    if (state::is_processing_save(hFile))
         return SetFilePointerO(hFile, lDistanceToMove, lpDistanceToMoveHigh, dwMoveMethod);
     lock::CSLock mylock(cs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
@@ -440,7 +438,7 @@ static DWORD WINAPI SetFilePointerH(HANDLE hFile, LONG lDistanceToMove, PLONG lp
 
 static DWORD(WINAPI* GetFileSizeO)(HANDLE, LPDWORD) = GetFileSize;
 static DWORD WINAPI GetFileSizeH(HANDLE hFile, LPDWORD lpFileSizeHigh) {
-    if (state::is_processing_save())
+    if (state::is_processing_save(hFile))
         return GetFileSizeO(hFile, lpFileSizeHigh);
     lock::CSLock mylock(cs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
@@ -461,7 +459,7 @@ static BOOL(WINAPI* SetFilePointerExO)(HANDLE, LARGE_INTEGER, PLARGE_INTEGER,
                                        DWORD) = SetFilePointerEx;
 static BOOL WINAPI SetFilePointerExH(HANDLE hFile, LARGE_INTEGER liDistanceToMove,
                                      PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod) {
-    if (state::is_processing_save())
+    if (state::is_processing_save(hFile))
         return SetFilePointerExO(hFile, liDistanceToMove, lpNewFilePointer, dwMoveMethod);
     lock::CSLock mylock(cs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
@@ -497,7 +495,7 @@ static BOOL WINAPI SetFilePointerExH(HANDLE hFile, LARGE_INTEGER liDistanceToMov
 
 static BOOL(WINAPI* GetFileSizeExO)(HANDLE, PLARGE_INTEGER) = GetFileSizeEx;
 static BOOL WINAPI GetFileSizeExH(HANDLE hFile, PLARGE_INTEGER lpFileSize) {
-    if (state::is_processing_save())
+    if (state::is_processing_save(hFile))
         return GetFileSizeExO(hFile, lpFileSize);
     lock::CSLock mylock(cs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hFile);

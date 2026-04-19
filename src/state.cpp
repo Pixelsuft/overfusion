@@ -12,10 +12,12 @@
 #include <imgui.h>
 #include <spdlog/spdlog.h>
 #include <vector>
+#include <string>
 #undef max
 #undef min
 
 constexpr int save_version = 1;
+constexpr int replay_version = 1;
 
 using event::Event;
 using ost::string_view;
@@ -70,12 +72,14 @@ static double to_wait;
 static double freq;
 static string last_msg;
 static string state_error_text;
+static string base_path;
 static int64_t time_offset;
 static bool processing_save;
 static bool updating;
 static bool need_key_msg;
 
 void state::init() {
+    base_path = string(files::get_cwd()) + '\\' + conf::get().project_name;
     need_key_msg = plug::get().need_key_message;
     last_msg = "None";
     processing_save = false;
@@ -90,7 +94,7 @@ void state::init() {
     QueryPerformanceCounterO(&last_counter);
 }
 
-bool state::is_processing_save() { return processing_save; }
+bool state::is_processing_save(void* handle) { return processing_save; }
 
 template <typename T> static void write_bin(ofs::File& file, const std::vector<T>& data) {
     size_t size = data.size();
@@ -124,13 +128,20 @@ template <typename T> static void load_bin(ofs::File& file, T& val) {
 }
 
 void state::save_state(int slot) {
-    string fp = string(files::get_cwd()) + '\\' + conf::get().project_name + "\\state_" + std::to_string(slot) + ".ostate";
-    ofs::File file(fp, 1);
-    if (!file.is_open()) {
+    string fp = base_path + "\\state_" + std::to_string(slot) + ".ofstate";
+    ofs::File file;
+    if (!file.open(fp, 1, false)) {
         spdlog::warn("Failed to open state slot {} for writing", slot);
         return;
     }
     ASS(file.write("ofstate!", 8));
+    write_bin(file, save_version);
+    write_bin(file, st.scene);
+    write_bin(file, st.frames);
+    write_bin(file, st.total);
+    write_bin(file, st.prev);
+    write_bin(file, st.temp_ev);
+    write_bin(file, st.ev);
     processing_save = true;
     auto ret = plug::get().save_state(file);
     if (!ret.has_value()) {
@@ -145,10 +156,11 @@ void state::save_state(int slot) {
         return;
     }
     processing_save = false;
+    last_msg = string("State ") + std::to_string(slot) + " saved!";
 }
 
 void state::load_state(int slot) {
-    ofs::File file(string(files::get_cwd()) + '\\' + conf::get().project_name + "\\state_" + std::to_string(slot) + ".ostate", 0);
+    ofs::File file(base_path + "\\state_" + std::to_string(slot) + ".ofstate", 0);
     if (!file.is_open()) {
         spdlog::warn("Failed to open state slot {} for reading", slot);
         return;
@@ -158,6 +170,19 @@ void state::load_state(int slot) {
         spdlog::error("Invalid state file");
         return;
     }
+    int int_data;
+    load_bin(file, int_data);
+    if (int_data != save_version) {
+        spdlog::error("State version mismatch (expected {}, got {})", save_version, int_data);
+        return;
+    }
+    State temp_state;
+    load_bin(file, temp_state.scene);
+    load_bin(file, temp_state.frames);
+    load_bin(file, temp_state.total);
+    load_bin(file, temp_state.prev);
+    load_bin(file, temp_state.temp_ev);
+    load_bin(file, temp_state.ev);
     processing_save = true;
     auto ret = plug::get().load_state(file);
     if (!ret.has_value()) {
@@ -169,7 +194,9 @@ void state::load_state(int slot) {
         spdlog::warn("Failed to load game state: {}", state_error_text);
         return;
     }
+    st = std::move(temp_state);
     processing_save = false;
+    last_msg = string("State ") + std::to_string(slot) + " loaded!";
 }
 
 bool state::invalidate_process(string_view text) {
