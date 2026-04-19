@@ -62,13 +62,14 @@ static void draw_info(bool custom_window) {
 }
 
 static void draw_menu() {
+    auto& cfg = conf::get();
     ImGui::SetNextWindowFocus();
     if (!ImGui::Begin("OverFusion", nullptr,
                       (ui_save_sets ? 0 : ImGuiWindowFlags_NoSavedSettings))) {
         ImGui::End();
         return;
     }
-    if (ImGui::CollapsingHeader("Virtual Filesystem")) {
+    if (cfg.virtual_fs && ImGui::CollapsingHeader("Virtual Filesystem")) {
         files::draw_ui();
     }
     if (ImGui::CollapsingHeader("About")) {

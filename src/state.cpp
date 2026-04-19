@@ -213,7 +213,6 @@ void state::load_state(int slot) {
         return;
     }
     st = std::move(temp_state);
-    // spdlog::debug("end move");
     processing_save = false;
     last_msg = string("State ") + std::to_string(slot) + " loaded!";
 }

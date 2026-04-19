@@ -5,7 +5,7 @@
   "emulate_user_timers": true,
   "emulate_mm_timers": true,
   "virtual_fs": false,
-  "disable_threads": false,
+  "disable_threads": true,
   "delay_thread_hook": false,
   "no_ini_hooks": false,
   "boxed_mode": false,
