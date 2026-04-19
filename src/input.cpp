@@ -137,6 +137,7 @@ void input::handle_input_real(int vk, bool pressed) {
     while (it != cfg.binds.end() && it->key == vk) {
         auto& bind = *it;
         bool matches_mod = true;
+        // TODO: improve so keys wont overlap
         for (auto& mod : bind.mods) {
             if (!kbd_state[mod]) {
                 matches_mod = false;
@@ -186,7 +187,7 @@ void input::handle_input_real(int vk, bool pressed) {
         case conf::Task::Map: {
             if (pressed && (prev || cfg.show_menu))
                 break;
-            state::set_key_down(vk, pressed);
+            state::set_key_down(bind.extra, pressed);
             break;
         }
         case conf::Task::Menu: {

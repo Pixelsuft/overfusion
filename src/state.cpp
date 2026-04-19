@@ -11,8 +11,8 @@
 #include <Windows.h>
 #include <imgui.h>
 #include <spdlog/spdlog.h>
-#include <vector>
 #include <string>
+#include <vector>
 #undef max
 #undef min
 
@@ -95,7 +95,10 @@ void state::init() {
     QueryPerformanceCounterO(&last_counter);
 }
 
-bool state::is_processing_save(void* handle) { return processing_save && handle == temp_handle; }
+bool state::is_processing_save(void* handle) {
+    /* return processing_save;*/
+    return processing_save && handle == temp_handle;
+}
 
 template <typename T> static void write_bin(ofs::File& file, const std::vector<T>& data) {
     size_t size = data.size();
@@ -187,6 +190,7 @@ void state::load_state(int slot) {
         return;
     }
     State temp_state;
+    // State& temp_state = st;
     load_bin(file, temp_state.scene);
     load_bin(file, temp_state.frames);
     load_bin(file, temp_state.total);
@@ -209,6 +213,7 @@ void state::load_state(int slot) {
         return;
     }
     st = std::move(temp_state);
+    // spdlog::debug("end move");
     processing_save = false;
     last_msg = string("State ") + std::to_string(slot) + " loaded!";
 }
