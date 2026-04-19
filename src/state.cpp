@@ -92,13 +92,45 @@ void state::init() {
 
 bool state::is_processing_save() { return processing_save; }
 
+template <typename T> static void write_bin(ofs::File& file, const std::vector<T>& data) {
+    size_t size = data.size();
+    auto ret = file.write(&size, sizeof(size_t));
+    ASS(ret);
+    if (size == 0)
+        return;
+    // Everything is trivial, no problems, ok?
+    ret = file.write(data.data(), size * sizeof(T));
+    ASS(ret);
+}
+
+template <typename T> static void write_bin(ofs::File& file, const T& val) {}
+
+template <typename T> static void load_bin(ofs::File& file, std::vector<T>& data) {
+    size_t size;
+    auto ret = file.read(&size, sizeof(size_t));
+    ASS(ret);
+    if (size == 0) {
+        data.clear();
+        return;
+    }
+    data.resize(size);
+    ret = file.read(&data[0], size * sizeof(T));
+    ASS(ret);
+}
+
+template <typename T> static void load_bin(ofs::File& file, T& val) {
+    auto ret = file.read(&val, sizeof(T));
+    ASS(ret);
+}
+
 void state::save_state(int slot) {
-    string fp = string(files::get_cwd()) + "\\state_" + std::to_string(slot) + ".ostate";
+    string fp = string(files::get_cwd()) + '\\' + conf::get().project_name + "\\state_" + std::to_string(slot) + ".ostate";
     ofs::File file(fp, 1);
     if (!file.is_open()) {
         spdlog::warn("Failed to open state slot {} for writing", slot);
         return;
     }
+    ASS(file.write("ofstate!", 8));
     processing_save = true;
     auto ret = plug::get().save_state(file);
     if (!ret.has_value()) {
@@ -116,9 +148,14 @@ void state::save_state(int slot) {
 }
 
 void state::load_state(int slot) {
-    ofs::File file(string(files::get_cwd()) + "\\state_" + std::to_string(slot) + ".ostate", 0);
+    ofs::File file(string(files::get_cwd()) + '\\' + conf::get().project_name + "\\state_" + std::to_string(slot) + ".ostate", 0);
     if (!file.is_open()) {
         spdlog::warn("Failed to open state slot {} for reading", slot);
+        return;
+    }
+    static char test_buf[8];
+    if (!file.read(test_buf, 8) || memcmp(test_buf, "ofstate!", 8) != 0) {
+        spdlog::error("Invalid state file");
         return;
     }
     processing_save = true;
