@@ -97,7 +97,7 @@ public:
     }
 
     ost::expected<void, string> load_state(ofs::File& file) override {
-        if (conf::get().is_replay)
+        if (!conf::get().is_replay)
             state::invalidate_process("Unsupported");
         return {};
     }

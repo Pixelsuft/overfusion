@@ -115,7 +115,7 @@ public:
 
     ost::expected<void, string> load_state(ofs::File& file) override {
         unsigned int outframe = 0;
-        if (conf::get().is_replay)
+        if (!conf::get().is_replay)
             LoadGameState(file.get_handle(), &outframe);
         return {};
     }

@@ -139,7 +139,7 @@ public:
     }
 
     ost::expected<void, string> load_state(ofs::File& file) override {
-        if (conf::get().is_replay) {
+        if (!conf::get().is_replay) {
             unsigned int outframe = 0;
             size_t ptr = *(size_t*)(mem::get_base() + 0xb49d4);
             *(short*)(ptr + 0x30) = 0;

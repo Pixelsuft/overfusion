@@ -46,6 +46,7 @@ public:
         mem::write(mem::get_base() + 0x29ad, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         mem::write(mem::get_base() + 0x1d6d7,
                    {0x90, 0x90, 0x90, 0x90, 0x90, 0x90}); // fixed switching the scene
+        mem::write(mem::get_base() + 0x1d77e, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         mem::write(mem::get_base() + 0x2a49, {0xeb});
         mem::write(mem::get_base() + 0x43036, {0x90, 0x90, 0x90, 0x90, 0x90});
         mem::write(mem::get_base() + 0x4304e, {0x90, 0x90, 0x90, 0x90, 0x90});
@@ -132,7 +133,7 @@ public:
 
     ost::expected<void, string> load_state(ofs::File& file) override {
         unsigned int outframe = 0;
-        if (conf::get().is_replay)
+        if (!conf::get().is_replay)
             LoadGameState(file.get_handle(), &outframe);
         return {};
     }
