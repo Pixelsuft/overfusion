@@ -31,9 +31,6 @@ public:
     std::vector<Event> ev;
     std::vector<Event> temp_ev;
     std::vector<int> prev;
-    uint64_t system_offset;
-    uint64_t local_offset;
-    uint64_t startup_offset;
     int scene;
     int fps;
     int frames;
@@ -42,7 +39,6 @@ public:
     State() { clear_values(); }
 
     void clear_values() {
-        system_offset = local_offset = startup_offset = 0;
         scene = 0;
         frames = total = 0;
         fps = 0;
@@ -148,9 +144,6 @@ void state::save_state(int slot) {
     write_bin(file, st.frames);
     write_bin(file, st.total);
     write_bin(file, st.fps);
-    write_bin(file, st.system_offset);
-    write_bin(file, st.local_offset);
-    write_bin(file, st.startup_offset);
     write_bin(file, st.prev);
     write_bin(file, st.temp_ev);
     write_bin(file, st.ev);
@@ -195,24 +188,25 @@ void state::load_state(int slot) {
     load_bin(file, temp_state.frames);
     load_bin(file, temp_state.total);
     load_bin(file, temp_state.fps);
-    load_bin(file, temp_state.system_offset);
-    load_bin(file, temp_state.local_offset);
-    load_bin(file, temp_state.startup_offset);
     load_bin(file, temp_state.prev);
     load_bin(file, temp_state.temp_ev);
     load_bin(file, temp_state.ev);
+    int prev_frames = st.frames;
+    st.frames = temp_state.frames; // Need to set before load_state
     processing_save = true;
     auto ret = plug::get().load_state(file);
     if (!ret.has_value()) {
         processing_save = false;
+        st.frames = prev_frames;
         spdlog::warn("Failed to load state data: {}", ret.error());
         return;
     }
     if (!processing_save) {
+        st.frames = prev_frames;
         spdlog::warn("Failed to load game state: {}", state_error_text);
         return;
     }
-    st = std::move(temp_state);
+    st = std::move(temp_state); // FIXME: need after checking all the errors (IWBTB)
     processing_save = false;
     last_msg = string("State ") + std::to_string(slot) + " loaded!";
 }
@@ -281,10 +275,12 @@ void state::after_update() {
 }
 
 int64_t state::get_utc_offset() {
-    return static_cast<int64_t>(st.local_offset) - static_cast<int64_t>(st.system_offset);
+    auto& cfg = conf::get();
+    return static_cast<int64_t>(cfg.local_offset) - static_cast<int64_t>(cfg.system_offset);
 }
 
 uint64_t state::get_time(TimeOffset offset) {
+    auto& cfg = conf::get();
     auto fps = static_cast<int64_t>(st.fps);
     uint64_t ret =
         static_cast<uint64_t>(static_cast<int64_t>(st.frames) * 1000 / fps + time_offset);
@@ -292,11 +288,11 @@ uint64_t state::get_time(TimeOffset offset) {
     case TimeOffset::None:
         return ret;
     case TimeOffset::System:
-        return ret + st.system_offset;
+        return ret + cfg.system_offset;
     case TimeOffset::Local:
-        return ret + st.local_offset;
+        return ret + cfg.local_offset;
     case TimeOffset::Startup:
-        return ret + st.startup_offset;
+        return ret + cfg.startup_offset;
     case TimeOffset::Reminder:
         return static_cast<uint64_t>(st.frames) * 1000 % fps;
     default:
