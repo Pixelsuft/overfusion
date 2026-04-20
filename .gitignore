@@ -15,3 +15,5 @@ nul
 *.tar
 *.gz
 *.xz
+*.exe
+*.dll
