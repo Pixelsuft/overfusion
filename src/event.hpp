@@ -7,6 +7,7 @@ struct Event {
     union {
         struct {
             short k;
+            bool down;
         } key;
         struct {
             short x;

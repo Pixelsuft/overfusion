@@ -29,7 +29,7 @@ extern BOOL(WINAPI* QueryPerformanceCounterO)(LARGE_INTEGER* lpFrequency);
 struct State {
     std::vector<Event> ev;
     std::vector<Event> temp_ev;
-    std::vector<int> prev;
+    std::vector<int> prev_kbd;
     int scene;
     int fps;
     int frames;
@@ -46,7 +46,7 @@ struct State {
     void clear_lists() {
         ev.clear();
         temp_ev.clear();
-        prev.clear();
+        prev_kbd.clear();
     }
 
     void trim() {
@@ -147,7 +147,7 @@ void state::save_state(int slot) {
     write_bin(file, st.frames);
     write_bin(file, st.total);
     write_bin(file, st.fps);
-    write_bin(file, st.prev);
+    write_bin(file, st.prev_kbd);
     write_bin(file, st.temp_ev);
     write_bin(file, st.ev);
     processing_save = true;
@@ -206,7 +206,7 @@ void state::load_state(int slot) {
     load_bin(file, temp_state.frames);
     load_bin(file, temp_state.total);
     load_bin(file, temp_state.fps);
-    load_bin(file, temp_state.prev);
+    load_bin(file, temp_state.prev_kbd);
     load_bin(file, temp_state.temp_ev);
     load_bin(file, temp_state.ev);
     int prev_frames = st.frames;
@@ -262,23 +262,35 @@ bool state::before_update() {
 
     } else {
         for (auto it = holding.begin(); it != holding.end(); it++) {
-            auto pit = std::find(st.prev.begin(), st.prev.end(), *it);
-            if (pit == st.prev.end()) {
+            auto pit = std::find(st.prev_kbd.begin(), st.prev_kbd.end(), *it);
+            if (pit == st.prev_kbd.end()) {
                 // Down event
                 if (need_key_msg)
                     winhooks::sim_key_event(*it, true);
+                Event event;
+                event.frame = st.frames;
+                event.idx = 1;
+                event.key.k = static_cast<short>(*it);
+                event.key.down = true;
+                st.ev.push_back(event);
             }
         }
-        for (auto pit = st.prev.begin(); pit != st.prev.end(); pit++) {
+        for (auto pit = st.prev_kbd.begin(); pit != st.prev_kbd.end(); pit++) {
             auto it = std::find(holding.begin(), holding.end(), *pit);
             if (it == holding.end()) {
                 // Up event
                 if (need_key_msg)
                     winhooks::sim_key_event(*pit, false);
+                Event event;
+                event.frame = st.frames;
+                event.idx = 1;
+                event.key.k = static_cast<short>(*pit);
+                event.key.down = false;
+                st.ev.push_back(event);
             }
         }
     }
-    st.prev = cfg.is_replay ? repl_holding : holding;
+    st.prev_kbd = cfg.is_replay ? repl_holding : holding;
     return true;
 }
 
@@ -337,7 +349,7 @@ uint64_t state::get_time(TimeOffset offset) {
 void state::set_temp_time_offset(int ms) { time_offset = static_cast<int64_t>(ms); }
 
 bool state::get_key_state(int vk) {
-    return std::find(st.prev.begin(), st.prev.end(), vk) != st.prev.end();
+    return std::find(st.prev_kbd.begin(), st.prev_kbd.end(), vk) != st.prev_kbd.end();
 }
 
 void state::set_key_down(int vk, bool down) {
@@ -350,7 +362,7 @@ void state::set_key_down(int vk, bool down) {
 }
 
 void state::fill_kbd_state(unsigned char* data) {
-    for (auto& val : st.prev)
+    for (auto& val : st.prev_kbd)
         data[val] = 1;
 }
 
@@ -359,5 +371,12 @@ void state::draw_info() {
     ImGui::TextUnformatted(cfg.is_replay ? "[REPLAY]" : "[RECORD]");
     ImGui::Text("Frames: %i / %i", st.frames, st.total);
     ImGui::Text("Scene: %i", st.scene);
+#ifdef _DEBUG
+    ImGui::Text("Replay index: %i", repl_index);
+    ImGui::Text("Event count: %i", static_cast<int>(st.ev.size()));
+#endif
     ImGui::Text("Message: %s", last_msg.c_str());
+    if (!cfg.fast_forward) {
+        ImGui::Text("Keys: TODO");
+    }
 }
