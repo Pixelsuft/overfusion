@@ -26,8 +26,7 @@ using std::string;
 extern BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency);
 extern BOOL(WINAPI* QueryPerformanceCounterO)(LARGE_INTEGER* lpFrequency);
 
-class State {
-public:
+struct State {
     std::vector<Event> ev;
     std::vector<Event> temp_ev;
     std::vector<int> prev;
@@ -103,35 +102,35 @@ bool state::is_processing_save(void* handle) {
 template <typename T> static void write_bin(ofs::File& file, const std::vector<T>& data) {
     size_t size = data.size();
     auto ret = file.write(&size, sizeof(size_t));
-    ASS(ret);
+    ENSURE(ret);
     if (size == 0)
         return;
     // Everything is trivial, no problems, ok?
     ret = file.write(data.data(), size * sizeof(T));
-    ASS(ret);
+    ENSURE(ret);
 }
 
 template <typename T> static void write_bin(ofs::File& file, const T& val) {
     auto ret = file.write(&val, sizeof(T));
-    ASS(ret);
+    ENSURE(ret);
 }
 
 template <typename T> static void load_bin(ofs::File& file, std::vector<T>& data) {
     size_t size;
     auto ret = file.read(&size, sizeof(size_t));
-    ASS(ret);
+    ENSURE(ret);
     if (size == 0) {
         data.clear();
         return;
     }
     data.resize(size);
     ret = file.read(&data[0], size * sizeof(T));
-    ASS(ret);
+    ENSURE(ret);
 }
 
 template <typename T> static void load_bin(ofs::File& file, T& val) {
     auto ret = file.read(&val, sizeof(T));
-    ASS(ret);
+    ENSURE(ret);
 }
 
 void state::save_state(int slot) {
@@ -142,7 +141,7 @@ void state::save_state(int slot) {
         return;
     }
     temp_handle = file.get_handle();
-    ASS(file.write("ofstate!", 8));
+    ENSURE(file.write("ofstate!", 8));
     write_bin(file, save_version);
     write_bin(file, st.scene);
     write_bin(file, st.frames);
@@ -212,7 +211,8 @@ void state::load_state(int slot) {
     load_bin(file, temp_state.ev);
     int prev_frames = st.frames;
     st.frames = temp_state.frames; // Need to set before load_state
-    processing_save = true;
+    if (!cfg.is_replay)
+        processing_save = true;
     auto ret = plug::get().load_state(file);
     if (!ret.has_value()) {
         processing_save = false;
@@ -221,7 +221,7 @@ void state::load_state(int slot) {
         last_msg = "Failed to load state: " + ret.error();
         return;
     }
-    if (!processing_save) {
+    if (!cfg.is_replay && !processing_save) {
         st.frames = prev_frames;
         spdlog::warn("Failed to load game state: {}", state_error_text);
         last_msg = "Failed to restore game state: " + state_error_text;
@@ -242,19 +242,21 @@ bool state::invalidate_process(string_view text) {
 
 void state::early_update() { updating = false; }
 
-void state::before_update() {
+bool state::before_update() {
     auto& cfg = conf::get();
+    ASS(need_scene_slot == -10000 || need_scene_slot >= 0);
     if (need_scene_slot != -10000) {
         load_state(need_scene_slot);
         // cfg.is_paused = true;
         // cfg.need_advance = false;
     }
     void* pGlobalApp = plug::get().get_prop(plug::PtrProp::PGlobalApp);
+    ASS(pGlobalApp != nullptr);
     int* pScene = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSceneID, pGlobalApp));
     ASS(pScene != nullptr);
     st.scene = *pScene;
-    if (cfg.is_paused && !cfg.need_advance)
-        return;
+    if ((cfg.is_paused && !cfg.need_advance) || need_scene_slot != -10000)
+        return false;
     updating = true;
     if (cfg.is_replay) {
 
@@ -277,6 +279,7 @@ void state::before_update() {
         }
     }
     st.prev = cfg.is_replay ? repl_holding : holding;
+    return true;
 }
 
 void state::after_update() {
@@ -355,6 +358,8 @@ void state::fill_kbd_state(unsigned char* data) {
 }
 
 void state::draw_info() {
+    auto& cfg = conf::get();
+    ImGui::TextUnformatted(cfg.is_replay ? "[REPLAY]" : "[RECORD]");
     ImGui::Text("Frames: %i / %i", st.frames, st.total);
     ImGui::Text("Scene: %i", st.scene);
     ImGui::Text("Message: %s", last_msg.c_str());

@@ -139,7 +139,7 @@ bool ofs::remove_file(string_view path) {
 
 bool ofs::make_dir(ost::string_view path) {
     wchar_t* converted = uconv::to_utf16(path);
-    ASS(converted != nullptr);
+    ENSURE(converted != nullptr);
     auto ret = CreateDirectoryW(converted, nullptr) != 0 || GetLastError() == ERROR_ALREADY_EXISTS;
     std::free(converted);
     return ret;

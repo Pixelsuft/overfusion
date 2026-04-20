@@ -223,7 +223,7 @@ Config::Config() {
     name = data[#name]
 
 void Config::read() {
-    ASS(ofs::make_dir(project_name));
+    ENSURE(ofs::make_dir(project_name));
     auto data = read_config_file(project_name);
     if (data["fps"].is_number_integer() && data["fps"].is_number_unsigned())
         fps = data["fps"];
@@ -291,7 +291,7 @@ void Config::read() {
             if ((bind.task == Task::SaveState || bind.task == Task::LoadState) &&
                 val["slot"].is_number_integer()) {
                 bind.extra = val["slot"];
-                ASS(bind.extra >= 0);
+                ENSURE(bind.extra >= 0);
             } else if ((bind.task == Task::Play || bind.task == Task::FastForward) &&
                        val["toggle"].is_boolean())
                 bind.extra = val["toggle"];

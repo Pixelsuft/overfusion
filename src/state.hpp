@@ -9,7 +9,7 @@ void init();
 bool invalidate_process(ost::string_view text);
 bool is_processing_save(void* handle);
 void early_update();
-void before_update();
+bool before_update();
 void after_update();
 uint64_t get_time(TimeOffset offset);
 int64_t get_utc_offset();

@@ -139,10 +139,12 @@ public:
     }
 
     ost::expected<void, string> load_state(ofs::File& file) override {
-        unsigned int outframe = 0;
-        size_t ptr = *(size_t*)(mem::get_base() + 0xb49d4);
-        *(short*)(ptr + 0x30) = 0;
-        LoadGameState(file.get_handle(), &outframe);
+        if (conf::get().is_replay) {
+            unsigned int outframe = 0;
+            size_t ptr = *(size_t*)(mem::get_base() + 0xb49d4);
+            *(short*)(ptr + 0x30) = 0;
+            LoadGameState(file.get_handle(), &outframe);
+        }
         return {};
     }
 };

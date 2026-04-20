@@ -81,12 +81,8 @@ static int __stdcall UpdateGameFrameH() {
     ASS(pStep != nullptr);
     ASS(pIsPaused != nullptr);
     *pStep = 1;
-    *pIsPaused = false;
-    state::before_update();
     int ret;
-    if (cfg.boxed_mode)
-        cfg.is_paused = false;
-    if (cfg.is_paused && !cfg.need_advance) {
+    if (!state::before_update() && !cfg.boxed_mode) {
         *pIsPaused = true;
         ret = UpdateGameFrameO();
         if (cfg.custom_window)
