@@ -199,7 +199,7 @@ static conf::Task task_from_string(string_view sv) {
 }
 
 Config::Config() {
-    project_name = "test_proj"; // TODO: configure it
+    project_name = "test_proj";                        // TODO: configure it
     system_offset = local_offset = startup_offset = 0; // TODO: conf them
     fps = 0;
     show_menu = show_info = true;
@@ -289,10 +289,11 @@ void Config::read() {
             }
             bind.extra = 0;
             if ((bind.task == Task::SaveState || bind.task == Task::LoadState) &&
-                val["slot"].is_number_integer())
+                val["slot"].is_number_integer()) {
                 bind.extra = val["slot"];
-            else if ((bind.task == Task::Play || bind.task == Task::FastForward) &&
-                     val["toggle"].is_boolean())
+                ASS(bind.extra >= 0);
+            } else if ((bind.task == Task::Play || bind.task == Task::FastForward) &&
+                       val["toggle"].is_boolean())
                 bind.extra = val["toggle"];
             else if (bind.task == Task::Map) {
                 if (val["target"].is_string()) {

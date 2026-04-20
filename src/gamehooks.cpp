@@ -25,7 +25,6 @@ static int __stdcall ProcessTransitionH() {
     ASS(pState != nullptr);
     input::process_update();
     state::early_update();
-    // TODO: check for skip
     state::before_update();
     int ret;
     if (cfg.boxed_mode)
@@ -77,7 +76,6 @@ static int __stdcall UpdateGameFrameH() {
     ASS(pState != nullptr);
     input::process_update();
     state::early_update();
-    // Assuming they are not nullptrs
     auto pStep = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));
     auto pIsPaused = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PIsPaused, pState));
     ASS(pStep != nullptr);

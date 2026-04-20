@@ -70,6 +70,8 @@ static string last_msg;
 static string state_error_text;
 static string base_path;
 static int64_t time_offset;
+static int need_scene_slot;
+static int repl_index;
 static bool processing_save;
 static bool updating;
 static bool need_key_msg;
@@ -85,6 +87,8 @@ void state::init() {
     const_dt = 1.0 / (double)st.fps;
     to_wait = 0.0;
     time_offset = 0;
+    repl_index = 0;
+    need_scene_slot = -10000;
     spdlog::debug("Init FPS: {}", st.fps);
     QueryPerformanceFrequencyO(&last_counter);
     freq = (double)last_counter.QuadPart;
@@ -165,6 +169,8 @@ void state::save_state(int slot) {
 }
 
 void state::load_state(int slot) {
+    need_scene_slot = -10000;
+    auto& cfg = conf::get();
     ofs::File file(base_path + "\\state_" + std::to_string(slot) + ".ofstate", 0);
     if (!file.is_open()) {
         spdlog::warn("Failed to open state slot {} for reading", slot);
@@ -185,6 +191,19 @@ void state::load_state(int slot) {
     State temp_state;
     // State& temp_state = st;
     load_bin(file, temp_state.scene);
+    if (temp_state.scene != st.scene) {
+        need_scene_slot = slot;
+        spdlog::debug("Preparing scene change: {} -> {}", st.scene, temp_state.scene);
+        last_msg = "Changing scene: " + std::to_string(st.scene) + " -> " +
+                   std::to_string(temp_state.scene);
+        void* pState = plug::get().get_prop(plug::PtrProp::PState);
+        short* ptr =
+            reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
+        *ptr = 3;
+        ptr = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
+        *ptr = static_cast<short>(temp_state.scene) | 0x8000;
+        return;
+    }
     load_bin(file, temp_state.frames);
     load_bin(file, temp_state.total);
     load_bin(file, temp_state.fps);
@@ -198,15 +217,17 @@ void state::load_state(int slot) {
     if (!ret.has_value()) {
         processing_save = false;
         st.frames = prev_frames;
-        spdlog::warn("Failed to load state data: {}", ret.error());
+        spdlog::warn("Failed to load state: {}", ret.error());
+        last_msg = "Failed to load state: " + ret.error();
         return;
     }
     if (!processing_save) {
         st.frames = prev_frames;
         spdlog::warn("Failed to load game state: {}", state_error_text);
+        last_msg = "Failed to restore game state: " + state_error_text;
         return;
     }
-    st = std::move(temp_state); // FIXME: need after checking all the errors (IWBTB)
+    st = std::move(temp_state);
     processing_save = false;
     last_msg = string("State ") + std::to_string(slot) + " loaded!";
 }
@@ -219,10 +240,19 @@ bool state::invalidate_process(string_view text) {
     return true;
 }
 
-void state::early_update() {}
+void state::early_update() { updating = false; }
 
 void state::before_update() {
     auto& cfg = conf::get();
+    if (need_scene_slot != -10000) {
+        load_state(need_scene_slot);
+        // cfg.is_paused = true;
+        // cfg.need_advance = false;
+    }
+    void* pGlobalApp = plug::get().get_prop(plug::PtrProp::PGlobalApp);
+    int* pScene = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSceneID, pGlobalApp));
+    ASS(pScene != nullptr);
+    st.scene = *pScene;
     if (cfg.is_paused && !cfg.need_advance)
         return;
     updating = true;
@@ -325,10 +355,7 @@ void state::fill_kbd_state(unsigned char* data) {
 }
 
 void state::draw_info() {
-    void* pGlobalApp = plug::get().get_prop(plug::PtrProp::PGlobalApp);
-    int* scene_id =
-        reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSceneID, pGlobalApp));
     ImGui::Text("Frames: %i / %i", st.frames, st.total);
-    ImGui::Text("Scene: %i", scene_id ? *scene_id : -1);
+    ImGui::Text("Scene: %i", st.scene);
     ImGui::Text("Message: %s", last_msg.c_str());
 }
