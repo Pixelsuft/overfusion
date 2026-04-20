@@ -478,7 +478,7 @@ static HRESULT WINAPI CreateDeviceH(IDirect3D9* pD3D, UINT Adapter, D3DDEVTYPE D
                                pPresentationParameters, ppReturnedDeviceInterface);
 
     if (SUCCEEDED(hr) && ppReturnedDeviceInterface && *ppReturnedDeviceInterface) {
-        spdlog::debug("Returning ID3D9Proxy");
+        spdlog::debug("Wrapping IDirect3DDevice9 into ID3D9Proxy");
         *ppReturnedDeviceInterface = new ID3D9Proxy(*ppReturnedDeviceInterface);
     }
     return hr;
