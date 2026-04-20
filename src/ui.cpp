@@ -69,6 +69,8 @@ static void draw_menu() {
         ImGui::End();
         return;
     }
+    if (ImGui::Checkbox("Replay mode", &cfg.is_replay))
+        state::on_mode_switch();
     if (cfg.virtual_fs && ImGui::CollapsingHeader("Virtual Filesystem")) {
         files::draw_ui();
     }

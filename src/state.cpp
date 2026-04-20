@@ -56,6 +56,11 @@ struct State {
         if (it != ev.end())
             ev.erase(it, ev.end());
     }
+
+    size_t calc_current_index() {
+        // TODO
+        return 0;
+    }
 };
 
 static State st;
@@ -68,9 +73,9 @@ static double freq;
 static string last_msg;
 static string state_error_text;
 static string base_path;
+static size_t repl_index;
 static int64_t time_offset;
 static int need_scene_slot;
-static int repl_index;
 static bool processing_save;
 static bool updating;
 static bool need_key_msg;
@@ -227,7 +232,17 @@ void state::load_state(int slot) {
         last_msg = "Failed to restore game state: " + state_error_text;
         return;
     }
-    st = std::move(temp_state);
+    if (cfg.is_replay) {
+        st.ev = std::move(temp_state.ev);
+        st.total = temp_state.total;
+        repl_index = st.calc_current_index();
+    }
+    else {
+        st = std::move(temp_state);
+        // TODO: maybe trim on the first frame, not directly when loading?
+        st.trim();
+        repl_index = 0;
+    }
     processing_save = false;
     last_msg = string("State ") + std::to_string(slot) + " loaded!";
 }
@@ -364,6 +379,18 @@ void state::set_key_down(int vk, bool down) {
 void state::fill_kbd_state(unsigned char* data) {
     for (auto& val : st.prev_kbd)
         data[val] = 1;
+}
+
+void state::on_mode_switch() {
+    auto& cfg = conf::get();
+    spdlog::debug("TODO: switch mode");
+    if (cfg.is_replay) {
+
+    } else {
+        // TODO: maybe trim on the first frame, not directly when loading?
+        st.trim();
+        repl_index = st.calc_current_index();
+    }
 }
 
 void state::draw_info() {

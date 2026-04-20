@@ -11,6 +11,7 @@ bool is_processing_save(void* handle);
 void early_update();
 bool before_update();
 void after_update();
+void on_mode_switch();
 uint64_t get_time(TimeOffset offset);
 int64_t get_utc_offset();
 void set_temp_time_offset(int ms);
