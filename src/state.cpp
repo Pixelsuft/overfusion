@@ -337,9 +337,7 @@ uint64_t state::get_time(TimeOffset offset) {
 void state::set_temp_time_offset(int ms) { time_offset = static_cast<int64_t>(ms); }
 
 bool state::get_key_state(int vk) {
-    auto& vec = updating ? (conf::get().is_replay ? repl_holding : holding) : st.prev;
-    auto ret = std::find(vec.begin(), vec.end(), vk) != vec.end();
-    return ret;
+    return std::find(st.prev.begin(), st.prev.end(), vk) != st.prev.end();
 }
 
 void state::set_key_down(int vk, bool down) {
@@ -352,8 +350,7 @@ void state::set_key_down(int vk, bool down) {
 }
 
 void state::fill_kbd_state(unsigned char* data) {
-    auto& vec = updating ? (conf::get().is_replay ? repl_holding : holding) : st.prev;
-    for (auto& val : vec)
+    for (auto& val : st.prev)
         data[val] = 1;
 }
 
