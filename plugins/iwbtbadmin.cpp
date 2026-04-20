@@ -42,6 +42,7 @@ public:
         // No waiting
         mem::write(mem::get_base() + 0x2fbb, {0xeb});
         mem::write(mem::get_base() + 0x302e, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x2ef41, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         // Force input to use GetKeyState for immediate refresh
         mem::write(mem::get_base() + 0xb912, {0xeb});
         mem::write(mem::get_base() + 0xb9c2, {0xeb});
