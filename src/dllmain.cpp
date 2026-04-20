@@ -39,7 +39,7 @@ static void of_main() {
     }
     timehooks::init();
     state::init();
-    loadhook::init();
+    loadhooks::init();
     winhooks::init();
     files::init();
     input::init();

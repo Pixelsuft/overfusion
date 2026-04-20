@@ -143,7 +143,7 @@ static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
     return reinterpret_cast<FARPROC>(temp_ret);
 }
 
-void loadhook::init() {
+void loadhooks::init() {
     HOOK_STR_AUTO("kernel32.dll", LoadLibrary);
     HOOK_AUTO("kernel32.dll", GetProcAddress);
     // For really old MMF2 versions
@@ -152,6 +152,6 @@ void loadhook::init() {
         after_load("mmfs2.dll", mmfs2_handle);
 }
 
-void* loadhook::get_func_address(void* handle, const char* func_name) {
+void* loadhooks::get_func_address(void* handle, const char* func_name) {
     return reinterpret_cast<void*>(GetProcAddressO(reinterpret_cast<HMODULE>(handle), func_name));
 }

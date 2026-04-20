@@ -54,7 +54,7 @@ void* mem::get_addr(const char* obj_name, const char* func_name) {
         spdlog::error("Failed to get module \"{}\"", obj_name);
         return nullptr;
     }
-    auto ret = loadhook::get_func_address(obj, func_name);
+    auto ret = loadhooks::get_func_address(obj, func_name);
     if (ret == nullptr)
         spdlog::error("Failed to get \"{}\" address of the module \"{}\"", func_name, obj_name);
     return ret;

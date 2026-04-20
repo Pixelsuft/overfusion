@@ -32,6 +32,12 @@ static BOOL WINAPI CreateProcessAH(LPCSTR lpApplicationName, LPSTR lpCommandLine
     return FALSE;
 }
 
+static BOOL(WINAPI* CreateProcessWO)(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
+                                     LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                                     LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
+                                     DWORD dwCreationFlags, LPVOID lpEnvironment,
+                                     LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
+                                     LPPROCESS_INFORMATION lpProcessInformation);
 static BOOL WINAPI CreateProcessWH(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
                                    LPSECURITY_ATTRIBUTES lpProcessAttributes,
                                    LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
@@ -52,5 +58,6 @@ void threadhooks::update_init() {
 void threadhooks::pre_init() {
     if (!conf::get().delay_thread_hook)
         HOOK_AUTO("kernel32.dll", CreateThread);
-    HOOK_STR_ONLY("kernel32.dll", CreateProcess);
+    HOOK_ONLY("kernel32.dll", CreateProcessA);
+    HOOK_AUTO("kernel32.dll", CreateProcessW);
 }

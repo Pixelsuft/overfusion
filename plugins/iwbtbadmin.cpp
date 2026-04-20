@@ -8,8 +8,8 @@
 #include <spdlog/spdlog.h>
 
 using ost::optional;
-using std::string;
 using ost::string_view;
+using std::string;
 
 class PlugIwbtbAdmin final : public plug::PlugBase {
 private:
