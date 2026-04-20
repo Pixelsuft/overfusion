@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include "mem.hpp"
 #include "ass.hpp"
+#include "loadhooks.hpp"
 #include "uconv.hpp"
 #include <MinHook.h>
 #include <Psapi.h>
@@ -53,11 +54,10 @@ void* mem::get_addr(const char* obj_name, const char* func_name) {
         spdlog::error("Failed to get module \"{}\"", obj_name);
         return nullptr;
     }
-    // TODO: no conflicts with loadhooks
-    auto ret = GetProcAddress(obj, func_name);
+    auto ret = loadhook::get_func_address(obj, func_name);
     if (ret == nullptr)
         spdlog::error("Failed to get \"{}\" address of the module \"{}\"", func_name, obj_name);
-    return reinterpret_cast<void*>(ret);
+    return ret;
 }
 
 bool mem::_write_memory(size_t addr, const void* data, size_t size) {

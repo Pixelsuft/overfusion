@@ -121,7 +121,7 @@ static HMODULE WINAPI LoadLibraryWH(LPCWSTR lpLibFileName) {
     return ret;
 }
 
-static FARPROC(WINAPI* GetProcAddressO)(HMODULE hModule, LPCSTR lpProcName);
+static FARPROC(WINAPI* GetProcAddressO)(HMODULE hModule, LPCSTR lpProcName) = GetProcAddress;
 static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
     if (!hModule || !lpProcName)
         return GetProcAddressO(hModule, lpProcName);
@@ -150,4 +150,8 @@ void loadhook::init() {
     auto mmfs2_handle = GetModuleHandleW(L"mmfs2.dll");
     if (mmfs2_handle != nullptr)
         after_load("mmfs2.dll", mmfs2_handle);
+}
+
+void* loadhook::get_func_address(void* handle, const char* func_name) {
+    return reinterpret_cast<void*>(GetProcAddressO(reinterpret_cast<HMODULE>(handle), func_name));
 }

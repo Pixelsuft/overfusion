@@ -12,6 +12,7 @@
 
 using ost::string_view;
 using std::string;
+static bool is_custom_window;
 
 HWND hwnd;
 HWND mhwnd;
@@ -24,9 +25,11 @@ static LRESULT(__stdcall* MainWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, 
 static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DROPFILES)
         return 0;
-    ui::processing = true;
-    ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
-    ui::processing = false;
+    if (!is_custom_window || uMsg < WM_MOUSEFIRST || uMsg > WM_MOUSELAST) {
+        ui::processing = true;
+        ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
+        ui::processing = false;
+    }
     switch (uMsg) {
     case WM_KEYDOWN:
     case WM_KEYUP:
@@ -49,9 +52,11 @@ static LRESULT(__stdcall* EditWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, 
 static LRESULT __stdcall EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DROPFILES)
         return 0;
-    ui::processing = true;
-    ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
-    ui::processing = false;
+    if (!is_custom_window || uMsg < WM_MOUSEFIRST || uMsg > WM_MOUSELAST) {
+        ui::processing = true;
+        ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
+        ui::processing = false;
+    }
     if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP) {
         // lParam = 0;
         input::handle_input(wParam, uMsg == WM_KEYDOWN);
@@ -191,7 +196,6 @@ static int WINAPI GetSystemMetricsH(int nIndex) {
     case SM_CYFRAME:
     case SM_CYVSCROLL:
     case SM_CXHSCROLL:
-        return 0;
     default:
         return GetSystemMetricsO(nIndex);
     }
@@ -217,6 +221,7 @@ static INT_PTR WINAPI DialogBoxParamWH(HINSTANCE hInstance, LPCWSTR lpTemplateNa
 }
 
 void winhooks::init() {
+    is_custom_window = false;
     hwnd = mhwnd = nullptr;
     // HOOK_STR_ONLY("user32.dll", GetMonitorInfo);
     HOOK_STR_AUTO("user32.dll", CreateWindowEx);
@@ -233,6 +238,7 @@ void winhooks::init() {
 }
 
 void winhooks::after_ui_init() {
+    is_custom_window = conf::get().custom_window;
     bool use_w = conf::get().is_unicode;
     ENSURE(hwnd != nullptr);
     ENSURE(mhwnd != nullptr);
