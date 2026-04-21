@@ -80,6 +80,7 @@ static int __stdcall UpdateGameFrameH() {
     auto pIsPaused = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PIsPaused, pState));
     ASS(pStep != nullptr);
     ASS(pIsPaused != nullptr);
+    *pIsPaused = false;
     *pStep = 1;
     int ret;
     if (!state::before_update() && !cfg.boxed_mode) {

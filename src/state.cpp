@@ -62,6 +62,8 @@ struct State {
                                    [](const Event& e, int f) { return e.frame < f; });
         return std::distance(ev.begin(), it);
     }
+
+    // TODO: get currently hold keys at the frame st.frames (so ENSURE->ASS in key sim)
 };
 
 static State st;
