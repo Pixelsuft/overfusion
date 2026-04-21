@@ -58,6 +58,7 @@ public:
             mem::write(base + 0x78d7, {0xeb});
             mem::write(base + 0x6e2f, {0xeb});
             mem::write(base + 0x6e80, {0x90, 0x90, 0x90, 0x90});
+            mem::write(base + 0xbfb8, {0xeb});
         } else if (fn == "CCTrans.dll") {
             // Disable transitions
             // mem::write(base + 0x7448, {0xeb});
