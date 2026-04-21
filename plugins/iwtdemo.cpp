@@ -67,6 +67,8 @@ public:
         mem::write(mem::get_base() + 0x5162a, {0x31, 0xf6});
         // Game FPS is fine
         mem::write(mem::get_base() + 0x2ab70, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        // Fix crash VERY EXPERIMENTAL
+        mem::write(mem::get_base() + 0x493fd, {0xeb});
         return true;
     }
 

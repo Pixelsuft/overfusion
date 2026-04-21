@@ -463,6 +463,8 @@ void state::reset_game() {
     st.prev_kbd.clear();
     st.ev.clear();
     st.frames = 0;
+    st.total = 0;
+    st.prev_kbd.clear();
     repl_holding.clear();
     repl_index = 0;
     void* pState = plug::get().get_prop(plug::PtrProp::PState);
