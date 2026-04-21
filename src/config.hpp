@@ -37,6 +37,7 @@ public:
     bool no_ini_hooks;
     bool boxed_mode;
     bool reset_on_replay;
+    bool save_game_state;
 
     Config();
     void read();

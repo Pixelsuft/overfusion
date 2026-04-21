@@ -134,9 +134,11 @@ public:
     ost::expected<void, string> save_state(ofs::File& file) override {
         // Replicating game engine mechanics
         // TODO: reinterpret cast
-        size_t ptr = *(size_t*)(mem::get_base() + 0xb49d4);
-        *(short*)(ptr + 0x436) = 0;
-        SaveGameState(file.get_handle());
+        if (conf::get().save_game_state) {
+            size_t ptr = *(size_t*)(mem::get_base() + 0xb49d4);
+            *(short*)(ptr + 0x436) = 0;
+            SaveGameState(file.get_handle());
+        }
         return {};
     }
 

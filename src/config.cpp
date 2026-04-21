@@ -217,6 +217,7 @@ Config::Config() {
     no_ini_hooks = false;
     boxed_mode = false;
     reset_on_replay = false;
+    save_game_state = true;
 }
 
 #define READ_BOOL(name)                                                                            \

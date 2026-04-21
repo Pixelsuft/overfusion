@@ -142,6 +142,7 @@ template <typename T> static void load_bin(ofs::File& file, T& val) {
 }
 
 void state::save_state(int slot) {
+    auto& cfg = conf::get();
     string fp = base_path + "\\state_" + std::to_string(slot) + ".ofstate";
     ofs::File file;
     if (!file.open(fp, 1, false)) {
@@ -167,7 +168,7 @@ void state::save_state(int slot) {
         ofs::remove_file(fp);
         return;
     }
-    if (!processing_save) {
+    if (cfg.save_game_state && !processing_save) {
         spdlog::warn("Failed to save game state: {}", state_error_text);
         return;
     }

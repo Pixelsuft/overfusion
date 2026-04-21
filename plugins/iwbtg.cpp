@@ -92,7 +92,8 @@ public:
 
     ost::expected<void, string> save_state(ofs::File& file) override {
         // I think that is unsupported
-        state::invalidate_process("Unsupported");
+        if (conf::get().save_game_state)
+            state::invalidate_process("Unsupported");
         return {};
     }
 

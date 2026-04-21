@@ -95,7 +95,8 @@ public:
     }
 
     ost::expected<void, string> save_state(ofs::File& file) override {
-        SaveGameState(file.get_handle());
+        if (conf::get().save_game_state)
+            SaveGameState(file.get_handle());
         return {};
     }
 
