@@ -21,4 +21,5 @@ void fill_kbd_state(unsigned char* data);
 void draw_info();
 void save_state(int slot);
 void load_state(int slot);
+void reset_game();
 } // namespace state

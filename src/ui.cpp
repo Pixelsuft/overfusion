@@ -75,6 +75,8 @@ static void draw_menu() {
     ImGui::Checkbox("Paused", &cfg.is_paused);
     ImGui::Checkbox("Fast forward", &cfg.fast_forward);
     ImGui::Checkbox("Show info", &cfg.show_info);
+    if (ImGui::Button("Restart"))
+        state::reset_game();
     if (cfg.virtual_fs && ImGui::CollapsingHeader("Virtual Filesystem")) {
         files::draw_ui();
     }

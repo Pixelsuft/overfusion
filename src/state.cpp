@@ -178,17 +178,8 @@ void state::load_state(int slot) {
     auto& cfg = conf::get();
     if (cfg.is_replay && cfg.reset_on_replay && st.frames != 0) {
         // Need to restart game before replay
-        st.prev_kbd.clear();
-        st.ev.clear();
-        st.frames = 0;
-        repl_holding.clear();
         need_scene_slot = slot;
-        void* pState = plug::get().get_prop(plug::PtrProp::PState);
-        short* ptr =
-            reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
-        *ptr = 4;
-        ptr = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
-        *ptr = 0;
+        reset_game();
         last_msg = "Restarting game";
         return;
     }
@@ -277,15 +268,19 @@ static void exec_event(Event ev) {
     case 1:
         if (ev.key.down == true) {
             auto it = std::find(repl_holding.begin(), repl_holding.end(), ev.key.k);
-            if (it == repl_holding.end())
+            if (it == repl_holding.end()) {
                 repl_holding.push_back(ev.key.k);
-            else
+                if (need_key_msg)
+                    winhooks::sim_key_event(ev.key.k, true);
+            } else
                 spdlog::error("Failed to simulate key: key {} is already down", ev.key.k);
         } else {
             auto it = std::find(repl_holding.begin(), repl_holding.end(), ev.key.k);
-            if (it != repl_holding.end())
+            if (it != repl_holding.end()) {
                 repl_holding.erase(it);
-            else
+                if (need_key_msg)
+                    winhooks::sim_key_event(ev.key.k, false);
+            } else
                 spdlog::error("Failed to simulate key: key {} is already up", ev.key.k);
         }
         break;
@@ -460,4 +455,18 @@ void state::draw_info() {
     if (!cfg.fast_forward) {
         ImGui::Text("Keys: TODO");
     }
+}
+
+void state::reset_game() {
+    st.prev_kbd.clear();
+    st.ev.clear();
+    st.frames = 0;
+    repl_holding.clear();
+    repl_index = 0;
+    void* pState = plug::get().get_prop(plug::PtrProp::PState);
+    short* ptr =
+        reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
+    *ptr = 4;
+    ptr = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
+    *ptr = 0;
 }
