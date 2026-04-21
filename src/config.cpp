@@ -216,6 +216,7 @@ Config::Config() {
     virtual_fs = true;
     no_ini_hooks = false;
     boxed_mode = false;
+    reset_on_replay = false;
 }
 
 #define READ_BOOL(name)                                                                            \

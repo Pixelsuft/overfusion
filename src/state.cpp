@@ -58,8 +58,9 @@ struct State {
     }
 
     size_t calc_current_index() {
-        // TODO
-        return 0;
+        auto it = std::lower_bound(ev.begin(), ev.end(), frames,
+                                   [](const Event& e, int f) { return e.frame < f; });
+        return std::distance(ev.begin(), it);
     }
 };
 
@@ -175,6 +176,22 @@ void state::save_state(int slot) {
 void state::load_state(int slot) {
     need_scene_slot = -10000;
     auto& cfg = conf::get();
+    if (cfg.is_replay && cfg.reset_on_replay && st.frames != 0) {
+        // Need to restart game before replay
+        st.prev_kbd.clear();
+        st.ev.clear();
+        st.frames = 0;
+        repl_holding.clear();
+        need_scene_slot = slot;
+        void* pState = plug::get().get_prop(plug::PtrProp::PState);
+        short* ptr =
+            reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
+        *ptr = 4;
+        ptr = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
+        *ptr = 0;
+        last_msg = "Restarting game";
+        return;
+    }
     ofs::File file(base_path + "\\state_" + std::to_string(slot) + ".ofstate", 0);
     if (!file.is_open()) {
         spdlog::warn("Failed to open state slot {} for reading", slot);
@@ -195,7 +212,7 @@ void state::load_state(int slot) {
     State temp_state;
     // State& temp_state = st;
     load_bin(file, temp_state.scene);
-    if (temp_state.scene != st.scene) {
+    if (!cfg.is_replay && temp_state.scene != st.scene) {
         need_scene_slot = slot;
         spdlog::debug("Preparing scene change: {} -> {}", st.scene, temp_state.scene);
         last_msg = "Changing scene: " + std::to_string(st.scene) + " -> " +
@@ -215,9 +232,10 @@ void state::load_state(int slot) {
     load_bin(file, temp_state.temp_ev);
     load_bin(file, temp_state.ev);
     int prev_frames = st.frames;
-    st.frames = temp_state.frames; // Need to set before load_state
-    if (!cfg.is_replay)
+    if (!cfg.is_replay) {
+        st.frames = temp_state.frames; // Need to set before load_state
         processing_save = true;
+    }
     auto ret = plug::get().load_state(file);
     if (!ret.has_value()) {
         processing_save = false;
@@ -236,8 +254,7 @@ void state::load_state(int slot) {
         st.ev = std::move(temp_state.ev);
         st.total = temp_state.total;
         repl_index = st.calc_current_index();
-    }
-    else {
+    } else {
         st = std::move(temp_state);
         // TODO: maybe trim on the first frame, not directly when loading?
         st.trim();
@@ -253,6 +270,30 @@ bool state::invalidate_process(string_view text) {
     state_error_text = text;
     processing_save = false;
     return true;
+}
+
+static void exec_event(Event ev) {
+    switch (ev.idx) {
+    case 1:
+        if (ev.key.down == true) {
+            auto it = std::find(repl_holding.begin(), repl_holding.end(), ev.key.k);
+            if (it == repl_holding.end())
+                repl_holding.push_back(ev.key.k);
+            else
+                spdlog::error("Failed to simulate key: key {} is already down", ev.key.k);
+        } else {
+            auto it = std::find(repl_holding.begin(), repl_holding.end(), ev.key.k);
+            if (it != repl_holding.end())
+                repl_holding.erase(it);
+            else
+                spdlog::error("Failed to simulate key: key {} is already up", ev.key.k);
+        }
+        break;
+    default:
+        // TODO: custom events for plugins
+        ASS(false);
+        break;
+    }
 }
 
 void state::early_update() { updating = false; }
@@ -274,7 +315,14 @@ bool state::before_update() {
         return false;
     updating = true;
     if (cfg.is_replay) {
-
+        for (; repl_index < st.ev.size(); repl_index++) {
+            Event& ev = st.ev[repl_index];
+            if (ev.frame > st.frames)
+                break;
+            if (ev.frame < st.frames)
+                continue;
+            exec_event(ev);
+        }
     } else {
         for (auto it = holding.begin(); it != holding.end(); it++) {
             auto pit = std::find(st.prev_kbd.begin(), st.prev_kbd.end(), *it);
@@ -317,6 +365,12 @@ void state::after_update() {
         st.frames++;
         timehooks::update(static_cast<int>(get_time(TimeOffset::None) - prev_time));
         st.total = std::max(st.total, st.frames);
+        if (cfg.is_replay && st.frames == st.total && st.frames > 0) {
+            cfg.is_paused = true;
+            cfg.is_replay = false;
+            on_mode_switch();
+            last_msg = "Switched to recording";
+        }
     }
     if (cfg.fast_forward)
         return;
@@ -383,13 +437,13 @@ void state::fill_kbd_state(unsigned char* data) {
 
 void state::on_mode_switch() {
     auto& cfg = conf::get();
-    spdlog::debug("TODO: switch mode");
+    repl_holding.clear(); // TODO: is this right????
     if (cfg.is_replay) {
-
+        repl_index = st.calc_current_index();
     } else {
         // TODO: maybe trim on the first frame, not directly when loading?
         st.trim();
-        repl_index = st.calc_current_index();
+        repl_index = 0;
     }
 }
 

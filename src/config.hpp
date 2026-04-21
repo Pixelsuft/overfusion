@@ -36,6 +36,7 @@ public:
     bool delay_thread_hook;
     bool no_ini_hooks;
     bool boxed_mode;
+    bool reset_on_replay;
 
     Config();
     void read();
