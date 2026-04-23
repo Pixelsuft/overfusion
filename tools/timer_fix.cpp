@@ -20,8 +20,9 @@ ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
         uint8_t nEvents = *reinterpret_cast<uint8_t*>(eventPtr + 2);
         uint8_t nConds = *reinterpret_cast<uint8_t*>(eventPtr + 3);
         int totalEntries = static_cast<int>(nConds) + static_cast<int>(nEvents);
-        uint8_t* currentEntry = reinterpret_cast<uint8_t*>(eventPtr) + 0xe;
-        int type = *reinterpret_cast<int*>(currentEntry + 0x10);
+        uint8_t* currentEntry =
+            reinterpret_cast<uint8_t*>(eventPtr) + cfg.tm_fix_event_entry_offset;
+        int type = *reinterpret_cast<int*>(currentEntry + cfg.tm_fix_event_entry_type_offset);
         if (type != -0xa0001 && type != -0x90001) {
             for (int i = 0; i < totalEntries; ++i) {
                 uint16_t entrySize = *reinterpret_cast<uint16_t*>(currentEntry);

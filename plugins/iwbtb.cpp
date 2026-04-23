@@ -103,6 +103,8 @@ public:
     bool update_init() override {
         auto& cfg = conf::get();
         cfg.gStats = *reinterpret_cast<void**>(mem::get_base() + 0x59a98);
+        cfg.tm_fix_event_entry_offset = 0xe;
+        cfg.tm_fix_event_entry_type_offset = 0x10;
         // hook::hook(mem::get_base() + 0x8d90, TimerProcH, &TimerProcO);
         return true;
     }

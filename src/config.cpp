@@ -222,6 +222,7 @@ Config::Config() {
     save_game_state = true;
     disable_app_menu = false;
     allow_timers_fix = true;
+    tm_fix_event_entry_offset = tm_fix_event_entry_type_offset = 0;
 }
 
 #define READ_BOOL(name)                                                                            \
