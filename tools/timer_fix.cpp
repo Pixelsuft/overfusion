@@ -3,6 +3,8 @@
 #include "../src/config.hpp"
 #include <spdlog/spdlog.h>
 
+// TODO: make it working not only with the boshy
+
 #pragma pack(push, 2)
 struct EventGroup {
     short length;

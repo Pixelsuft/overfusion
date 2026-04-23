@@ -133,12 +133,14 @@ void state::save_state(int slot) {
     if (!ret.has_value()) {
         processing_save = false;
         spdlog::warn("Failed to save state data: {}", ret.error());
+        last_msg = "Failed to save state data: " + ret.error();
         file.close();
         ofs::remove_file(fp);
         return;
     }
     if (cfg.save_game_state && !processing_save) {
         spdlog::warn("Failed to save game state: {}", state_error_text);
+        last_msg = "Failed to save game state: " + state_error_text;
         return;
     }
     processing_save = false;
@@ -203,13 +205,13 @@ void state::load_state(int slot) {
     if (!ret.has_value()) {
         processing_save = false;
         st.frames = prev_frames;
-        spdlog::warn("Failed to load state: {}", ret.error());
-        last_msg = "Failed to load state: " + ret.error();
+        spdlog::warn("Failed to load state data: {}", ret.error());
+        last_msg = "Failed to load state data: " + ret.error();
         return;
     }
     if (!cfg.is_replay && !processing_save) {
         st.frames = prev_frames;
-        spdlog::warn("Failed to load game state: {}", state_error_text);
+        spdlog::warn("Failed to restore game state: {}", state_error_text);
         last_msg = "Failed to restore game state: " + state_error_text;
         return;
     }

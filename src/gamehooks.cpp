@@ -77,7 +77,6 @@ static int __stdcall UpdateGameFrameH() {
     }
     auto pState = plug::get().get_prop(plug::PtrProp::PState);
     ASS(pState != nullptr);
-    input::process_update();
     state::early_update();
     auto pStep = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));
     auto pIsPaused = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PIsPaused, pState));
@@ -85,6 +84,8 @@ static int __stdcall UpdateGameFrameH() {
     ASS(pIsPaused != nullptr);
     *pIsPaused = false;
     *pStep = 1;
+    if (!state::is_processing_save())
+        input::process_update();
     int ret;
     if (!state::before_update() && !cfg.boxed_mode) {
         *pIsPaused = true;
