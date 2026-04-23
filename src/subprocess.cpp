@@ -6,6 +6,10 @@
 
 using subprocess::Process;
 
+extern BOOL(WINAPI* CreateProcessWO)(LPCWSTR, LPWSTR, LPSECURITY_ATTRIBUTES, LPSECURITY_ATTRIBUTES,
+                                     BOOL, DWORD, LPVOID, LPCWSTR, LPSTARTUPINFOW,
+                                     LPPROCESS_INFORMATION);
+
 Process::Process() {
     pi.hProcess = pi.hThread = nullptr;
     pi.dwProcessId = pi.dwThreadId = 0;
@@ -50,7 +54,7 @@ bool Process::open(ost::string_view cmdline) {
     wchar_t* w_buf = uconv::to_utf16(cmdline);
     ENSURE(w_buf != nullptr);
     auto ret = true;
-    if (!CreateProcessW(nullptr, w_buf, nullptr, nullptr, TRUE, 0, nullptr, nullptr, &si, &pi)) {
+    if (!CreateProcessWO(nullptr, w_buf, nullptr, nullptr, TRUE, 0, nullptr, nullptr, &si, &pi)) {
         spdlog::error("Failed to create child process");
         CloseHandle(hChildStdinWrite);
         pi.hProcess = pi.hThread = nullptr;

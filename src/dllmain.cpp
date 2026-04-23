@@ -11,6 +11,7 @@
 #include "threadhooks.hpp"
 #include "timehooks.hpp"
 #include "ui.hpp"
+#include "video.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
@@ -46,6 +47,7 @@ static void of_main() {
     extrahooks::init();
     gamehooks::init();
     threadhooks::pre_init();
+    video::init();
     hook::enable();
 }
 

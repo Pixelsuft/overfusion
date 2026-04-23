@@ -33,7 +33,7 @@ static BOOL WINAPI CreateProcessAH(LPCSTR lpApplicationName, LPSTR lpCommandLine
     return FALSE;
 }
 
-static BOOL(WINAPI* CreateProcessWO)(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
+BOOL(WINAPI* CreateProcessWO)(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
                                      LPSECURITY_ATTRIBUTES lpProcessAttributes,
                                      LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
                                      DWORD dwCreationFlags, LPVOID lpEnvironment,

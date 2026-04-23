@@ -10,6 +10,7 @@
 #include "state.hpp"
 #include "threadhooks.hpp"
 #include "timehooks.hpp"
+#include "video.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
@@ -38,6 +39,7 @@ static int __stdcall ProcessTransitionH() {
     } else {
         cfg.need_advance = false;
         ret = ProcessTransitionO();
+        video::after_draw();
         if (cfg.custom_window)
             customwindow::render();
     }
@@ -98,6 +100,7 @@ static int __stdcall UpdateGameFrameH() {
         cfg.need_advance = false;
         *pIsPaused = false;
         ret = UpdateGameFrameO();
+        video::after_draw();
         if (cfg.custom_window)
             customwindow::render();
     }

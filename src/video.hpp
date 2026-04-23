@@ -4,4 +4,5 @@ namespace video {
 void init();
 void start();
 void stop();
+void after_draw();
 }

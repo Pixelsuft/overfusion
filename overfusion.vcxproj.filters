@@ -168,7 +168,7 @@
     <ClCompile Include="src\subprocess.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\record.cpp">
+    <ClCompile Include="src\video.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -256,7 +256,7 @@
     <ClInclude Include="src\subprocess.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\record.hpp">
+    <ClInclude Include="src\video.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

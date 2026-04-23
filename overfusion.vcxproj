@@ -294,7 +294,7 @@
     <ClCompile Include="src\loadhooks.cpp" />
     <ClCompile Include="src\ofs.cpp" />
     <ClCompile Include="src\plugbase.cpp" />
-    <ClCompile Include="src\record.cpp" />
+    <ClCompile Include="src\video.cpp" />
     <ClCompile Include="src\state.cpp" />
     <ClCompile Include="src\subprocess.cpp" />
     <ClCompile Include="src\threadhooks.cpp" />
@@ -325,7 +325,7 @@
     <ClInclude Include="src\ofs.hpp" />
     <ClInclude Include="src\opt.hpp" />
     <ClInclude Include="src\plugbase.hpp" />
-    <ClInclude Include="src\record.hpp" />
+    <ClInclude Include="src\video.hpp" />
     <ClInclude Include="src\state.hpp" />
     <ClInclude Include="src\subprocess.hpp" />
     <ClInclude Include="src\sv.hpp" />
