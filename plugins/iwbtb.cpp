@@ -12,7 +12,6 @@ using ost::optional;
 using ost::string_view;
 using std::string;
 
-#pragma pack(push, 2)
 struct ConditionHeader {
     short size;
     short field1_0x2;
@@ -31,7 +30,6 @@ struct ConditionHeader {
     int interval;
     int currentTimer;
 };
-#pragma pack(pop)
 
 static int(__cdecl* TimerProcO)(ConditionHeader* cond);
 static int __cdecl TimerProcH(ConditionHeader* cond) {

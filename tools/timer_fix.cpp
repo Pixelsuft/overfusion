@@ -4,81 +4,48 @@
 #include <spdlog/spdlog.h>
 
 // TODO: make it working not only with the boshy
-
-#pragma pack(push, 2)
-struct EventGroup {
-    short length;
-    unsigned char eventCount;
-    unsigned char condCount;
-    unsigned short flags;
-    short groupTimerBase;
-    short field5_0x8;
-    short field6_0xa;
-    unsigned char field7_0xc;
-    unsigned char field8_0xd;
-    short condStart;
-    int type;
-    unsigned char field11_0x14;
-    unsigned char field12_0x15;
-    unsigned char field13_0x16;
-    unsigned char field14_0x17;
-    unsigned char field15_0x18;
-    unsigned char field16_0x19;
-    unsigned char field17_0x1a;
-    unsigned char field18_0x1b;
-    unsigned char field19_0x1c;
-    unsigned char field20_0x1d;
-    unsigned char field21_0x1e;
-    unsigned char field22_0x1f;
-    unsigned char field23_0x20;
-    unsigned char field24_0x21;
-    unsigned short groupFlags;
-};
-
-struct ConditionHeader {
-    short size;
-    short field1_0x2;
-    short condID;
-    short field3_0x6;
-    short field4_0x8;
-    unsigned char field5_0xa;
-    unsigned char unk1;
-    unsigned char unk2;
-    unsigned char unk3;
-    unsigned char unk4;
-    unsigned char unk5;
-    unsigned char parameterData;
-    unsigned char unk6;
-    short conditionType;
-    int interval;
-    int currentTimer;
-};
-#pragma pack(pop)
+// TODO: how can I skip disabled timers?
 
 ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
     auto& cfg = conf::get();
     if (!cfg.allow_timers_fix)
         return {};
     // spdlog::debug("gStats before: {}", cfg.gStats);
-    EventGroup* eventPtr =
-        *reinterpret_cast<EventGroup**>(reinterpret_cast<size_t>(cfg.gStats) + 0x80);
-    ENSURE(eventPtr != nullptr);
-    if (eventPtr == nullptr) {
+    size_t eventPtr = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(cfg.gStats) + 0x80);
+    if (eventPtr == 0) {
         spdlog::error("eventPtr is nullptr WTF");
         return ost::unexpected<std::string>("failed to save timers - eventPtr was nullptr");
     }
-    while (eventPtr->length != 0) {
-        ConditionHeader* cond = reinterpret_cast<ConditionHeader*>(&eventPtr->condStart);
-        for (int i = static_cast<int>(eventPtr->eventCount); i != 0; i--) {
-            if (cond->condID == -4) {
-                data.push_back(cond->interval);
-                data.push_back(cond->currentTimer);
+    while (*reinterpret_cast<short*>(eventPtr) != 0) {
+        uint8_t nEvents = *reinterpret_cast<uint8_t*>(eventPtr + 2);
+        uint8_t nConds = *reinterpret_cast<uint8_t*>(eventPtr + 3);
+        int totalEntries = static_cast<int>(nConds) + static_cast<int>(nEvents);
+        uint8_t* currentEntry = reinterpret_cast<uint8_t*>(eventPtr) + 0xe;
+        int type = *reinterpret_cast<int*>(currentEntry + 0x10);
+        if (type != -0xa0001 && type != -0x90001) {
+            for (int i = 0; i < totalEntries; ++i) {
+                uint16_t entrySize = *reinterpret_cast<uint16_t*>(currentEntry);
+                int32_t objectID = *reinterpret_cast<int32_t*>(currentEntry + 2);
+                uint8_t paramCount = *reinterpret_cast<uint8_t*>(currentEntry + 0xC);
+                if (paramCount > 0) {
+                    uint8_t* paramPtr = currentEntry + (objectID < 0 ? 0x10 : 0x0E);
+                    for (int p = 0; p < static_cast<int>(paramCount); ++p) {
+                        uint16_t pSize = *reinterpret_cast<uint16_t*>(paramPtr);
+                        uint16_t pType = *reinterpret_cast<uint16_t*>(paramPtr + 2);
+                        if (pType == 0x0D) {
+                            int32_t intervalValue = *reinterpret_cast<int32_t*>(paramPtr + 4);
+                            int32_t timerValue = *reinterpret_cast<int32_t*>(paramPtr + 8);
+                            data.push_back(intervalValue);
+                            data.push_back(timerValue);
+                            spdlog::debug("saved {} / {}", timerValue, intervalValue);
+                        }
+                        paramPtr += pSize;
+                    }
+                }
+                currentEntry += entrySize;
             }
-            cond = reinterpret_cast<ConditionHeader*>(
-                (reinterpret_cast<size_t>(cond) + static_cast<size_t>(cond->size)));
         }
-        eventPtr = reinterpret_cast<EventGroup*>(
-            (reinterpret_cast<size_t>(eventPtr) - static_cast<size_t>(eventPtr->length)));
+        eventPtr -= static_cast<size_t>(*reinterpret_cast<short*>(eventPtr));
     }
     spdlog::debug("timers fix size: {}", data.size());
     return {};
@@ -89,30 +56,5 @@ ost::expected<void, std::string> timer_fix::load(std::vector<int> data) {
     if (!cfg.allow_timers_fix)
         return {};
     ASS(data.size() % 2 == 0);
-    EventGroup* eventPtr =
-        *reinterpret_cast<EventGroup**>(reinterpret_cast<size_t>(cfg.gStats) + 0x80);
-    ENSURE(eventPtr != nullptr);
-    if (eventPtr == nullptr) {
-        spdlog::error("eventPtr is nullptr WTF");
-        return ost::unexpected<std::string>("failed to restore timers - eventPtr was nullptr");
-    }
-    auto it = data.begin();
-    while (eventPtr->length != 0) {
-        ConditionHeader* cond = reinterpret_cast<ConditionHeader*>(&eventPtr->condStart);
-        for (int i = static_cast<int>(eventPtr->eventCount); i != 0; i--) {
-            if (cond->condID == -4) {
-                ASS(it != data.end());
-                int interval = *(it++);
-                int timer = *(it++);
-                ENSURE(interval == cond->interval);
-                cond->currentTimer = timer;
-                // TODO: maybe return error actually when failed?
-            }
-            cond = reinterpret_cast<ConditionHeader*>(
-                (reinterpret_cast<size_t>(cond) + static_cast<size_t>(cond->size)));
-        }
-        eventPtr = reinterpret_cast<EventGroup*>(
-            (reinterpret_cast<size_t>(eventPtr) - static_cast<size_t>(eventPtr->length)));
-    }
     return {};
 }
