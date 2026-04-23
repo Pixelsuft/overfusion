@@ -1,9 +1,9 @@
 #include "timer_fix.hpp"
 #include "../src/ass.hpp"
 #include "../src/config.hpp"
-#include "../src/mem.hpp"
 #include <spdlog/spdlog.h>
 
+#pragma pack(push, 2)
 struct EventGroup {
     short length;
     unsigned char eventCount;
@@ -51,6 +51,7 @@ struct ConditionHeader {
     int interval;
     int currentTimer;
 };
+#pragma pack(pop)
 
 ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
     auto& cfg = conf::get();
@@ -65,15 +66,17 @@ ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
         return ost::unexpected<std::string>("failed to save timers - eventPtr was nullptr");
     }
     while (eventPtr->length != 0) {
-        ConditionHeader* cond = (ConditionHeader*)&eventPtr->condStart;
-        for (int i = (int)eventPtr->eventCount; i != 0; i--) {
+        ConditionHeader* cond = reinterpret_cast<ConditionHeader*>(&eventPtr->condStart);
+        for (int i = static_cast<int>(eventPtr->eventCount); i != 0; i--) {
             if (cond->condID == -4) {
                 data.push_back(cond->interval);
                 data.push_back(cond->currentTimer);
             }
-            cond = (ConditionHeader*)((size_t)cond + (size_t)cond->size);
+            cond = reinterpret_cast<ConditionHeader*>(
+                (reinterpret_cast<size_t>(cond) + static_cast<size_t>(cond->size)));
         }
-        eventPtr = (EventGroup*)((size_t)eventPtr - (size_t)eventPtr->length);
+        eventPtr = reinterpret_cast<EventGroup*>(
+            (reinterpret_cast<size_t>(eventPtr) - static_cast<size_t>(eventPtr->length)));
     }
     spdlog::debug("timers fix size: {}", data.size());
     return {};
@@ -93,8 +96,8 @@ ost::expected<void, std::string> timer_fix::load(std::vector<int> data) {
     }
     auto it = data.begin();
     while (eventPtr->length != 0) {
-        ConditionHeader* cond = (ConditionHeader*)&eventPtr->condStart;
-        for (int i = (int)eventPtr->eventCount; i != 0; i--) {
+        ConditionHeader* cond = reinterpret_cast<ConditionHeader*>(&eventPtr->condStart);
+        for (int i = static_cast<int>(eventPtr->eventCount); i != 0; i--) {
             if (cond->condID == -4) {
                 ASS(it != data.end());
                 int interval = *(it++);
@@ -103,9 +106,11 @@ ost::expected<void, std::string> timer_fix::load(std::vector<int> data) {
                 cond->currentTimer = timer;
                 // TODO: maybe return error actually when failed?
             }
-            cond = (ConditionHeader*)((size_t)cond + (size_t)cond->size);
+            cond = reinterpret_cast<ConditionHeader*>(
+                (reinterpret_cast<size_t>(cond) + static_cast<size_t>(cond->size)));
         }
-        eventPtr = (EventGroup*)((size_t)eventPtr - (size_t)eventPtr->length);
+        eventPtr = reinterpret_cast<EventGroup*>(
+            (reinterpret_cast<size_t>(eventPtr) - static_cast<size_t>(eventPtr->length)));
     }
     return {};
 }
