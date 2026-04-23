@@ -1,6 +1,7 @@
 #include "timer_fix.hpp"
 #include "../src/ass.hpp"
 #include "../src/config.hpp"
+#include "../src/mem.hpp"
 #include <spdlog/spdlog.h>
 
 struct EventGroup {
@@ -53,8 +54,14 @@ struct ConditionHeader {
 
 ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
     auto& cfg = conf::get();
+    // spdlog::debug("gStats before: {}", cfg.gStats);
     EventGroup* eventPtr =
         *reinterpret_cast<EventGroup**>(reinterpret_cast<size_t>(cfg.gStats) + 0x80);
+    ENSURE(eventPtr != nullptr);
+    if (eventPtr == nullptr) {
+        spdlog::error("eventPtr is nullptr WTF");
+        return ost::unexpected<std::string>("failed to save timers - eventPtr was nullptr");
+    }
     while (eventPtr->length != 0) {
         ConditionHeader* cond = (ConditionHeader*)&eventPtr->condStart;
         for (int i = (int)eventPtr->eventCount; i != 0; i--) {
@@ -73,8 +80,14 @@ ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
 ost::expected<void, std::string> timer_fix::load(std::vector<int> data) {
     auto& cfg = conf::get();
     ASS(data.size() % 2 == 0);
+    spdlog::debug("gStats before: {}", cfg.gStats);
     EventGroup* eventPtr =
         *reinterpret_cast<EventGroup**>(reinterpret_cast<size_t>(cfg.gStats) + 0x80);
+    ENSURE(eventPtr != nullptr);
+    if (eventPtr == nullptr) {
+        spdlog::error("eventPtr is nullptr WTF");
+        return ost::unexpected<std::string>("failed to restore timers - eventPtr was nullptr");
+    }
     auto it = data.begin();
     while (eventPtr->length != 0) {
         ConditionHeader* cond = (ConditionHeader*)&eventPtr->condStart;
