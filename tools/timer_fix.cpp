@@ -1,6 +1,6 @@
 #include "timer_fix.hpp"
+#include "../src/ass.hpp"
 #include "../src/config.hpp"
-#include "../src/state.hpp"
 #include <spdlog/spdlog.h>
 
 struct EventGroup {
@@ -58,7 +58,7 @@ ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
     while (eventPtr->length != 0) {
         ConditionHeader* cond = (ConditionHeader*)&eventPtr->condStart;
         for (int i = (int)eventPtr->eventCount; i != 0; i--) {
-            if (cond->condID == -4 && cond->conditionType == 13 && cond->size == 30) {
+            if (cond->condID == -4) {
                 data.push_back(cond->interval);
                 data.push_back(cond->currentTimer);
             }
@@ -73,14 +73,13 @@ ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
 ost::expected<void, std::string> timer_fix::load(std::vector<int> data) {
     auto& cfg = conf::get();
     ASS(data.size() % 2 == 0);
-    spdlog::debug("restoring {} timers", data.size());
     EventGroup* eventPtr =
         *reinterpret_cast<EventGroup**>(reinterpret_cast<size_t>(cfg.gStats) + 0x80);
     auto it = data.begin();
     while (eventPtr->length != 0) {
         ConditionHeader* cond = (ConditionHeader*)&eventPtr->condStart;
         for (int i = (int)eventPtr->eventCount; i != 0; i--) {
-            if (cond->condID == -4 && cond->conditionType == 13 && cond->size == 30) {
+            if (cond->condID == -4) {
                 ASS(it != data.end());
                 int interval = *(it++);
                 int timer = *(it++);
