@@ -165,6 +165,9 @@
     <ClCompile Include="tools\timer_fix.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
+    <ClCompile Include="src\subprocess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest">
@@ -246,6 +249,9 @@
     </ClInclude>
     <ClInclude Include="tools\timer_fix.hpp">
       <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="src\subprocess.hpp">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

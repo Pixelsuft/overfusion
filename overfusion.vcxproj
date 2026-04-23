@@ -295,6 +295,7 @@
     <ClCompile Include="src\ofs.cpp" />
     <ClCompile Include="src\plugbase.cpp" />
     <ClCompile Include="src\state.cpp" />
+    <ClCompile Include="src\subprocess.cpp" />
     <ClCompile Include="src\threadhooks.cpp" />
     <ClCompile Include="src\timehooks.cpp" />
     <ClCompile Include="src\uconv.cpp" />
@@ -324,6 +325,7 @@
     <ClInclude Include="src\opt.hpp" />
     <ClInclude Include="src\plugbase.hpp" />
     <ClInclude Include="src\state.hpp" />
+    <ClInclude Include="src\subprocess.hpp" />
     <ClInclude Include="src\sv.hpp" />
     <ClInclude Include="src\threadhooks.hpp" />
     <ClInclude Include="src\timehooks.hpp" />
