@@ -168,6 +168,9 @@
     <ClCompile Include="src\subprocess.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\record.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest">
@@ -251,6 +254,9 @@
       <Filter>Tools</Filter>
     </ClInclude>
     <ClInclude Include="src\subprocess.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\record.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
