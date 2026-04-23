@@ -54,6 +54,8 @@ struct ConditionHeader {
 
 ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
     auto& cfg = conf::get();
+    if (!cfg.allow_timers_fix)
+        return {};
     // spdlog::debug("gStats before: {}", cfg.gStats);
     EventGroup* eventPtr =
         *reinterpret_cast<EventGroup**>(reinterpret_cast<size_t>(cfg.gStats) + 0x80);
@@ -79,8 +81,9 @@ ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
 
 ost::expected<void, std::string> timer_fix::load(std::vector<int> data) {
     auto& cfg = conf::get();
+    if (!cfg.allow_timers_fix)
+        return {};
     ASS(data.size() % 2 == 0);
-    spdlog::debug("gStats before: {}", cfg.gStats);
     EventGroup* eventPtr =
         *reinterpret_cast<EventGroup**>(reinterpret_cast<size_t>(cfg.gStats) + 0x80);
     ENSURE(eventPtr != nullptr);

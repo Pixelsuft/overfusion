@@ -44,6 +44,7 @@ public:
     bool reset_on_replay;
     bool save_game_state;
     bool disable_app_menu;
+    bool allow_timers_fix;
 
     Config();
     void read();

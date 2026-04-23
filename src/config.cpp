@@ -221,6 +221,7 @@ Config::Config() {
     reset_on_replay = false;
     save_game_state = true;
     disable_app_menu = false;
+    allow_timers_fix = true;
 }
 
 #define READ_BOOL(name)                                                                            \
@@ -244,6 +245,7 @@ void Config::read() {
     READ_BOOL(reset_on_replay);
     READ_BOOL(save_game_state);
     READ_BOOL(disable_app_menu);
+    READ_BOOL(allow_timers_fix);
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
     if (data["binds"].is_array()) {
