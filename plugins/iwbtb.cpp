@@ -1,7 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/ass.hpp"
 #include "../src/config.hpp"
-#include "../src/gamehooks.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include <Windows.h>
@@ -32,10 +31,10 @@ public:
         ASS(SaveGameState != nullptr);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x39780);
         ASS(LoadGameState != nullptr);
-        gamehooks::hook_update_func(reinterpret_cast<void*>(mem::get_base() + 0x365a0));
-        gamehooks::set_render_func(reinterpret_cast<void*>(mem::get_base() + 0x1ebf0));
-        gamehooks::hook_trans_update_func(reinterpret_cast<void*>(mem::get_base() + 0x1aac0));
-        gamehooks::set_trans_render_func(reinterpret_cast<void*>(mem::get_base() + 0x1cd40));
+        cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x365a0);
+        cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x1ebf0);
+        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x1aac0);
+        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x1cd40);
         mem::write(mem::get_base() + 0x4b74, {0x90, 0x90, 0x90, 0x90, 0x90});
         mem::write(mem::get_base() + 0x4b6d, {0x90, 0x90, 0x90, 0x90, 0x90});
         mem::write(mem::get_base() + 0x4c29, {0xeb});

@@ -104,28 +104,19 @@ static int __stdcall UpdateGameFrameH() {
 }
 
 void gamehooks::init() {
-    if (UpdateGameFrameO == nullptr)
+    auto& cfg = conf::get();
+    RenderFrame = reinterpret_cast<decltype(RenderFrame)>(cfg.pRenderFrame);
+    RenderTransition = reinterpret_cast<decltype(RenderTransition)>(cfg.pRenderTransition);
+    if (cfg.pUpdateGameFrame == nullptr)
         spdlog::error("UpdateGameFrame was not hooked");
-    if (ProcessTransitionO == nullptr)
+    else
+        hook::hook(cfg.pUpdateGameFrame, UpdateGameFrameH, &UpdateGameFrameO);
+    if (cfg.pProcessTransition == nullptr)
         spdlog::error("ProcessTransition was not hooked");
+    else
+        hook::hook(cfg.pProcessTransition, ProcessTransitionH, &ProcessTransitionO);
     if (RenderFrame == nullptr)
         spdlog::error("RenderFrame was not loaded");
     if (RenderTransition == nullptr)
         spdlog::error("RenderTransition was not loaded");
-}
-
-void gamehooks::hook_update_func(void* ptr) {
-    hook::hook(ptr, UpdateGameFrameH, &UpdateGameFrameO);
-}
-
-void gamehooks::set_render_func(void* ptr) {
-    RenderFrame = reinterpret_cast<decltype(RenderFrame)>(ptr);
-}
-
-void gamehooks::hook_trans_update_func(void* ptr) {
-    hook::hook(ptr, ProcessTransitionH, &ProcessTransitionO);
-}
-
-void gamehooks::set_trans_render_func(void* ptr) {
-    RenderTransition = reinterpret_cast<decltype(RenderTransition)>(ptr);
 }

@@ -1,6 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/config.hpp"
-#include "../src/gamehooks.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
@@ -22,10 +21,10 @@ public:
         auto& cfg = conf::get();
         if (cfg.fps <= 0)
             cfg.fps = 50;
-        gamehooks::hook_update_func(reinterpret_cast<void*>(mem::get_base() + 0x2bf30));
-        gamehooks::set_render_func(reinterpret_cast<void*>(mem::get_base() + 0x17290));
-        gamehooks::hook_trans_update_func(reinterpret_cast<void*>(mem::get_base() + 0x142e0));
-        gamehooks::set_trans_render_func(reinterpret_cast<void*>(mem::get_base() + 0x13e70));
+        cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x2bf30);
+        cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x17290);
+        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x142e0);
+        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x13e70);
         // Idk but this fixes switching between scenes
         mem::write(mem::get_base() + 0x15af3, {0x90, 0x90});
         // No extra time logic

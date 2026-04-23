@@ -20,6 +20,10 @@ public:
     uint64_t system_offset;
     uint64_t local_offset;
     uint64_t startup_offset;
+    void* pUpdateGameFrame;
+    void* pRenderFrame;
+    void* pProcessTransition;
+    void* pRenderTransition;
     int fps;
     bool show_info;
     bool show_menu;

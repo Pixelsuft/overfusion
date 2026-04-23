@@ -1,7 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/ass.hpp"
 #include "../src/config.hpp"
-#include "../src/gamehooks.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include <spdlog/spdlog.h>
@@ -31,10 +30,10 @@ public:
         ASS(SaveGameState != nullptr);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49f40);
         ASS(LoadGameState != nullptr);
-        gamehooks::hook_update_func(reinterpret_cast<void*>(mem::get_base() + 0x462e0));
-        gamehooks::set_render_func(reinterpret_cast<void*>(mem::get_base() + 0x2c3f0));
-        gamehooks::hook_trans_update_func(reinterpret_cast<void*>(mem::get_base() + 0x28b50));
-        gamehooks::set_trans_render_func(reinterpret_cast<void*>(mem::get_base() + 0x29f30));
+        cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x462e0);
+        cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2c3f0);
+        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x28b50);
+        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x29f30);
         // Show scene name in title
         mem::write(mem::get_base() + 0x273a8, {0x90, 0x90});
         // No __security_check_cookie

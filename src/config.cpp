@@ -201,6 +201,7 @@ static conf::Task task_from_string(string_view sv) {
 Config::Config() {
     project_name = "test_proj";                        // TODO: configure it
     system_offset = local_offset = startup_offset = 0; // TODO: conf them
+    pUpdateGameFrame = pRenderFrame = pProcessTransition = pRenderTransition = nullptr;
     fps = 0;
     show_menu = show_info = true;
     is_replay = false;
