@@ -3,13 +3,14 @@
 #include "../src/config.hpp"
 #include <spdlog/spdlog.h>
 
-// TODO: make it working not only with the boshy
-// TODO: how can I skip disabled timers?
+// TODO: how can I skip disabled timers for performance?
 
 ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
     auto& cfg = conf::get();
     if (!cfg.allow_timers_fix)
         return {};
+    ASS(cfg.tm_fix_event_entry_offset != 0);
+    ASS(cfg.tm_fix_event_entry_type_offset != 0);
     // spdlog::debug("gStats before: {}", cfg.gStats);
     size_t eventPtr = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(cfg.gStats) + 0x80);
     if (eventPtr == 0) {

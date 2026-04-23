@@ -1,1 +1,2 @@
 [ ] Use IAT hooks where possible
+[ ] Maybe move timer fix to the actual source code cuz it's everywhere?

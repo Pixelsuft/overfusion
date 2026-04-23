@@ -12,33 +12,6 @@ using ost::optional;
 using ost::string_view;
 using std::string;
 
-struct ConditionHeader {
-    short size;
-    short field1_0x2;
-    short condID;
-    short field3_0x6;
-    short field4_0x8;
-    unsigned char field5_0xa;
-    unsigned char unk1;
-    unsigned char unk2;
-    unsigned char unk3;
-    unsigned char unk4;
-    unsigned char unk5;
-    unsigned char parameterData;
-    unsigned char unk6;
-    short conditionType;
-    int interval;
-    int currentTimer;
-};
-
-static int(__cdecl* TimerProcO)(ConditionHeader* cond);
-static int __cdecl TimerProcH(ConditionHeader* cond) {
-    spdlog::debug("Timer Proc {} {} {} ({} / {})", (void*)&cond->interval, cond->condID,
-                  cond->conditionType, cond->currentTimer, cond->interval);
-    // cond->currentTimer = 0;
-    return TimerProcO(cond);
-}
-
 class PlugIwbtb final : public plug::PlugBase {
 private:
     void(__cdecl* SaveGameState)(void* hfile);
@@ -105,7 +78,6 @@ public:
         cfg.gStats = *reinterpret_cast<void**>(mem::get_base() + 0x59a98);
         cfg.tm_fix_event_entry_offset = 0xe;
         cfg.tm_fix_event_entry_type_offset = 0x10;
-        // hook::hook(mem::get_base() + 0x8d90, TimerProcH, &TimerProcO);
         return true;
     }
 
