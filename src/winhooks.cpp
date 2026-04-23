@@ -188,6 +188,8 @@ static int WINAPI GetSystemMetricsH(int nIndex) {
         return 1;
     case SM_SAMEDISPLAYFORMAT:
         return 1;
+    case SM_CYMENU:
+        return conf::get().disable_app_menu ? 0 : GetSystemMetricsO(nIndex);
     case SM_CXVSCROLL:
     case SM_CYHSCROLL:
     case SM_CYCAPTION:
@@ -220,6 +222,15 @@ static INT_PTR WINAPI DialogBoxParamWH(HINSTANCE hInstance, LPCWSTR lpTemplateNa
     return static_cast<INT_PTR>(-1);
 }
 
+static BOOL(WINAPI* SetMenuO)(HWND hWnd, HMENU hMenu);
+static BOOL WINAPI SetMenuH(HWND hWnd, HMENU hMenu) {
+    if (conf::get().disable_app_menu && hWnd == ::hwnd) {
+        spdlog::warn("Failing to set menu");
+        return FALSE;
+    }
+    return SetMenuO(hWnd, hMenu);
+}
+
 void winhooks::init() {
     is_custom_window = false;
     hwnd = mhwnd = nullptr;
@@ -235,6 +246,7 @@ void winhooks::init() {
     HOOK_ONLY("user32.dll", SetFocus);
     HOOK_ONLY("user32.dll", SetActiveWindow);
     HOOK_AUTO("user32.dll", GetSystemMetrics);
+    HOOK_AUTO("user32.dll", SetMenu);
 }
 
 void winhooks::after_ui_init() {

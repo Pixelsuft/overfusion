@@ -219,6 +219,7 @@ Config::Config() {
     boxed_mode = false;
     reset_on_replay = false;
     save_game_state = true;
+    disable_app_menu = false;
 }
 
 #define READ_BOOL(name)                                                                            \
@@ -239,7 +240,9 @@ void Config::read() {
     READ_BOOL(disable_threads);
     READ_BOOL(delay_thread_hook);
     READ_BOOL(no_ini_hooks);
-    READ_BOOL(boxed_mode);
+    READ_BOOL(reset_on_replay);
+    READ_BOOL(save_game_state);
+    READ_BOOL(disable_app_menu);
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
     if (data["binds"].is_array()) {

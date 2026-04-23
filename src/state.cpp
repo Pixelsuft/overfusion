@@ -35,7 +35,7 @@ struct State {
     int frames;
     int total;
 
-    State() { clear_values(); }
+    State() : scene(0), fps(0), frames(0), total(0) {}
 
     void clear_values() {
         scene = 0;

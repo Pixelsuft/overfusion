@@ -25,6 +25,7 @@ public:
         cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x17290);
         cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x142e0);
         cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x13e70);
+        cfg.save_game_state = false; // Not supported
         // Idk but this fixes switching between scenes
         mem::write(mem::get_base() + 0x15af3, {0x90, 0x90});
         // No extra time logic

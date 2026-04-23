@@ -276,11 +276,12 @@ void extrahooks::init() {
         auto temp2 = uconv::to_utf16(plug::get().cmdline_append + conf::get().cmdline_append);
         wcscat(my_argv_w, temp2);
         std::free(temp2);
-        // TODO: better way than GetModuleHandleA
-        *reinterpret_cast<char**>(GetProcAddress(GetModuleHandleA("msvcrt.dll"), "_acmdln")) =
-            my_argv_a;
-        *reinterpret_cast<wchar_t**>(GetProcAddress(GetModuleHandleA("msvcrt.dll"), "_wcmdln")) =
-            my_argv_w;
+        // TODO: better way than GetModuleHandleW
+        auto handle = GetModuleHandleW(L"msvcrt.dll");
+        if (handle) {
+            *reinterpret_cast<char**>(GetProcAddress(handle, "_acmdln")) = my_argv_a;
+            *reinterpret_cast<wchar_t**>(GetProcAddress(handle, "_wcmdln")) = my_argv_w;
+        }
     }();
     // TODO: GetDateFormatEx, GetLocaleInfoEx, GetTimeFormatEx, GetUserDefaultLocaleName
     HOOK_STR_AUTO("user32.dll", MessageBox);

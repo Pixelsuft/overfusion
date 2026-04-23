@@ -42,6 +42,7 @@ public:
     bool boxed_mode;
     bool reset_on_replay;
     bool save_game_state;
+    bool disable_app_menu;
 
     Config();
     void read();
