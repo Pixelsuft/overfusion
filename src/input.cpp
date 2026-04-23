@@ -131,7 +131,7 @@ void input::handle_input_real(int vk, bool pressed) {
     ASS(vk > 0 && vk < 256);
     auto& cfg = conf::get();
     auto it = std::lower_bound(cfg.binds.begin(), cfg.binds.end(), vk,
-                               [](const auto& a, int key) { return a.key > key; });
+                               [](const auto& a, int key) { return a.key < key; });
     bool prev = kbd_state[vk];
     kbd_state[vk] = pressed;
     while (it != cfg.binds.end() && it->key == vk) {

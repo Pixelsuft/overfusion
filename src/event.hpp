@@ -18,10 +18,6 @@ struct Event {
     };
     uint8_t idx;
 
-    Event() {
-        dummy.x = dummy.y = dummy.z = dummy.w = 0;
-        frame = 0;
-        idx = 0;
-    }
+    Event() : dummy(0, 0, 0, 0), frame(0), idx(0) {}
 };
 } // namespace event

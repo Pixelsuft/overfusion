@@ -226,7 +226,8 @@ Config::Config() {
     name = data[#name]
 
 void Config::read() {
-    ENSURE(ofs::make_dir(project_name));
+    auto temp_ret = ofs::make_dir(project_name);
+    ENSURE(temp_ret);
     auto data = read_config_file(project_name);
     if (data["fps"].is_number_integer() && data["fps"].is_number_unsigned())
         fps = data["fps"];
@@ -322,7 +323,7 @@ void Config::read() {
             binds.push_back(bind);
         }
         std::sort(binds.begin(), binds.end(),
-                  [](const auto& a, const auto& b) { return a.key > b.key; });
+                  [](const auto& a, const auto& b) { return a.key < b.key; });
     }
 }
 
