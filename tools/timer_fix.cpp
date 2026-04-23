@@ -51,15 +51,13 @@ struct ConditionHeader {
     int currentTimer;
 };
 
-ost::expected<void, std::string> timer_fix::save(ofs::File& file, std::vector<int>& data) {
+ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
     auto& cfg = conf::get();
-    cfg.gStats = *reinterpret_cast<void**>(0x459a98);
     EventGroup* eventPtr =
-        reinterpret_cast<EventGroup*>(reinterpret_cast<size_t>(cfg.gStats) + 0x80);
+        *reinterpret_cast<EventGroup**>(reinterpret_cast<size_t>(cfg.gStats) + 0x80);
     while (eventPtr->length != 0) {
         ConditionHeader* cond = (ConditionHeader*)&eventPtr->condStart;
         for (int i = (int)eventPtr->eventCount; i != 0; i--) {
-            spdlog::debug("cond {} {} {}", cond->condID, cond->conditionType, cond->size);
             if (cond->condID == -4 && cond->conditionType == 13 && cond->size == 30) {
                 data.push_back(cond->interval);
                 data.push_back(cond->currentTimer);
@@ -68,13 +66,31 @@ ost::expected<void, std::string> timer_fix::save(ofs::File& file, std::vector<in
         }
         eventPtr = (EventGroup*)((size_t)eventPtr - (size_t)eventPtr->length);
     }
-    spdlog::debug("timers size: {}", data.size());
+    spdlog::debug("timers fix size: {}", data.size());
     return {};
 }
 
-ost::expected<void, std::string> timer_fix::load(ofs::File& file, std::vector<int> data) {
+ost::expected<void, std::string> timer_fix::load(std::vector<int> data) {
     auto& cfg = conf::get();
     ASS(data.size() % 2 == 0);
     spdlog::debug("restoring {} timers", data.size());
+    EventGroup* eventPtr =
+        *reinterpret_cast<EventGroup**>(reinterpret_cast<size_t>(cfg.gStats) + 0x80);
+    auto it = data.begin();
+    while (eventPtr->length != 0) {
+        ConditionHeader* cond = (ConditionHeader*)&eventPtr->condStart;
+        for (int i = (int)eventPtr->eventCount; i != 0; i--) {
+            if (cond->condID == -4 && cond->conditionType == 13 && cond->size == 30) {
+                ASS(it != data.end());
+                int interval = *(it++);
+                int timer = *(it++);
+                ENSURE(interval == cond->interval);
+                cond->currentTimer = timer;
+                // TODO: maybe return error actually when failed?
+            }
+            cond = (ConditionHeader*)((size_t)cond + (size_t)cond->size);
+        }
+        eventPtr = (EventGroup*)((size_t)eventPtr - (size_t)eventPtr->length);
+    }
     return {};
 }

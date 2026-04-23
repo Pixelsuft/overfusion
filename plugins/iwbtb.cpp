@@ -134,7 +134,7 @@ public:
     ost::expected<void, string> save_state(ofs::File& file) override {
         if (conf::get().save_game_state) {
             std::vector<int> timer_data;
-            auto timer_ret = timer_fix::save(file, timer_data);
+            auto timer_ret = timer_fix::save(timer_data);
             if (!timer_ret.has_value())
                 return timer_ret;
             state::write_bin(file, timer_data);
@@ -152,9 +152,7 @@ public:
             // Check if LoadGameState already failed
             if (!state::is_processing_save())
                 return {};
-            auto timer_ret = timer_fix::load(file, timer_data);
-            if (!timer_ret.has_value())
-                return timer_ret;
+            return timer_fix::load(timer_data);
         }
         return {};
     }
