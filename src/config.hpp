@@ -24,7 +24,7 @@ public:
     void* pRenderFrame;
     void* pProcessTransition;
     void* pRenderTransition;
-    void* gApp;
+    void* gStats;
     int fps;
     bool show_info;
     bool show_menu;

@@ -28,6 +28,9 @@
     <Filter Include="SimpleIni">
       <UniqueIdentifier>{7a592c95-b0e1-4300-b073-12504f13bcc0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Tools">
+      <UniqueIdentifier>{1ea0f2a0-1948-4e2c-aa37-513d055a2f6a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -159,6 +162,9 @@
     <ClCompile Include="plugins\iwbtg.cpp">
       <Filter>Plugins</Filter>
     </ClCompile>
+    <ClCompile Include="tools\timer_fix.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest">
@@ -237,6 +243,9 @@
     </ClInclude>
     <ClInclude Include="src\event.hpp">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tools\timer_fix.hpp">
+      <Filter>Tools</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

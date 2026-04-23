@@ -55,7 +55,7 @@ public:
 
     bool update_init() override {
         auto& cfg = conf::get();
-        cfg.gApp = *reinterpret_cast<void**>(mem::get_base() + 0xb60e8);
+        cfg.gStats = *reinterpret_cast<void**>(mem::get_base() + 0xb60e8);
         return true;
     }
 

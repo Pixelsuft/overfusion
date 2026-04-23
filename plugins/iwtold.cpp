@@ -70,7 +70,7 @@ public:
 
     bool update_init() override {
         auto& cfg = conf::get();
-        cfg.gApp = *reinterpret_cast<void**>(mem::get_base() + 0xb49d0);
+        cfg.gStats = *reinterpret_cast<void**>(mem::get_base() + 0xb49d0);
         return true;
     }
 

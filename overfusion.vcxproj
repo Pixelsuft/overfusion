@@ -300,6 +300,7 @@
     <ClCompile Include="src\uconv.cpp" />
     <ClCompile Include="src\ui.cpp" />
     <ClCompile Include="src\winhooks.cpp" />
+    <ClCompile Include="tools\timer_fix.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest" />
@@ -329,6 +330,7 @@
     <ClInclude Include="src\uconv.hpp" />
     <ClInclude Include="src\ui.hpp" />
     <ClInclude Include="src\winhooks.hpp" />
+    <ClInclude Include="tools\timer_fix.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

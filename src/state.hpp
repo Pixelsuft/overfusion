@@ -1,13 +1,17 @@
 #pragma once
+#include "ass.hpp"
+#include "ofs.hpp"
 #include "sv.hpp"
 #include <cstdint>
+#include <vector>
 
 namespace state {
 enum class TimeOffset { None, System, Local, Startup, Reminder };
 
 void init();
 bool invalidate_process(ost::string_view text);
-bool is_processing_save(void* handle);
+bool is_save_handle(void* handle);
+bool is_processing_save();
 void early_update();
 bool before_update();
 void after_update();
@@ -22,4 +26,39 @@ void draw_info();
 void save_state(int slot);
 void load_state(int slot);
 void reset_game();
+
+// TODO: maybe to ofs?
+template <typename T> static void write_bin(ofs::File& file, const std::vector<T>& data) {
+    size_t size = data.size();
+    auto ret = file.write(&size, sizeof(size_t));
+    ENSURE(ret);
+    if (size == 0)
+        return;
+    // Everything is trivial, no problems, ok?
+    ret = file.write(data.data(), size * sizeof(T));
+    ENSURE(ret);
+}
+
+template <typename T> static void write_bin(ofs::File& file, const T& val) {
+    auto ret = file.write(&val, sizeof(T));
+    ENSURE(ret);
+}
+
+template <typename T> static void load_bin(ofs::File& file, std::vector<T>& data) {
+    size_t size;
+    auto ret = file.read(&size, sizeof(size_t));
+    ENSURE(ret);
+    if (size == 0) {
+        data.clear();
+        return;
+    }
+    data.resize(size);
+    ret = file.read(&data[0], size * sizeof(T));
+    ENSURE(ret);
+}
+
+template <typename T> static void load_bin(ofs::File& file, T& val) {
+    auto ret = file.read(&val, sizeof(T));
+    ENSURE(ret);
+}
 } // namespace state

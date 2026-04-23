@@ -102,44 +102,12 @@ void state::init() {
     QueryPerformanceCounterO(&last_counter);
 }
 
-bool state::is_processing_save(void* handle) {
+bool state::is_save_handle(void* handle) {
     /* return processing_save;*/
     return processing_save && handle == temp_handle;
 }
 
-template <typename T> static void write_bin(ofs::File& file, const std::vector<T>& data) {
-    size_t size = data.size();
-    auto ret = file.write(&size, sizeof(size_t));
-    ENSURE(ret);
-    if (size == 0)
-        return;
-    // Everything is trivial, no problems, ok?
-    ret = file.write(data.data(), size * sizeof(T));
-    ENSURE(ret);
-}
-
-template <typename T> static void write_bin(ofs::File& file, const T& val) {
-    auto ret = file.write(&val, sizeof(T));
-    ENSURE(ret);
-}
-
-template <typename T> static void load_bin(ofs::File& file, std::vector<T>& data) {
-    size_t size;
-    auto ret = file.read(&size, sizeof(size_t));
-    ENSURE(ret);
-    if (size == 0) {
-        data.clear();
-        return;
-    }
-    data.resize(size);
-    ret = file.read(&data[0], size * sizeof(T));
-    ENSURE(ret);
-}
-
-template <typename T> static void load_bin(ofs::File& file, T& val) {
-    auto ret = file.read(&val, sizeof(T));
-    ENSURE(ret);
-}
+bool state::is_processing_save() { return processing_save; }
 
 void state::save_state(int slot) {
     auto& cfg = conf::get();
@@ -150,7 +118,8 @@ void state::save_state(int slot) {
         return;
     }
     temp_handle = file.get_handle();
-    ENSURE(file.write("ofstate!", 8));
+    auto bool_ret = file.write("ofstate!", 8);
+    ENSURE(bool_ret);
     write_bin(file, save_version);
     write_bin(file, st.scene);
     write_bin(file, st.frames);

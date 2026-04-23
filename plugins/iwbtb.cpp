@@ -3,6 +3,8 @@
 #include "../src/config.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
+#include "../src/state.hpp"
+#include "../tools/timer_fix.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
@@ -73,7 +75,7 @@ public:
 
     bool update_init() override {
         auto& cfg = conf::get();
-        cfg.gApp = *reinterpret_cast<void**>(mem::get_base() + 0x59a98);
+        cfg.gStats = *reinterpret_cast<void**>(mem::get_base() + 0x59a98);
         return true;
     }
 
@@ -130,15 +132,30 @@ public:
     }
 
     ost::expected<void, string> save_state(ofs::File& file) override {
-        if (conf::get().save_game_state)
+        if (conf::get().save_game_state) {
+            std::vector<int> timer_data;
+            auto timer_ret = timer_fix::save(file, timer_data);
+            if (!timer_ret.has_value())
+                return timer_ret;
+            state::write_bin(file, timer_data);
             SaveGameState(file.get_handle());
+        }
         return {};
     }
 
     ost::expected<void, string> load_state(ofs::File& file) override {
         unsigned int outframe = 0;
-        if (!conf::get().is_replay)
+        if (!conf::get().is_replay) {
+            std::vector<int> timer_data;
+            state::load_bin(file, timer_data);
             LoadGameState(file.get_handle(), &outframe);
+            // Check if LoadGameState already failed
+            if (!state::is_processing_save())
+                return {};
+            auto timer_ret = timer_fix::load(file, timer_data);
+            if (!timer_ret.has_value())
+                return timer_ret;
+        }
         return {};
     }
 };
