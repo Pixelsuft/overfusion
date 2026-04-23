@@ -1,4 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
+#define _CRT_SECURE_NO_WARNINGS
 #include "winhooks.hpp"
 #include "ass.hpp"
 #include "config.hpp"
@@ -138,22 +139,22 @@ static BOOL(WINAPI* SetWindowTextWO)(HWND hWnd, LPCWSTR lpString);
 static BOOL WINAPI SetWindowTextWH(HWND hWnd, LPCWSTR lpString) {
     if (hWnd != ::hwnd)
         return SetWindowTextWO(hWnd, lpString);
-    string new_title = uconv::from_utf16(lpString) + " [OverFusion]";
-    auto temp = uconv::to_utf16(new_title);
-    auto ret = SetWindowTextWO(hWnd, temp);
-    std::free(temp);
-    return ret;
+    ASS(lpString && std::wcslen(lpString) < (4096 - 13));
+    wchar_t temp_buf[4096];
+    std::wcscpy(temp_buf, lpString);
+    std::wcscat(temp_buf, L" [OverFusion]");
+    return SetWindowTextWO(hWnd, temp_buf);
 }
 
 static BOOL(WINAPI* SetWindowTextAO)(HWND hWnd, LPCSTR lpString);
 static BOOL WINAPI SetWindowTextAH(HWND hWnd, LPCSTR lpString) {
     if (hWnd != ::hwnd)
         return SetWindowTextAO(hWnd, lpString);
-    string new_title = uconv::from_ansi(lpString) + " [OverFusion]";
-    auto temp = uconv::to_ansi(new_title);
-    auto ret = SetWindowTextAO(hWnd, temp);
-    std::free(temp);
-    return ret;
+    ASS(lpString && std::strlen(lpString) < (4096 - 13));
+    char temp_buf[4096];
+    std::strcpy(temp_buf, lpString);
+    std::strcat(temp_buf, " [OverFusion]");
+    return SetWindowTextAO(hWnd, temp_buf);
 }
 
 static HHOOK WINAPI SetWindowsHookExAH(int idHook, HOOKPROC lpfn, HINSTANCE hmod,
