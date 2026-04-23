@@ -223,6 +223,7 @@ Config::Config() {
     disable_app_menu = false;
     allow_timers_fix = true;
     tm_fix_event_entry_offset = tm_fix_event_entry_type_offset = 0;
+    ffmpeg_cmdline = "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an $NAME.mp4";
 }
 
 #define READ_BOOL(name)                                                                            \
@@ -249,6 +250,8 @@ void Config::read() {
     READ_BOOL(allow_timers_fix);
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
+    if (data["ffmpeg_cmdline"].is_string())
+        ffmpeg_cmdline = data["ffmpeg_cmdline"];
     if (data["binds"].is_array()) {
         for (auto& val : data["binds"]) {
             if (!val.is_object())

@@ -17,6 +17,7 @@ public:
     std::vector<Bind> binds;
     std::string cmdline_append;
     std::string project_name;
+    std::string ffmpeg_cmdline;
     uint64_t system_offset;
     uint64_t local_offset;
     uint64_t startup_offset;
