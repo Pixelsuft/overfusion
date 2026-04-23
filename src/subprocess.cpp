@@ -48,21 +48,24 @@ bool Process::open(ost::string_view cmdline) {
     si.dwFlags |= STARTF_USESTDHANDLES;
     ZeroMemory(&pi, sizeof(pi));
     wchar_t* w_buf = uconv::to_utf16(cmdline);
+    ENSURE(w_buf != nullptr);
     auto ret = true;
     if (!CreateProcessW(nullptr, w_buf, nullptr, nullptr, TRUE, 0, nullptr, nullptr, &si, &pi)) {
         spdlog::error("Failed to create child process");
         CloseHandle(hChildStdinWrite);
+        pi.hProcess = pi.hThread = nullptr;
+        pi.dwProcessId = pi.dwThreadId = 0;
         hChildStdinWrite = nullptr;
         ret = false;
     }
     std::free(w_buf);
     CloseHandle(hChildStdinRead);
     hChildStdinRead = nullptr;
-    return true;
+    return ret;
 }
 
 bool Process::close() {
-    ASS(!is_open());
+    ASS(is_open());
     if (hChildStdinWrite) {
         CloseHandle(hChildStdinWrite);
         hChildStdinWrite = nullptr;
