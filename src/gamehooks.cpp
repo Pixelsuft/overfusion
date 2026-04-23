@@ -69,7 +69,10 @@ static int __stdcall UpdateGameFrameH() {
         extrahooks::init_adv();
         if (conf::get().virtual_fs)
             files::hook_fs();
-        plug::get().update_init();
+        if (!plug::get().update_init()) {
+            spdlog::error("Failed to init plugin first-frame");
+            // Exit???
+        }
         hook::enable();
     }
     auto pState = plug::get().get_prop(plug::PtrProp::PState);

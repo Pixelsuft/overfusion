@@ -71,7 +71,11 @@ public:
         return true;
     }
 
-    bool update_init() override { return true; }
+    bool update_init() override {
+        auto& cfg = conf::get();
+        cfg.gApp = *reinterpret_cast<void**>(mem::get_base() + 0x59a98);
+        return true;
+    }
 
     optional<std::string> before_dll_load(string_view path, string_view fn) override {
         if (fn == "wininet.dll")

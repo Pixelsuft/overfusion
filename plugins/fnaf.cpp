@@ -53,6 +53,12 @@ public:
         return true;
     }
 
+    bool update_init() override {
+        auto& cfg = conf::get();
+        cfg.gApp = *reinterpret_cast<void**>(mem::get_base() + 0xac9b0);
+        return true;
+    }
+
     void after_dll_load(string_view path, string_view fn, void* mod) override {
         if (mod == nullptr)
             return;
