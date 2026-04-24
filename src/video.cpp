@@ -45,6 +45,8 @@ void video::init() {
 
 void video::set_allow_d3d9_frame(bool allow) { allow_d3d9_frame = allow; }
 
+bool video::is_recording() { return recording; }
+
 void video::start() {
     if (recording)
         return;
@@ -55,7 +57,7 @@ void video::start() {
     allow_d3d9_frame = false;
     auto& cfg = conf::get();
     recording = true;
-    use_d3d9 = cfg.alllow_d3d9_recording && !cfg.custom_window;
+    use_d3d9 = cfg.allow_d3d9_recording && !cfg.custom_window;
 }
 
 void video::stop() {
@@ -103,7 +105,7 @@ static video::CheckResult check_record(std::pair<int, int> new_size) {
         while ((pos = cmd.find("$PROJ")) != std::string::npos)
             cmd.replace(pos, 5, cfg.project_name);
         while ((pos = cmd.find("$NAME")) != std::string::npos)
-            cmd.replace(pos, 5, "output"); // TODO
+            cmd.replace(pos, 5, "video_1"); // TODO
         spdlog::info("running: {}", cmd);
         if (!video::ffmpeg.open(cmd)) {
             video::recording = false;
@@ -192,6 +194,8 @@ void video::d3d9_draw(void* dev_ptr) {
     default:
         ASS(false);
     }
+    d3d_ret = pDevice->GetRenderTargetData(pBackBuffer, pSysSurface);
+    ENSURE(d3d_ret == D3D_OK);
     ASS(data_buffer.size() == desc.Width * desc.Height * 4);
     ASS(data_buffer.size() == size.first * size.second * 4);
     D3DLOCKED_RECT lockedRect;

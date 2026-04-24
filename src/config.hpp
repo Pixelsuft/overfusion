@@ -48,7 +48,7 @@ public:
     bool save_game_state;
     bool disable_app_menu;
     bool allow_timers_fix;
-    bool alllow_d3d9_recording;
+    bool allow_d3d9_recording;
 
     Config();
     void read();

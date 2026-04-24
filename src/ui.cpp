@@ -90,10 +90,14 @@ static void draw_menu() {
         files::draw_ui();
     }
     if (ImGui::CollapsingHeader("Recording")) {
-        if (ImGui::Button("Start video recording"))
-            video::start();
-        if (ImGui::Button("Stop video recording"))
-            video::stop();
+        if (!video::is_recording()) {
+            if (ImGui::Button("Start video recording"))
+                video::start();
+        }
+        else {
+            if (ImGui::Button("Stop video recording"))
+                video::stop();
+        }
     }
     if (ImGui::CollapsingHeader("About")) {
         ImGui::Text("Created by Pixelsuft");

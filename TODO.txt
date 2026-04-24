@@ -1,2 +1,3 @@
 [ ] Use IAT hooks where possible
-[ ] Maybe move timer fix to the actual source code cuz it's everywhere?
+[ ] Re-record count (separate file in the project dir)
+[ ] Fix TODOs in code

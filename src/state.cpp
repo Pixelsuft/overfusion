@@ -7,6 +7,7 @@
 #include "ofs.hpp"
 #include "plugbase.hpp"
 #include "timehooks.hpp"
+#include "video.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
 #include <imgui.h>
@@ -421,7 +422,8 @@ void state::on_mode_switch() {
 
 void state::draw_info() {
     auto& cfg = conf::get();
-    ImGui::TextUnformatted(cfg.is_replay ? "[REPLAY]" : "[RECORD]");
+    ImGui::Text("%s%s", cfg.is_replay ? "[REPLAY]" : "[RECORD]",
+                video::is_recording() ? " [VIDEO]" : "");
     ImGui::Text("Frames: %i / %i", st.frames, st.total);
     ImGui::Text("Scene: %i", st.scene);
 #ifdef _DEBUG

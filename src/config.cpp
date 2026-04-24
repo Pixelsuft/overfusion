@@ -225,7 +225,7 @@ Config::Config() {
     save_game_state = true;
     disable_app_menu = false;
     allow_timers_fix = true;
-    alllow_d3d9_recording = true;
+    allow_d3d9_recording = true;
 }
 
 #define READ_BOOL(name)                                                                            \
@@ -250,7 +250,7 @@ void Config::read() {
     READ_BOOL(save_game_state);
     READ_BOOL(disable_app_menu);
     READ_BOOL(allow_timers_fix);
-    READ_BOOL(alllow_d3d9_recording);
+    READ_BOOL(allow_d3d9_recording);
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
     if (data["ffmpeg_cmdline"].is_string())
