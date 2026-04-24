@@ -13,7 +13,10 @@
 
 using ost::string_view;
 using std::string;
-static bool is_custom_window;
+
+namespace winhooks {
+    static bool is_custom_window;
+}
 
 HWND hwnd;
 HWND mhwnd;
@@ -26,10 +29,10 @@ static LRESULT(__stdcall* MainWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, 
 static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DROPFILES)
         return 0;
-    if (!is_custom_window || uMsg < WM_MOUSEFIRST || uMsg > WM_MOUSELAST) {
-        ui::processing = true;
+    if (!winhooks::is_custom_window || uMsg < WM_MOUSEFIRST || uMsg > WM_MOUSELAST) {
+        ui::set_processing(true);
         ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
-        ui::processing = false;
+        ui::set_processing(false);
     }
     switch (uMsg) {
     case WM_KEYDOWN:
@@ -53,10 +56,10 @@ static LRESULT(__stdcall* EditWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, 
 static LRESULT __stdcall EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DROPFILES)
         return 0;
-    if (!is_custom_window || uMsg < WM_MOUSEFIRST || uMsg > WM_MOUSELAST) {
-        ui::processing = true;
+    if (!winhooks::is_custom_window || uMsg < WM_MOUSEFIRST || uMsg > WM_MOUSELAST) {
+        ui::set_processing(true);
         ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
-        ui::processing = false;
+        ui::set_processing(false);
     }
     if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP) {
         // lParam = 0;
@@ -111,14 +114,14 @@ static HWND WINAPI CreateWindowExWH(DWORD dwExStyle, LPCWSTR lpClassName, LPCWST
 
 static HWND(WINAPI* GetFocusO)();
 static HWND WINAPI GetFocusH() {
-    if (ui::processing)
+    if (ui::is_processing())
         return GetFocusO();
     return ::hwnd;
 }
 
 static HWND(WINAPI* GetForegroundWindowO)();
 static HWND WINAPI GetForegroundWindowH() {
-    if (ui::processing)
+    if (ui::is_processing())
         return GetForegroundWindowO();
     return ::hwnd;
 }
@@ -130,7 +133,7 @@ static BOOL WINAPI SetForegroundWindowH(HWND hWnd) {
 
 static HWND(WINAPI* GetActiveWindowO)();
 static HWND WINAPI GetActiveWindowH() {
-    if (ui::processing)
+    if (ui::is_processing())
         return GetActiveWindowO();
     return ::hwnd;
 }

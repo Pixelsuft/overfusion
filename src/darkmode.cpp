@@ -1,7 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "winhooks.hpp"
 #include <Windows.h>
-#include <algorithm>
 #include <spdlog/spdlog.h>
 #include <vector>
 // Should be after Windows.h
@@ -164,7 +163,8 @@ typedef struct tagUAHMEASUREMENUITEM {
     UAHMENUITEM umi;
 } UAHMEASUREMENUITEM;
 
-static int dark_mode_enabled = -1;
+namespace dark {
+static int enabled = -1;
 static HTHEME g_menuTheme = nullptr;
 static HBRUSH g_brBarBackground = nullptr;
 static HBRUSH g_brItemBackground = nullptr;
@@ -172,9 +172,10 @@ static HBRUSH g_brItemBackgroundHot = nullptr;
 static HBRUSH g_brItemBackgroundSelected = nullptr;
 static HBRUSH g_brItemBorder = nullptr;
 static std::vector<HWND> cached_windows;
+} // namespace dark
 
 void winhooks::fix_win32_theme(void* _hwnd) {
-    cached_windows.push_back(reinterpret_cast<HWND>(_hwnd));
+    dark::cached_windows.push_back(reinterpret_cast<HWND>(_hwnd));
 }
 
 static bool fix_win32_theme_real(HWND hwnd) {
@@ -231,9 +232,9 @@ static bool fix_win32_theme_real(HWND hwnd) {
         win_shit.SetPreferredAppMode(WIN_APPMODE_ALLOW_DARK);
     win_shit.RefreshImmersiveColorPolicyState();
     win_shit.AllowDarkModeForWindow(hwnd, true);
-    if (dark_mode_enabled == -1)
-        dark_mode_enabled = win_shit.ShouldAppsUseDarkMode() ? 1 : 0;
-    bool enable_dark = dark_mode_enabled != 0;
+    if (dark::enabled == -1)
+        dark::enabled = win_shit.ShouldAppsUseDarkMode() ? 1 : 0;
+    bool enable_dark = dark::enabled != 0;
     BOOL win_dark = enable_dark ? TRUE : FALSE;
     if (win_shit.build_num < 18362) {
         SetPropW(hwnd, L"UseImmersiveDarkModeColors",
@@ -267,7 +268,7 @@ static void UAHDrawMenuNCBottomLine(HWND hWnd) {
     rcAnnoyingLine.top--;
 
     HDC hdc = GetWindowDC(hWnd);
-    FillRect(hdc, &rcAnnoyingLine, g_brBarBackground);
+    FillRect(hdc, &rcAnnoyingLine, dark::g_brBarBackground);
     ReleaseDC(hWnd, hdc);
 }
 
@@ -284,13 +285,13 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
             rc = mbi.rcBar;
             OffsetRect(&rc, -rcWindow.left, -rcWindow.top);
         }
-        FillRect(pUDM->hdc, &rc, g_brBarBackground);
+        FillRect(pUDM->hdc, &rc, dark::g_brBarBackground);
         return true;
     }
     case WM_UAHDRAWMENUITEM: {
         UAHDRAWMENUITEM* pUDMI = (UAHDRAWMENUITEM*)lParam;
-        HBRUSH* pbrBackground = &g_brItemBackground;
-        HBRUSH* pbrBorder = &g_brItemBackground;
+        HBRUSH* pbrBackground = &dark::g_brItemBackground;
+        HBRUSH* pbrBorder = &dark::g_brItemBackground;
         wchar_t menuString[256] = {0};
         MENUITEMINFOW mii = {sizeof(mii), MIIM_STRING};
         {
@@ -310,15 +311,15 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
                 iTextStateID = MBI_HOT;
                 iBackgroundStateID = MBI_HOT;
 
-                pbrBackground = &g_brItemBackgroundHot;
-                pbrBorder = &g_brItemBorder;
+                pbrBackground = &dark::g_brItemBackgroundHot;
+                pbrBorder = &dark::g_brItemBorder;
             }
             if (pUDMI->dis.itemState & ODS_SELECTED) {
                 iTextStateID = MBI_PUSHED;
                 iBackgroundStateID = MBI_PUSHED;
 
-                pbrBackground = &g_brItemBackgroundSelected;
-                pbrBorder = &g_brItemBorder;
+                pbrBackground = &dark::g_brItemBackgroundSelected;
+                pbrBorder = &dark::g_brItemBorder;
             }
             if ((pUDMI->dis.itemState & ODS_GRAYED) || (pUDMI->dis.itemState & ODS_DISABLED)) {
                 iTextStateID = MBI_DISABLED;
@@ -328,21 +329,18 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
                 dwFlags |= DT_HIDEPREFIX;
             }
         }
-
-        if (!g_menuTheme) {
-            g_menuTheme = OpenThemeData(hWnd, L"Menu");
+        if (!dark::g_menuTheme) {
+            dark::g_menuTheme = OpenThemeData(hWnd, L"Menu");
         }
-
-        DTTOPTS opts = {
-            sizeof(opts), DTT_TEXTCOLOR,
-            iTextStateID != MBI_DISABLED
-                ? (dark_mode_enabled == 0 ? RGB(0x00, 0x00, 0x00) : RGB(0xFF, 0xFF, 0xFF))
-                : (dark_mode_enabled == 0 ? RGB(0x6D, 0x6D, 0x6D) : RGB(0x64, 0x64, 0x64))};
+        DTTOPTS opts = {sizeof(opts), DTT_TEXTCOLOR,
+                        iTextStateID != MBI_DISABLED
+                            ? (dark::enabled == 0 ? RGB(0x00, 0x00, 0x00) : RGB(0xFF, 0xFF, 0xFF))
+                            : (dark::enabled == 0 ? RGB(0x6D, 0x6D, 0x6D) : RGB(0x64, 0x64, 0x64))};
 
         FillRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, *pbrBackground);
         FrameRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, *pbrBorder);
-        DrawThemeTextEx(g_menuTheme, pUDMI->um.hdc, MENU_BARITEM, MBI_NORMAL, menuString, mii.cch,
-                        dwFlags, &pUDMI->dis.rcItem, &opts);
+        DrawThemeTextEx(dark::g_menuTheme, pUDMI->um.hdc, MENU_BARITEM, MBI_NORMAL, menuString,
+                        mii.cch, dwFlags, &pUDMI->dis.rcItem, &opts);
 
         return true;
     }
@@ -353,28 +351,28 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
         return true;
     }
     case WM_THEMECHANGED: {
-        dark_mode_enabled = -1;
-        if (g_menuTheme) {
-            CloseThemeData(g_menuTheme);
-            g_menuTheme = nullptr;
+        dark::enabled = -1;
+        if (dark::g_menuTheme) {
+            CloseThemeData(dark::g_menuTheme);
+            dark::g_menuTheme = nullptr;
         }
-        for (auto& win_hwnd : cached_windows)
+        for (auto& win_hwnd : dark::cached_windows)
             fix_win32_theme_real(win_hwnd);
-        DeleteObject(g_brBarBackground);
-        DeleteObject(g_brItemBackground);
-        DeleteObject(g_brItemBackgroundHot);
-        DeleteObject(g_brItemBackgroundSelected);
-        DeleteObject(g_brItemBorder);
-        g_brBarBackground = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(255, 255, 255))
-                                                   : CreateSolidBrush(RGB(25, 25, 25));
-        g_brItemBackground = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(255, 255, 255))
-                                                    : CreateSolidBrush(RGB(25, 25, 25));
-        g_brItemBackgroundHot = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(245, 245, 245))
-                                                       : CreateSolidBrush(RGB(67, 67, 67));
-        g_brItemBackgroundSelected = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(249, 249, 249))
-                                                            : CreateSolidBrush(RGB(33, 33, 33));
-        g_brItemBorder = dark_mode_enabled == 0 ? CreateSolidBrush(RGB(235, 235, 235))
-                                                : CreateSolidBrush(RGB(19, 19, 19));
+        DeleteObject(dark::g_brBarBackground);
+        DeleteObject(dark::g_brItemBackground);
+        DeleteObject(dark::g_brItemBackgroundHot);
+        DeleteObject(dark::g_brItemBackgroundSelected);
+        DeleteObject(dark::g_brItemBorder);
+        dark::g_brBarBackground = dark::enabled == 0 ? CreateSolidBrush(RGB(255, 255, 255))
+                                                     : CreateSolidBrush(RGB(25, 25, 25));
+        dark::g_brItemBackground = dark::enabled == 0 ? CreateSolidBrush(RGB(255, 255, 255))
+                                                      : CreateSolidBrush(RGB(25, 25, 25));
+        dark::g_brItemBackgroundHot = dark::enabled == 0 ? CreateSolidBrush(RGB(245, 245, 245))
+                                                         : CreateSolidBrush(RGB(67, 67, 67));
+        dark::g_brItemBackgroundSelected = dark::enabled == 0 ? CreateSolidBrush(RGB(249, 249, 249))
+                                                              : CreateSolidBrush(RGB(33, 33, 33));
+        dark::g_brItemBorder = dark::enabled == 0 ? CreateSolidBrush(RGB(235, 235, 235))
+                                                  : CreateSolidBrush(RGB(19, 19, 19));
         return false;
     }
     case WM_NCPAINT:

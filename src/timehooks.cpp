@@ -41,9 +41,11 @@ struct MMTimer {
         : cb(cb), data(data), elapse(elapse), flags(flags), counter(0) {}
 };
 
+namespace timehooks {
 static std::map<std::pair<HWND, UINT_PTR>, UserTimer> user_timers;
 static std::map<MMRESULT, MMTimer> mm_timers;
 static MMRESULT mm_timer_counter;
+} // namespace timehooks
 
 static MMRESULT WINAPI timeGetSystemTimeH(LPMMTIME pmmt, UINT cbmmt) {
     if (pmmt == NULL || cbmmt < sizeof(MMTIME))
@@ -79,7 +81,7 @@ static BOOL SetLocalTimeH(const SYSTEMTIME* lpSystemTime) { return FALSE; }
 
 BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency) = QueryPerformanceFrequency;
 static BOOL WINAPI QueryPerformanceFrequencyH(LARGE_INTEGER* lpFrequency) {
-    if (ui::processing)
+    if (ui::is_processing())
         return QueryPerformanceFrequencyO(lpFrequency);
     lpFrequency->QuadPart = 1000000;
     return TRUE;
@@ -87,7 +89,7 @@ static BOOL WINAPI QueryPerformanceFrequencyH(LARGE_INTEGER* lpFrequency) {
 
 BOOL(WINAPI* QueryPerformanceCounterO)(LARGE_INTEGER* lpFrequency) = QueryPerformanceCounter;
 static BOOL WINAPI QueryPerformanceCounterH(LARGE_INTEGER* lpFrequency) {
-    if (ui::processing)
+    if (ui::is_processing())
         return QueryPerformanceCounterO(lpFrequency);
     lpFrequency->QuadPart = state::get_time(state::TimeOffset::None) * 1000 +
                             state::get_time(state::TimeOffset::Reminder);
@@ -135,7 +137,7 @@ static UINT_PTR WINAPI SetTimerH(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse,
         uElapse = USER_TIMER_MAXIMUM;
     // spdlog::debug("SetTimer: {} {} {}", nIDEvent, uElapse, reinterpret_cast<void*>(lpTimerFunc));
     // Who needs thread safety, lul
-    for (auto& timer : user_timers) {
+    for (auto& timer : timehooks::user_timers) {
         if ((hWnd == nullptr || timer.first.first == hWnd) && nIDEvent == timer.second.event) {
             timer.second.counter = 0;
             timer.second.elapse = uElapse;
@@ -143,35 +145,37 @@ static UINT_PTR WINAPI SetTimerH(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse,
             return timer.first.second;
         }
     }
-    user_timers[{hWnd, nIDEvent}] = UserTimer(nIDEvent, uElapse, lpTimerFunc);
+    timehooks::user_timers[{hWnd, nIDEvent}] = UserTimer(nIDEvent, uElapse, lpTimerFunc);
     return nIDEvent;
 }
 
 static BOOL WINAPI KillTimerH(HWND hWnd, UINT_PTR uIDEvent) {
-    auto it = user_timers.find({hWnd, uIDEvent});
-    if (it == user_timers.end())
+    auto it = timehooks::user_timers.find({hWnd, uIDEvent});
+    if (it == timehooks::user_timers.end())
         return FALSE;
     // spdlog::debug("KillTimer: {}", uIDEvent);
-    user_timers.erase(it);
+    timehooks::user_timers.erase(it);
     return TRUE;
 }
 
 static MMRESULT WINAPI timeSetEventH(UINT uDelay, UINT uResolution, LPTIMECALLBACK lpTimeProc,
                                      DWORD_PTR dwUser, UINT fuEvent) {
     // Who needs thread safety, lul
-    while ((mm_timers.find(mm_timer_counter) != mm_timers.end()) || mm_timer_counter == 0)
-        mm_timer_counter++;
-    mm_timers[mm_timer_counter] = MMTimer(lpTimeProc, dwUser, uDelay, fuEvent);
+    while ((timehooks::mm_timers.find(timehooks::mm_timer_counter) != timehooks::mm_timers.end()) ||
+           timehooks::mm_timer_counter == 0)
+        timehooks::mm_timer_counter++;
+    timehooks::mm_timers[timehooks::mm_timer_counter] =
+        MMTimer(lpTimeProc, dwUser, uDelay, fuEvent);
     // spdlog::debug("timeSetEvent: {} {} -> {}", uDelay, uResolution, mm_timer_counter);
-    return mm_timer_counter++;
+    return timehooks::mm_timer_counter++;
 }
 
 static MMRESULT WINAPI timeKillEventH(UINT uTimerID) {
     // spdlog::debug("timeKillEvent: {}", uTimerID);
-    auto it = mm_timers.find(uTimerID);
-    if (it == mm_timers.end())
+    auto it = timehooks::mm_timers.find(uTimerID);
+    if (it == timehooks::mm_timers.end())
         return MMSYSERR_INVALPARAM;
-    mm_timers.erase(it);
+    timehooks::mm_timers.erase(it);
     return TIMERR_NOERROR;
 }
 

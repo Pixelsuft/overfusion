@@ -182,7 +182,7 @@ public:
     STDMETHOD(BeginScene)() override { return pDev->BeginScene(); }
 
     STDMETHOD(EndScene)() override {
-        ui::processing = true;
+        ui::set_processing(true);
         static bool inited = false;
         if (!inited) {
             inited = true;
@@ -190,7 +190,7 @@ public:
             if (conf::get().custom_window) {
                 // Custom window is handled separately, don't initialize here
                 // ImGui for the game's D3D9 device
-                ui::processing = false;
+                ui::set_processing(false);
                 auto ret = pDev->EndScene();
                 return ret;
             }
@@ -213,7 +213,7 @@ public:
         ImGui::EndFrame();
         ImGui::Render();
         ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
-        ui::processing = false;
+        ui::set_processing(false);
         auto ret = pDev->EndScene();
         return ret;
     }

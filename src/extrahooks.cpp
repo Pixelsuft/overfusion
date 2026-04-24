@@ -15,8 +15,10 @@
 
 using ost::string_view;
 
+namespace extrahooks {
 static char my_argv_a[MAX_PATH * 2];
 static wchar_t my_argv_w[MAX_PATH * 2];
+} // namespace extrahooks
 
 static void(WINAPI* DragAcceptFilesO)(HWND hWnd, BOOL fAccept);
 static void WINAPI DragAcceptFilesH(HWND hWnd, BOOL fAccept) { DragAcceptFilesO(hWnd, FALSE); }
@@ -49,7 +51,7 @@ static BOOL ShellExecuteExWH(SHELLEXECUTEINFOW* pExecInfo) {
 }
 
 static int process_message_box(string_view text, string_view caption, UINT uType) {
-    if (ui::processing)
+    if (ui::is_processing())
         return 0;
     if (uType == 0x30 && state::invalidate_process(text))
         return IDOK;
@@ -258,12 +260,12 @@ static BOOL __stdcall InternetGetConnectedStateH(LPDWORD lpdwFlags, DWORD dwRese
 
 static LPSTR GetCommandLineAH() {
     // spdlog::debug("GetCommandLineAH {}", my_argv_a);
-    return my_argv_a;
+    return extrahooks::my_argv_a;
 }
 
 static LPWSTR GetCommandLineWH() {
     // spdlog::debug("GetCommandLineWH {}", uconv::from_utf16(my_argv_w));
-    return my_argv_w;
+    return extrahooks::my_argv_w;
 }
 
 void extrahooks::init() {

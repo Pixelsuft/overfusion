@@ -11,9 +11,15 @@
 
 constexpr bool ui_save_sets = true;
 
-bool ui::processing;
+namespace ui {
+static bool processing;
+}
 
 void ui::init() { processing = false; }
+
+void ui::set_processing(bool enabled) { processing = enabled; }
+
+bool ui::is_processing() { return processing; }
 
 bool ui::init_imgui_context() {
     processing = true;

@@ -194,7 +194,7 @@ void customwindow::cleanup() {
 }
 
 void customwindow::render() {
-    ui::processing = true;
+    ui::set_processing(true);
     ImGui_ImplDX9_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
@@ -217,7 +217,7 @@ void customwindow::render() {
         g_pd3dDevice->Reset(&g_d3dpp);
         ImGui_ImplDX9_CreateDeviceObjects();
     }
-    ui::processing = false;
+    ui::set_processing(false);
 }
 
 HWND customwindow::get_hwnd() { return g_hwnd; }

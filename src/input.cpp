@@ -10,8 +10,10 @@
 #include <spdlog/spdlog.h>
 #include <vector>
 
+namespace input {
 static bool kbd_state[256];
 static std::vector<std::pair<int, bool>> kbd_que;
+} // namespace input
 
 static SHORT(WINAPI* GetAsyncKeyStateO)(int nVirtKey);
 static SHORT WINAPI GetAsyncKeyStateH(int nVirtKey) {
@@ -20,7 +22,7 @@ static SHORT WINAPI GetAsyncKeyStateH(int nVirtKey) {
         return 0;
     }
     // not used by imgui (for now)
-    // if (ui::processing)
+    // if (ui::is_processing())
     //     return GetAsyncKeyStateO(nVirtKey);
     return state::get_key_state(nVirtKey) ? -32767 : 0;
 }
@@ -31,14 +33,14 @@ static SHORT WINAPI GetKeyStateH(int nVirtKey) {
         spdlog::warn("Invalid nVirtKey for GetKeyState");
         return 0;
     }
-    if (ui::processing)
-        return kbd_state[nVirtKey];
+    if (ui::is_processing())
+        return input::kbd_state[nVirtKey];
     return state::get_key_state(nVirtKey) ? -32767 : 0;
 }
 
 static BOOL(WINAPI* GetCursorPosO)(LPPOINT lpPoint);
 static BOOL WINAPI GetCursorPosH(LPPOINT lpPoint) {
-    if (ui::processing)
+    if (ui::is_processing())
         return GetCursorPosO(lpPoint);
     // TODO
     lpPoint->x = -100;
@@ -53,7 +55,7 @@ static BOOL WINAPI GetInputStateH() {
 
 static HKL(WINAPI* GetKeyboardLayoutO)(DWORD idThread);
 static HKL WINAPI GetKeyboardLayoutH(DWORD idThread) {
-    if (ui::processing)
+    if (ui::is_processing())
         return GetKeyboardLayoutO(idThread);
     return reinterpret_cast<HKL>(0x04090409);
 }
