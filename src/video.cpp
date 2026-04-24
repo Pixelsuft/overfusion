@@ -19,6 +19,7 @@ enum class CheckResult { Ok, Started, Failed };
 static subprocess::Process ffmpeg;
 static std::vector<BYTE> data_buffer;
 static std::pair<int, int> size;
+static int file_index;
 static bool use_d3d9;
 static bool recording;
 
@@ -41,6 +42,7 @@ void video::init() {
     allow_d3d9_frame = false;
     recording = false;
     size.first = size.second = 0;
+    file_index = 0;
 }
 
 void video::set_allow_d3d9_frame(bool allow) { allow_d3d9_frame = allow; }
@@ -104,8 +106,9 @@ static video::CheckResult check_record(std::pair<int, int> new_size) {
                         std::to_string(new_size.first) + "x" + std::to_string(new_size.second));
         while ((pos = cmd.find("$PROJ")) != std::string::npos)
             cmd.replace(pos, 5, cfg.project_name);
+        video::file_index++;
         while ((pos = cmd.find("$NAME")) != std::string::npos)
-            cmd.replace(pos, 5, "video_1"); // TODO
+            cmd.replace(pos, 5, string("video_") + std::to_string(video::file_index));
         spdlog::info("running: {}", cmd);
         if (!video::ffmpeg.open(cmd)) {
             video::recording = false;

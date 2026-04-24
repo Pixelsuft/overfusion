@@ -225,6 +225,9 @@ Config::Config() {
     disable_app_menu = false;
     allow_timers_fix = true;
     allow_d3d9_recording = true;
+    allow_audio_hook = true;
+    disable_audio = false;
+    record_audio = false;
 }
 
 #define READ_BOOL(name)                                                                            \

@@ -1,11 +1,17 @@
 #define WIN32_LEAN_AND_MEAN
 #include "audiohooks.hpp"
+#include "config.hpp"
 #include "mem.hpp"
+#include "lock.hpp"
+#include "state.hpp"
 #include <Windows.h>
 #include <mmsystem.h>
 // after
 #include <dsound.h>
 #include <spdlog/spdlog.h>
+
+static lock::CriticalSection acs;
+// To get TAS time: state::get_time(state::TimeOffset::None) -> uint64_t
 
 class IDSBProxy : public IDirectSoundBuffer {
     IDirectSoundBuffer* pBuf;
@@ -120,7 +126,8 @@ public:
 
 static HRESULT(WINAPI* DirectSoundCreateO)(LPCGUID guid, LPDIRECTSOUND* ds, LPUNKNOWN unk);
 static HRESULT WINAPI DirectSoundCreateH(LPCGUID guid, LPDIRECTSOUND* ds, LPUNKNOWN unk) {
-    // TODO: ability to disable dsound
+    if (conf::get().disable_audio)
+        return DSERR_NODRIVER;
     HRESULT hr = DirectSoundCreateO(guid, ds, unk);
     if (SUCCEEDED(hr) && ds && *ds) {
         spdlog::info("Wrapping IDirectSound into IDSProxy");
@@ -142,7 +149,8 @@ static MCIERROR mciSendCommandWH(MCIDEVICEID IDDevice, UINT uMsg, DWORD_PTR fdwC
 }
 
 void audiohooks::init() {
-    // TODO: ability to disable hooks
+    if (!conf::get().allow_audio_hook)
+        return;
     HOOK_STR_ONLY("winmm.dll", mciSendCommand);
     HOOK_AUTO("dsound.dll", DirectSoundCreate);
 }

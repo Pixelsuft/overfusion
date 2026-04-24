@@ -48,6 +48,9 @@ public:
     bool disable_app_menu;
     bool allow_timers_fix;
     bool allow_d3d9_recording;
+    bool allow_audio_hook;
+    bool disable_audio;
+    bool record_audio;
 
     Config();
     void read();

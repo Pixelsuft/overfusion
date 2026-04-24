@@ -55,7 +55,7 @@ struct FileHandle {
     }
 };
 
-static lock::CriticalSection cs;
+static lock::CriticalSection fcs;
 static string real_cwd;
 static string temp_path;
 static std::map<std::string, FileData> file_map;
@@ -220,7 +220,7 @@ static optional<void*> handle_file_open(string_view path, bool for_read, bool fo
         SetLastError(ERROR_ACCESS_DENIED);
         return INVALID_HANDLE_VALUE;
     }
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it = file_map.find(norm_fp);
     if (!for_write && it == file_map.end()) {
         // spdlog::debug("Passing through file opened for reading: {}", path);
@@ -281,7 +281,7 @@ static BOOL WINAPI ReadFileH(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytes
                              LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped) {
     if (state::is_save_handle(hFile))
         return ReadFileO(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
     if (it == our_handles.end())
         return ReadFileO(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
@@ -307,7 +307,7 @@ static BOOL WINAPI WriteFileH(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfByt
     if (state::is_save_handle(hFile))
         return WriteFileO(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten,
                           lpOverlapped);
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
     if (it == our_handles.end())
         return WriteFileO(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten,
@@ -339,7 +339,7 @@ static BOOL WINAPI ReadFileExH(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfByt
     if (state::is_save_handle(hFile))
         return ReadFileExO(hFile, lpBuffer, nNumberOfBytesToRead, lpOverlapped,
                            lpCompletionRoutine);
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
     if (it == our_handles.end())
         return ReadFileExO(hFile, lpBuffer, nNumberOfBytesToRead, lpOverlapped,
@@ -373,7 +373,7 @@ static BOOL WINAPI WriteFileExH(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfB
     if (state::is_save_handle(hFile))
         return WriteFileExO(hFile, lpBuffer, nNumberOfBytesToWrite, lpOverlapped,
                             lpCompletionRoutine);
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
     if (it == our_handles.end())
         return WriteFileExO(hFile, lpBuffer, nNumberOfBytesToWrite, lpOverlapped,
@@ -404,7 +404,7 @@ static DWORD WINAPI SetFilePointerH(HANDLE hFile, LONG lDistanceToMove, PLONG lp
                                     DWORD dwMoveMethod) {
     if (state::is_save_handle(hFile))
         return SetFilePointerO(hFile, lDistanceToMove, lpDistanceToMoveHigh, dwMoveMethod);
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
     if (it == our_handles.end())
         return SetFilePointerO(hFile, lDistanceToMove, lpDistanceToMoveHigh, dwMoveMethod);
@@ -441,7 +441,7 @@ static DWORD(WINAPI* GetFileSizeO)(HANDLE, LPDWORD) = GetFileSize;
 static DWORD WINAPI GetFileSizeH(HANDLE hFile, LPDWORD lpFileSizeHigh) {
     if (state::is_save_handle(hFile))
         return GetFileSizeO(hFile, lpFileSizeHigh);
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
     if (it == our_handles.end())
         return GetFileSizeO(hFile, lpFileSizeHigh);
@@ -462,7 +462,7 @@ static BOOL WINAPI SetFilePointerExH(HANDLE hFile, LARGE_INTEGER liDistanceToMov
                                      PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod) {
     if (state::is_save_handle(hFile))
         return SetFilePointerExO(hFile, liDistanceToMove, lpNewFilePointer, dwMoveMethod);
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
     if (it == our_handles.end())
         return SetFilePointerExO(hFile, liDistanceToMove, lpNewFilePointer, dwMoveMethod);
@@ -498,7 +498,7 @@ static BOOL(WINAPI* GetFileSizeExO)(HANDLE, PLARGE_INTEGER) = GetFileSizeEx;
 static BOOL WINAPI GetFileSizeExH(HANDLE hFile, PLARGE_INTEGER lpFileSize) {
     if (state::is_save_handle(hFile))
         return GetFileSizeExO(hFile, lpFileSize);
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
     if (it == our_handles.end())
         return GetFileSizeExO(hFile, lpFileSize);
@@ -530,7 +530,7 @@ static HFILE WINAPI OpenFileH(LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT u
     strcpy(lpReOpenBuff->szPathName, lpFileName);
     if (uStyle & OF_DELETE) {
         string norm = normalize_path(uconv::from_ansi(lpFileName));
-        lock::CSLock mylock(cs);
+        lock::CSLock mylock(fcs);
         auto it = file_map.find(norm);
         if (it != file_map.end() && it->second.data) {
             std::free(it->second.data);
@@ -560,7 +560,7 @@ static BOOL(WINAPI* DeleteFileAO)(LPCSTR lpFileName);
 static BOOL WINAPI DeleteFileAH(LPCSTR lpFileName) {
     string norm = normalize_path(uconv::from_ansi(lpFileName));
     // spdlog::debug("DeleteFileA: {}", norm);
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it = file_map.find(norm);
     if (it != file_map.end() && it->second.data) {
         if (it->second.refcount != 0)
@@ -578,7 +578,7 @@ static BOOL(WINAPI* DeleteFileWO)(LPCWSTR lpFileName);
 static BOOL WINAPI DeleteFileWH(LPCWSTR lpFileName) {
     string norm = normalize_path(uconv::from_utf16(lpFileName));
     // spdlog::debug("DeleteFileW: {}", norm);
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it = file_map.find(norm);
     if (it != file_map.end() && it->second.data) {
         if (it->second.refcount != 0)
@@ -633,7 +633,7 @@ static int _wopenH(const wchar_t* filename, int oflag, int pmode) {
 
 static bool is_our_fd(int fd) {
     // I think nobody uses it so we can be slow
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it = std::find(our_handles.begin(), our_handles.end(), reinterpret_cast<FileHandle*>(fd));
     return it != our_handles.end();
 }
@@ -674,7 +674,7 @@ static long CDECL _lseekH(int fd, long offset, int origin) {
 }
 
 static BOOL WINAPI CloseHandleH(HANDLE hObject) {
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it =
         std::find(our_handles.begin(), our_handles.end(), reinterpret_cast<FileHandle*>(hObject));
     if (it == our_handles.end())
@@ -703,7 +703,7 @@ static HFILE WINAPI _lopenH(LPCSTR lpPathName, int iReadWrite) {
 
 static HFILE(WINAPI* _lcloseO)(HFILE);
 static HFILE WINAPI _lcloseH(HFILE hFile) {
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it =
         std::find(our_handles.begin(), our_handles.end(), reinterpret_cast<FileHandle*>(hFile));
     if (it == our_handles.end())
@@ -716,7 +716,7 @@ static HFILE WINAPI _lcloseH(HFILE hFile) {
 static int (*_accessO)(const char* path, int mode);
 static int _accessH(const char* path, int mode) {
     string norm_fp = normalize_path(uconv::from_ansi(path));
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it = file_map.find(norm_fp);
     if (it == file_map.end()) {
         mylock.unlock();
@@ -732,7 +732,7 @@ static int _accessH(const char* path, int mode) {
 static int (*_waccessO)(const wchar_t* path, int mode);
 static int _waccessH(const wchar_t* path, int mode) {
     string norm_fp = normalize_path(uconv::from_utf16(path));
-    lock::CSLock mylock(cs);
+    lock::CSLock mylock(fcs);
     auto it = file_map.find(norm_fp);
     if (it == file_map.end()) {
         mylock.unlock();
@@ -829,7 +829,7 @@ static int fseekH(FILE* stream, long offset, int origin) {
 static long (*ftellO)(FILE*);
 static long ftellH(FILE* stream) {
     if (is_our_fd(reinterpret_cast<int>(stream))) {
-        lock::CSLock mylock(cs);
+        lock::CSLock mylock(fcs);
         return (long)reinterpret_cast<FileHandle*>(stream)->pos;
     }
     return ftellO(stream);
