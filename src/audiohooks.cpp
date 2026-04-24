@@ -1,8 +1,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include "audiohooks.hpp"
 #include "config.hpp"
-#include "mem.hpp"
 #include "lock.hpp"
+#include "mem.hpp"
 #include "state.hpp"
 #include <Windows.h>
 #include <mmsystem.h>
@@ -15,9 +15,38 @@ static lock::CriticalSection acs;
 
 class IDSBProxy : public IDirectSoundBuffer {
     IDirectSoundBuffer* pBuf;
+    DWORD m_bytesPerSec = 0;
+    DWORD m_bufferSize = 0;
+    uint64_t m_startVirtualTime = 0;
+    DWORD m_startByteOffset = 0;
+    DWORD m_baseFrequency = 44100;
+    bool m_playing = false;
+
+    DWORD GetVirtualPos() {
+        if (!m_playing || m_bytesPerSec == 0 || m_bufferSize == 0)
+            return m_startByteOffset;
+
+        uint64_t currentVT = state::get_time(state::TimeOffset::None);
+        uint64_t elapsedMs =
+            (currentVT > m_startVirtualTime) ? (currentVT - m_startVirtualTime) : 0;
+
+        double elapsedSec = elapsedMs / 1000.0;
+        long long totalBytes = static_cast<long long>(elapsedSec * m_bytesPerSec);
+        return (m_startByteOffset + (DWORD)(totalBytes % m_bufferSize)) % m_bufferSize;
+    }
 
 public:
-    IDSBProxy(IDirectSoundBuffer* pReal) : pBuf(pReal) {}
+    IDSBProxy(IDirectSoundBuffer* pReal) : pBuf(pReal) {
+        WAVEFORMATEX wfx;
+        if (SUCCEEDED(pBuf->GetFormat(&wfx, sizeof(wfx), NULL))) {
+            m_bytesPerSec = wfx.nAvgBytesPerSec;
+            m_baseFrequency = wfx.nSamplesPerSec;
+        }
+        DSBCAPS caps = {sizeof(caps)};
+        if (SUCCEEDED(pBuf->GetCaps(&caps))) {
+            m_bufferSize = caps.dwBufferBytes;
+        }
+    }
     virtual ~IDSBProxy() {}
     STDMETHOD(QueryInterface)(REFIID riid, void** ppvObj) override {
         return pBuf->QueryInterface(riid, ppvObj);
@@ -29,10 +58,21 @@ public:
             delete this;
         return count;
     }
-    STDMETHOD(GetCaps)(LPDSBCAPS pDSBCaps) override { return pBuf->GetCaps(pDSBCaps); }
-    STDMETHOD(GetCurrentPosition)(LPDWORD pdwCurrentPlayCursor,
-                                  LPDWORD pdwCurrentWriteCursor) override {
-        return pBuf->GetCurrentPosition(pdwCurrentPlayCursor, pdwCurrentWriteCursor);
+    STDMETHOD(GetCaps)(LPDSBCAPS pCaps) override {
+        HRESULT hr = pBuf->GetCaps(pCaps);
+        if (SUCCEEDED(hr))
+            m_bufferSize = pCaps->dwBufferBytes;
+        return hr;
+    }
+    STDMETHOD(GetCurrentPosition)(LPDWORD pdwPlay, LPDWORD pdwWrite) override {
+        DWORD vPos = GetVirtualPos();
+        if (pdwPlay)
+            *pdwPlay = vPos;
+        if (pdwWrite) {
+            DWORD margin = m_bytesPerSec / 50;
+            *pdwWrite = (vPos + margin) % m_bufferSize;
+        }
+        return DS_OK;
     }
     STDMETHOD(GetFormat)(LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated,
                          LPDWORD pdwSizeWritten) override {
@@ -55,20 +95,38 @@ public:
     }
     STDMETHOD(Play)(DWORD dwReserved1, DWORD dwPriority, DWORD dwFlags) override {
         spdlog::debug("DirectSoundBuffer::Play");
+        if (!m_playing) {
+            m_playing = true;
+            m_startVirtualTime = state::get_time(state::TimeOffset::None);
+        }
         return pBuf->Play(dwReserved1, dwPriority, dwFlags);
     }
     STDMETHOD(SetCurrentPosition)(DWORD dwNewPosition) override {
+        m_startByteOffset = dwNewPosition % m_bufferSize;
+        m_startVirtualTime = state::get_time(state::TimeOffset::None);
         return pBuf->SetCurrentPosition(dwNewPosition);
     }
-    STDMETHOD(SetFormat)(LPCWAVEFORMATEX pcfxFormat) override {
-        return pBuf->SetFormat(pcfxFormat);
+    STDMETHOD(SetFormat)(LPCWAVEFORMATEX pcfx) override {
+        if (pcfx) {
+            m_bytesPerSec = pcfx->nAvgBytesPerSec;
+            m_baseFrequency = pcfx->nSamplesPerSec;
+        }
+        return pBuf->SetFormat(pcfx);
     }
     STDMETHOD(SetVolume)(LONG lVolume) override { return pBuf->SetVolume(lVolume); }
     STDMETHOD(SetPan)(LONG lPan) override { return pBuf->SetPan(lPan); }
-    STDMETHOD(SetFrequency)(DWORD dwFrequency) override { return pBuf->SetFrequency(dwFrequency); }
+    STDMETHOD(SetFrequency)(DWORD dwFrequency) override {
+        if (m_baseFrequency > 0) {
+            m_bytesPerSec = (DWORD)((double)m_bytesPerSec * dwFrequency / m_baseFrequency);
+            m_baseFrequency = dwFrequency;
+        }
+        return pBuf->SetFrequency(dwFrequency);
+    }
     STDMETHOD(Stop)() override { return pBuf->Stop(); }
     STDMETHOD(Unlock)(LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2,
                       DWORD dwAudioBytes2) override {
+        m_startByteOffset = GetVirtualPos();
+        m_playing = false;
         return pBuf->Unlock(pvAudioPtr1, dwAudioBytes1, pvAudioPtr2, dwAudioBytes2);
     }
     STDMETHOD(Restore)() override { return pBuf->Restore(); }
@@ -149,7 +207,8 @@ static MCIERROR mciSendCommandWH(MCIDEVICEID IDDevice, UINT uMsg, DWORD_PTR fdwC
 }
 
 void audiohooks::init() {
-    if (!conf::get().allow_audio_hook)
+    auto& cfg = conf::get();
+    if (!cfg.allow_audio_hook && !cfg.disable_audio)
         return;
     HOOK_STR_ONLY("winmm.dll", mciSendCommand);
     HOOK_AUTO("dsound.dll", DirectSoundCreate);
