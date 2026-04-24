@@ -43,10 +43,13 @@ inline double ds_vol_to_linear(LONG vol) {
     return std::pow(10.0, (double)vol / 2000.0);
 }
 
-inline void ds_pan_to_weights(LONG pan, double& left, double& right) {
-    double p = (double)pan / 10000.0;
-    left = (p > 0) ? (1.0 - p) : 1.0;
-    right = (p < 0) ? (1.0 + p) : 1.0;
+inline void ds_pan_to_weights(LONG pan, double& l, double& r) {
+    l = 1.0;
+    r = 1.0;
+    if (pan > 0)
+        l = std::pow(10.0, (double)-pan / 2000.0);
+    else if (pan < 0)
+        r = std::pow(10.0, (double)pan / 2000.0);
 }
 
 class IDSBProxy : public IDirectSoundBuffer {
@@ -54,7 +57,6 @@ class IDSBProxy : public IDirectSoundBuffer {
     int internal_id;
     ofs::File rec_file;
     BufferSession session;
-    WAVEFORMATEX wfx;
     uint32_t data_bytes;
 
     void push_event() {
@@ -63,8 +65,21 @@ class IDSBProxy : public IDirectSoundBuffer {
         pBuf->GetFrequency(&freq);
         pBuf->GetVolume(&vol);
         pBuf->GetPan(&pan);
+
         uint64_t now = state::get_time(state::TimeOffset::None);
-        session.events.push_back({now - session.startTime, freq, vol, pan});
+        uint64_t offset = now - session.startTime;
+
+        // Оптимизация: не добавляем событие, если параметры не изменились или время то же самое
+        if (!session.events.empty()) {
+            auto& last = session.events.back();
+            if (last.timeOffset == offset) {
+                last = {offset, freq, vol, pan}; // Обновляем текущее
+                return;
+            }
+            if (last.frequency == freq && last.volume == vol && last.pan == pan)
+                return;
+        }
+        session.events.push_back({offset, freq, vol, pan});
     }
 
     void finalize_wav() {
@@ -92,6 +107,7 @@ class IDSBProxy : public IDirectSoundBuffer {
         sprintf_s(path, "%s\\%llu_%d.wav", base_path.c_str(), session.startTime, internal_id);
 
         if (rec_file.open(path, 1)) {
+            WAVEFORMATEX wfx;
             DWORD read;
             pBuf->GetFormat(&wfx, sizeof(wfx), &read);
             rec_file.write("RIFF\0\0\0\0WAVEfmt ", 16);
@@ -105,7 +121,9 @@ class IDSBProxy : public IDirectSoundBuffer {
 
 public:
     IDSBProxy(IDirectSoundBuffer* pReal)
-        : pBuf(pReal), internal_id(g_buffer_counter++), data_bytes(0) {}
+        : pBuf(pReal), internal_id(g_buffer_counter++), data_bytes(0) {
+        start_wav();
+    }
     virtual ~IDSBProxy() { finalize_wav(); }
     STDMETHOD(QueryInterface)(REFIID riid, void** ppvObj) override {
         return pBuf->QueryInterface(riid, ppvObj);
@@ -143,12 +161,14 @@ public:
     }
     STDMETHOD(Play)(DWORD dwReserved1, DWORD dwPriority, DWORD dwFlags) override {
         spdlog::debug("DirectSoundBuffer::Play");
-        start_wav();
+        // start_wav();
         return pBuf->Play(dwReserved1, dwPriority, dwFlags);
     }
     STDMETHOD(SetCurrentPosition)(DWORD dwNewPosition) override {
+        finalize_wav();
+        auto ret = pBuf->SetCurrentPosition(dwNewPosition);
         start_wav();
-        return pBuf->SetCurrentPosition(dwNewPosition);
+        return ret;
     }
     STDMETHOD(SetFormat)(LPCWAVEFORMATEX pcfxFormat) override {
         return pBuf->SetFormat(pcfxFormat);
@@ -283,15 +303,16 @@ void audio::flush() {
     capture_audio = false;
     ofs::File fFile(base_path + "\\filters.txt", 1);
     ofs::File bFile(base_path + "\\mix.bat", 1);
+
     std::string filters = "";
-    std::string mix_labels = "";
+    std::string mix_in = "";
+
     for (size_t i = 0; i < g_history.size(); ++i) {
         auto& h = g_history[i];
-        std::string finalLabel = "[final" + std::to_string(i) + "]";
+        std::string finalLabel = "[a" + std::to_string(i) + "]";
         std::string fn = std::to_string(h.startTime) + "_" + std::to_string(h.bufferId) + ".wav";
         double totalDur = (double)(h.endTime - h.startTime) / 1000.0;
 
-        // Split source for each event segment
         filters += "amovie=" + fn + ",asplit=" + std::to_string(h.events.size());
         for (size_t e = 0; e < h.events.size(); ++e)
             filters += "[s" + std::to_string(i) + "_" + std::to_string(e) + "]";
@@ -303,15 +324,14 @@ void audio::flush() {
             double start = (double)ev.timeOffset / 1000.0;
             double end =
                 (e + 1 < h.events.size()) ? (double)h.events[e + 1].timeOffset / 1000.0 : totalDur;
-
-            double v = ds_vol_to_linear(ev.volume);
             double l, r;
             ds_pan_to_weights(ev.pan, l, r);
+            double v = ds_vol_to_linear(ev.volume);
 
             std::string bOut = "[p" + std::to_string(i) + "_" + std::to_string(e) + "]";
             filters += "[s" + std::to_string(i) + "_" + std::to_string(e) +
                        "]atrim=start=" + std::to_string(start) + ":end=" + std::to_string(end) +
-                       ",asetrate=" + std::to_string(ev.frequency) +
+                       ",asetpts=PTS-STARTPTS,asetrate=" + std::to_string(ev.frequency) +
                        ",pan=stereo|c0=" + std::to_string(l) + "*c0|c1=" + std::to_string(r) +
                        "*c1" + ",volume=" + std::to_string(v) + ",aresample=48000" + bOut + ";\n";
             concat_in += bOut;
@@ -319,13 +339,14 @@ void audio::flush() {
 
         filters += concat_in + "concat=n=" + std::to_string(h.events.size()) +
                    ":v=0:a=1,adelay=" + std::to_string(h.startTime) + ":all=1" + finalLabel + ";\n";
-        mix_labels += finalLabel;
+        mix_in += finalLabel;
     }
 
-    filters += mix_labels + "amix=inputs=" + std::to_string(g_history.size()) + ":normalize=0[out]";
+    filters += mix_in + "amix=inputs=" + std::to_string(g_history.size()) +
+               ":duration=longest:dropout_transition=0:normalize=0[out]";
     fFile.write(filters.c_str(), filters.size());
 
-    std::string bat = "@echo off\nffmpeg -y -/filter_complex_script filters.txt -map \"[out]\" -ar "
+    std::string bat = "@echo off\nffmpeg -y -filter_complex_script filters.txt -map \"[out]\" -ar "
                       "48000 audio_final.wav\npause";
     bFile.write(bat.c_str(), bat.size());
 }
