@@ -253,6 +253,9 @@ void Config::read() {
     READ_BOOL(disable_app_menu);
     READ_BOOL(allow_timers_fix);
     READ_BOOL(allow_d3d9_recording);
+    READ_BOOL(allow_audio_hook);
+    READ_BOOL(disable_audio);
+    READ_BOOL(record_audio);
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
     if (data["ffmpeg_cmdline"].is_string())

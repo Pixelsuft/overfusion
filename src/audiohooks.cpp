@@ -35,6 +35,22 @@ class IDSBProxy : public IDirectSoundBuffer {
         return (m_startByteOffset + (DWORD)(totalBytes % m_bufferSize)) % m_bufferSize;
     }
 
+    void SyncHardwareWithVirtual() {
+        if (m_playing) {
+            DWORD vPos = GetVirtualPos();
+            // pBuf->SetCurrentPosition(vPos);
+            static uint64_t lastVT = 0;
+            uint64_t currentVT = state::get_time(state::TimeOffset::None);
+            // spdlog::debug("current time: {}", currentVT);
+            if (currentVT == lastVT) {
+                pBuf->Stop();
+            } else {
+                pBuf->Play(0, 0, DSBPLAY_LOOPING);
+            }
+            lastVT = currentVT;
+        }
+    }
+
 public:
     IDSBProxy(IDirectSoundBuffer* pReal) : pBuf(pReal) {
         WAVEFORMATEX wfx;
@@ -65,11 +81,12 @@ public:
         return hr;
     }
     STDMETHOD(GetCurrentPosition)(LPDWORD pdwPlay, LPDWORD pdwWrite) override {
+        SyncHardwareWithVirtual();
         DWORD vPos = GetVirtualPos();
         if (pdwPlay)
             *pdwPlay = vPos;
         if (pdwWrite) {
-            DWORD margin = m_bytesPerSec / 50;
+            DWORD margin = m_bytesPerSec / 10;
             *pdwWrite = (vPos + margin) % m_bufferSize;
         }
         return DS_OK;
@@ -104,7 +121,9 @@ public:
     STDMETHOD(SetCurrentPosition)(DWORD dwNewPosition) override {
         m_startByteOffset = dwNewPosition % m_bufferSize;
         m_startVirtualTime = state::get_time(state::TimeOffset::None);
-        return pBuf->SetCurrentPosition(dwNewPosition);
+        spdlog::debug("SetCurrentPosition");
+        // return pBuf->SetCurrentPosition(dwNewPosition);
+        return DS_OK;
     }
     STDMETHOD(SetFormat)(LPCWAVEFORMATEX pcfx) override {
         if (pcfx) {
@@ -122,7 +141,11 @@ public:
         }
         return pBuf->SetFrequency(dwFrequency);
     }
-    STDMETHOD(Stop)() override { return pBuf->Stop(); }
+    STDMETHOD(Stop)() override {
+        m_startByteOffset = GetVirtualPos();
+        m_playing = false;
+        return pBuf->Stop();
+    }
     STDMETHOD(Unlock)(LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2,
                       DWORD dwAudioBytes2) override {
         m_startByteOffset = GetVirtualPos();
@@ -212,4 +235,5 @@ void audiohooks::init() {
         return;
     HOOK_STR_ONLY("winmm.dll", mciSendCommand);
     HOOK_AUTO("dsound.dll", DirectSoundCreate);
+    spdlog::debug("Audio hooks enabled");
 }
