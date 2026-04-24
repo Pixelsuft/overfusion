@@ -12,6 +12,9 @@
 #include <spdlog/spdlog.h>
 #pragma comment(lib, "d3d9.lib")
 
+// TODO: separale class for windows
+// TODO: draw directly without hooks
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam,
                                                              LPARAM lParam);
 

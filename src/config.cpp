@@ -223,7 +223,7 @@ Config::Config() {
     disable_app_menu = false;
     allow_timers_fix = true;
     tm_fix_event_entry_offset = tm_fix_event_entry_type_offset = 0;
-    ffmpeg_cmdline = "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an $NAME.mp4";
+    ffmpeg_cmdline = "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an $PROJ/$NAME.mp4";
 }
 
 #define READ_BOOL(name)                                                                            \

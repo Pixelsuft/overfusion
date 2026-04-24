@@ -3,6 +3,7 @@
 #include "files.hpp"
 #include "plugbase.hpp"
 #include "state.hpp"
+#include "video.hpp"
 #include <backends/imgui_impl_dx9.h>
 #include <backends/imgui_impl_win32.h>
 #include <imgui.h>
@@ -69,16 +70,24 @@ static void draw_menu() {
         ImGui::End();
         return;
     }
-    if (ImGui::Checkbox("Replay mode", &cfg.is_replay))
-        state::on_mode_switch();
-    ImGui::Checkbox("Reset on replay", &cfg.reset_on_replay);
-    ImGui::Checkbox("Paused", &cfg.is_paused);
-    ImGui::Checkbox("Fast forward", &cfg.fast_forward);
-    ImGui::Checkbox("Show info", &cfg.show_info);
+    if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (ImGui::Checkbox("Replay mode", &cfg.is_replay))
+            state::on_mode_switch();
+        ImGui::Checkbox("Reset on replay", &cfg.reset_on_replay);
+        ImGui::Checkbox("Paused", &cfg.is_paused);
+        ImGui::Checkbox("Fast forward", &cfg.fast_forward);
+        ImGui::Checkbox("Show info", &cfg.show_info);
+    }
     if (ImGui::Button("Restart"))
         state::reset_game();
     if (cfg.virtual_fs && ImGui::CollapsingHeader("Virtual Filesystem")) {
         files::draw_ui();
+    }
+    if (ImGui::CollapsingHeader("Recording")) {
+        if (ImGui::Button("Start video recording"))
+            video::start();
+        if (ImGui::Button("Stop video recording"))
+            video::stop();
     }
     if (ImGui::CollapsingHeader("About")) {
         ImGui::Text("Created by Pixelsuft");

@@ -14,6 +14,7 @@ public:
     bool is_open();
     bool open(ost::string_view cmdline);
     bool close();
+    bool write(const void* data, size_t size);
     ~Process();
 };
 } // namespace subprocess

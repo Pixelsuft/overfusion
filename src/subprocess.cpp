@@ -68,6 +68,13 @@ bool Process::open(ost::string_view cmdline) {
     return ret;
 }
 
+bool Process::write(const void* data, size_t size) {
+    ASS(is_open());
+    DWORD dwWritten;
+    BOOL ret = WriteFile(hChildStdinWrite, data, size, &dwWritten, nullptr);
+    return ret && static_cast<size_t>(dwWritten) == size;
+}
+
 bool Process::close() {
     ASS(is_open());
     if (hChildStdinWrite) {
