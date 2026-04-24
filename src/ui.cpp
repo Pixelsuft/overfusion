@@ -93,8 +93,7 @@ static void draw_menu() {
         if (!video::is_recording()) {
             if (ImGui::Button("Start video recording"))
                 video::start();
-        }
-        else {
+        } else {
             if (ImGui::Button("Stop video recording"))
                 video::stop();
         }
