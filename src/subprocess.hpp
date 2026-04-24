@@ -1,6 +1,6 @@
 #pragma once
-#include <Windows.h>
 #include "sv.hpp"
+#include <Windows.h>
 
 namespace subprocess {
 class Process {
@@ -15,6 +15,10 @@ public:
     bool open(ost::string_view cmdline);
     bool close();
     bool write(const void* data, size_t size);
+    Process(const Process&) = delete;
+    Process& operator=(const Process&) = delete;
+    Process(Process&&) = delete;
+    Process& operator=(Process&&) = delete;
     ~Process();
 };
 } // namespace subprocess
