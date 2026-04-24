@@ -341,14 +341,14 @@ void audio::flush() {
         return;
 
     ofs::File filterF(base_path + "\\audio_filters.txt", 1);
-    ofs::File batF(base_path + "\\audio_merge.bat", 1);
+    ofs::File batF(base_path + "\\..\\audio_merge.bat", 1);
 
     string mix = "";
 
     for (size_t i = 0; i < g_history.size(); i++) {
         auto& c = g_history[i];
         string fn = "audio_" + std::to_string(c.startTime) + "_" + std::to_string(c.idx) + ".wav";
-        string finalLabel = "[final" + std::to_string(i) + "]";
+        string finalLabel = "[f" + std::to_string(i) + "]";
         double totalDuration = (double)(c.endTime - c.startTime) / 1000.0;
         if (c.events.empty()) {
             filterF.writeln("amovie=" + fn + ",atrim=duration=" + std::to_string(totalDuration) +
@@ -395,7 +395,10 @@ void audio::flush() {
 
     filterF.write(mix + "amix=inputs=" + std::to_string(g_history.size()) + ":normalize=0[out]");
 
-    batF.write("@echo off\nffmpeg -y -/filter_complex audio_filters.txt -map "
-               "\"[out]\" -ar 48000 output.wav\npause");
+    batF.writeln("@echo off");
+    batF.writeln("cd temp_audio");
+    batF.writeln(
+        "ffmpeg -y -/filter_complex audio_filters.txt -map \"[out]\" -ar 48000 ../output.wav");
+    batF.writeln("pause");
     g_history.clear();
 }
