@@ -11,6 +11,8 @@
 #include <dsound.h>
 #include <spdlog/spdlog.h>
 #include <vector>
+#undef min
+#undef max
 
 using std::string;
 
@@ -131,7 +133,7 @@ class IDSBProxy : public IDirectSoundBuffer {
         cap.file = ofs::File(fn, 1);
         cap.file.write(&cap.h, sizeof(WavHeader));
         cap.bytesWritten = 0;
-        cap.startTime = cur_time;
+        cap.startTime = cap.endTime = cur_time;
         cap.idx = idx;
         cap.events.clear();
         push_event();
@@ -344,10 +346,9 @@ void audio::flush() {
     if (g_history.empty())
         return;
 
-    ofs::File filterFile(base_path + "\\audio_filters.txt", 1);
-    ofs::File batFile(base_path + "\\audio_merge.bat", 1);
+    ofs::File filterF(base_path + "\\audio_filters.txt", 1);
+    ofs::File batF(base_path + "\\audio_merge.bat", 1);
 
-    string filters = "";
     string mix = "";
 
     for (size_t i = 0; i < g_history.size(); i++) {
@@ -356,16 +357,16 @@ void audio::flush() {
         string finalLabel = "[final" + std::to_string(i) + "]";
         double totalDuration = (double)(c.endTime - c.startTime) / 1000.0;
         if (c.events.empty()) {
-            filters += "amovie=" + fn + ",atrim=duration=" + std::to_string(totalDuration) +
-                       ",aresample=48000,adelay=" + std::to_string(c.startTime) + ":all=1" +
-                       finalLabel + ";\n";
+            filterF.writeln("amovie=" + fn + ",atrim=duration=" + std::to_string(totalDuration) +
+                            ",aresample=48000,adelay=" + std::to_string(c.startTime) + ":all=1" +
+                            finalLabel + ";");
         } else {
             int numSegs = (int)c.events.size();
-            filters += "amovie=" + fn + ",asplit=" + std::to_string(numSegs);
+            filterF.write("amovie=" + fn + ",asplit=" + std::to_string(numSegs));
             for (int e = 0; e < numSegs; ++e) {
-                filters += "[b" + std::to_string(i) + "s" + std::to_string(e) + "]";
+                filterF.write("[b" + std::to_string(i) + "s" + std::to_string(e) + "]");
             }
-            filters += ";\n";
+            filterF.writeln(";");
             std::string segmentLabels = "";
             for (size_t e = 0; e < c.events.size(); ++e) {
                 std::string branchIn = "[b" + std::to_string(i) + "s" + std::to_string(e) + "]";
@@ -375,29 +376,32 @@ void audio::flush() {
                 double end = (e + 1 < c.events.size()) ? (double)c.events[e + 1].timeOffset / 1000.0
                                                        : totalDuration;
                 double volLinear = pow(10.0, (double)c.events[e].volume / 2000.0);
+                double panNorm = static_cast<double>(c.events[e].pan) / 10000.0;
+                double volLeft = std::min(1.0, 1.0 - panNorm) *
+                                 std::pow(10.0, static_cast<double>(c.events[e].volume) / 2000.0);
+                double volRight = std::min(1.0, 1.0 + panNorm) *
+                                  std::pow(10.0, static_cast<double>(c.events[e].volume) / 2000.0);
 
-                filters += branchIn + "atrim=start=" + std::to_string(start) +
-                           ":end=" + std::to_string(end) +
-                           ",asetrate=" + std::to_string(c.events[e].frequency) +
-                           ",volume=" + std::to_string(volLinear) + ",aresample=48000" + branchOut +
-                           ";\n";
+                filterF.writeln(branchIn + "atrim=start=" + std::to_string(start) +
+                                ":end=" + std::to_string(end) +
+                                ",asetrate=" + std::to_string(c.events[e].frequency) +
+                                ",volume=" + std::to_string(volLinear) +
+                                //",pan=stereo|c0=" + std::to_string(volLeft) +
+                                // "*c0|c1=" + std::to_string(volRight) + "*c1" +
+                                ",aresample=48000" + branchOut + ";");
 
                 segmentLabels += branchOut;
             }
-            filters += segmentLabels + "concat=n=" + std::to_string(numSegs) +
-                       ":v=0:a=1,adelay=" + std::to_string(c.startTime) + ":all=1" + finalLabel +
-                       ";\n";
+            filterF.writeln(segmentLabels + "concat=n=" + std::to_string(numSegs) +
+                            ":v=0:a=1,adelay=" + std::to_string(c.startTime) + ":all=1" +
+                            finalLabel + ";");
         }
         mix += finalLabel;
     }
 
-    filters += mix + "amix=inputs=" + std::to_string(g_history.size()) + ":normalize=0[out]";
+    filterF.write(mix + "amix=inputs=" + std::to_string(g_history.size()) + ":normalize=0[out]");
 
-    std::string batContent = "@echo off\nffmpeg -y -/filter_complex audio_filters.txt -map "
-                             "\"[out]\" -ar 48000 output.wav\npause";
-
-    filterFile.write(filters.c_str(), filters.size());
-    batFile.write(batContent.c_str(), batContent.size());
-
+    batF.write("@echo off\nffmpeg -y -/filter_complex audio_filters.txt -map "
+               "\"[out]\" -ar 48000 output.wav\npause");
     g_history.clear();
 }
