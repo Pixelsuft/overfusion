@@ -38,7 +38,9 @@ static int __stdcall ProcessTransitionH() {
             RenderTransition();
     } else {
         cfg.need_advance = false;
+        video::set_allow_d3d9_frame(true);
         ret = ProcessTransitionO();
+        video::set_allow_d3d9_frame(false);
         video::after_draw();
         if (cfg.custom_window)
             customwindow::render();
