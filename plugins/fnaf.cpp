@@ -53,11 +53,7 @@ public:
         return true;
     }
 
-    bool update_init() override {
-        auto& cfg = conf::get();
-        cfg.gStats = *reinterpret_cast<void**>(mem::get_base() + 0xac9b0);
-        return true;
-    }
+    bool update_init() override { return true; }
 
     void after_dll_load(string_view path, string_view fn, void* mod) override {
         if (mod == nullptr)
@@ -77,6 +73,8 @@ public:
         switch (prop) {
         case plug::PtrProp::PState:
             return *reinterpret_cast<void**>(mem::get_base() + 0xac9b4);
+        case plug::PtrProp::PStats:
+            return *reinterpret_cast<void**>(mem::get_base() + 0xac9b0);
         case plug::PtrProp::PGlobalApp:
             return *reinterpret_cast<void**>(mem::get_base() + 0xac9ac);
         case plug::PtrProp::PNextFrameTask:

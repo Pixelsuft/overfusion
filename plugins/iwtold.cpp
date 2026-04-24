@@ -72,7 +72,6 @@ public:
 
     bool update_init() override {
         auto& cfg = conf::get();
-        cfg.gStats = *reinterpret_cast<void**>(mem::get_base() + 0xb49d0);
         cfg.tm_fix_event_entry_offset = 0x10;
         cfg.tm_fix_event_entry_type_offset = 0x12;
         return true;
@@ -96,6 +95,8 @@ public:
         switch (prop) {
         case plug::PtrProp::PState:
             return *reinterpret_cast<void**>(mem::get_base() + 0xb49d4);
+        case plug::PtrProp::PStats:
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb49d0);
         case plug::PtrProp::PGlobalApp:
             return *reinterpret_cast<void**>(mem::get_base() + 0xb49cc);
         case plug::PtrProp::PNextFrameTask:

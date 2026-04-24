@@ -69,6 +69,8 @@ public:
         switch (prop) {
         case plug::PtrProp::PState:
             return *reinterpret_cast<void**>(mem::get_base() + 0x48384);
+        case plug::PtrProp::PStats:
+            return nullptr;
         case plug::PtrProp::PGlobalApp:
             return *reinterpret_cast<void**>(mem::get_base() + 0x4837c);
         case plug::PtrProp::PNextFrameTask:

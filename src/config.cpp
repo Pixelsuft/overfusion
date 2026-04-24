@@ -205,7 +205,6 @@ Config::Config() {
     system_offset = local_offset = startup_offset = 0; // TODO: conf them
     tm_fix_event_entry_offset = tm_fix_event_entry_type_offset = 0;
     pUpdateGameFrame = pRenderFrame = pProcessTransition = pRenderTransition = nullptr;
-    gStats = nullptr;
     fps = 0;
     show_menu = show_info = true;
     is_replay = false;

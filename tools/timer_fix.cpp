@@ -1,6 +1,7 @@
 #include "timer_fix.hpp"
 #include "../src/ass.hpp"
 #include "../src/config.hpp"
+#include "../src/plugbase.hpp"
 #include <spdlog/spdlog.h>
 
 // TODO: how can I skip disabled timers for performance?
@@ -11,8 +12,10 @@ ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
         return {};
     ASS(cfg.tm_fix_event_entry_offset != 0);
     ASS(cfg.tm_fix_event_entry_type_offset != 0);
-    // spdlog::debug("gStats before: {}", cfg.gStats);
-    size_t eventPtr = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(cfg.gStats) + 0x80);
+    void* gStats = plug::get().get_prop(plug::PtrProp::PStats);
+    ASS(gStats != nullptr);
+    // spdlog::debug("gStats before: {}", gStats);
+    size_t eventPtr = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(gStats) + 0x80);
     if (eventPtr == 0) {
         spdlog::error("eventPtr is nullptr WTF");
         return ost::unexpected<std::string>("failed to save timers - eventPtr was nullptr");
@@ -63,7 +66,10 @@ ost::expected<void, std::string> timer_fix::load(std::vector<int> data) {
     }
     ASS(data.size() % 2 == 0);
     auto it = data.begin();
-    size_t eventPtr = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(cfg.gStats) + 0x80);
+    void* gStats = plug::get().get_prop(plug::PtrProp::PStats);
+    ASS(gStats != nullptr);
+    // spdlog::debug("gStats before: {}", gStats);
+    size_t eventPtr = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(gStats) + 0x80);
     if (eventPtr == 0) {
         spdlog::error("eventPtr is nullptr WTF");
         return ost::unexpected<std::string>("failed to save timers - eventPtr was nullptr");

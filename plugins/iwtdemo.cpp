@@ -3,6 +3,8 @@
 #include "../src/config.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
+#include "../src/state.hpp"
+#include "../tools/timer_fix.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
@@ -73,7 +75,8 @@ public:
 
     bool update_init() override {
         auto& cfg = conf::get();
-        cfg.gStats = *reinterpret_cast<void**>(mem::get_base() + 0xb49d0);
+        cfg.tm_fix_event_entry_offset = 0x10;
+        cfg.tm_fix_event_entry_type_offset = 0x12;
         return true;
     }
 
@@ -112,6 +115,8 @@ public:
         switch (prop) {
         case plug::PtrProp::PState:
             return *reinterpret_cast<void**>(mem::get_base() + 0xb49d4);
+        case plug::PtrProp::PStats:
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb49d0);
         case plug::PtrProp::PGlobalApp:
             return *reinterpret_cast<void**>(mem::get_base() + 0xb49cc);
         case plug::PtrProp::PNextFrameTask:
@@ -135,9 +140,13 @@ public:
     }
 
     ost::expected<void, string> save_state(ofs::File& file) override {
-        // Replicating game engine mechanics
-        // TODO: reinterpret cast
         if (conf::get().save_game_state) {
+            std::vector<int> timer_data;
+            auto timer_ret = timer_fix::save(timer_data);
+            if (!timer_ret.has_value())
+                return timer_ret;
+            state::write_bin(file, timer_data);
+            // Replicating game engine mechanics
             size_t ptr = *(size_t*)(mem::get_base() + 0xb49d4);
             *(short*)(ptr + 0x436) = 0;
             SaveGameState(file.get_handle());
@@ -147,10 +156,15 @@ public:
 
     ost::expected<void, string> load_state(ofs::File& file) override {
         if (!conf::get().is_replay) {
+            std::vector<int> timer_data;
+            state::load_bin(file, timer_data);
             unsigned int outframe = 0;
             size_t ptr = *(size_t*)(mem::get_base() + 0xb49d4);
             *(short*)(ptr + 0x30) = 0;
             LoadGameState(file.get_handle(), &outframe);
+            if (!state::is_processing_save())
+                return {};
+            return timer_fix::load(timer_data);
         }
         return {};
     }

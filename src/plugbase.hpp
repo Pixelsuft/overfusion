@@ -16,6 +16,7 @@ namespace plug {
 enum class PtrProp {
     PState,
     PGlobalApp,
+    PStats,
     PSubTickStep,
     PIsPaused,
     PSceneID,
