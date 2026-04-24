@@ -74,7 +74,6 @@ struct AudioCapture {
           sampleRateOrig(0) {}
 };
 
-// To use lock: lock::CSLock cs(acs);
 static std::vector<AudioCapture> g_history;
 static string base_path;
 static lock::CriticalSection acs;
@@ -96,23 +95,6 @@ inline uint64_t audio_get_time() { return state::get_time(state::TimeOffset::Non
 static void write_original_raw(AudioCapture& cap, const void* data, uint32_t len) {
     cap.file.write(data, len);
     cap.bytesWritten += len;
-}
-
-static void finalize_wav(AudioCapture& cap) {
-    if (cap.file.is_open()) {
-        cap.endTime = audio_get_time();
-        uint32_t finalFileSize = cap.bytesWritten + 36;
-        cap.file.seek(4, ofs::SeekBegin);
-        cap.file.write(&finalFileSize, 4);
-        cap.file.seek(24, ofs::SeekBegin);
-        cap.file.write(&cap.h.sampleRate, 4);
-        cap.file.seek(28, ofs::SeekBegin);
-        cap.file.write(&cap.h.byteRate, 4);
-        cap.file.seek(40, ofs::SeekBegin);
-        cap.file.write(&cap.bytesWritten, 4);
-        cap.file.close();
-        g_history.push_back(std::move(cap));
-    }
 }
 
 class IDSBProxy : public IDirectSoundBuffer {
@@ -231,7 +213,20 @@ public:
     }
     STDMETHOD(Stop)() override {
         lock::CSLock lock(acs);
-        finalize_wav(cap);
+        if (cap.file.is_open()) {
+            cap.endTime = audio_get_time();
+            uint32_t finalFileSize = cap.bytesWritten + 36;
+            cap.file.seek(4, ofs::SeekBegin);
+            cap.file.write(&finalFileSize, 4);
+            cap.file.seek(24, ofs::SeekBegin);
+            cap.file.write(&cap.h.sampleRate, 4);
+            cap.file.seek(28, ofs::SeekBegin);
+            cap.file.write(&cap.h.byteRate, 4);
+            cap.file.seek(40, ofs::SeekBegin);
+            cap.file.write(&cap.bytesWritten, 4);
+            cap.file.close();
+            g_history.push_back(std::move(cap));
+        }
         return pBuf->Stop();
     }
     STDMETHOD(Unlock)(LPVOID pv1, DWORD db1, LPVOID pv2, DWORD db2) override {
@@ -355,30 +350,22 @@ void audio::flush() {
     string filters = "";
     string mix = "";
 
-    for (size_t i = 0; i < g_history.size(); ++i) {
+    for (size_t i = 0; i < g_history.size(); i++) {
         auto& c = g_history[i];
         string fn = "audio_" + std::to_string(c.startTime) + "_" + std::to_string(c.idx) + ".wav";
         string finalLabel = "[final" + std::to_string(i) + "]";
-        double totalDuration =
-            (c.endTime > c.startTime) ? (double)(c.endTime - c.startTime) / 1000.0 : 0.0;
-
+        double totalDuration = (double)(c.endTime - c.startTime) / 1000.0;
         if (c.events.empty()) {
-            // Case 1: Simple file
             filters += "amovie=" + fn + ",atrim=duration=" + std::to_string(totalDuration) +
                        ",aresample=48000,adelay=" + std::to_string(c.startTime) + ":all=1" +
                        finalLabel + ";\n";
         } else {
-            // Case 2: Frequency segments
             int numSegs = (int)c.events.size();
-
-            // 1. Load and split source
             filters += "amovie=" + fn + ",asplit=" + std::to_string(numSegs);
             for (int e = 0; e < numSegs; ++e) {
                 filters += "[b" + std::to_string(i) + "s" + std::to_string(e) + "]";
             }
             filters += ";\n";
-
-            // 2. Process each split branch
             std::string segmentLabels = "";
             for (size_t e = 0; e < c.events.size(); ++e) {
                 std::string branchIn = "[b" + std::to_string(i) + "s" + std::to_string(e) + "]";
@@ -397,8 +384,6 @@ void audio::flush() {
 
                 segmentLabels += branchOut;
             }
-
-            // 3. Concat branches and apply delay
             filters += segmentLabels + "concat=n=" + std::to_string(numSegs) +
                        ":v=0:a=1,adelay=" + std::to_string(c.startTime) + ":all=1" + finalLabel +
                        ";\n";
@@ -408,7 +393,6 @@ void audio::flush() {
 
     filters += mix + "amix=inputs=" + std::to_string(g_history.size()) + ":normalize=0[out]";
 
-    // FFmpeg 2026 syntax: -/filter_complex reads from file
     std::string batContent = "@echo off\nffmpeg -y -/filter_complex audio_filters.txt -map "
                              "\"[out]\" -ar 48000 output.wav\npause";
 
