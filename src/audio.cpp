@@ -65,15 +65,11 @@ struct AudioCapture {
     uint64_t endTime;
     uint32_t bytesWritten;
     std::vector<AudioEvent> events;
-    DWORD lastFreq;
-    DWORD sampleRateOrig;
     LONG lastVol;
     LONG lastPan;
     int idx;
 
-    AudioCapture()
-        : startTime(0), endTime(0), bytesWritten(0), idx(0), lastFreq(0), lastVol(0), lastPan(0),
-          sampleRateOrig(0) {}
+    AudioCapture() : startTime(0), endTime(0), bytesWritten(0), idx(0), lastVol(0), lastPan(0) {}
 };
 
 static std::vector<AudioCapture> g_history;
@@ -142,13 +138,11 @@ class IDSBProxy : public IDirectSoundBuffer {
 public:
     IDSBProxy(IDirectSoundBuffer* pReal, LPCDSBUFFERDESC desc) {
         pBuf = pReal;
-        cap.sampleRateOrig = desc->lpwfxFormat->nSamplesPerSec;
         cap.h.sampleRate = desc->lpwfxFormat->nSamplesPerSec;
         cap.h.channels = desc->lpwfxFormat->nChannels;
         cap.h.bitsPerSample = desc->lpwfxFormat->wBitsPerSample;
         cap.h.blockAlign = desc->lpwfxFormat->nBlockAlign;
         cap.h.byteRate = desc->lpwfxFormat->nAvgBytesPerSec;
-        cap.lastFreq = cap.h.sampleRate;
         reinit_wav();
     }
     virtual ~IDSBProxy() {}
