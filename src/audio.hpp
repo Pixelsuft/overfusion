@@ -1,5 +1,5 @@
 #pragma once
 
-namespace audiohooks {
+namespace audio {
 void init();
 }

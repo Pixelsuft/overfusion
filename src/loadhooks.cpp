@@ -1,6 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "loadhooks.hpp"
-#include "audiohooks.hpp"
+#include "audio.hpp"
 #include "config.hpp"
 #include "d3d9hooks.hpp"
 #include "extrahooks.hpp"
@@ -62,7 +62,7 @@ static void after_load(string_view path, void* mod) {
     if (mod) {
         if (fn == "mmfs2.dll") {
             d3d9hooks::pre_init();
-            audiohooks::init();
+            audio::init();
             hook::enable();
         } else if (fn == "mmf2d3d9.dll") {
             conf::get().custom_window = false;
