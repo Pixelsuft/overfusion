@@ -15,6 +15,40 @@
 using std::string;
 
 namespace audio {
+#pragma pack(push, 1)
+struct WavHeader {
+    char riff[4];
+    uint32_t fileSize;
+    char wave[4];
+    char fmt[4];
+    uint32_t fmtLen;
+    uint16_t formatTag;
+    uint16_t channels;
+    uint32_t sampleRate;
+    uint32_t byteRate;
+    uint16_t blockAlign;
+    uint16_t bitsPerSample;
+    char data[4];
+    uint32_t dataLen;
+
+    WavHeader() {
+        std::memcpy(riff, "RIFF", 4);
+        fileSize = 0;
+        std::memcpy(wave, "WAVE", 4);
+        std::memcpy(fmt, "fmt ", 4);
+        fmtLen = 16;
+        formatTag = 1;
+        channels = 0;
+        sampleRate = 0;
+        byteRate = 0;
+        blockAlign = 0;
+        bitsPerSample = 0;
+        std::memcpy(data, "data", 4);
+        dataLen = 0;
+    }
+};
+#pragma pack(pop)
+
 struct AudioEvent {
     uint64_t timeOffset;
     DWORD frequency;
@@ -22,42 +56,76 @@ struct AudioEvent {
     LONG pan;
 };
 
-struct BufferSession {
-    std::vector<AudioEvent> events;
+struct AudioCapture {
+    ofs::File file;
+    WavHeader h;
     uint64_t startTime;
     uint64_t endTime;
-    int bufferId;
+    uint32_t bytesWritten;
+    std::vector<AudioEvent> events;
+    DWORD lastFreq;
+    DWORD sampleRateOrig;
+    LONG lastVol;
+    LONG lastPan;
+    int idx;
+
+    AudioCapture()
+        : startTime(0), endTime(0), bytesWritten(0), idx(0), lastFreq(0), lastVol(0), lastPan(0),
+          sampleRateOrig(0) {}
 };
 
-// To get TAS time: state::get_time(state::TimeOffset::None) -> uint64_t
 // To use lock: lock::CSLock cs(acs);
-static std::vector<BufferSession> g_history;
+static std::vector<AudioCapture> g_history;
 static string base_path;
 static lock::CriticalSection acs;
 static int g_buffer_counter;
 static bool capture_audio;
+static int last_uid = 0;
+static uint64_t last_time = 0;
 
-inline double ds_vol_to_linear(LONG vol) {
-    if (vol <= -10000)
-        return 0.0;
-    return std::pow(10.0, (double)vol / 2000.0);
+static int gen_uid(uint64_t mytime) {
+    if (mytime != last_time) {
+        last_time = mytime;
+        last_uid = 0;
+    }
+    return last_uid++;
 }
 
-inline void ds_pan_to_weights(LONG pan, double& l, double& r) {
-    l = 1.0;
-    r = 1.0;
-    if (pan > 0)
-        l = std::pow(10.0, (double)-pan / 2000.0);
-    else if (pan < 0)
-        r = std::pow(10.0, (double)pan / 2000.0);
+inline uint64_t audio_get_time() { return state::get_time(state::TimeOffset::None); }
+
+static void setup_fixed_header(WavHeader& h, uint16_t channels, uint16_t bits) {
+    h.channels = channels;
+    h.sampleRate = 48000;
+    h.bitsPerSample = bits;
+    h.blockAlign = (channels * bits) / 8;
+    h.byteRate = h.sampleRate * h.blockAlign;
+}
+
+static void write_original_raw(AudioCapture& cap, const void* data, uint32_t len) {
+    cap.file.write(data, len);
+    cap.bytesWritten += len;
+}
+
+static void finalize_wav(AudioCapture& cap) {
+    if (cap.file.is_open()) {
+        cap.endTime = audio_get_time();
+        uint32_t finalFileSize = cap.bytesWritten + 36;
+        cap.file.seek(4, ofs::SeekBegin);
+        cap.file.write(&finalFileSize, 4);
+        cap.file.seek(24, ofs::SeekBegin);
+        cap.file.write(&cap.h.sampleRate, 4);
+        cap.file.seek(28, ofs::SeekBegin);
+        cap.file.write(&cap.h.byteRate, 4);
+        cap.file.seek(40, ofs::SeekBegin);
+        cap.file.write(&cap.bytesWritten, 4);
+        cap.file.close();
+        g_history.push_back(std::move(cap));
+    }
 }
 
 class IDSBProxy : public IDirectSoundBuffer {
     IDirectSoundBuffer* pBuf;
-    int internal_id;
-    ofs::File rec_file;
-    BufferSession session;
-    uint32_t data_bytes;
+    AudioCapture cap;
 
     void push_event() {
         DWORD freq;
@@ -67,64 +135,47 @@ class IDSBProxy : public IDirectSoundBuffer {
         pBuf->GetPan(&pan);
 
         uint64_t now = state::get_time(state::TimeOffset::None);
-        uint64_t offset = now - session.startTime;
+        uint64_t offset = now - cap.startTime;
 
-        // Оптимизация: не добавляем событие, если параметры не изменились или время то же самое
-        if (!session.events.empty()) {
-            auto& last = session.events.back();
+        if (!cap.events.empty()) {
+            auto& last = cap.events.back();
             if (last.timeOffset == offset) {
-                last = {offset, freq, vol, pan}; // Обновляем текущее
+                last = {offset, freq, vol, pan};
                 return;
             }
             if (last.frequency == freq && last.volume == vol && last.pan == pan)
                 return;
         }
-        session.events.push_back({offset, freq, vol, pan});
+        cap.events.push_back({offset, freq, vol, pan});
     }
 
-    void finalize_wav() {
-        if (!rec_file.is_open())
-            return;
-        uint32_t riff_size = data_bytes + 36;
-        rec_file.seek(4, ofs::SeekBegin);
-        rec_file.write(&riff_size, 4);
-        rec_file.seek(40, ofs::SeekBegin);
-        rec_file.write(&data_bytes, 4);
-        rec_file.close();
-        session.endTime = state::get_time(state::TimeOffset::None);
-        lock::CSLock lock(acs);
-        g_history.push_back(session);
-        session.events.clear();
-    }
-
-    void start_wav() {
-        finalize_wav();
-        session.bufferId = internal_id;
-        session.startTime = state::get_time(state::TimeOffset::None);
-        data_bytes = 0;
-
-        char path[MAX_PATH];
-        sprintf_s(path, "%s\\%llu_%d.wav", base_path.c_str(), session.startTime, internal_id);
-
-        if (rec_file.open(path, 1)) {
-            WAVEFORMATEX wfx;
-            DWORD read;
-            pBuf->GetFormat(&wfx, sizeof(wfx), &read);
-            rec_file.write("RIFF\0\0\0\0WAVEfmt ", 16);
-            uint32_t f_sz = 16;
-            rec_file.write(&f_sz, 4);
-            rec_file.write(&wfx, 16);
-            rec_file.write("data\0\0\0\0", 8);
-            push_event();
-        }
+    void reinit_wav() {
+        auto cur_time = audio_get_time();
+        auto idx = gen_uid(cur_time);
+        string fn =
+            base_path + "\\audio_" + std::to_string(cur_time) + "_" + std::to_string(idx) + ".wav";
+        cap.file = ofs::File(fn, 1);
+        cap.file.write(&cap.h, sizeof(WavHeader));
+        cap.bytesWritten = 0;
+        cap.startTime = cur_time;
+        cap.idx = idx;
+        cap.events.clear();
+        push_event();
     }
 
 public:
-    IDSBProxy(IDirectSoundBuffer* pReal)
-        : pBuf(pReal), internal_id(g_buffer_counter++), data_bytes(0) {
-        start_wav();
+    IDSBProxy(IDirectSoundBuffer* pReal, LPCDSBUFFERDESC desc) {
+        pBuf = pReal;
+        cap.sampleRateOrig = desc->lpwfxFormat->nSamplesPerSec;
+        cap.h.sampleRate = desc->lpwfxFormat->nSamplesPerSec;
+        cap.h.channels = desc->lpwfxFormat->nChannels;
+        cap.h.bitsPerSample = desc->lpwfxFormat->wBitsPerSample;
+        cap.h.blockAlign = desc->lpwfxFormat->nBlockAlign;
+        cap.h.byteRate = desc->lpwfxFormat->nAvgBytesPerSec;
+        cap.lastFreq = cap.h.sampleRate;
+        reinit_wav();
     }
-    virtual ~IDSBProxy() { finalize_wav(); }
+    virtual ~IDSBProxy() {}
     STDMETHOD(QueryInterface)(REFIID riid, void** ppvObj) override {
         return pBuf->QueryInterface(riid, ppvObj);
     }
@@ -165,9 +216,7 @@ public:
         return pBuf->Play(dwReserved1, dwPriority, dwFlags);
     }
     STDMETHOD(SetCurrentPosition)(DWORD dwNewPosition) override {
-        finalize_wav();
         auto ret = pBuf->SetCurrentPosition(dwNewPosition);
-        start_wav();
         return ret;
     }
     STDMETHOD(SetFormat)(LPCWAVEFORMATEX pcfxFormat) override {
@@ -189,21 +238,20 @@ public:
         return hr;
     }
     STDMETHOD(Stop)() override {
-        finalize_wav();
+        lock::CSLock lock(acs);
+        finalize_wav(cap);
         return pBuf->Stop();
     }
-    STDMETHOD(Unlock)(LPVOID p1, DWORD b1, LPVOID p2, DWORD b2) override {
-        if (rec_file.is_open()) {
-            if (p1) {
-                rec_file.write(p1, b1);
-                data_bytes += b1;
-            }
-            if (p2) {
-                rec_file.write(p2, b2);
-                data_bytes += b2;
-            }
+    STDMETHOD(Unlock)(LPVOID pv1, DWORD db1, LPVOID pv2, DWORD db2) override {
+        if (!cap.file.is_open()) {
+            reinit_wav();
+            return pBuf->Unlock(pv1, db1, pv2, db2);
         }
-        return pBuf->Unlock(p1, b1, p2, b2);
+        if (pv1 && db1 > 0)
+            write_original_raw(cap, pv1, db1);
+        if (pv2 && db2 > 0)
+            write_original_raw(cap, pv2, db2);
+        return pBuf->Unlock(pv1, db1, pv2, db2);
     }
     STDMETHOD(Restore)() override { return pBuf->Restore(); }
 };
@@ -227,9 +275,9 @@ public:
     STDMETHOD(CreateSoundBuffer)(LPCDSBUFFERDESC pcDSBufferDesc, LPDIRECTSOUNDBUFFER* ppDSBuffer,
                                  LPUNKNOWN pUnkOuter) override {
         HRESULT hr = pDev->CreateSoundBuffer(pcDSBufferDesc, ppDSBuffer, pUnkOuter);
-        if (SUCCEEDED(hr) && ppDSBuffer && *ppDSBuffer) {
+        if (SUCCEEDED(hr) && ppDSBuffer && *ppDSBuffer && pcDSBufferDesc->lpwfxFormat) {
             spdlog::debug("Wrapping IDirectSoundBuffer into IDSBProxy");
-            *ppDSBuffer = new IDSBProxy(*ppDSBuffer);
+            *ppDSBuffer = new IDSBProxy(*ppDSBuffer, pcDSBufferDesc);
         }
         return hr;
     }
@@ -239,7 +287,8 @@ public:
         HRESULT hr = pDev->DuplicateSoundBuffer(pDSBufferOriginal, ppDSBufferDuplicate);
         if (SUCCEEDED(hr) && ppDSBufferDuplicate && *ppDSBufferDuplicate) {
             spdlog::debug("Duplicating IDSBProxy");
-            *ppDSBufferDuplicate = new IDSBProxy(*ppDSBufferDuplicate);
+            // FIXME
+            *ppDSBufferDuplicate = new IDSBProxy(*ppDSBufferDuplicate, nullptr);
         }
         return hr;
     }
@@ -298,55 +347,76 @@ void audio::init() {
 }
 
 void audio::flush() {
-    if (!capture_audio || g_history.empty())
+    lock::CSLock lock(acs);
+    spdlog::debug("flush {}", g_history.size());
+    if (g_history.empty())
         return;
-    capture_audio = false;
-    ofs::File fFile(base_path + "\\filters.txt", 1);
-    ofs::File bFile(base_path + "\\mix.bat", 1);
 
-    std::string filters = "";
-    std::string mix_in = "";
+    ofs::File filterFile(base_path + "\\audio_filters.txt", 1);
+    ofs::File batFile(base_path + "\\audio_merge.bat", 1);
+
+    string filters = "";
+    string mix = "";
 
     for (size_t i = 0; i < g_history.size(); ++i) {
-        auto& h = g_history[i];
-        std::string finalLabel = "[a" + std::to_string(i) + "]";
-        std::string fn = std::to_string(h.startTime) + "_" + std::to_string(h.bufferId) + ".wav";
-        double totalDur = (double)(h.endTime - h.startTime) / 1000.0;
+        auto& c = g_history[i];
+        string fn = "audio_" + std::to_string(c.startTime) + "_" + std::to_string(c.idx) + ".wav";
+        string finalLabel = "[final" + std::to_string(i) + "]";
+        double totalDuration =
+            (c.endTime > c.startTime) ? (double)(c.endTime - c.startTime) / 1000.0 : 0.0;
 
-        filters += "amovie=" + fn + ",asplit=" + std::to_string(h.events.size());
-        for (size_t e = 0; e < h.events.size(); ++e)
-            filters += "[s" + std::to_string(i) + "_" + std::to_string(e) + "]";
-        filters += ";\n";
+        if (c.events.empty()) {
+            // Case 1: Simple file
+            filters += "amovie=" + fn + ",atrim=duration=" + std::to_string(totalDuration) +
+                       ",aresample=48000,adelay=" + std::to_string(c.startTime) + ":all=1" +
+                       finalLabel + ";\n";
+        } else {
+            // Case 2: Frequency segments
+            int numSegs = (int)c.events.size();
 
-        std::string concat_in = "";
-        for (size_t e = 0; e < h.events.size(); ++e) {
-            auto& ev = h.events[e];
-            double start = (double)ev.timeOffset / 1000.0;
-            double end =
-                (e + 1 < h.events.size()) ? (double)h.events[e + 1].timeOffset / 1000.0 : totalDur;
-            double l, r;
-            ds_pan_to_weights(ev.pan, l, r);
-            double v = ds_vol_to_linear(ev.volume);
+            // 1. Load and split source
+            filters += "amovie=" + fn + ",asplit=" + std::to_string(numSegs);
+            for (int e = 0; e < numSegs; ++e) {
+                filters += "[b" + std::to_string(i) + "s" + std::to_string(e) + "]";
+            }
+            filters += ";\n";
 
-            std::string bOut = "[p" + std::to_string(i) + "_" + std::to_string(e) + "]";
-            filters += "[s" + std::to_string(i) + "_" + std::to_string(e) +
-                       "]atrim=start=" + std::to_string(start) + ":end=" + std::to_string(end) +
-                       ",asetpts=PTS-STARTPTS,asetrate=" + std::to_string(ev.frequency) +
-                       ",pan=stereo|c0=" + std::to_string(l) + "*c0|c1=" + std::to_string(r) +
-                       "*c1" + ",volume=" + std::to_string(v) + ",aresample=48000" + bOut + ";\n";
-            concat_in += bOut;
+            // 2. Process each split branch
+            std::string segmentLabels = "";
+            for (size_t e = 0; e < c.events.size(); ++e) {
+                std::string branchIn = "[b" + std::to_string(i) + "s" + std::to_string(e) + "]";
+                std::string branchOut = "[p" + std::to_string(i) + "s" + std::to_string(e) + "]";
+
+                double start = (double)c.events[e].timeOffset / 1000.0;
+                double end = (e + 1 < c.events.size()) ? (double)c.events[e + 1].timeOffset / 1000.0
+                                                       : totalDuration;
+                double volLinear = pow(10.0, (double)c.events[e].volume / 2000.0);
+
+                filters += branchIn + "atrim=start=" + std::to_string(start) +
+                           ":end=" + std::to_string(end) +
+                           ",asetrate=" + std::to_string(c.events[e].frequency) +
+                           ",volume=" + std::to_string(volLinear) + ",aresample=48000" + branchOut +
+                           ";\n";
+
+                segmentLabels += branchOut;
+            }
+
+            // 3. Concat branches and apply delay
+            filters += segmentLabels + "concat=n=" + std::to_string(numSegs) +
+                       ":v=0:a=1,adelay=" + std::to_string(c.startTime) + ":all=1" + finalLabel +
+                       ";\n";
         }
-
-        filters += concat_in + "concat=n=" + std::to_string(h.events.size()) +
-                   ":v=0:a=1,adelay=" + std::to_string(h.startTime) + ":all=1" + finalLabel + ";\n";
-        mix_in += finalLabel;
+        mix += finalLabel;
     }
 
-    filters += mix_in + "amix=inputs=" + std::to_string(g_history.size()) +
-               ":duration=longest:dropout_transition=0:normalize=0[out]";
-    fFile.write(filters.c_str(), filters.size());
+    filters += mix + "amix=inputs=" + std::to_string(g_history.size()) + ":normalize=0[out]";
 
-    std::string bat = "@echo off\nffmpeg -y -filter_complex_script filters.txt -map \"[out]\" -ar "
-                      "48000 audio_final.wav\npause";
-    bFile.write(bat.c_str(), bat.size());
+    // FFmpeg 2026 syntax: -/filter_complex reads from file
+    std::string batContent = "@echo off\nffmpeg -y -/filter_complex audio_filters.txt -map "
+                             "\"[out]\" -ar 48000 output.wav\npause";
+
+    filterFile.write(filters.c_str(), filters.size());
+    batFile.write(batContent.c_str(), batContent.size());
+
+    g_history.clear();
 }
