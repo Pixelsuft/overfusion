@@ -199,8 +199,11 @@ static conf::Task task_from_string(string_view sv) {
 }
 
 Config::Config() {
-    project_name = "test_proj";                        // TODO: configure it
+    project_name = "test_proj"; // TODO: configure it
+    ffmpeg_cmdline =
+        "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an $PROJ/$NAME.mp4";
     system_offset = local_offset = startup_offset = 0; // TODO: conf them
+    tm_fix_event_entry_offset = tm_fix_event_entry_type_offset = 0;
     pUpdateGameFrame = pRenderFrame = pProcessTransition = pRenderTransition = nullptr;
     gStats = nullptr;
     fps = 0;
@@ -222,8 +225,7 @@ Config::Config() {
     save_game_state = true;
     disable_app_menu = false;
     allow_timers_fix = true;
-    tm_fix_event_entry_offset = tm_fix_event_entry_type_offset = 0;
-    ffmpeg_cmdline = "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an $PROJ/$NAME.mp4";
+    alllow_d3d9_recording = true;
 }
 
 #define READ_BOOL(name)                                                                            \
@@ -248,6 +250,7 @@ void Config::read() {
     READ_BOOL(save_game_state);
     READ_BOOL(disable_app_menu);
     READ_BOOL(allow_timers_fix);
+    READ_BOOL(alllow_d3d9_recording);
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
     if (data["ffmpeg_cmdline"].is_string())

@@ -4,6 +4,7 @@
 #include "config.hpp"
 #include "mem.hpp"
 #include "ui.hpp"
+#include "video.hpp"
 #include <Windows.h>
 #include <backends/imgui_impl_dx9.h>
 #include <backends/imgui_impl_win32.h>
@@ -206,6 +207,7 @@ public:
             ImGui_ImplWin32_Init(hwnd);
             ImGui_ImplDX9_Init(pDev);
         }
+        video::d3d9_draw(pDev);
         ImGui_ImplDX9_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();

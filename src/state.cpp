@@ -23,6 +23,7 @@ using event::Event;
 using ost::string_view;
 using std::string;
 
+extern HWND hwnd;
 extern BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency);
 extern BOOL(WINAPI* QueryPerformanceCounterO)(LARGE_INTEGER* lpFrequency);
 
@@ -280,6 +281,8 @@ bool state::before_update() {
     int* pScene = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSceneID, pGlobalApp));
     ASS(pScene != nullptr);
     st.scene = *pScene;
+    if (!cfg.is_paused && IsIconic(::hwnd))
+        cfg.is_paused = true;
     if ((cfg.is_paused && !cfg.need_advance) || need_scene_slot != -10000)
         return false;
     updating = true;

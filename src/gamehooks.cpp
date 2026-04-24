@@ -99,7 +99,9 @@ static int __stdcall UpdateGameFrameH() {
     } else {
         cfg.need_advance = false;
         *pIsPaused = false;
+        video::set_allow_d3d9_frame(true);
         ret = UpdateGameFrameO();
+        video::set_allow_d3d9_frame(false);
         video::after_draw();
         if (cfg.custom_window)
             customwindow::render();
