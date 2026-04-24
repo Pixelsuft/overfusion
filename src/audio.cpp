@@ -10,11 +10,16 @@
 #include <dsound.h>
 #include <spdlog/spdlog.h>
 
+using std::string;
+
 namespace audio {
-static lock::CriticalSection acs;
-static bool capture_audio;
-} // namespace audio
 // To get TAS time: state::get_time(state::TimeOffset::None) -> uint64_t
+// To use lock: lock::CSLock cs(acs);
+static lock::CriticalSection acs;
+static string base_path;
+static bool capture_audio;
+
+} // namespace audio
 
 class IDSBProxy : public IDirectSoundBuffer {
     IDirectSoundBuffer* pBuf;
@@ -154,6 +159,11 @@ void audio::init() {
     if (!cfg.allow_audio_hook && !cfg.disable_audio)
         return;
     capture_audio = cfg.record_audio;
+    if (capture_audio) {
+        base_path = cfg.project_name + "\\" + "temp_audio";
+        auto dir_ret = ofs::make_dir(base_path);
+        ENSURE(dir_ret);
+    }
     HOOK_STR_ONLY("winmm.dll", mciSendCommand);
     HOOK_AUTO("dsound.dll", DirectSoundCreate);
     spdlog::debug("Audio hooked");
