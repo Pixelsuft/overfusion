@@ -51,9 +51,9 @@ struct WavHeader {
 
 struct AudioEvent {
     uint64_t timeOffset;
-    DWORD frequency;
     LONG volume;
     LONG pan;
+    DWORD frequency;
 };
 
 struct AudioCapture {
@@ -92,14 +92,6 @@ static int gen_uid(uint64_t mytime) {
 }
 
 inline uint64_t audio_get_time() { return state::get_time(state::TimeOffset::None); }
-
-static void setup_fixed_header(WavHeader& h, uint16_t channels, uint16_t bits) {
-    h.channels = channels;
-    h.sampleRate = 48000;
-    h.bitsPerSample = bits;
-    h.blockAlign = (channels * bits) / 8;
-    h.byteRate = h.sampleRate * h.blockAlign;
-}
 
 static void write_original_raw(AudioCapture& cap, const void* data, uint32_t len) {
     cap.file.write(data, len);
@@ -140,13 +132,13 @@ class IDSBProxy : public IDirectSoundBuffer {
         if (!cap.events.empty()) {
             auto& last = cap.events.back();
             if (last.timeOffset == offset) {
-                last = {offset, freq, vol, pan};
+                last = {offset, vol, pan, freq};
                 return;
             }
             if (last.frequency == freq && last.volume == vol && last.pan == pan)
                 return;
         }
-        cap.events.push_back({offset, freq, vol, pan});
+        cap.events.push_back({offset, vol, pan, freq});
     }
 
     void reinit_wav() {
@@ -243,14 +235,19 @@ public:
         return pBuf->Stop();
     }
     STDMETHOD(Unlock)(LPVOID pv1, DWORD db1, LPVOID pv2, DWORD db2) override {
+        lock::CSLock lock(acs);
         if (!cap.file.is_open()) {
             reinit_wav();
             return pBuf->Unlock(pv1, db1, pv2, db2);
         }
-        if (pv1 && db1 > 0)
-            write_original_raw(cap, pv1, db1);
-        if (pv2 && db2 > 0)
-            write_original_raw(cap, pv2, db2);
+        if (pv1 && db1 > 0) {
+            cap.file.write(pv1, db1);
+            cap.bytesWritten += db1;
+        }
+        if (pv2 && db2 > 0) {
+            cap.file.write(pv2, db2);
+            cap.bytesWritten += db2;
+        }
         return pBuf->Unlock(pv1, db1, pv2, db2);
     }
     STDMETHOD(Restore)() override { return pBuf->Restore(); }
