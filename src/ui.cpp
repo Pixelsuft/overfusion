@@ -1,4 +1,5 @@
 #include "ui.hpp"
+#include "audio.hpp"
 #include "config.hpp"
 #include "files.hpp"
 #include "plugbase.hpp"
@@ -77,6 +78,8 @@ static void draw_menu() {
         return;
     }
     if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (ImGui::Button("Flush Audio"))
+            audio::flush();
         if (ImGui::Checkbox("Replay mode", &cfg.is_replay))
             state::on_mode_switch();
         ImGui::Checkbox("Reset on replay", &cfg.reset_on_replay);

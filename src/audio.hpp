@@ -2,4 +2,5 @@
 
 namespace audio {
 void init();
+void flush();
 }
