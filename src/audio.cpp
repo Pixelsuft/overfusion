@@ -93,27 +93,44 @@ class IDSBProxy : public IDirectSoundBuffer {
     ofs::File file;
     IDirectSoundBuffer* pBuf;
     uint32_t bytesWritten;
+    uint64_t lastRealTime;
+    double virtualTimeAcc;
+    DWORD currentFreq;
+    DWORD originalFreq;
 
     void push_event() {
-        DWORD freq;
+        DWORD newFreq;
         LONG vol, pan;
-        pBuf->GetFrequency(&freq);
+        pBuf->GetFrequency(&newFreq);
         pBuf->GetVolume(&vol);
         pBuf->GetPan(&pan);
 
         uint64_t now = state::get_time(state::TimeOffset::None);
-        uint64_t offset = now - cap.startTime;
 
+        if (cap.events.empty()) {
+            cap.startTime = now;
+            lastRealTime = now;
+            virtualTimeAcc = 0;
+            currentFreq = newFreq;
+        } else {
+            uint64_t deltaReal = now - lastRealTime;
+            double scale = static_cast<double>(currentFreq) / static_cast<double>(originalFreq);
+            virtualTimeAcc += static_cast<double>(deltaReal) * scale;
+            lastRealTime = now;
+            currentFreq = newFreq;
+        }
+
+        uint64_t offset = static_cast<uint64_t>(virtualTimeAcc);
         if (!cap.events.empty()) {
             auto& last = cap.events.back();
             if (last.timeOffset == offset) {
-                last = {offset, vol, pan, freq};
+                last = {offset, vol, pan, newFreq};
                 return;
             }
-            if (last.frequency == freq && last.volume == vol && last.pan == pan)
-                return;
+            // if (last.frequency == newFreq && last.volume == vol && last.pan == pan)
+            //     return;
         }
-        cap.events.push_back({offset, vol, pan, freq});
+        cap.events.push_back({offset, vol, pan, newFreq});
     }
 
     void reinit_wav() {
@@ -133,7 +150,10 @@ class IDSBProxy : public IDirectSoundBuffer {
 public:
     void finalize_wav() {
         if (file.is_open()) {
-            cap.endTime = audio_get_time();
+            uint64_t now = audio_get_time();
+            double scale = static_cast<double>(currentFreq) / static_cast<double>(originalFreq);
+            virtualTimeAcc += static_cast<double>(now - lastRealTime) * scale;
+            cap.endTime = cap.startTime + static_cast<uint64_t>(virtualTimeAcc);
             uint32_t finalFileSize = bytesWritten + 36;
             file.seek(4, ofs::SeekBegin);
             file.write(&finalFileSize, 4);
@@ -157,7 +177,11 @@ public:
         header.bitsPerSample = desc->lpwfxFormat->wBitsPerSample;
         header.blockAlign = desc->lpwfxFormat->nBlockAlign;
         header.byteRate = desc->lpwfxFormat->nAvgBytesPerSec;
+        originalFreq = desc->lpwfxFormat->nSamplesPerSec;
+        currentFreq = originalFreq;
         bytesWritten = 0;
+        lastRealTime = 0;
+        virtualTimeAcc = 0.0;
         reinit_wav();
         cache.push_back(this);
     }
@@ -350,6 +374,7 @@ void audio::flush() {
     ofs::File bat(base_path + "\\..\\audio_merge.bat", 1);
     string mix = "";
     size_t count = 0;
+    bool support_pan = false;
 
     for (const auto& c : history) {
         string fn = "a_" + std::to_string(c.startTime) + "_" + std::to_string(c.idx) + ".wav";
@@ -376,12 +401,14 @@ void audio::flush() {
             double leftGain = (panNorm <= 0) ? 1.0 : (1.0 - panNorm);
             double rightGain = (panNorm >= 0) ? 1.0 : (1.0 + panNorm);
 
-            filters.writeln(
-                branchIn + "atrim=start=" + std::to_string(start) + ":end=" + std::to_string(end) +
-                ",asetrate=" + std::to_string(c.events[e].frequency) +
-                ",aformat=channel_layouts=stereo" + ",volume=" + std::to_string(volLinear) +
-                ",pan=stereo|c0=" + std::to_string(leftGain) + "*c0|c1=" +
-                std::to_string(rightGain) + "*c1" + ",aresample=48000" + branchOut + ";");
+            filters.writeln(branchIn + "atrim=start=" + std::to_string(start) +
+                            ":end=" + std::to_string(end) +
+                            ",asetrate=" + std::to_string(c.events[e].frequency) +
+                            ",aformat=channel_layouts=stereo,volume=" + std::to_string(volLinear) +
+                            (support_pan ? ",pan=stereo|c0=" + std::to_string(leftGain) +
+                                               "*c0|c1=" + std::to_string(rightGain) + "*c1"
+                                         : "") +
+                            ",aresample=48000" + branchOut + ";");
 
             segmentLabels += branchOut;
         }
