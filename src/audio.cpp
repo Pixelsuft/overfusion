@@ -66,20 +66,17 @@ struct AudioCapture {
     uint64_t endTime;
     uint32_t bytesWritten;
     std::vector<AudioEvent> events;
-    LONG lastVol;
-    LONG lastPan;
     int idx;
 
-    AudioCapture() : startTime(0), endTime(0), bytesWritten(0), idx(0), lastVol(0), lastPan(0) {}
+    AudioCapture() : startTime(0), endTime(0), bytesWritten(0), idx(0) {}
 };
 
 class IDSBProxy;
-static std::vector<AudioCapture> g_history;
+static std::vector<AudioCapture> history;
 static std::vector<IDSBProxy*> cache;
 static string base_path;
 static lock::CriticalSection acs;
-static int g_buffer_counter;
-static bool capture_audio;
+static bool capture;
 static uint64_t last_time;
 static int last_uid;
 
@@ -92,11 +89,6 @@ static int gen_uid(uint64_t mytime) {
 }
 
 inline uint64_t audio_get_time() { return state::get_time(state::TimeOffset::None); }
-
-static void write_original_raw(AudioCapture& cap, const void* data, uint32_t len) {
-    cap.file.write(data, len);
-    cap.bytesWritten += len;
-}
 
 class IDSBProxy : public IDirectSoundBuffer {
     IDirectSoundBuffer* pBuf;
@@ -152,7 +144,7 @@ public:
             cap.file.seek(40, ofs::SeekBegin);
             cap.file.write(&cap.bytesWritten, 4);
             cap.file.close();
-            g_history.push_back(std::move(cap));
+            history.push_back(std::move(cap));
         }
     }
     IDSBProxy(IDirectSoundBuffer* pReal, LPCDSBUFFERDESC desc) {
@@ -167,7 +159,7 @@ public:
     }
     virtual ~IDSBProxy() {
         auto it = std::find(cache.begin(), cache.end(), this);
-        ENSURE(it != cache.end());
+        ASS(it != cache.end());
         cache.erase(it);
     }
     STDMETHOD(QueryInterface)(REFIID riid, void** ppvObj) override {
@@ -333,11 +325,10 @@ void audio::init() {
     auto& cfg = conf::get();
     if (!cfg.allow_audio_hook && !cfg.disable_audio)
         return;
-    capture_audio = cfg.record_audio;
-    g_buffer_counter = 0;
+    capture = cfg.record_audio;
     last_uid = 0;
     last_time = 0;
-    if (capture_audio) {
+    if (capture) {
         base_path = string(files::get_cwd()) + '\\' + cfg.project_name + "\\temp_audio";
         auto dir_ret = ofs::make_dir(base_path);
         ENSURE(dir_ret);
@@ -351,47 +342,48 @@ void audio::flush() {
     lock::CSLock lock(acs);
     for (IDSBProxy* c : cache)
         c->finalize_wav();
-    spdlog::debug("flush {}", g_history.size());
-    if (g_history.empty())
+    spdlog::debug("flush {}", history.size());
+    if (history.empty())
         return;
 
-    ofs::File filterF(base_path + "\\audio_filters.txt", 1);
-    ofs::File batF(base_path + "\\..\\audio_merge.bat", 1);
+    ofs::File filters(base_path + "\\audio_filters.txt", 1);
+    ofs::File bat(base_path + "\\..\\audio_merge.bat", 1);
 
     string mix = "";
 
-    for (size_t i = 0; i < g_history.size(); i++) {
-        auto& c = g_history[i];
+    for (size_t i = 0; i < history.size(); i++) {
+        auto& c = history[i];
         string fn = "audio_" + std::to_string(c.startTime) + "_" + std::to_string(c.idx) + ".wav";
         string finalLabel = "[f" + std::to_string(i) + "]";
-        double totalDuration = (double)(c.endTime - c.startTime) / 1000.0;
+        double totalDuration = static_cast<double>(c.endTime - c.startTime) / 1000.0;
         if (c.events.empty()) {
-            filterF.writeln("amovie=" + fn + ",atrim=duration=" + std::to_string(totalDuration) +
+            filters.writeln("amovie=" + fn + ",atrim=duration=" + std::to_string(totalDuration) +
                             ",aresample=48000,adelay=" + std::to_string(c.startTime) + ":all=1" +
                             finalLabel + ";");
         } else {
-            int numSegs = (int)c.events.size();
-            filterF.write("amovie=" + fn + ",asplit=" + std::to_string(numSegs));
+            int numSegs = static_cast<int>(c.events.size());
+            filters.write("amovie=" + fn + ",asplit=" + std::to_string(numSegs));
             for (int e = 0; e < numSegs; ++e) {
-                filterF.write("[b" + std::to_string(i) + "s" + std::to_string(e) + "]");
+                filters.write("[b" + std::to_string(i) + "s" + std::to_string(e) + "]");
             }
-            filterF.writeln(";");
+            filters.writeln(";");
             std::string segmentLabels = "";
             for (size_t e = 0; e < c.events.size(); ++e) {
                 std::string branchIn = "[b" + std::to_string(i) + "s" + std::to_string(e) + "]";
                 std::string branchOut = "[p" + std::to_string(i) + "s" + std::to_string(e) + "]";
 
-                double start = (double)c.events[e].timeOffset / 1000.0;
-                double end = (e + 1 < c.events.size()) ? (double)c.events[e + 1].timeOffset / 1000.0
-                                                       : totalDuration;
-                double volLinear = pow(10.0, (double)c.events[e].volume / 2000.0);
+                double start = static_cast<double>(c.events[e].timeOffset) / 1000.0;
+                double end = (e + 1 < c.events.size())
+                                 ? static_cast<double>(c.events[e + 1].timeOffset) / 1000.0
+                                 : totalDuration;
+                double volLinear = pow(10.0, static_cast<double>(c.events[e].volume) / 2000.0);
                 double panNorm = static_cast<double>(c.events[e].pan) / 10000.0;
                 double volLeft = std::min(1.0, 1.0 - panNorm) *
                                  std::pow(10.0, static_cast<double>(c.events[e].volume) / 2000.0);
                 double volRight = std::min(1.0, 1.0 + panNorm) *
                                   std::pow(10.0, static_cast<double>(c.events[e].volume) / 2000.0);
 
-                filterF.writeln(branchIn + "atrim=start=" + std::to_string(start) +
+                filters.writeln(branchIn + "atrim=start=" + std::to_string(start) +
                                 ":end=" + std::to_string(end) +
                                 ",asetrate=" + std::to_string(c.events[e].frequency) +
                                 ",volume=" + std::to_string(volLinear) +
@@ -401,19 +393,17 @@ void audio::flush() {
 
                 segmentLabels += branchOut;
             }
-            filterF.writeln(segmentLabels + "concat=n=" + std::to_string(numSegs) +
+            filters.writeln(segmentLabels + "concat=n=" + std::to_string(numSegs) +
                             ":v=0:a=1,adelay=" + std::to_string(c.startTime) + ":all=1" +
                             finalLabel + ";");
         }
         mix += finalLabel;
     }
-
-    filterF.write(mix + "amix=inputs=" + std::to_string(g_history.size()) + ":normalize=0[out]");
-
-    batF.writeln("@echo off");
-    batF.writeln("cd temp_audio");
-    batF.writeln(
+    filters.write(mix + "amix=inputs=" + std::to_string(history.size()) + ":normalize=0[out]");
+    bat.writeln("@echo off");
+    bat.writeln("cd temp_audio");
+    bat.writeln(
         "ffmpeg -y -/filter_complex audio_filters.txt -map \"[out]\" -ar 48000 ../audio.wav");
-    batF.writeln("pause");
-    g_history.clear();
+    bat.writeln("pause");
+    history.clear();
 }
