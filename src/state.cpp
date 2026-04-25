@@ -65,7 +65,28 @@ struct State {
         return std::distance(ev.begin(), it);
     }
 
-    // TODO: get currently hold keys at the frame st.frames (so ENSURE->ASS in key sim)
+    std::vector<int> calc_keys() {
+        std::vector<int> ret;
+        for (auto& e : ev) {
+            if (e.frame >= frames)
+                break;
+            if (e.idx != 1)
+                continue;
+            auto it = std::find(ret.begin(), ret.end(), e.key.k);
+            if (e.key.down) {
+                if (it == ret.end())
+                    ret.push_back(e.key.k);
+                else
+                    spdlog::error("Key {} is double-pressed", e.key.k);
+            } else {
+                if (it != ret.end())
+                    ret.erase(it);
+                else
+                    spdlog::error("Key {} is double-released", e.key.k);
+            }
+        }
+        return ret;
+    }
 };
 
 static State st;
@@ -134,6 +155,7 @@ bool state::is_save_handle(void* handle) {
 bool state::is_processing_save() { return processing_save; }
 
 void state::save_state(int slot) {
+    last_msg.clear();
     auto& cfg = conf::get();
     string fp = base_path + "\\state_" + std::to_string(slot) + ".ofstate";
     ofs::File file;
@@ -168,10 +190,14 @@ void state::save_state(int slot) {
         return;
     }
     processing_save = false;
-    last_msg = string("State ") + std::to_string(slot) + " saved!";
+    if (last_msg.empty())
+        last_msg = string("State ") + std::to_string(slot) + " saved!";
+    else
+        last_msg = string("State ") + std::to_string(slot) + " saved! (" + last_msg + ")";
 }
 
 void state::load_state(int slot) {
+    last_msg.clear();
     need_scene_slot = -10000;
     auto& cfg = conf::get();
     if (cfg.is_replay && cfg.reset_on_replay && st.frames != 0) {
@@ -243,6 +269,12 @@ void state::load_state(int slot) {
         st.ev = std::move(temp_state.ev);
         st.total = temp_state.total;
         repl_index = st.calc_current_index();
+        auto new_holding = st.calc_keys();
+        if (new_holding != st.prev_kbd) {
+            spdlog::warn("Keyboard state mismatch during replay load, fixing");
+            st.prev_kbd = std::move(new_holding);
+            last_msg = "Keyboard mismatch fixed";
+        }
     } else {
         st = std::move(temp_state);
         // TODO: maybe trim on the first frame, not directly when loading?
@@ -251,7 +283,10 @@ void state::load_state(int slot) {
     }
     set_rerecords(++rerec_count);
     processing_save = false;
-    last_msg = string("State ") + std::to_string(slot) + " loaded!";
+    if (last_msg.empty())
+        last_msg = string("State ") + std::to_string(slot) + " loaded!";
+    else
+        last_msg = string("State ") + std::to_string(slot) + " loaded! (" + last_msg + ")";
 }
 
 bool state::invalidate_process(string_view text) {
