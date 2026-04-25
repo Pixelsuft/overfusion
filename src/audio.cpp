@@ -60,15 +60,12 @@ struct AudioEvent {
 };
 
 struct AudioCapture {
-    ofs::File file;
-    WavHeader h;
     uint64_t startTime;
     uint64_t endTime;
-    uint32_t bytesWritten;
     std::vector<AudioEvent> events;
     int idx;
 
-    AudioCapture() : startTime(0), endTime(0), bytesWritten(0), idx(0) {}
+    AudioCapture() : startTime(0), endTime(0), idx(0) {}
 };
 
 class IDSBProxy;
@@ -91,8 +88,11 @@ static int gen_uid(uint64_t mytime) {
 inline uint64_t audio_get_time() { return state::get_time(state::TimeOffset::None); }
 
 class IDSBProxy : public IDirectSoundBuffer {
-    IDirectSoundBuffer* pBuf;
     AudioCapture cap;
+    WavHeader header;
+    ofs::File file;
+    IDirectSoundBuffer* pBuf;
+    uint32_t bytesWritten;
 
     void push_event() {
         DWORD freq;
@@ -121,9 +121,9 @@ class IDSBProxy : public IDirectSoundBuffer {
         auto idx = gen_uid(cur_time);
         string fn =
             base_path + "\\a_" + std::to_string(cur_time) + "_" + std::to_string(idx) + ".wav";
-        cap.file = ofs::File(fn, 1);
-        cap.file.write(&cap.h, sizeof(WavHeader));
-        cap.bytesWritten = 0;
+        file = ofs::File(fn, 1);
+        file.write(&header, sizeof(WavHeader));
+        bytesWritten = 0;
         cap.startTime = cap.endTime = cur_time;
         cap.idx = idx;
         cap.events.clear();
@@ -132,31 +132,32 @@ class IDSBProxy : public IDirectSoundBuffer {
 
 public:
     void finalize_wav() {
-        if (cap.file.is_open()) {
+        if (file.is_open()) {
             cap.endTime = audio_get_time();
-            uint32_t finalFileSize = cap.bytesWritten + 36;
-            cap.file.seek(4, ofs::SeekBegin);
-            cap.file.write(&finalFileSize, 4);
-            cap.file.seek(24, ofs::SeekBegin);
-            cap.file.write(&cap.h.sampleRate, 4);
-            cap.file.seek(28, ofs::SeekBegin);
-            cap.file.write(&cap.h.byteRate, 4);
-            cap.file.seek(40, ofs::SeekBegin);
-            cap.file.write(&cap.bytesWritten, 4);
-            cap.file.close();
+            uint32_t finalFileSize = bytesWritten + 36;
+            file.seek(4, ofs::SeekBegin);
+            file.write(&finalFileSize, 4);
+            file.seek(24, ofs::SeekBegin);
+            file.write(&header.sampleRate, 4);
+            file.seek(28, ofs::SeekBegin);
+            file.write(&header.byteRate, 4);
+            file.seek(40, ofs::SeekBegin);
+            file.write(&bytesWritten, 4);
+            file.close();
             if (cap.endTime <= cap.startTime)
                 return;
-            history.push_back(std::move(cap));
+            history.push_back(cap);
         }
     }
 
     IDSBProxy(IDirectSoundBuffer* pReal, LPCDSBUFFERDESC desc) {
         pBuf = pReal;
-        cap.h.sampleRate = desc->lpwfxFormat->nSamplesPerSec;
-        cap.h.channels = desc->lpwfxFormat->nChannels;
-        cap.h.bitsPerSample = desc->lpwfxFormat->wBitsPerSample;
-        cap.h.blockAlign = desc->lpwfxFormat->nBlockAlign;
-        cap.h.byteRate = desc->lpwfxFormat->nAvgBytesPerSec;
+        header.sampleRate = desc->lpwfxFormat->nSamplesPerSec;
+        header.channels = desc->lpwfxFormat->nChannels;
+        header.bitsPerSample = desc->lpwfxFormat->wBitsPerSample;
+        header.blockAlign = desc->lpwfxFormat->nBlockAlign;
+        header.byteRate = desc->lpwfxFormat->nAvgBytesPerSec;
+        bytesWritten = 0;
         reinit_wav();
         cache.push_back(this);
     }
@@ -235,17 +236,17 @@ public:
     }
     STDMETHOD(Unlock)(LPVOID pv1, DWORD db1, LPVOID pv2, DWORD db2) override {
         lock::CSLock lock(acs);
-        if (!cap.file.is_open()) {
+        if (!file.is_open()) {
             reinit_wav();
             return pBuf->Unlock(pv1, db1, pv2, db2);
         }
         if (pv1 && db1 > 0) {
-            cap.file.write(pv1, db1);
-            cap.bytesWritten += db1;
+            file.write(pv1, db1);
+            bytesWritten += db1;
         }
         if (pv2 && db2 > 0) {
-            cap.file.write(pv2, db2);
-            cap.bytesWritten += db2;
+            file.write(pv2, db2);
+            bytesWritten += db2;
         }
         return pBuf->Unlock(pv1, db1, pv2, db2);
     }
@@ -280,13 +281,8 @@ public:
     STDMETHOD(GetCaps)(LPDSCAPS pDSCaps) override { return pDev->GetCaps(pDSCaps); }
     STDMETHOD(DuplicateSoundBuffer)(LPDIRECTSOUNDBUFFER pDSBufferOriginal,
                                     LPDIRECTSOUNDBUFFER* ppDSBufferDuplicate) override {
-        HRESULT hr = pDev->DuplicateSoundBuffer(pDSBufferOriginal, ppDSBufferDuplicate);
-        if (SUCCEEDED(hr) && ppDSBufferDuplicate && *ppDSBufferDuplicate) {
-            spdlog::debug("Duplicating IDSBProxy");
-            // FIXME
-            *ppDSBufferDuplicate = new IDSBProxy(*ppDSBufferDuplicate, nullptr);
-        }
-        return hr;
+        spdlog::error("Not implemented: DuplicateSoundBuffer");
+        return DSERR_OUTOFMEMORY;
     }
     STDMETHOD(SetCooperativeLevel)(HWND hwnd, DWORD dwLevel) override {
         return pDev->SetCooperativeLevel(hwnd, dwLevel);
@@ -353,10 +349,9 @@ void audio::flush() {
 
     ofs::File filters(base_path + "\\audio_filters.txt", 1);
     ofs::File bat(base_path + "\\..\\audio_merge.bat", 1);
-
     string mix = "";
-
     size_t count = 0;
+
     for (const auto& c : history) {
         string fn = "a_" + std::to_string(c.startTime) + "_" + std::to_string(c.idx) + ".wav";
         string finalLabel = "[f" + std::to_string(count) + "]";
@@ -369,7 +364,7 @@ void audio::flush() {
         }
         filters.writeln(";");
         std::string segmentLabels = "";
-        for (size_t e = 0; e < c.events.size(); ++e) {
+        for (size_t e = 0; e < c.events.size(); e++) {
             std::string branchIn = "[b" + std::to_string(count) + "s" + std::to_string(e) + "]";
             std::string branchOut = "[p" + std::to_string(count) + "s" + std::to_string(e) + "]";
 
