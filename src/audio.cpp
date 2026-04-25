@@ -140,6 +140,8 @@ class IDSBProxy : public IDirectSoundBuffer {
     }
 
     void reinit_wav() {
+        if (!capture)
+            return;
         auto cur_time = audio_get_time();
         auto idx = gen_uid(cur_time);
         file = ofs::File(base_path + '\\' + get_fn(cur_time, idx), 1);
@@ -198,7 +200,8 @@ public:
         lastRealTime = 0;
         virtualTimeAcc = 0.0;
         reinit_wav();
-        cache.push_back(this);
+        if (capture)
+            cache.push_back(this);
     }
     STDMETHOD(QueryInterface)(REFIID riid, void** ppvObj) override {
         return pBuf->QueryInterface(riid, ppvObj);
@@ -207,9 +210,11 @@ public:
     STDMETHOD_(ULONG, Release)() override {
         ULONG count = pBuf->Release();
         if (count == 0) {
-            auto it = std::find(cache.begin(), cache.end(), this);
-            ASS(it != cache.end());
-            cache.erase(it);
+            if (capture) {
+                auto it = std::find(cache.begin(), cache.end(), this);
+                ASS(it != cache.end());
+                cache.erase(it);
+            }
             delete this;
         }
         return count;
@@ -240,7 +245,6 @@ public:
     }
     STDMETHOD(Play)(DWORD dwReserved1, DWORD dwPriority, DWORD dwFlags) override {
         spdlog::debug("DirectSoundBuffer::Play");
-        // start_wav();
         return pBuf->Play(dwReserved1, dwPriority, dwFlags);
     }
     STDMETHOD(SetCurrentPosition)(DWORD dwNewPosition) override {
@@ -253,38 +257,51 @@ public:
     }
     STDMETHOD(SetFrequency)(DWORD f) override {
         HRESULT hr = pBuf->SetFrequency(f);
-        push_event();
+        if (capture) {
+            lock::CSLock lock(acs);
+            push_event();
+        }
         return hr;
     }
     STDMETHOD(SetVolume)(LONG v) override {
         HRESULT hr = pBuf->SetVolume(v);
-        push_event();
+        if (capture) {
+            lock::CSLock lock(acs);
+            push_event();
+        }
         return hr;
     }
     STDMETHOD(SetPan)(LONG p) override {
         HRESULT hr = pBuf->SetPan(p);
-        push_event();
+        if (capture) {
+            lock::CSLock lock(acs);
+            push_event();
+        }
         return hr;
     }
     STDMETHOD(Stop)() override {
-        lock::CSLock lock(acs);
-        finalize_wav();
+        if (capture) {
+            lock::CSLock lock(acs);
+            finalize_wav();
+        }
         spdlog::debug("DirectSoundBuffer::Stop");
         return pBuf->Stop();
     }
     STDMETHOD(Unlock)(LPVOID pv1, DWORD db1, LPVOID pv2, DWORD db2) override {
-        lock::CSLock lock(acs);
-        if (!file.is_open()) {
-            reinit_wav();
-            return pBuf->Unlock(pv1, db1, pv2, db2);
-        }
-        if (pv1 && db1 > 0) {
-            file.write(pv1, db1);
-            bytesWritten += db1;
-        }
-        if (pv2 && db2 > 0) {
-            file.write(pv2, db2);
-            bytesWritten += db2;
+        if (capture) {
+            lock::CSLock lock(acs);
+            if (!file.is_open()) {
+                reinit_wav();
+                return pBuf->Unlock(pv1, db1, pv2, db2);
+            }
+            if (pv1 && db1 > 0) {
+                file.write(pv1, db1);
+                bytesWritten += db1;
+            }
+            if (pv2 && db2 > 0) {
+                file.write(pv2, db2);
+                bytesWritten += db2;
+            }
         }
         return pBuf->Unlock(pv1, db1, pv2, db2);
     }
@@ -378,6 +395,8 @@ void audio::init() {
 }
 
 void audio::flush() {
+    if (!capture)
+        return;
     lock::CSLock lock(acs);
     auto& cfg = conf::get();
     for (IDSBProxy* c : cache)
@@ -396,10 +415,10 @@ void audio::flush() {
         string finalLabel = "[f" + std::to_string(count) + "]";
         double totalDuration = static_cast<double>(c.endTime - c.startTime) / 1000.0;
         ASS(!c.events.empty());
-        int numSegs = static_cast<int>(c.events.size());
+        size_t numSegs = c.events.size();
         filters.write("amovie=" + get_fn(c.startTime, c.idx) +
                       ",asplit=" + std::to_string(numSegs));
-        for (int e = 0; e < numSegs; ++e) {
+        for (size_t e = 0; e < numSegs; e++) {
             filters.write("[b" + std::to_string(count) + "s" + std::to_string(e) + "]");
         }
         filters.writeln(";");
@@ -414,8 +433,8 @@ void audio::flush() {
                              : totalDuration;
             double volLinear = std::pow(10.0, static_cast<double>(c.events[e].volume) / 2000.0);
             double panNorm = static_cast<double>(c.events[e].pan) / 10000.0;
-            double leftGain = (panNorm <= 0) ? 1.0 : (1.0 - panNorm);
-            double rightGain = (panNorm >= 0) ? 1.0 : (1.0 + panNorm);
+            double leftGain = (panNorm <= 0.0) ? 1.0 : (1.0 - panNorm);
+            double rightGain = (panNorm >= 0.0) ? 1.0 : (1.0 + panNorm);
 
             filters.writeln(branchIn + "atrim=start=" + std::to_string(start) +
                             ":end=" + std::to_string(end) +
@@ -441,5 +460,6 @@ void audio::flush() {
     bat.writeln("echo Waiting to delete wav cache...");
     bat.writeln("pause");
     bat.writeln("del a_*.wav");
+    bat.writeln("del audio_filters.txt");
     history.clear();
 }
