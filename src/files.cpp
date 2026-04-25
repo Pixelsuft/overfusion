@@ -697,7 +697,7 @@ static int CDECL _closeH(int fd) {
 
 static HFILE(WINAPI* _lopenO)(LPCSTR lpPathName, int iReadWrite);
 static HFILE WINAPI _lopenH(LPCSTR lpPathName, int iReadWrite) {
-    spdlog::debug("TODO: _lopen");
+    spdlog::error("TODO: _lopen");
     return HFILE_ERROR;
 }
 

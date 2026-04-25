@@ -32,12 +32,13 @@ struct State {
     std::vector<Event> ev;
     std::vector<Event> temp_ev;
     std::vector<int> prev_kbd;
+    uint64_t rerec_count;
     int scene;
     int fps;
     int frames;
     int total;
 
-    State() : scene(0), fps(0), frames(0), total(0) {}
+    State() : scene(0), fps(0), frames(0), total(0), rerec_count(0) {}
 
     void clear_values() {
         scene = 0;
@@ -102,7 +103,6 @@ static string base_path;
 static size_t repl_index;
 static int64_t time_offset;
 static int need_scene_slot;
-static uint64_t rerec_count;
 static bool processing_save;
 static bool updating;
 static bool need_key_msg;
@@ -132,13 +132,12 @@ void state::init() {
     last_msg = "None";
     processing_save = false;
     updating = false;
-    st.fps = conf::get().fps;
+    st.fps = conf::get().fps; // TODO: should I really use st?
     const_dt = 1.0 / (double)st.fps;
     to_wait = 0.0;
     time_offset = 0;
     repl_index = 0;
     need_scene_slot = -10000;
-    rerec_count = get_rerecords();
     spdlog::debug("Init FPS: {}", st.fps);
     QueryPerformanceFrequencyO(&last_counter);
     freq = (double)last_counter.QuadPart;
@@ -170,6 +169,7 @@ void state::save_state(int slot) {
     write_bin(file, st.scene);
     write_bin(file, st.frames);
     write_bin(file, st.total);
+    write_bin(file, st.rerec_count);
     write_bin(file, st.fps);
     write_bin(file, st.prev_kbd);
     write_bin(file, st.temp_ev);
@@ -242,6 +242,7 @@ void state::load_state(int slot) {
     }
     load_bin(file, temp_state.frames);
     load_bin(file, temp_state.total);
+    load_bin(file, temp_state.rerec_count);
     load_bin(file, temp_state.fps);
     load_bin(file, temp_state.prev_kbd);
     load_bin(file, temp_state.temp_ev);
@@ -268,6 +269,7 @@ void state::load_state(int slot) {
     if (cfg.is_replay) {
         st.ev = std::move(temp_state.ev);
         st.total = temp_state.total;
+        st.rerec_count = temp_state.rerec_count;
         repl_index = st.calc_current_index();
         auto new_holding = st.calc_keys();
         if (new_holding != st.prev_kbd) {
@@ -281,7 +283,8 @@ void state::load_state(int slot) {
         st.trim();
         repl_index = 0;
     }
-    set_rerecords(++rerec_count);
+    st.rerec_count = std::max(st.rerec_count, get_rerecords()) + 1;
+    set_rerecords(st.rerec_count);
     processing_save = false;
     if (last_msg.empty())
         last_msg = string("State ") + std::to_string(slot) + " loaded!";
@@ -484,7 +487,7 @@ void state::draw_info() {
                 video::is_recording() ? " [VIDEO]" : "");
     ImGui::Text("Frames: %i / %i", st.frames, st.total);
     ImGui::Text("Scene: %i", st.scene);
-    ImGui::Text("Re-records: %llu", rerec_count);
+    ImGui::Text("Re-records: %llu", st.rerec_count);
 #ifdef _DEBUG
     ImGui::Text("Replay index: %i", repl_index);
     ImGui::Text("Event count: %llu", static_cast<uint64_t>(st.ev.size()));
