@@ -144,6 +144,8 @@ public:
             cap.file.seek(40, ofs::SeekBegin);
             cap.file.write(&cap.bytesWritten, 4);
             cap.file.close();
+            if (cap.endTime <= cap.startTime)
+                return;
             history.push_back(std::move(cap));
         }
     }
@@ -356,51 +358,41 @@ void audio::flush() {
 
     size_t count = 0;
     for (const auto& c : history) {
-        if (c.endTime <= c.startTime)
-            continue;
         string fn = "a_" + std::to_string(c.startTime) + "_" + std::to_string(c.idx) + ".wav";
         string finalLabel = "[f" + std::to_string(count) + "]";
         double totalDuration = static_cast<double>(c.endTime - c.startTime) / 1000.0;
-        if (c.events.empty()) {
-            filters.writeln("amovie=" + fn + ",atrim=duration=" + std::to_string(totalDuration) +
-                            ",aformat=channel_layouts=stereo,aresample=48000,adelay=" +
-                            std::to_string(c.startTime) + ":all=1" + finalLabel + ";");
-        } else {
-            int numSegs = static_cast<int>(c.events.size());
-            filters.write("amovie=" + fn + ",asplit=" + std::to_string(numSegs));
-            for (int e = 0; e < numSegs; ++e) {
-                filters.write("[b" + std::to_string(count) + "s" + std::to_string(e) + "]");
-            }
-            filters.writeln(";");
-            std::string segmentLabels = "";
-            for (size_t e = 0; e < c.events.size(); ++e) {
-                std::string branchIn = "[b" + std::to_string(count) + "s" + std::to_string(e) + "]";
-                std::string branchOut =
-                    "[p" + std::to_string(count) + "s" + std::to_string(e) + "]";
-
-                double start = static_cast<double>(c.events[e].timeOffset) / 1000.0;
-                double end = (e + 1 < c.events.size())
-                                 ? static_cast<double>(c.events[e + 1].timeOffset) / 1000.0
-                                 : totalDuration;
-                double volLinear = std::pow(10.0, static_cast<double>(c.events[e].volume) / 2000.0);
-                double panNorm = static_cast<double>(c.events[e].pan) / 10000.0;
-                double leftGain = (panNorm <= 0) ? 1.0 : (1.0 - panNorm);
-                double rightGain = (panNorm >= 0) ? 1.0 : (1.0 + panNorm);
-
-                filters.writeln(branchIn + "atrim=start=" + std::to_string(start) +
-                                ":end=" + std::to_string(end) +
-                                ",asetrate=" + std::to_string(c.events[e].frequency) +
-                                ",aformat=channel_layouts=stereo" +
-                                ",volume=" + std::to_string(volLinear) + ",pan=stereo|c0=" +
-                                std::to_string(leftGain) + "*c0|c1=" + std::to_string(rightGain) +
-                                "*c1" + ",aresample=48000" + branchOut + ";");
-
-                segmentLabels += branchOut;
-            }
-            filters.writeln(segmentLabels + "concat=n=" + std::to_string(numSegs) +
-                            ":v=0:a=1,adelay=" + std::to_string(c.startTime) + ":all=1" +
-                            finalLabel + ";");
+        ASS(!c.events.empty());
+        int numSegs = static_cast<int>(c.events.size());
+        filters.write("amovie=" + fn + ",asplit=" + std::to_string(numSegs));
+        for (int e = 0; e < numSegs; ++e) {
+            filters.write("[b" + std::to_string(count) + "s" + std::to_string(e) + "]");
         }
+        filters.writeln(";");
+        std::string segmentLabels = "";
+        for (size_t e = 0; e < c.events.size(); ++e) {
+            std::string branchIn = "[b" + std::to_string(count) + "s" + std::to_string(e) + "]";
+            std::string branchOut = "[p" + std::to_string(count) + "s" + std::to_string(e) + "]";
+
+            double start = static_cast<double>(c.events[e].timeOffset) / 1000.0;
+            double end = (e + 1 < c.events.size())
+                             ? static_cast<double>(c.events[e + 1].timeOffset) / 1000.0
+                             : totalDuration;
+            double volLinear = std::pow(10.0, static_cast<double>(c.events[e].volume) / 2000.0);
+            double panNorm = static_cast<double>(c.events[e].pan) / 10000.0;
+            double leftGain = (panNorm <= 0) ? 1.0 : (1.0 - panNorm);
+            double rightGain = (panNorm >= 0) ? 1.0 : (1.0 + panNorm);
+
+            filters.writeln(
+                branchIn + "atrim=start=" + std::to_string(start) + ":end=" + std::to_string(end) +
+                ",asetrate=" + std::to_string(c.events[e].frequency) +
+                ",aformat=channel_layouts=stereo" + ",volume=" + std::to_string(volLinear) +
+                ",pan=stereo|c0=" + std::to_string(leftGain) + "*c0|c1=" +
+                std::to_string(rightGain) + "*c1" + ",aresample=48000" + branchOut + ";");
+
+            segmentLabels += branchOut;
+        }
+        filters.writeln(segmentLabels + "concat=n=" + std::to_string(numSegs) + ":v=0:a=1,adelay=" +
+                        std::to_string(c.startTime) + ":all=1" + finalLabel + ";");
         mix += finalLabel;
         count++;
     }
