@@ -439,7 +439,7 @@ void audio::flush() {
             filters.writeln(branchIn + "atrim=start=" + std::to_string(start) +
                             ":end=" + std::to_string(end) +
                             ",asetrate=" + std::to_string(c.events[e].frequency) +
-                            ",aformat=channel_layouts=stereo,volume=" + std::to_string(volLinear) +
+                            ",volume=" + std::to_string(volLinear) +
                             (support_pan ? ",pan=stereo|c0=" + std::to_string(leftGain) +
                                                "*c0|c1=" + std::to_string(rightGain) + "*c1"
                                          : "") +
@@ -462,4 +462,5 @@ void audio::flush() {
     bat.writeln("del a_*.wav");
     bat.writeln("del audio_filters.txt");
     history.clear();
+    state::set_last_msg("Audio flushed, run audio_merge.bat script!");
 }

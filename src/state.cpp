@@ -104,6 +104,8 @@ void state::init() {
     QueryPerformanceCounterO(&last_counter);
 }
 
+void state::set_last_msg(ost::string_view msg) { last_msg = msg; }
+
 bool state::is_save_handle(void* handle) {
     /* return processing_save;*/
     return processing_save && handle == temp_handle;
