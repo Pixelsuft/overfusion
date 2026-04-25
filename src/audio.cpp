@@ -147,6 +147,7 @@ public:
             history.push_back(std::move(cap));
         }
     }
+
     IDSBProxy(IDirectSoundBuffer* pReal, LPCDSBUFFERDESC desc) {
         pBuf = pReal;
         cap.h.sampleRate = desc->lpwfxFormat->nSamplesPerSec;
@@ -203,6 +204,7 @@ public:
     }
     STDMETHOD(SetCurrentPosition)(DWORD dwNewPosition) override {
         auto ret = pBuf->SetCurrentPosition(dwNewPosition);
+        spdlog::debug("DirectSoundBuffer::SetCurrentPosition");
         return ret;
     }
     STDMETHOD(SetFormat)(LPCWAVEFORMATEX pcfxFormat) override {
@@ -226,6 +228,7 @@ public:
     STDMETHOD(Stop)() override {
         lock::CSLock lock(acs);
         finalize_wav();
+        spdlog::debug("DirectSoundBuffer::Stop");
         return pBuf->Stop();
     }
     STDMETHOD(Unlock)(LPVOID pv1, DWORD db1, LPVOID pv2, DWORD db2) override {
