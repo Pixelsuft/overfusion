@@ -87,6 +87,10 @@ static int gen_uid(uint64_t mytime) {
 
 inline uint64_t audio_get_time() { return state::get_time(state::TimeOffset::None); }
 
+inline string get_fn(uint64_t a, int b) {
+    return "a_" + std::to_string(a) + "_" + std::to_string(b) + ".wav";
+}
+
 class IDSBProxy : public IDirectSoundBuffer {
     AudioCapture cap;
     WavHeader header;
@@ -112,9 +116,11 @@ class IDSBProxy : public IDirectSoundBuffer {
             lastRealTime = now;
             virtualTimeAcc = 0;
             currentFreq = newFreq;
+            originalFreq = newFreq;
         } else {
             uint64_t deltaReal = now - lastRealTime;
-            double scale = static_cast<double>(currentFreq) / static_cast<double>(originalFreq);
+            double scale =
+                (originalFreq > 0.0) ? (static_cast<double>(currentFreq) / originalFreq) : 1.0;
             virtualTimeAcc += static_cast<double>(deltaReal) * scale;
             lastRealTime = now;
             currentFreq = newFreq;
@@ -127,8 +133,8 @@ class IDSBProxy : public IDirectSoundBuffer {
                 last = {offset, vol, pan, newFreq};
                 return;
             }
-            // if (last.frequency == newFreq && last.volume == vol && last.pan == pan)
-            //     return;
+            if (last.frequency == newFreq && last.volume == vol && last.pan == pan)
+                return;
         }
         cap.events.push_back({offset, vol, pan, newFreq});
     }
@@ -136,9 +142,7 @@ class IDSBProxy : public IDirectSoundBuffer {
     void reinit_wav() {
         auto cur_time = audio_get_time();
         auto idx = gen_uid(cur_time);
-        string fn =
-            base_path + "\\a_" + std::to_string(cur_time) + "_" + std::to_string(idx) + ".wav";
-        file = ofs::File(fn, 1);
+        file = ofs::File(base_path + '\\' + get_fn(cur_time, idx), 1);
         file.write(&header, sizeof(WavHeader));
         bytesWritten = 0;
         cap.startTime = cap.endTime = cur_time;
@@ -153,6 +157,13 @@ public:
             uint64_t now = audio_get_time();
             double scale = static_cast<double>(currentFreq) / static_cast<double>(originalFreq);
             virtualTimeAcc += static_cast<double>(now - lastRealTime) * scale;
+            if (virtualTimeAcc <= 0.0) {
+                spdlog::debug("Sound: got virtualTimeAcc <= 0");
+                file.close();
+                auto rem_ret = ofs::remove_file(base_path + '\\' + get_fn(cap.startTime, cap.idx));
+                ENSURE(rem_ret);
+                return;
+            }
             cap.endTime = cap.startTime + static_cast<uint64_t>(virtualTimeAcc);
             uint32_t finalFileSize = bytesWritten + 36;
             file.seek(4, ofs::SeekBegin);
@@ -164,9 +175,13 @@ public:
             file.seek(40, ofs::SeekBegin);
             file.write(&bytesWritten, 4);
             file.close();
-            if (cap.endTime <= cap.startTime)
+            if (cap.endTime > cap.startTime) {
+                history.push_back(cap);
                 return;
-            history.push_back(cap);
+            }
+            spdlog::debug("Sound: got endTime <= startTime");
+            auto rem_ret = ofs::remove_file(base_path + '\\' + get_fn(cap.startTime, cap.idx));
+            ENSURE(rem_ret);
         }
     }
 
@@ -377,12 +392,12 @@ void audio::flush() {
     bool support_pan = false;
 
     for (const auto& c : history) {
-        string fn = "a_" + std::to_string(c.startTime) + "_" + std::to_string(c.idx) + ".wav";
         string finalLabel = "[f" + std::to_string(count) + "]";
         double totalDuration = static_cast<double>(c.endTime - c.startTime) / 1000.0;
         ASS(!c.events.empty());
         int numSegs = static_cast<int>(c.events.size());
-        filters.write("amovie=" + fn + ",asplit=" + std::to_string(numSegs));
+        filters.write("amovie=" + get_fn(c.startTime, c.idx) +
+                      ",asplit=" + std::to_string(numSegs));
         for (int e = 0; e < numSegs; ++e) {
             filters.write("[b" + std::to_string(count) + "s" + std::to_string(e) + "]");
         }
@@ -419,7 +434,7 @@ void audio::flush() {
     }
     filters.write(mix + "amix=inputs=" + std::to_string(count) + ":normalize=0[out]");
     bat.writeln("@echo off");
-    bat.writeln("cd temp_audio");
+    bat.writeln("cd " + base_path);
     bat.writeln(
         "ffmpeg -y -/filter_complex audio_filters.txt -map \"[out]\" -ar 48000 ../audio.wav");
     // bat.writeln("del a_*.wav");
