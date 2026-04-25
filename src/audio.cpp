@@ -360,8 +360,8 @@ void audio::flush() {
         double totalDuration = static_cast<double>(c.endTime - c.startTime) / 1000.0;
         if (c.events.empty()) {
             filters.writeln("amovie=" + fn + ",atrim=duration=" + std::to_string(totalDuration) +
-                            ",aresample=48000,adelay=" + std::to_string(c.startTime) + ":all=1" +
-                            finalLabel + ";");
+                            ",aformat=channel_layouts=stereo,aresample=48000,adelay=" +
+                            std::to_string(c.startTime) + ":all=1" + finalLabel + ";");
         } else {
             int numSegs = static_cast<int>(c.events.size());
             filters.write("amovie=" + fn + ",asplit=" + std::to_string(numSegs));
@@ -379,20 +379,18 @@ void audio::flush() {
                 double end = (e + 1 < c.events.size())
                                  ? static_cast<double>(c.events[e + 1].timeOffset) / 1000.0
                                  : totalDuration;
-                double volLinear = pow(10.0, static_cast<double>(c.events[e].volume) / 2000.0);
+                double volLinear = std::pow(10.0, static_cast<double>(c.events[e].volume) / 2000.0);
                 double panNorm = static_cast<double>(c.events[e].pan) / 10000.0;
-                double volLeft = std::min(1.0, 1.0 - panNorm) *
-                                 std::pow(10.0, static_cast<double>(c.events[e].volume) / 2000.0);
-                double volRight = std::min(1.0, 1.0 + panNorm) *
-                                  std::pow(10.0, static_cast<double>(c.events[e].volume) / 2000.0);
+                double leftGain = (panNorm <= 0) ? 1.0 : (1.0 - panNorm);
+                double rightGain = (panNorm >= 0) ? 1.0 : (1.0 + panNorm);
 
                 filters.writeln(branchIn + "atrim=start=" + std::to_string(start) +
                                 ":end=" + std::to_string(end) +
                                 ",asetrate=" + std::to_string(c.events[e].frequency) +
-                                ",volume=" + std::to_string(volLinear) +
-                                //",pan=stereo|c0=" + std::to_string(volLeft) +
-                                // "*c0|c1=" + std::to_string(volRight) + "*c1" +
-                                ",aresample=48000" + branchOut + ";");
+                                ",aformat=channel_layouts=stereo" +
+                                ",volume=" + std::to_string(volLinear) + ",pan=stereo|c0=" +
+                                std::to_string(leftGain) + "*c0|c1=" + std::to_string(rightGain) +
+                                "*c1" + ",aresample=48000" + branchOut + ";");
 
                 segmentLabels += branchOut;
             }
