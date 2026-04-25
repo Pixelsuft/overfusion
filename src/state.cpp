@@ -144,7 +144,7 @@ void state::init() {
     QueryPerformanceCounterO(&last_counter);
 }
 
-void state::set_last_msg(ost::string_view msg) { last_msg = msg; }
+void state::set_last_msg(string_view msg) { last_msg = msg; }
 
 bool state::is_save_handle(void* handle) {
     /* return processing_save;*/
@@ -153,13 +153,53 @@ bool state::is_save_handle(void* handle) {
 
 bool state::is_processing_save() { return processing_save; }
 
+void state::export_replay(string_view fn) {
+    string fp = base_path + '\\' + string(fn);
+    ofs::File file;
+    if (!file.open(fp, 1, false)) {
+        spdlog::error("Failed to open replay file \"{}\" for writing", fn);
+        return;
+    }
+    auto fret = file.writeln("-4,overfusion," + std::to_string(replay_version));
+    ENSURE(fret);
+    fret = file.writeln("-3,total," + std::to_string(st.total));
+    ENSURE(fret);
+    fret = file.writeln("-3,total," + std::to_string(st.total));
+    ENSURE(fret);
+    fret = file.writeln("-2,rerecords," + std::to_string(st.rerec_count));
+    ENSURE(fret);
+    fret = file.writeln("-1,events_begin,");
+    ENSURE(fret);
+    for (const auto& e : st.ev) {
+        switch (e.idx) {
+        case 1:
+            fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(e.idx) + ',' +
+                                std::to_string(e.key.k) + ',' +
+                                std::to_string(static_cast<int>(e.key.down)));
+            ENSURE(fret);
+            break;
+        default:
+            ASS(false);
+        }
+    }
+    last_msg = "Replay exported";
+    spdlog::info("Replay exported");
+}
+
+void state::import_replay(string_view fn) {
+    // TODO
+    last_msg = "Replay imported";
+    spdlog::info("Replay imported");
+}
+
 void state::save_state(int slot) {
     last_msg.clear();
     auto& cfg = conf::get();
     string fp = base_path + "\\state_" + std::to_string(slot) + ".ofstate";
     ofs::File file;
     if (!file.open(fp, 1, false)) {
-        spdlog::warn("Failed to open state slot {} for writing", slot);
+        spdlog::error("Failed to open state slot {} for writing", slot);
+        last_msg = "Failed to save state from slot " + std::to_string(slot) + " to file";
         return;
     }
     temp_handle = file.get_handle();
@@ -194,6 +234,7 @@ void state::save_state(int slot) {
         last_msg = string("State ") + std::to_string(slot) + " saved!";
     else
         last_msg = string("State ") + std::to_string(slot) + " saved! (" + last_msg + ")";
+    spdlog::info("State saved");
 }
 
 void state::load_state(int slot) {
@@ -210,6 +251,7 @@ void state::load_state(int slot) {
     ofs::File file(base_path + "\\state_" + std::to_string(slot) + ".ofstate", 0);
     if (!file.is_open()) {
         spdlog::warn("Failed to open state slot {} for reading", slot);
+        last_msg = "Failed to open state slot " + std::to_string(slot);
         return;
     }
     temp_handle = file.get_handle();
@@ -290,6 +332,7 @@ void state::load_state(int slot) {
         last_msg = string("State ") + std::to_string(slot) + " loaded!";
     else
         last_msg = string("State ") + std::to_string(slot) + " loaded! (" + last_msg + ")";
+    spdlog::info("State loaded");
 }
 
 bool state::invalidate_process(string_view text) {

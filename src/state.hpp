@@ -27,6 +27,8 @@ void save_state(int slot);
 void load_state(int slot);
 void reset_game();
 void set_last_msg(ost::string_view msg);
+void export_replay(ost::string_view fn);
+void import_replay(ost::string_view fn);
 
 // TODO: maybe to ofs?
 template <typename T> static void write_bin(ofs::File& file, const std::vector<T>& data) {

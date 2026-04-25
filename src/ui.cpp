@@ -84,6 +84,12 @@ static void draw_menu() {
         ImGui::Checkbox("Paused", &cfg.is_paused);
         ImGui::Checkbox("Fast forward", &cfg.fast_forward);
         ImGui::Checkbox("Show info", &cfg.show_info);
+        static char replay_buf[1024] = "replay.csv";
+        ImGui::InputText("Replay filename", replay_buf, 1024);
+        if (ImGui::Button("Export"))
+            state::export_replay(replay_buf);
+        if (ImGui::Button("Import"))
+            state::import_replay(replay_buf);
     }
     if (ImGui::Button("Restart"))
         state::reset_game();
