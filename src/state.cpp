@@ -81,10 +81,29 @@ static string base_path;
 static size_t repl_index;
 static int64_t time_offset;
 static int need_scene_slot;
+static uint64_t rerec_count;
 static bool processing_save;
 static bool updating;
 static bool need_key_msg;
 static void* temp_handle;
+
+static uint64_t get_rerecords() {
+    ofs::File file;
+    uint64_t ret = 0;
+    if (file.open(base_path + "\\rerecords.ofbin", 0)) {
+        string line;
+        if (file.readln(line))
+            ret = std::stoull(line);
+        file.close();
+    }
+    return ret;
+}
+
+static void set_rerecords(uint64_t count) {
+    ofs::File file;
+    if (file.open(base_path + "\\rerecords.ofbin", 1))
+        file.writeln(std::to_string(count));
+}
 
 void state::init() {
     base_path = string(files::get_cwd()) + '\\' + conf::get().project_name;
@@ -98,6 +117,7 @@ void state::init() {
     time_offset = 0;
     repl_index = 0;
     need_scene_slot = -10000;
+    rerec_count = get_rerecords();
     spdlog::debug("Init FPS: {}", st.fps);
     QueryPerformanceFrequencyO(&last_counter);
     freq = (double)last_counter.QuadPart;
@@ -229,6 +249,7 @@ void state::load_state(int slot) {
         st.trim();
         repl_index = 0;
     }
+    set_rerecords(++rerec_count);
     processing_save = false;
     last_msg = string("State ") + std::to_string(slot) + " loaded!";
 }
@@ -428,9 +449,10 @@ void state::draw_info() {
                 video::is_recording() ? " [VIDEO]" : "");
     ImGui::Text("Frames: %i / %i", st.frames, st.total);
     ImGui::Text("Scene: %i", st.scene);
+    ImGui::Text("Re-records: %llu", rerec_count);
 #ifdef _DEBUG
     ImGui::Text("Replay index: %i", repl_index);
-    ImGui::Text("Event count: %i", static_cast<int>(st.ev.size()));
+    ImGui::Text("Event count: %llu", static_cast<uint64_t>(st.ev.size()));
 #endif
     ImGui::Text("Message: %s", last_msg.c_str());
     if (!cfg.fast_forward) {

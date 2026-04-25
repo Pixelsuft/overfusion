@@ -49,7 +49,7 @@ bool File::open(string_view path, int mode, bool hooked) {
 
 bool File::is_open() { return handle != INVALID_HANDLE_VALUE; }
 
-bool File::read_line(std::string& line) {
+bool File::readln(std::string& line) {
     ASS(is_open());
     line.clear();
     line.reserve(128);

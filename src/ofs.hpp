@@ -14,7 +14,7 @@ public:
     File(ost::string_view path, int mode) noexcept;
     bool open(ost::string_view path, int mode, bool hooked = false);
     bool is_open();
-    bool read_line(std::string& line);
+    bool readln(std::string& line);
     bool read(void* buf, size_t size);
     bool write(const void* buf, size_t size);
     inline bool write(ost::string_view data) { return write(data.data(), data.size()); }
