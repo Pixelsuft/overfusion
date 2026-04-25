@@ -8,6 +8,7 @@
 #include <Windows.h>
 #include <mmsystem.h>
 // after
+#include <algorithm>
 #include <dsound.h>
 #include <spdlog/spdlog.h>
 #include <vector>
@@ -72,13 +73,15 @@ struct AudioCapture {
     AudioCapture() : startTime(0), endTime(0), bytesWritten(0), idx(0), lastVol(0), lastPan(0) {}
 };
 
+class IDSBProxy;
 static std::vector<AudioCapture> g_history;
+static std::vector<IDSBProxy*> cache;
 static string base_path;
 static lock::CriticalSection acs;
 static int g_buffer_counter;
 static bool capture_audio;
-static int last_uid = 0;
-static uint64_t last_time = 0;
+static uint64_t last_time;
+static int last_uid;
 
 static int gen_uid(uint64_t mytime) {
     if (mytime != last_time) {
@@ -136,6 +139,22 @@ class IDSBProxy : public IDirectSoundBuffer {
     }
 
 public:
+    void finalize_wav() {
+        if (cap.file.is_open()) {
+            cap.endTime = audio_get_time();
+            uint32_t finalFileSize = cap.bytesWritten + 36;
+            cap.file.seek(4, ofs::SeekBegin);
+            cap.file.write(&finalFileSize, 4);
+            cap.file.seek(24, ofs::SeekBegin);
+            cap.file.write(&cap.h.sampleRate, 4);
+            cap.file.seek(28, ofs::SeekBegin);
+            cap.file.write(&cap.h.byteRate, 4);
+            cap.file.seek(40, ofs::SeekBegin);
+            cap.file.write(&cap.bytesWritten, 4);
+            cap.file.close();
+            g_history.push_back(std::move(cap));
+        }
+    }
     IDSBProxy(IDirectSoundBuffer* pReal, LPCDSBUFFERDESC desc) {
         pBuf = pReal;
         cap.h.sampleRate = desc->lpwfxFormat->nSamplesPerSec;
@@ -144,8 +163,13 @@ public:
         cap.h.blockAlign = desc->lpwfxFormat->nBlockAlign;
         cap.h.byteRate = desc->lpwfxFormat->nAvgBytesPerSec;
         reinit_wav();
+        cache.push_back(this);
     }
-    virtual ~IDSBProxy() {}
+    virtual ~IDSBProxy() {
+        auto it = std::find(cache.begin(), cache.end(), this);
+        ENSURE(it != cache.end());
+        cache.erase(it);
+    }
     STDMETHOD(QueryInterface)(REFIID riid, void** ppvObj) override {
         return pBuf->QueryInterface(riid, ppvObj);
     }
@@ -209,20 +233,7 @@ public:
     }
     STDMETHOD(Stop)() override {
         lock::CSLock lock(acs);
-        if (cap.file.is_open()) {
-            cap.endTime = audio_get_time();
-            uint32_t finalFileSize = cap.bytesWritten + 36;
-            cap.file.seek(4, ofs::SeekBegin);
-            cap.file.write(&finalFileSize, 4);
-            cap.file.seek(24, ofs::SeekBegin);
-            cap.file.write(&cap.h.sampleRate, 4);
-            cap.file.seek(28, ofs::SeekBegin);
-            cap.file.write(&cap.h.byteRate, 4);
-            cap.file.seek(40, ofs::SeekBegin);
-            cap.file.write(&cap.bytesWritten, 4);
-            cap.file.close();
-            g_history.push_back(std::move(cap));
-        }
+        finalize_wav();
         return pBuf->Stop();
     }
     STDMETHOD(Unlock)(LPVOID pv1, DWORD db1, LPVOID pv2, DWORD db2) override {
@@ -324,6 +335,8 @@ void audio::init() {
         return;
     capture_audio = cfg.record_audio;
     g_buffer_counter = 0;
+    last_uid = 0;
+    last_time = 0;
     if (capture_audio) {
         base_path = string(files::get_cwd()) + '\\' + cfg.project_name + "\\temp_audio";
         auto dir_ret = ofs::make_dir(base_path);
@@ -336,6 +349,8 @@ void audio::init() {
 
 void audio::flush() {
     lock::CSLock lock(acs);
+    for (IDSBProxy* c : cache)
+        c->finalize_wav();
     spdlog::debug("flush {}", g_history.size());
     if (g_history.empty())
         return;
@@ -398,7 +413,7 @@ void audio::flush() {
     batF.writeln("@echo off");
     batF.writeln("cd temp_audio");
     batF.writeln(
-        "ffmpeg -y -/filter_complex audio_filters.txt -map \"[out]\" -ar 48000 ../output.wav");
+        "ffmpeg -y -/filter_complex audio_filters.txt -map \"[out]\" -ar 48000 ../audio.wav");
     batF.writeln("pause");
     g_history.clear();
 }

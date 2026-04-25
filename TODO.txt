@@ -1,3 +1,4 @@
 [ ] Use IAT hooks where possible
 [ ] Re-record count (separate file in the project dir)
+[ ] Fix that ugly audio recording implementation
 [ ] Fix TODOs in code
