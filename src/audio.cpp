@@ -379,6 +379,7 @@ void audio::init() {
 
 void audio::flush() {
     lock::CSLock lock(acs);
+    auto& cfg = conf::get();
     for (IDSBProxy* c : cache)
         c->finalize_wav();
     spdlog::debug("flush {}", history.size());
@@ -389,7 +390,7 @@ void audio::flush() {
     ofs::File bat(base_path + "\\..\\audio_merge.bat", 1);
     string mix = "";
     size_t count = 0;
-    bool support_pan = false;
+    bool support_pan = cfg.support_audio_panning;
 
     for (const auto& c : history) {
         string finalLabel = "[f" + std::to_string(count) + "]";
@@ -437,7 +438,8 @@ void audio::flush() {
     bat.writeln("cd " + base_path);
     bat.writeln(
         "ffmpeg -y -/filter_complex audio_filters.txt -map \"[out]\" -ar 48000 ../audio.wav");
-    // bat.writeln("del a_*.wav");
+    bat.writeln("echo Waiting to delete wav cache...");
     bat.writeln("pause");
+    bat.writeln("del a_*.wav");
     history.clear();
 }

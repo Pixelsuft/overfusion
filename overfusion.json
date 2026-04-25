@@ -15,6 +15,7 @@
   "allow_audio_hook": true,
   "disable_audio": false,
   "record_audio": true,
+  "support_audio_panning": true,
   "cmdline_append": " /D3D9 /DEBUG /NOF /NOVSYNC /MIS0 /NOC",
   "ffmpeg_cmdline": "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an -vcodec h264_nvenc -b:v 10000k $PROJ/$NAME.mp4",
   "binds": [

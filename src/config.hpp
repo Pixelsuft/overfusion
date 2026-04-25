@@ -51,6 +51,7 @@ public:
     bool allow_audio_hook;
     bool disable_audio;
     bool record_audio;
+    bool support_audio_panning;
 
     Config();
     void read();

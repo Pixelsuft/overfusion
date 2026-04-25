@@ -228,6 +228,7 @@ Config::Config() {
     allow_audio_hook = true;
     disable_audio = false;
     record_audio = false;
+    support_audio_panning = true;
 }
 
 #define READ_BOOL(name)                                                                            \
@@ -256,6 +257,7 @@ void Config::read() {
     READ_BOOL(allow_audio_hook);
     READ_BOOL(disable_audio);
     READ_BOOL(record_audio);
+    READ_BOOL(support_audio_panning);
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
     if (data["ffmpeg_cmdline"].is_string())
