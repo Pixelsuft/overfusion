@@ -161,19 +161,18 @@ public:
         reinit_wav();
         cache.push_back(this);
     }
-    virtual ~IDSBProxy() {
-        auto it = std::find(cache.begin(), cache.end(), this);
-        ASS(it != cache.end());
-        cache.erase(it);
-    }
     STDMETHOD(QueryInterface)(REFIID riid, void** ppvObj) override {
         return pBuf->QueryInterface(riid, ppvObj);
     }
     STDMETHOD_(ULONG, AddRef)() override { return pBuf->AddRef(); }
     STDMETHOD_(ULONG, Release)() override {
         ULONG count = pBuf->Release();
-        if (count == 0)
+        if (count == 0) {
+            auto it = std::find(cache.begin(), cache.end(), this);
+            ASS(it != cache.end());
+            cache.erase(it);
             delete this;
+        }
         return count;
     }
     STDMETHOD(GetCaps)(LPDSBCAPS pDSBCaps) override { return pBuf->GetCaps(pDSBCaps); }
