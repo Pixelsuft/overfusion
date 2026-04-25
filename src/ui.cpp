@@ -78,8 +78,6 @@ static void draw_menu() {
         return;
     }
     if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_DefaultOpen)) {
-        if (ImGui::Button("Flush Audio"))
-            audio::flush();
         if (ImGui::Checkbox("Replay mode", &cfg.is_replay))
             state::on_mode_switch();
         ImGui::Checkbox("Reset on replay", &cfg.reset_on_replay);
@@ -99,6 +97,10 @@ static void draw_menu() {
         } else {
             if (ImGui::Button("Stop video recording"))
                 video::stop();
+        }
+        if (cfg.record_audio) {
+            if (ImGui::Button("Stop audio capture"))
+                audio::flush();
         }
     }
     if (ImGui::CollapsingHeader("About")) {

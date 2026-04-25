@@ -15,6 +15,8 @@
 #undef min
 #undef max
 
+// TODO: write extended WAV header with channels number info
+
 using std::string;
 
 namespace audio {
@@ -391,7 +393,7 @@ void audio::init() {
     }
     HOOK_STR_ONLY("winmm.dll", mciSendCommand);
     HOOK_AUTO("dsound.dll", DirectSoundCreate);
-    spdlog::debug("Audio hooked");
+    spdlog::info("Audio hooked");
 }
 
 void audio::flush() {

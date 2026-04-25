@@ -258,6 +258,10 @@ void Config::read() {
     READ_BOOL(disable_audio);
     READ_BOOL(record_audio);
     READ_BOOL(support_audio_panning);
+    if (record_audio && !allow_audio_hook) {
+        spdlog::warn("Recording audio is enabled, but audio hook is not, disabling");
+        record_audio = false;
+    }
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
     if (data["ffmpeg_cmdline"].is_string())
