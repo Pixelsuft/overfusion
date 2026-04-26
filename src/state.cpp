@@ -193,6 +193,7 @@ void state::export_replay(string_view fn) {
 }
 
 void state::import_replay(string_view fn) {
+    auto& cfg = conf::get();
     ofs::File file;
     last_msg.clear();
     if (!file.open(base_path + '\\' + string(fn), 0, false)) {
@@ -283,14 +284,7 @@ void state::import_replay(string_view fn) {
                 spdlog::warn("Invalid keyboard event (key)");
                 continue;
             }
-            end++;
-            start = end;
-            end = line.find(',', start);
-            if (end == string::npos) {
-                spdlog::warn("Invalid keyboard event line (is_down)");
-                continue;
-            }
-            event.key.down = str_to_int(line.substr(start, end)) != 0;
+            event.key.down = str_to_int(line.substr(++end)) != 0;
             break;
         default:
             spdlog::warn("Invalid event index");
@@ -305,6 +299,16 @@ void state::import_replay(string_view fn) {
     if (need_sort)
         std::stable_sort(temp_state.ev.begin(), temp_state.ev.end(),
                          [](const Event& a, const Event& b) { return a.frame < b.frame; });
+    st.ev = std::move(temp_state.ev);
+    st.total = temp_state.total;
+    st.rerec_count = temp_state.rerec_count;
+    repl_index = st.calc_current_index();
+    auto new_holding = st.calc_keys();
+    if (new_holding != st.prev_kbd) {
+        spdlog::warn("Keyboard state mismatch during replay load, fixing");
+        st.prev_kbd = std::move(new_holding);
+    }
+    cfg.is_replay = true;
     last_msg = "Replay imported";
     spdlog::info("Replay imported");
 }
