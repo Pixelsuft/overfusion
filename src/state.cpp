@@ -154,21 +154,18 @@ bool state::is_save_handle(void* handle) {
 bool state::is_processing_save() { return processing_save; }
 
 void state::export_replay(string_view fn) {
-    string fp = base_path + '\\' + string(fn);
     ofs::File file;
-    if (!file.open(fp, 1, false)) {
+    if (!file.open(base_path + '\\' + string(fn), 1, false)) {
         spdlog::error("Failed to open replay file \"{}\" for writing", fn);
         return;
     }
-    auto fret = file.writeln("-4,overfusion," + std::to_string(replay_version));
-    ENSURE(fret);
-    fret = file.writeln("-3,total," + std::to_string(st.total));
+    auto fret = file.writeln("-4,pixelsuft_overfusion," + std::to_string(replay_version));
     ENSURE(fret);
     fret = file.writeln("-3,total," + std::to_string(st.total));
     ENSURE(fret);
     fret = file.writeln("-2,rerecords," + std::to_string(st.rerec_count));
     ENSURE(fret);
-    fret = file.writeln("-1,events_begin,");
+    fret = file.writeln("-1,events_begin,0");
     ENSURE(fret);
     for (const auto& e : st.ev) {
         switch (e.idx) {
@@ -187,7 +184,61 @@ void state::export_replay(string_view fn) {
 }
 
 void state::import_replay(string_view fn) {
-    // TODO
+    ofs::File file;
+    if (!file.open(base_path + '\\' + string(fn), 0, false)) {
+        spdlog::error("Failed to open replay file \"{}\" for reading", fn);
+        return;
+    }
+    State temp_state;
+    string line;
+    bool is_of = false;
+    while (file.readln(line)) {
+        if (line.size() < 2)
+            continue;
+        auto start = line.find(',');
+        if (start == string::npos) {
+            is_of = false;
+            break;
+        }
+        start++;
+        auto end = line.find(',', start);
+        if (end == string::npos) {
+            is_of = false;
+            break;
+        }
+        auto sub = line.substr(start, end - start);
+        end++;
+        auto sub2 = line.substr(end);
+        if (sub == "pixelsuft_overfusion") {
+            int st_ver = std::stoi(sub2);
+            if (st_ver != replay_version) {
+                last_msg = "Invalid replay version";
+                spdlog::error("Invalid replay version");
+                return;
+            }
+            is_of = true;
+        } else if (sub == "total") {
+            temp_state.total = std::stoi(sub2);
+        } else if (sub == "rerecords") {
+            temp_state.rerec_count = std::stoi(sub2);
+        } else if (sub == "events_begin") {
+            break;
+        } else {
+            is_of = false;
+            break;
+        }
+    }
+    if (temp_state.total < 0)
+        is_of = false;
+    if (!is_of) {
+        last_msg = "Invalid replay file";
+        spdlog::error("Invalid replay file");
+        return;
+    }
+    while (file.readln(line)) {
+        if (line.size() < 2)
+            continue;
+    }
     last_msg = "Replay imported";
     spdlog::info("Replay imported");
 }
