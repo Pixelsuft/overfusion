@@ -10,6 +10,7 @@
 #include "video.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
+#include <algorithm>
 #include <imgui.h>
 #include <spdlog/spdlog.h>
 #include <string>
@@ -108,6 +109,12 @@ static bool updating;
 static bool need_key_msg;
 static void* temp_handle;
 
+inline int str_to_int(const std::string& str) {
+    char* endptr;
+    long num = std::strtol(str.c_str(), &endptr, 10);
+    return endptr != str.c_str() ? static_cast<int>(num) : 0;
+}
+
 static uint64_t get_rerecords() {
     ofs::File file;
     uint64_t ret = 0;
@@ -154,9 +161,11 @@ bool state::is_save_handle(void* handle) {
 bool state::is_processing_save() { return processing_save; }
 
 void state::export_replay(string_view fn) {
+    last_msg.clear();
     ofs::File file;
     if (!file.open(base_path + '\\' + string(fn), 1, false)) {
         spdlog::error("Failed to open replay file \"{}\" for writing", fn);
+        last_msg = "Failed to save replay file";
         return;
     }
     auto fret = file.writeln("-4,pixelsuft_overfusion," + std::to_string(replay_version));
@@ -185,24 +194,28 @@ void state::export_replay(string_view fn) {
 
 void state::import_replay(string_view fn) {
     ofs::File file;
+    last_msg.clear();
     if (!file.open(base_path + '\\' + string(fn), 0, false)) {
         spdlog::error("Failed to open replay file \"{}\" for reading", fn);
+        last_msg = "Failed to open replay file";
         return;
     }
     State temp_state;
     string line;
     bool is_of = false;
     while (file.readln(line)) {
-        if (line.size() < 2)
+        if (line.size() < 3)
             continue;
         auto start = line.find(',');
         if (start == string::npos) {
+            spdlog::error("Failed to parse replay header (frame)");
             is_of = false;
             break;
         }
         start++;
         auto end = line.find(',', start);
         if (end == string::npos) {
+            spdlog::error("Failed to parse replay header (name)");
             is_of = false;
             break;
         }
@@ -210,21 +223,23 @@ void state::import_replay(string_view fn) {
         end++;
         auto sub2 = line.substr(end);
         if (sub == "pixelsuft_overfusion") {
-            int st_ver = std::stoi(sub2);
+            int st_ver = str_to_int(sub2);
             if (st_ver != replay_version) {
-                last_msg = "Invalid replay version";
-                spdlog::error("Invalid replay version");
-                return;
+                spdlog::error("Invalid replay version (expected {}, got {})", replay_version,
+                              st_ver);
+                is_of = false;
+                break;
             }
             is_of = true;
         } else if (sub == "total") {
-            temp_state.total = std::stoi(sub2);
+            temp_state.total = str_to_int(sub2);
         } else if (sub == "rerecords") {
-            temp_state.rerec_count = std::stoi(sub2);
+            temp_state.rerec_count = str_to_int(sub2);
         } else if (sub == "events_begin") {
             break;
         } else {
             is_of = false;
+            spdlog::error("Invalid replay header");
             break;
         }
     }
@@ -235,10 +250,50 @@ void state::import_replay(string_view fn) {
         spdlog::error("Invalid replay file");
         return;
     }
+    bool need_sort = false;
     while (file.readln(line)) {
-        if (line.size() < 2)
+        if (line.size() < 3)
             continue;
+        Event event;
+        auto end = line.find(',');
+        if (end == string::npos) {
+            spdlog::warn("Invalid event line (frame)");
+            continue;
+        }
+        event.frame = str_to_int(line.substr(0, end));
+        end++;
+        auto start = end;
+        end = line.find(',', start);
+        if (end == string::npos) {
+            spdlog::warn("Invalid event line (event index)");
+            continue;
+        }
+        event.idx = str_to_int(line.substr(start, end));
+        end++;
+        switch (event.idx) {
+        case 1:
+            start = end;
+            end = line.find(',', start);
+            if (end == string::npos) {
+                spdlog::warn("Invalid key idex");
+                continue;
+            }
+            event.key.k = str_to_int(line.substr(start, end));
+            end++;
+            break;
+        default:
+            spdlog::warn("Invalid event index");
+            break;
+        }
+        if (!temp_state.ev.empty() && temp_state.ev.back().frame > event.frame) {
+            spdlog::warn("Invalid frame index order");
+            need_sort = true;
+        }
+        temp_state.ev.push_back(event);
     }
+    if (need_sort)
+        std::stable_sort(temp_state.ev.begin(), temp_state.ev.end(),
+                         [](const Event& a, const Event& b) { return a.frame < b.frame; });
     last_msg = "Replay imported";
     spdlog::info("Replay imported");
 }
