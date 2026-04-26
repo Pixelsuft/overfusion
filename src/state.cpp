@@ -275,11 +275,22 @@ void state::import_replay(string_view fn) {
             start = end;
             end = line.find(',', start);
             if (end == string::npos) {
-                spdlog::warn("Invalid key idex");
+                spdlog::warn("Invalid keyboard event line (key)");
                 continue;
             }
             event.key.k = str_to_int(line.substr(start, end));
+            if (event.key.k <= 0) {
+                spdlog::warn("Invalid keyboard event (key)");
+                continue;
+            }
             end++;
+            start = end;
+            end = line.find(',', start);
+            if (end == string::npos) {
+                spdlog::warn("Invalid keyboard event line (is_down)");
+                continue;
+            }
+            event.key.down = str_to_int(line.substr(start, end)) != 0;
             break;
         default:
             spdlog::warn("Invalid event index");
