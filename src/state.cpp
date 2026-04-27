@@ -257,7 +257,7 @@ void state::import_replay(string_view fn) {
             continue;
         Event event;
         auto end = line.find(',');
-        if (end == string::npos) {
+        if (end == string::npos || end == 0) {
             spdlog::warn("Invalid event line (frame)");
             continue;
         }
@@ -265,7 +265,7 @@ void state::import_replay(string_view fn) {
         end++;
         auto start = end;
         end = line.find(',', start);
-        if (end == string::npos) {
+        if (end == string::npos || end == start) {
             spdlog::warn("Invalid event line (event index)");
             continue;
         }

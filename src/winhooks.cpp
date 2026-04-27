@@ -15,7 +15,7 @@ using ost::string_view;
 using std::string;
 
 namespace winhooks {
-    static bool is_custom_window;
+static bool is_custom_window;
 }
 
 HWND hwnd;
@@ -193,7 +193,7 @@ static int WINAPI GetSystemMetricsH(int nIndex) {
     case SM_SAMEDISPLAYFORMAT:
         return 1;
     case SM_CYMENU:
-        return conf::get().disable_app_menu ? 0 : GetSystemMetricsO(nIndex);
+        return conf::get().disable_app_menu ? 0 : GetSystemMetricsO(SM_CYMENU);
     case SM_CXVSCROLL:
     case SM_CYHSCROLL:
     case SM_CYCAPTION:
@@ -270,4 +270,11 @@ void winhooks::after_ui_init() {
 
 void winhooks::sim_key_event(int vk, bool down) {
     MainWindowProcO(::hwnd, down ? WM_KEYDOWN : WM_KEYUP, vk, down ? 0 : ((1 << 30) | (1 << 31)));
+}
+
+std::pair<int, int> get_size() {
+    RECT rect;
+    if (!GetClientRect(::hwnd, &rect))
+        return {0, 0};
+    return {static_cast<int>(rect.right), static_cast<int>(rect.bottom)};
 }
