@@ -39,6 +39,8 @@ public:
     }
     virtual void after_dll_load(ost::string_view path, ost::string_view fn, void* mod) {}
     virtual void* after_proc_get(void* module, const char* proc, void* ret) { return ret; }
+    virtual std::pair<float, float> mouse_from_screen(int x, int y) { return {0.f, 0.f}; }
+    virtual std::pair<int, int> mouse_to_screen(float x, float y) { return {0, 0}; }
     virtual void* get_prop(PtrProp prop, void* data = nullptr) = 0;
     virtual ost::expected<void, std::string> save_state(ofs::File& file) = 0;
     virtual ost::expected<void, std::string> load_state(ofs::File& file) = 0;

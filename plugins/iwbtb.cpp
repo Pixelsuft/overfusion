@@ -4,6 +4,7 @@
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
+#include "../src/winhooks.hpp"
 #include "../tools/timer_fix.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
@@ -105,6 +106,22 @@ public:
             mem::write(base + 0x88cb, {0x90, 0x90, 0x90, 0x90, 0x90});
         }
     };
+
+    std::pair<float, float> mouse_from_screen(int x, int y) override {
+        if (x < 0 || y < 0)
+            return {-1.f, -1.f};
+        auto win_size = winhooks::get_size();
+        return {static_cast<float>(x) / static_cast<float>(win_size.first),
+                static_cast<float>(y) / static_cast<float>(win_size.second)};
+    }
+
+    std::pair<int, int> mouse_to_screen(float x, float y) override {
+        if (x < 0.f || y < 0.f)
+            return {-100, -100};
+        auto win_size = winhooks::get_size();
+        return {static_cast<int>(x * static_cast<float>(win_size.first)),
+                static_cast<int>(y * static_cast<float>(win_size.second))};
+    }
 
     void* get_prop(plug::PtrProp prop, void* data) override {
         switch (prop) {

@@ -10,6 +10,10 @@ struct Event {
             bool down;
         } key;
         struct {
+            float x;
+            float y;
+        } mouse;
+        struct {
             short x;
             short y;
             short z;

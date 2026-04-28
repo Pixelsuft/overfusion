@@ -3,6 +3,7 @@
 #include "ass.hpp"
 #include "config.hpp"
 #include "mem.hpp"
+#include "plugbase.hpp"
 #include "state.hpp"
 #include "ui.hpp"
 #include <Windows.h>
@@ -14,6 +15,12 @@ namespace input {
 static bool kbd_state[256];
 static std::vector<std::pair<int, bool>> kbd_que;
 } // namespace input
+
+extern HWND hwnd;
+extern HWND mhwnd;
+
+extern LRESULT(__stdcall* MainWindowProcO)(HWND, UINT, WPARAM, LPARAM);
+extern LRESULT(__stdcall* EditWindowProcO)(HWND, UINT, WPARAM, LPARAM);
 
 static SHORT(WINAPI* GetAsyncKeyStateO)(int nVirtKey);
 static SHORT WINAPI GetAsyncKeyStateH(int nVirtKey) {
@@ -42,9 +49,9 @@ static BOOL(WINAPI* GetCursorPosO)(LPPOINT lpPoint);
 static BOOL WINAPI GetCursorPosH(LPPOINT lpPoint) {
     if (ui::is_processing())
         return GetCursorPosO(lpPoint);
-    // TODO
-    lpPoint->x = -100;
-    lpPoint->y = -100;
+    auto mouse_pos = state::get_mouse_pos();
+    lpPoint->x = mouse_pos.first;
+    lpPoint->y = mouse_pos.second;
     return TRUE;
 }
 
@@ -96,6 +103,13 @@ static UINT WINAPI SendInputH(UINT cInputs, LPINPUT pInputs, int cbSize) {
 
 static BOOL WINAPI SetCursorPosH(int X, int Y) {
     spdlog::info("SetCursorPos({}, {})", X, Y);
+    if (0) {
+        // TODO: option to allow set cursor pos???
+        auto mouse_pos = state::get_mouse_pos();
+        mouse_pos.first = X;
+        mouse_pos.second = Y;
+        return TRUE;
+    }
     return FALSE;
 }
 
@@ -208,4 +222,22 @@ void input::handle_input_real(int vk, bool pressed) {
         }
         it++;
     }
+}
+
+void input::sim_key_event(int vk, bool down) {
+    if (plug::get().need_key_message)
+        MainWindowProcO(::hwnd, down ? WM_KEYDOWN : WM_KEYUP, vk,
+                        down ? 0 : ((1 << 30) | (1 << 31)));
+}
+
+void input::sim_mouse_event(int vk, bool down) {
+    // TODO: support other keys
+    EditWindowProcO(::mhwnd, down ? WM_LBUTTONDOWN : WM_LBUTTONUP, vk,
+                    down ? 0 : ((1 << 30) | (1 << 31)));
+}
+
+void input::sim_mouse_move(int x, int y) {
+    // TODO: option in config to send WM_MOUSEMOVE
+    if (!plug::get().need_key_message)
+        return;
 }

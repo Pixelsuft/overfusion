@@ -3,6 +3,7 @@
 #include "ofs.hpp"
 #include "sv.hpp"
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 namespace state {
@@ -29,6 +30,7 @@ void reset_game();
 void set_last_msg(ost::string_view msg);
 void export_replay(ost::string_view fn);
 void import_replay(ost::string_view fn);
+std::pair<int, int> get_mouse_pos();
 
 // TODO: maybe to ofs?
 template <typename T> static void write_bin(ofs::File& file, const std::vector<T>& data) {
@@ -39,6 +41,14 @@ template <typename T> static void write_bin(ofs::File& file, const std::vector<T
         return;
     // Everything is trivial, no problems, ok?
     ret = file.write(data.data(), size * sizeof(T));
+    ENSURE(ret);
+}
+
+template <typename A, typename B>
+static void write_bin(ofs::File& file, const std::pair<A, B>& val) {
+    auto ret = file.write(&val.first, sizeof(A));
+    ENSURE(ret);
+    ret = file.write(&val.second, sizeof(B));
     ENSURE(ret);
 }
 
@@ -57,6 +67,13 @@ template <typename T> static void load_bin(ofs::File& file, std::vector<T>& data
     }
     data.resize(size);
     ret = file.read(&data[0], size * sizeof(T));
+    ENSURE(ret);
+}
+
+template <typename A, typename B> static void load_bin(ofs::File& file, std::pair<A, B>& val) {
+    auto ret = file.read(&val.first, sizeof(A));
+    ENSURE(ret);
+    ret = file.read(&val.second, sizeof(B));
     ENSURE(ret);
 }
 

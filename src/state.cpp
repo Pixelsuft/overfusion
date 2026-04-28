@@ -4,11 +4,11 @@
 #include "config.hpp"
 #include "event.hpp"
 #include "files.hpp"
+#include "input.hpp"
 #include "ofs.hpp"
 #include "plugbase.hpp"
 #include "timehooks.hpp"
 #include "video.hpp"
-#include "winhooks.hpp"
 #include <Windows.h>
 #include <algorithm>
 #include <imgui.h>
@@ -34,17 +34,19 @@ struct State {
     std::vector<Event> temp_ev;
     std::vector<int> prev_kbd;
     uint64_t rerec_count;
+    std::pair<float, float> mouse_pos;
     int scene;
     int fps;
     int frames;
     int total;
 
-    State() : scene(0), fps(0), frames(0), total(0), rerec_count(0) {}
+    State() : scene(0), fps(0), frames(0), total(0), rerec_count(0), mouse_pos({-1.f, -1.f}) {}
 
     void clear_values() {
         scene = 0;
         frames = total = 0;
         fps = 0;
+        mouse_pos.first = mouse_pos.second = -1.f;
     }
 
     void clear_lists() {
@@ -106,7 +108,6 @@ static int64_t time_offset;
 static int need_scene_slot;
 static bool processing_save;
 static bool updating;
-static bool need_key_msg;
 static void* temp_handle;
 
 inline int str_to_int(const std::string& str) {
@@ -135,7 +136,6 @@ static void set_rerecords(uint64_t count) {
 
 void state::init() {
     base_path = string(files::get_cwd()) + '\\' + conf::get().project_name;
-    need_key_msg = plug::get().need_key_message;
     last_msg = "None";
     processing_save = false;
     updating = false;
@@ -332,6 +332,7 @@ void state::save_state(int slot) {
     write_bin(file, st.total);
     write_bin(file, st.rerec_count);
     write_bin(file, st.fps);
+    write_bin(file, st.mouse_pos);
     write_bin(file, st.prev_kbd);
     write_bin(file, st.temp_ev);
     write_bin(file, st.ev);
@@ -407,6 +408,7 @@ void state::load_state(int slot) {
     load_bin(file, temp_state.total);
     load_bin(file, temp_state.rerec_count);
     load_bin(file, temp_state.fps);
+    load_bin(file, temp_state.mouse_pos);
     load_bin(file, temp_state.prev_kbd);
     load_bin(file, temp_state.temp_ev);
     load_bin(file, temp_state.ev);
@@ -467,23 +469,44 @@ bool state::invalidate_process(string_view text) {
 static void exec_event(Event ev) {
     switch (ev.idx) {
     case 1:
+        // Key down/up
         if (ev.key.down == true) {
             auto it = std::find(repl_holding.begin(), repl_holding.end(), ev.key.k);
             if (it == repl_holding.end()) {
                 repl_holding.push_back(ev.key.k);
-                if (need_key_msg)
-                    winhooks::sim_key_event(ev.key.k, true);
+                input::sim_key_event(ev.key.k, true);
             } else
                 spdlog::error("Failed to simulate key: key {} is already down", ev.key.k);
         } else {
             auto it = std::find(repl_holding.begin(), repl_holding.end(), ev.key.k);
             if (it != repl_holding.end()) {
                 repl_holding.erase(it);
-                if (need_key_msg)
-                    winhooks::sim_key_event(ev.key.k, false);
+                input::sim_key_event(ev.key.k, false);
             } else
                 spdlog::error("Failed to simulate key: key {} is already up", ev.key.k);
         }
+        break;
+    case 2:
+        // Mouse down/up
+        // TODO
+        if (ev.key.down == true) {
+            auto it = std::find(repl_holding.begin(), repl_holding.end(), ev.key.k);
+            if (it == repl_holding.end()) {
+                repl_holding.push_back(ev.key.k);
+                input::sim_key_event(ev.key.k, true);
+            } else
+                spdlog::error("Failed to simulate key: key {} is already down", ev.key.k);
+        } else {
+            auto it = std::find(repl_holding.begin(), repl_holding.end(), ev.key.k);
+            if (it != repl_holding.end()) {
+                repl_holding.erase(it);
+                input::sim_key_event(ev.key.k, false);
+            } else
+                spdlog::error("Failed to simulate key: key {} is already up", ev.key.k);
+        }
+        break;
+    case 3:
+        // Mouse move
         break;
     default:
         // TODO: custom events for plugins
@@ -526,8 +549,7 @@ bool state::before_update() {
             auto pit = std::find(st.prev_kbd.begin(), st.prev_kbd.end(), *it);
             if (pit == st.prev_kbd.end()) {
                 // Down event
-                if (need_key_msg)
-                    winhooks::sim_key_event(*it, true);
+                input::sim_key_event(*it, true);
                 Event event;
                 event.frame = st.frames;
                 event.idx = 1;
@@ -540,8 +562,7 @@ bool state::before_update() {
             auto it = std::find(holding.begin(), holding.end(), *pit);
             if (it == holding.end()) {
                 // Up event
-                if (need_key_msg)
-                    winhooks::sim_key_event(*pit, false);
+                input::sim_key_event(*pit, false);
                 Event event;
                 event.frame = st.frames;
                 event.idx = 1;
@@ -633,6 +654,10 @@ void state::fill_kbd_state(unsigned char* data) {
         data[val] = 1;
 }
 
+std::pair<int, int> state::get_mouse_pos() {
+    return plug::get().mouse_to_screen(st.mouse_pos.first, st.mouse_pos.second);
+}
+
 void state::on_mode_switch() {
     auto& cfg = conf::get();
     repl_holding.clear(); // TODO: is this right????
@@ -658,6 +683,8 @@ void state::draw_info() {
 #endif
     ImGui::Text("Message: %s", last_msg.c_str());
     if (!cfg.fast_forward) {
+        auto win_pos = plug::get().mouse_to_screen(st.mouse_pos.first, st.mouse_pos.second);
+        ImGui::Text("Real mouse pos: %i, %i", win_pos.first, win_pos.second);
         ImGui::Text("Keys: TODO");
     }
 }
@@ -668,6 +695,7 @@ void state::reset_game() {
     st.frames = 0;
     st.total = 0;
     st.prev_kbd.clear();
+    st.mouse_pos.first = st.mouse_pos.second = -1.f;
     repl_holding.clear();
     repl_index = 0;
     void* pState = plug::get().get_prop(plug::PtrProp::PState);

@@ -16,7 +16,7 @@ using std::string;
 
 namespace winhooks {
 static bool is_custom_window;
-}
+} // namespace winhooks
 
 HWND hwnd;
 HWND mhwnd;
@@ -25,7 +25,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
                                                              LPARAM lParam);
 extern bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* lr);
 
-static LRESULT(__stdcall* MainWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT(__stdcall* MainWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DROPFILES)
         return 0;
@@ -52,7 +52,7 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     return ret;
 }
 
-static LRESULT(__stdcall* EditWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT(__stdcall* EditWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static LRESULT __stdcall EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DROPFILES)
         return 0;
@@ -268,11 +268,7 @@ void winhooks::after_ui_init() {
     ENSURE(EditWindowProcO != nullptr);
 }
 
-void winhooks::sim_key_event(int vk, bool down) {
-    MainWindowProcO(::hwnd, down ? WM_KEYDOWN : WM_KEYUP, vk, down ? 0 : ((1 << 30) | (1 << 31)));
-}
-
-std::pair<int, int> get_size() {
+std::pair<int, int> winhooks::get_size() {
     RECT rect;
     if (!GetClientRect(::hwnd, &rect))
         return {0, 0};
