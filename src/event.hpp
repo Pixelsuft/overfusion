@@ -13,15 +13,10 @@ struct Event {
             float x;
             float y;
         } mouse;
-        struct {
-            short x;
-            short y;
-            short z;
-            short w;
-        } dummy;
+        uint64_t dummy;
     };
     uint8_t idx;
 
-    Event() : dummy(0, 0, 0, 0), frame(0), idx(0) {}
+    Event() : dummy(0), frame(0), idx(0) {}
 };
 } // namespace event

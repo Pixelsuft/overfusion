@@ -10,12 +10,6 @@
 [submodule "spdlog"]
 	path = spdlog
 	url = https://github.com/gabime/spdlog
-[submodule "BackportCpp"]
-	path = BackportCpp
-	url = https://github.com/bitwizeshift/BackportCpp
-[submodule "inih"]
-	path = inih
-	url = https://github.com/benhoyt/inih
 [submodule "simpleini"]
 	path = simpleini
 	url = https://github.com/brofield/simpleini/
@@ -25,3 +19,6 @@
 [submodule "optional"]
 	path = optional
 	url = https://github.com/TartanLlama/optional
+[submodule "string_view-standalone"]
+	path = string_view-standalone
+	url = https://github.com/bitwizeshift/string_view-standalone

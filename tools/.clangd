@@ -4,7 +4,7 @@ CompileFlags:
     - "-I../minhook/include"
     - "-I../spdlog/include"
     - "-I../json/include"
-    - "-I../BackportCpp/include"
+    - "-I../string_view-standalone/include"
     - "-I../expected/include"
     - "-I../optional/include"
     - "-I../simpleini"

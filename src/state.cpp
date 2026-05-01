@@ -151,7 +151,7 @@ void state::init() {
     QueryPerformanceCounterO(&last_counter);
 }
 
-void state::set_last_msg(string_view msg) { last_msg = msg; }
+void state::set_last_msg(string_view msg) { last_msg = string(msg); }
 
 bool state::is_save_handle(void* handle) {
     /* return processing_save;*/
@@ -461,7 +461,7 @@ void state::load_state(int slot) {
 bool state::invalidate_process(string_view text) {
     if (!processing_save)
         return false;
-    state_error_text = text;
+    state_error_text = string(text);
     processing_save = false;
     return true;
 }
