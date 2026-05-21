@@ -30,9 +30,9 @@
 #define WM_UAHMEASUREMENUITEM 0x0094
 #define WM_UAHNCPAINTMENUPOPUP 0x0095
 
-typedef LONG WIN_NTDLL_NTSTATUS;
+using WIN_NTDLL_NTSTATUS = LONG;
 
-typedef struct {
+struct WIN_NTDLL_OSVERSIONINFOEXW {
     ULONG dwOSVersionInfoSize;
     ULONG dwMajorVersion;
     ULONG dwMinorVersion;
@@ -44,15 +44,15 @@ typedef struct {
     USHORT wSuiteMask;
     UCHAR wProductType;
     UCHAR wReserved;
-} WIN_NTDLL_OSVERSIONINFOEXW;
+};
 
-typedef enum {
+enum WinPreferredAppMode {
     WIN_APPMODE_DEFAULT,
     WIN_APPMODE_ALLOW_DARK,
     WIN_APPMODE_FORCE_DARK,
     WIN_APPMODE_FORCE_LIGHT,
     WIN_APPMODE_MAX
-} WinPreferredAppMode;
+};
 
 enum WINDOWCOMPOSITIONATTRIB {
     WCA_UNDEFINED = 0,
@@ -85,11 +85,11 @@ enum WINDOWCOMPOSITIONATTRIB {
     WCA_LAST = 27
 };
 
-typedef struct {
+struct WINDOWCOMPOSITIONATTRIBDATA {
     WINDOWCOMPOSITIONATTRIB Attrib;
     PVOID pvData;
     SIZE_T cbData;
-} WINDOWCOMPOSITIONATTRIBDATA;
+};
 
 typedef bool(WINAPI* ShouldAppsUseDarkMode_t)(void);
 typedef void(WINAPI* AllowDarkModeForWindow_t)(HWND, bool);
@@ -131,7 +131,7 @@ struct win_shit_type {
     int enabled;
 };
 
-typedef union tagUAHMENUITEMMETRICS {
+union UAHMENUITEMMETRICS {
     struct {
         DWORD cx;
         DWORD cy;
@@ -140,36 +140,36 @@ typedef union tagUAHMENUITEMMETRICS {
         DWORD cx;
         DWORD cy;
     } rgsizePopup[4];
-} UAHMENUITEMMETRICS;
+};
 
-typedef struct tagUAHMENUPOPUPMETRICS {
+struct UAHMENUPOPUPMETRICS {
     DWORD rgcx[4];
     DWORD fUpdateMaxWidths : 2;
-} UAHMENUPOPUPMETRICS;
+};
 
-typedef struct tagUAHMENU {
+struct UAHMENU {
     HMENU hmenu;
     HDC hdc;
     DWORD dwFlags;
-} UAHMENU;
+};
 
-typedef struct tagUAHMENUITEM {
+struct UAHMENUITEM {
     int iPosition;
     UAHMENUITEMMETRICS umim;
     UAHMENUPOPUPMETRICS umpm;
-} UAHMENUITEM;
+};
 
-typedef struct UAHDRAWMENUITEM {
+struct UAHDRAWMENUITEM {
     DRAWITEMSTRUCT dis;
     UAHMENU um;
     UAHMENUITEM umi;
-} UAHDRAWMENUITEM;
+};
 
-typedef struct tagUAHMEASUREMENUITEM {
+struct UAHMEASUREMENUITEM {
     MEASUREITEMSTRUCT mis;
     UAHMENU um;
     UAHMENUITEM umi;
-} UAHMEASUREMENUITEM;
+};
 
 static win_shit_type win_shit;
 
