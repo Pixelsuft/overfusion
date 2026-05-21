@@ -6,8 +6,6 @@
 #include <d3d9.h>
 #include <spdlog/spdlog.h>
 
-// TODO: replace many ENSUREs with normal checks
-
 using std::string;
 
 extern HWND hwnd;
@@ -162,7 +160,11 @@ void video::after_draw() {
     } else {
         success = PrintWindow(hwnd, memdc, PW_CLIENTONLY);
     }
-    ENSURE(success);
+    if (!success) {
+        spdlog::error("Failed to capture window");
+        stop();
+        return;
+    }
     int bits = GetDIBits(memdc, bmp, 0, size.second, data_buffer.data(), &bmi, DIB_RGB_COLORS);
     ENSURE(bits == size.second);
     if (!ffmpeg.write(data_buffer.data(), data_buffer.size())) {
@@ -198,12 +200,16 @@ void video::d3d9_draw(void* dev_ptr) {
         ASS(false);
     }
     d3d_ret = pDevice->GetRenderTargetData(pBackBuffer, pSysSurface);
-    ENSURE(d3d_ret == D3D_OK);
+    if (d3d_ret != D3D_OK) {
+        spdlog::error("Failed to capture D3D9 frame data");
+        pBackBuffer->Release();
+        return;
+    }
     ASS(data_buffer.size() == desc.Width * desc.Height * 4);
     ASS(data_buffer.size() == size.first * size.second * 4);
     D3DLOCKED_RECT lockedRect;
     d3d_ret = pSysSurface->LockRect(&lockedRect, nullptr, D3DLOCK_READONLY);
-    ENSURE(d3d_ret == D3D_OK);
+    // ENSURE(d3d_ret == D3D_OK);
     if (d3d_ret == D3D_OK) {
         unsigned char* pSrc = reinterpret_cast<unsigned char*>(lockedRect.pBits);
         for (UINT y = 0; y < desc.Height; ++y)
@@ -212,8 +218,9 @@ void video::d3d9_draw(void* dev_ptr) {
         pSysSurface->UnlockRect();
     }
     pBackBuffer->Release();
-    if (!ffmpeg.write(data_buffer.data(), data_buffer.size())) {
-        spdlog::error("Failed to write data to ffmpeg");
+    if (d3d_ret != D3D_OK || !ffmpeg.write(data_buffer.data(), data_buffer.size())) {
+        spdlog::error((d3d_ret == D3D_OK) ? "Failed to write data to ffmpeg"
+                                          : "Failed to lock D3D9 surface");
         stop();
     }
 }

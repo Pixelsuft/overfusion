@@ -13,7 +13,7 @@
   "allow_timers_fix": true,
   "allow_d3d9_recording": true,
   "allow_audio_hook": true,
-  "disable_audio": false,
+  "disable_audio": true,
   "record_audio": false,
   "support_audio_panning": true,
   "cmdline_append": " /D3D9 /DEBUG /NOF /NOVSYNC /MIS0 /NOC",
