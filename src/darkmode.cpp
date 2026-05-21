@@ -1,13 +1,10 @@
 #define WIN32_LEAN_AND_MEAN
 #include "winhooks.hpp"
 #include <Windows.h>
-#include <spdlog/spdlog.h>
 #include <vector>
 // Should be after Windows.h
 #include <Uxtheme.h>
 #include <vsstyle.h>
-#pragma comment(lib, "uxtheme.lib")
-// TODO: support < that Windows Vista
 
 #ifndef NTAPI
 #define NTAPI __stdcall
@@ -16,11 +13,9 @@
 #define LOAD_FUNC_ORD(func_name, func_ord)                                                         \
     do {                                                                                           \
         win_shit.func_name = reinterpret_cast<func_name##_t>(                                      \
-            GetProcAddress(win_shit.uxtheme_handle, MAKEINTRESOURCEA(func_ord)));                  \
-        if (win_shit.func_name == nullptr) {                                                       \
-            FreeLibrary(win_shit.uxtheme_handle);                                                  \
-            return true;                                                                           \
-        }                                                                                          \
+            GetProcAddress(uxtheme_handle, MAKEINTRESOURCEA(func_ord)));                           \
+        if (win_shit.func_name == nullptr)                                                         \
+            return;                                                                                \
     } while (0)
 
 #define WM_UAHDESTROYWINDOW 0x0090
@@ -107,9 +102,6 @@ typedef WIN_NTDLL_NTSTATUS(NTAPI* RtlGetVersion_t)(WIN_NTDLL_OSVERSIONINFOEXW*);
 
 struct win_shit_type {
     std::vector<HWND> cached_windows;
-    HMODULE uxtheme_handle;
-    HMODULE user32_handle;
-    HMODULE ntdll_handle;
     ShouldAppsUseDarkMode_t ShouldAppsUseDarkMode;
     AllowDarkModeForWindow_t AllowDarkModeForWindow;
     AllowDarkModeForApp_t AllowDarkModeForApp;
@@ -120,6 +112,11 @@ struct win_shit_type {
     SetPreferredAppMode_t SetPreferredAppMode;
     IsDarkModeAllowedForApp_t IsDarkModeAllowedForApp;
     SetWindowCompositionAttribute_t SetWindowCompositionAttribute;
+    HRESULT(WINAPI* CloseThemeData)(HTHEME);
+    HRESULT(WINAPI* DrawThemeTextEx)(HTHEME, HDC, int, int, LPCWSTR, int, DWORD, LPRECT,
+                                     const DTTOPTS*);
+    HTHEME(WINAPI* OpenThemeData)(HWND hwnd, LPCWSTR pszClassList);
+    HRESULT(WINAPI* SetWindowTheme)(HWND hwnd, LPCWSTR pszSubAppName, LPCWSTR pszSubIdList);
     RtlGetVersion_t RtlGetVersion;
     HTHEME g_menuTheme;
     HBRUSH g_brBarBackground;
@@ -185,34 +182,45 @@ void winhooks::init_win32_theme() {
     win_shit.g_brItemBackgroundHot = nullptr;
     win_shit.g_brItemBackgroundSelected = nullptr;
     win_shit.g_brItemBorder = nullptr;
-}
-
-static bool fix_win32_theme_real(HWND hwnd) {
-    // Just copy-pasted code from my game
-    win_shit.uxtheme_handle = nullptr;
-    win_shit.user32_handle = nullptr;
-    win_shit.ntdll_handle = GetModuleHandleW(L"ntdll.dll");
-    if (!win_shit.ntdll_handle)
-        return false;
+    win_shit.AllowDarkModeForWindow = nullptr;
+    win_shit.ShouldAppsUseDarkMode = nullptr;
+    win_shit.SetWindowCompositionAttribute = nullptr;
+    win_shit.CloseThemeData = nullptr;
+    win_shit.DrawThemeTextEx = nullptr;
+    win_shit.OpenThemeData = nullptr;
+    win_shit.SetWindowTheme = nullptr;
+    auto ntdll_handle = GetModuleHandleW(L"ntdll.dll");
+    if (!ntdll_handle)
+        return;
     win_shit.RtlGetVersion =
-        (RtlGetVersion_t)GetProcAddress(win_shit.ntdll_handle, "RtlGetVersion");
+        reinterpret_cast<RtlGetVersion_t>(GetProcAddress(ntdll_handle, "RtlGetVersion"));
     if (!win_shit.RtlGetVersion)
-        return false;
+        return;
     WIN_NTDLL_OSVERSIONINFOEXW os_ver;
     os_ver.dwOSVersionInfoSize = sizeof(WIN_NTDLL_OSVERSIONINFOEXW);
     win_shit.RtlGetVersion(&os_ver);
     win_shit.build_num = os_ver.dwBuildNumber;
     win_shit.build_num &= ~0xF0000000;
     if (win_shit.build_num < 17763)
-        return true; // Lol ur windoes is too old;
-    win_shit.uxtheme_handle = GetModuleHandleW(L"uxtheme.dll");
-    if (win_shit.uxtheme_handle == nullptr)
-        return false;
-    win_shit.user32_handle = GetModuleHandleW(L"user32.dll");
-    if (win_shit.user32_handle == nullptr)
-        return false;
-    win_shit.SetWindowCompositionAttribute = (SetWindowCompositionAttribute_t)GetProcAddress(
-        win_shit.user32_handle, "SetWindowCompositionAttribute");
+        return;
+    auto uxtheme_handle = GetModuleHandleW(L"uxtheme.dll");
+    if (uxtheme_handle == nullptr)
+        return;
+    win_shit.CloseThemeData = reinterpret_cast<decltype(win_shit.CloseThemeData)>(
+        GetProcAddress(uxtheme_handle, "CloseThemeData"));
+    win_shit.DrawThemeTextEx = reinterpret_cast<decltype(win_shit.DrawThemeTextEx)>(
+        GetProcAddress(uxtheme_handle, "DrawThemeTextEx"));
+    win_shit.OpenThemeData = reinterpret_cast<decltype(win_shit.OpenThemeData)>(
+        GetProcAddress(uxtheme_handle, "OpenThemeData"));
+    win_shit.SetWindowTheme = reinterpret_cast<decltype(win_shit.SetWindowTheme)>(
+        GetProcAddress(uxtheme_handle, "SetWindowTheme"));
+    if (win_shit.DrawThemeTextEx == nullptr || win_shit.OpenThemeData == nullptr)
+        win_shit.CloseThemeData = nullptr;
+    auto user32_handle = GetModuleHandleW(L"user32.dll");
+    if (user32_handle == nullptr)
+        return;
+    win_shit.SetWindowCompositionAttribute = reinterpret_cast<SetWindowCompositionAttribute_t>(
+        GetProcAddress(user32_handle, "SetWindowCompositionAttribute"));
     LOAD_FUNC_ORD(ShouldAppsUseDarkMode, 132);
     LOAD_FUNC_ORD(AllowDarkModeForWindow, 133);
     if (win_shit.build_num < 18362) {
@@ -233,14 +241,19 @@ static bool fix_win32_theme_real(HWND hwnd) {
         LOAD_FUNC_ORD(IsDarkModeAllowedForApp, 139);
     else
         win_shit.IsDarkModeAllowedForApp = nullptr;
-    // Let's begin our magic
     if (win_shit.AllowDarkModeForApp != nullptr)
         win_shit.AllowDarkModeForApp(true);
     if (win_shit.SetPreferredAppMode != nullptr)
         win_shit.SetPreferredAppMode(WIN_APPMODE_ALLOW_DARK);
-    win_shit.RefreshImmersiveColorPolicyState();
+    if (win_shit.RefreshImmersiveColorPolicyState)
+        win_shit.RefreshImmersiveColorPolicyState();
+}
+
+static void fix_win32_theme_real(HWND hwnd) {
+    if (!win_shit.AllowDarkModeForWindow)
+        return;
     win_shit.AllowDarkModeForWindow(hwnd, true);
-    if (win_shit.enabled == -1)
+    if (win_shit.enabled == -1 && win_shit.ShouldAppsUseDarkMode)
         win_shit.enabled = win_shit.ShouldAppsUseDarkMode() ? 1 : 0;
     bool enable_dark = win_shit.enabled != 0;
     BOOL win_dark = enable_dark ? TRUE : FALSE;
@@ -251,9 +264,8 @@ static bool fix_win32_theme_real(HWND hwnd) {
         WINDOWCOMPOSITIONATTRIBDATA data = {WCA_USEDARKMODECOLORS, &win_dark, sizeof(win_dark)};
         win_shit.SetWindowCompositionAttribute(hwnd, &data);
     }
-    // TODO
-    SetWindowTheme(hwnd, enable_dark ? L"DarkMode_Explorer" : nullptr, nullptr);
-    return true;
+    if (win_shit.SetWindowTheme)
+        win_shit.SetWindowTheme(hwnd, enable_dark ? L"DarkMode_Explorer" : nullptr, nullptr);
 }
 
 static void UAHDrawMenuNCBottomLine(HWND hWnd) {
@@ -281,6 +293,8 @@ static void UAHDrawMenuNCBottomLine(HWND hWnd) {
 }
 
 bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* lr) {
+    if (win_shit.CloseThemeData == nullptr)
+        return false;
     switch (message) {
     case WM_UAHDRAWMENU: {
         UAHMENU* pUDM = (UAHMENU*)lParam;
@@ -337,9 +351,8 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
                 dwFlags |= DT_HIDEPREFIX;
             }
         }
-        if (!win_shit.g_menuTheme) {
-            win_shit.g_menuTheme = OpenThemeData(hWnd, L"Menu");
-        }
+        if (!win_shit.g_menuTheme)
+            win_shit.g_menuTheme = win_shit.OpenThemeData(hWnd, L"Menu");
         DTTOPTS opts = {
             sizeof(opts), DTT_TEXTCOLOR,
             iTextStateID != MBI_DISABLED
@@ -348,8 +361,8 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
 
         FillRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, *pbrBackground);
         FrameRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, *pbrBorder);
-        DrawThemeTextEx(win_shit.g_menuTheme, pUDMI->um.hdc, MENU_BARITEM, MBI_NORMAL, menuString,
-                        mii.cch, dwFlags, &pUDMI->dis.rcItem, &opts);
+        win_shit.DrawThemeTextEx(win_shit.g_menuTheme, pUDMI->um.hdc, MENU_BARITEM, MBI_NORMAL,
+                                 menuString, mii.cch, dwFlags, &pUDMI->dis.rcItem, &opts);
 
         return true;
     }
@@ -362,7 +375,7 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
     case WM_THEMECHANGED: {
         win_shit.enabled = -1;
         if (win_shit.g_menuTheme) {
-            CloseThemeData(win_shit.g_menuTheme);
+            win_shit.CloseThemeData(win_shit.g_menuTheme);
             win_shit.g_menuTheme = nullptr;
         }
         for (auto& win_hwnd : win_shit.cached_windows)
