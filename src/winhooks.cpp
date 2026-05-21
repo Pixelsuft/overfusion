@@ -266,6 +266,7 @@ static int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UIN
 void winhooks::init() {
     is_custom_window = false;
     hwnd = mhwnd = nullptr;
+    winhooks::init_win32_theme();
     // HOOK_STR_ONLY("user32.dll", GetMonitorInfo);
     HOOK_STR_AUTO("user32.dll", CreateWindowEx);
     HOOK_STR_AUTO("user32.dll", SetWindowText);
