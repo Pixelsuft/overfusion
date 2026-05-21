@@ -202,6 +202,7 @@ public:
         lastRealTime = 0;
         virtualTimeAcc = 0.0;
         reinit_wav();
+        lock::CSLock lock(acs);
         if (capture)
             cache.push_back(this);
     }

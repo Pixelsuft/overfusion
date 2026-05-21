@@ -5,9 +5,14 @@
 #define ASS(expr) assert(expr)
 #define ENSURE(expr) assert(expr)
 #else
+#include "winhooks.hpp"
+
+#define ASS_TO_STRING(x) #x
 #define ASS(expr) __assume(expr)
-// TODO
 #define ENSURE(expr)                                                                               \
-    if (!(expr)) {                                                                                 \
-    }
+    do {                                                                                           \
+        if (!(expr))                                                                               \
+            winhooks::display_ensure_fail("ASSERTION FAILED AT " __FILE__                          \
+                                          ": " ASS_TO_STRING(expr));                               \
+    } while (0)
 #endif

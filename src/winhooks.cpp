@@ -5,6 +5,7 @@
 #include "config.hpp"
 #include "input.hpp"
 #include "mem.hpp"
+#include "state.hpp"
 #include "uconv.hpp"
 #include "ui.hpp"
 #include <Windows.h>
@@ -235,12 +236,40 @@ static BOOL WINAPI SetMenuH(HWND hWnd, HMENU hMenu) {
     return SetMenuO(hWnd, hMenu);
 }
 
+static int process_message_box(string_view text, string_view caption, UINT uType) {
+    if (ui::is_processing())
+        return 0;
+    if (uType == 0x30 && state::invalidate_process(text))
+        return IDOK;
+    if (caption == "Microsoft Visual C++ Runtime Library")
+        return 0;
+    spdlog::info("MessageBox: {} - {}", caption, text);
+    return 0;
+}
+
+static int(WINAPI* MessageBoxAO)(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
+static int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
+    auto ret = process_message_box(uconv::from_ansi(lpText), uconv::from_ansi(lpCaption), uType);
+    if (ret == 0)
+        ret = MessageBoxAO(hWnd, lpText, lpCaption, uType);
+    return ret;
+}
+
+static int(WINAPI* MessageBoxWO)(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType);
+static int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) {
+    auto ret = process_message_box(uconv::from_utf16(lpText), uconv::from_utf16(lpCaption), uType);
+    if (ret == 0)
+        ret = MessageBoxWO(hWnd, lpText, lpCaption, uType);
+    return ret;
+}
+
 void winhooks::init() {
     is_custom_window = false;
     hwnd = mhwnd = nullptr;
     // HOOK_STR_ONLY("user32.dll", GetMonitorInfo);
     HOOK_STR_AUTO("user32.dll", CreateWindowEx);
     HOOK_STR_AUTO("user32.dll", SetWindowText);
+    HOOK_STR_AUTO("user32.dll", MessageBox);
     HOOK_STR_ONLY("user32.dll", DialogBoxParam);
     HOOK_STR_ONLY("user32.dll", SetWindowsHookEx);
     HOOK_AUTO("user32.dll", GetFocus);
@@ -273,4 +302,11 @@ std::pair<int, int> winhooks::get_size() {
     if (!GetClientRect(::hwnd, &rect))
         return {0, 0};
     return {static_cast<int>(rect.right), static_cast<int>(rect.bottom)};
+}
+
+void winhooks::display_ensure_fail(ost::string_view text) {
+    auto buf = uconv::to_utf16(text);
+    ENSURE(buf != nullptr);
+    MessageBoxWO(::hwnd, buf, L"Assertion failed!", MB_ICONERROR);
+    std::free(buf);
 }

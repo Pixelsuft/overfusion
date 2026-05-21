@@ -4,9 +4,7 @@
 #include "config.hpp"
 #include "mem.hpp"
 #include "plugbase.hpp"
-#include "state.hpp"
 #include "uconv.hpp"
-#include "ui.hpp"
 #include <WinSock2.h>
 #include <Windows.h>
 #include <joystickapi.h>
@@ -48,33 +46,6 @@ static BOOL ShellExecuteExWH(SHELLEXECUTEINFOW* pExecInfo) {
     spdlog::info("ShellExecuteExW: {} {}", uconv::from_utf16(pExecInfo->lpVerb),
                  uconv::from_utf16(pExecInfo->lpFile));
     return FALSE;
-}
-
-static int process_message_box(string_view text, string_view caption, UINT uType) {
-    if (ui::is_processing())
-        return 0;
-    if (uType == 0x30 && state::invalidate_process(text))
-        return IDOK;
-    if (caption == "Microsoft Visual C++ Runtime Library")
-        return 0;
-    spdlog::info("MessageBox: {} - {}", caption, text);
-    return 0;
-}
-
-static int(WINAPI* MessageBoxAO)(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
-static int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
-    auto ret = process_message_box(uconv::from_ansi(lpText), uconv::from_ansi(lpCaption), uType);
-    if (ret == 0)
-        ret = MessageBoxAO(hWnd, lpText, lpCaption, uType);
-    return ret;
-}
-
-static int(WINAPI* MessageBoxWO)(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType);
-static int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) {
-    auto ret = process_message_box(uconv::from_utf16(lpText), uconv::from_utf16(lpCaption), uType);
-    if (ret == 0)
-        ret = MessageBoxWO(hWnd, lpText, lpCaption, uType);
-    return ret;
 }
 
 static BOOL WINAPI EnumSystemLocalesAH(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD dwFlags) {
@@ -159,12 +130,26 @@ static int WINAPI WSAStartupH(WORD wVersionRequired, LPWSADATA lpWSAData) {
 static int WINAPI bindH(SOCKET s, const sockaddr* addr, int namelen) { return SOCKET_ERROR; }
 
 static BOOL __stdcall GetUserNameAH(LPSTR lpBuffer, LPDWORD pcbBuffer) {
+    if (!pcbBuffer)
+        return FALSE;
+    *pcbBuffer = 11;
+    if (!lpBuffer) {
+        *pcbBuffer = 11;
+        return FALSE;
+    }
     spdlog::info("Faking user name: OverFusion");
     strcpy(lpBuffer, "OverFusion");
     return TRUE;
 }
 
 static BOOL __stdcall GetUserNameWH(LPWSTR lpBuffer, LPDWORD pcbBuffer) {
+    if (!pcbBuffer)
+        return FALSE;
+    *pcbBuffer = 11;
+    if (!lpBuffer) {
+        *pcbBuffer = 11;
+        return FALSE;
+    }
     spdlog::info("Faking user name: OverFusion");
     wcscpy(lpBuffer, L"OverFusion");
     return TRUE;
@@ -286,7 +271,6 @@ void extrahooks::init() {
         }
     }();
     // TODO: GetDateFormatEx, GetLocaleInfoEx, GetTimeFormatEx, GetUserDefaultLocaleName
-    HOOK_STR_AUTO("user32.dll", MessageBox);
     HOOK_AUTO("shell32.dll", DragAcceptFiles);
     HOOK_STR_ONLY("shell32.dll", DragQueryFile);
     HOOK_STR_ONLY("shell32.dll", ShellExecute);

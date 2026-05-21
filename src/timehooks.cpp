@@ -91,6 +91,7 @@ BOOL(WINAPI* QueryPerformanceCounterO)(LARGE_INTEGER* lpFrequency) = QueryPerfor
 static BOOL WINAPI QueryPerformanceCounterH(LARGE_INTEGER* lpFrequency) {
     if (ui::is_processing())
         return QueryPerformanceCounterO(lpFrequency);
+    // TODO: RETURN actual precise value and 10000000 freq
     lpFrequency->QuadPart = state::get_time(state::TimeOffset::None) * 1000 +
                             state::get_time(state::TimeOffset::Reminder);
     return TRUE;
