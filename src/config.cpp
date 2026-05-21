@@ -229,6 +229,7 @@ Config::Config() {
     disable_audio = false;
     record_audio = false;
     support_audio_panning = true;
+    allow_setting_cursor_pos = false;
 }
 
 #define READ_BOOL(name)                                                                            \
@@ -258,6 +259,7 @@ void Config::read() {
     READ_BOOL(disable_audio);
     READ_BOOL(record_audio);
     READ_BOOL(support_audio_panning);
+    READ_BOOL(allow_setting_cursor_pos);
     if (record_audio && !allow_audio_hook) {
         spdlog::warn("Recording audio is enabled, but audio hook is not, disabling");
         record_audio = false;

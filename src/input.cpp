@@ -230,16 +230,16 @@ void input::sim_key_event(int vk, bool down) {
                         down ? 0 : ((1 << 30) | (1 << 31)));
 }
 
-void input::sim_mouse_event(int button, bool down) {
+void input::sim_mouse_event(int vk, bool down) {
     UINT msg;
-    switch (button) {
-    case 1:
+    switch (vk) {
+    case VK_LBUTTON:
         msg = down ? WM_LBUTTONDOWN : WM_LBUTTONUP;
         break;
-    case 2:
+    case VK_MBUTTON:
         msg = down ? WM_MBUTTONDOWN : WM_MBUTTONUP;
         break;
-    case 3:
+    case VK_RBUTTON:
         msg = down ? WM_RBUTTONDOWN : WM_RBUTTONUP;
         break;
     default:
@@ -247,7 +247,8 @@ void input::sim_mouse_event(int button, bool down) {
         return;
     }
     // TODO: implement lParam + wParam if needed
-    EditWindowProcO(::mhwnd, msg, button, down ? 0 : ((1 << 30) | (1 << 31)));
+    state::set_key_down(vk, down);
+    EditWindowProcO(::mhwnd, msg, vk, down ? 0 : ((1 << 30) | (1 << 31)));
 }
 
 void input::sim_mouse_move(int x, int y) {

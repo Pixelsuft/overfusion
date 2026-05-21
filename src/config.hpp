@@ -52,6 +52,7 @@ public:
     bool disable_audio;
     bool record_audio;
     bool support_audio_panning;
+    bool allow_setting_cursor_pos;
 
     Config();
     void read();

@@ -1,5 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/config.hpp"
+#include "../src/files.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
@@ -14,7 +15,7 @@ class PlugIwbtg final : public plug::PlugBase {
 public:
     PlugIwbtg() {
         name = "I Wanna Be The Guy";
-        cmdline_append = " /SF \"E:\\Games\\IWBTG\\iwbtg.exe\" /SO94208";
+        cmdline_append = string(" /SF \"") + string(files::get_cwd()) + "\\iwbtg.exe\" /SO94208";
     }
 
     bool pre_init() override {
