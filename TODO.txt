@@ -1,3 +1,4 @@
+[ ] Better fix on_plugin_check for jumbo
 [ ] Use IAT hooks where possible
 [ ] Re-record count (separate file in the project dir)
 [ ] Fix that ugly audio recording implementation

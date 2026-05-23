@@ -170,7 +170,7 @@ public:
     }
 };
 
-static void on_plugin_check(plug::PlugBase** buf, bool& check) {
+static void on_plugin_check_iwtdemo(plug::PlugBase** buf, bool& check) {
     if (buf) {
         *buf = new PlugIwtDemo;
     } else {
@@ -178,4 +178,4 @@ static void on_plugin_check(plug::PlugBase** buf, bool& check) {
     }
 }
 
-PLUG_REG(PlugIwtDemo, on_plugin_check)
+PLUG_REG(PlugIwtDemo, on_plugin_check_iwtdemo)

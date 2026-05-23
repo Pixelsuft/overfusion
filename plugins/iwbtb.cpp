@@ -178,7 +178,7 @@ public:
     }
 };
 
-static void on_plugin_check(plug::PlugBase** buf, bool& check) {
+static void on_plugin_check_iwbtb(plug::PlugBase** buf, bool& check) {
     if (buf) {
         *buf = new PlugIwbtb;
     } else {
@@ -186,4 +186,4 @@ static void on_plugin_check(plug::PlugBase** buf, bool& check) {
     }
 }
 
-PLUG_REG(PlugIwbtb, on_plugin_check)
+PLUG_REG(PlugIwbtb, on_plugin_check_iwbtb)

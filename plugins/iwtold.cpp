@@ -150,7 +150,7 @@ public:
     }
 };
 
-static void on_plugin_check(plug::PlugBase** buf, bool& check) {
+static void on_plugin_check_iwtold(plug::PlugBase** buf, bool& check) {
     if (buf) {
         *buf = new PlugIwtOld;
     } else {
@@ -158,4 +158,4 @@ static void on_plugin_check(plug::PlugBase** buf, bool& check) {
     }
 }
 
-PLUG_REG(PlugIwtOld, on_plugin_check)
+PLUG_REG(PlugIwtOld, on_plugin_check_iwtold)
