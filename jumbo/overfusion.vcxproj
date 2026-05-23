@@ -39,7 +39,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO;_HAS_EXCEPTIONS=0
+      <PreprocessorDefinitions>_HAS_EXCEPTIONS=0
 ;SPDLOG_COMPILED_LIB;WIN32;NDEBUG;OVERFUSION_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>

@@ -1,6 +1,10 @@
 #define JUMBO_BUILD
 #define IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DISABLE_DEBUG_TOOLS
+#define IMGUI_DISABLE_DEMO_WINDOWS
+#define JSON_NOEXCEPTION
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_INFO
+#define MINHOOK_NO_ASSERT
 #define _WINSOCKAPI_
 #include "../imgui/backends/imgui_impl_dx9.cpp"
 #include "../imgui/backends/imgui_impl_win32.cpp"
