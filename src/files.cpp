@@ -1035,3 +1035,22 @@ void files::draw_ui() {
             ImGui::Text("%s: deleted", it.first.c_str());
     }
 }
+
+void files::clear_fs() {
+    lock::CSLock mylock(fcs);
+    auto it = file_map.begin();
+    while (it != file_map.end()) {
+        if (it->second.refcount > 0) {
+            spdlog::error("Cannot clear file '{}' because it is in use (refcount: {})", it->first,
+                          it->second.refcount);
+            ++it;
+        } else {
+            if (it->second.data) {
+                std::free(it->second.data);
+                it->second.data = nullptr;
+                it->second.size = 0;
+            }
+            it = file_map.erase(it);
+        }
+    }
+}

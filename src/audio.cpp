@@ -394,6 +394,8 @@ void audio::init() {
     }
     if (!cfg.allow_audio_hook && !cfg.disable_audio)
         return;
+    if (cfg.record_audio)
+        spdlog::warn("Audio recording is still in BETA");
     capture = cfg.record_audio;
     last_uid = 0;
     last_time = 0;
