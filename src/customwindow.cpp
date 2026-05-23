@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include "customwindow.hpp"
 #include "ass.hpp"
+#include "config.hpp"
 #include "input.hpp"
 #include "ui.hpp"
 #include "winhooks.hpp"
@@ -39,12 +40,13 @@ static HICON GetWindowIcon(HWND targetHwnd) {
 }
 
 static LRESULT WINAPI CustomWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    if (msg != WM_KEYDOWN && msg != WM_KEYUP &&
-        ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-        return true;
+    if ((msg != WM_KEYDOWN && msg != WM_KEYUP) || conf::get().show_menu)
+        ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
     switch (msg) {
     case WM_KEYDOWN:
     case WM_KEYUP: {
+        // if (ImGui::GetIO().WantCaptureKeyboard && msg == WM_KEYDOWN)
+        //     break;
         input::handle_input(wParam, msg == WM_KEYDOWN);
         break;
     }

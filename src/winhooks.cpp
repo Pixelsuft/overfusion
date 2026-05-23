@@ -230,7 +230,7 @@ static INT_PTR WINAPI DialogBoxParamWH(HINSTANCE hInstance, LPCWSTR lpTemplateNa
 static BOOL(WINAPI* SetMenuO)(HWND hWnd, HMENU hMenu);
 static BOOL WINAPI SetMenuH(HWND hWnd, HMENU hMenu) {
     if (conf::get().disable_app_menu && hWnd == ::hwnd) {
-        spdlog::warn("Failing to set menu");
+        spdlog::info("Failing to set menu");
         return FALSE;
     }
     return SetMenuO(hWnd, hMenu);

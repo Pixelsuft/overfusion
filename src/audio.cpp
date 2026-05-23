@@ -382,6 +382,16 @@ static MCIERROR mciSendCommandWH(MCIDEVICEID IDDevice, UINT uMsg, DWORD_PTR fdwC
 
 void audio::init() {
     auto& cfg = conf::get();
+    if (!cfg.allow_audio_hook && cfg.record_audio) {
+        spdlog::warn("Audio hook was disabled, but audio recording is enabled; enabling audio hook");
+        cfg.disable_audio = false;
+        cfg.allow_audio_hook = true;
+    }
+    else if (cfg.disable_audio && cfg.record_audio) {
+        spdlog::warn("Audio is disabled, but recording is enabled; enabling audio");
+        cfg.disable_audio = false;
+        cfg.allow_audio_hook = true;
+    }
     if (!cfg.allow_audio_hook && !cfg.disable_audio)
         return;
     capture = cfg.record_audio;

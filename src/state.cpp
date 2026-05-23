@@ -31,6 +31,9 @@ extern BOOL(WINAPI* QueryPerformanceCounterO)(LARGE_INTEGER* lpFrequency);
 
 struct State {
     std::vector<Event> ev;
+    // TODO: maybe keep keydowns here instead of holding?
+    // and clear them when saving state?
+    // or just duplicate them here? (this one might be the best)
     std::vector<Event> temp_ev;
     std::vector<int> prev_kbd;
     uint64_t rerec_count;
@@ -81,12 +84,12 @@ struct State {
                 if (it == ret.end())
                     ret.push_back(e.key.k);
                 else
-                    spdlog::error("Key {} is double-pressed", e.key.k);
+                    spdlog::error("Key {} is double-pressed at frame {}", e.key.k, e.frame);
             } else {
                 if (it != ret.end())
                     ret.erase(it);
                 else
-                    spdlog::error("Key {} is double-released", e.key.k);
+                    spdlog::error("Key {} is double-released at frame {}", e.key.k, e.frame);
             }
         }
         return ret;
@@ -287,11 +290,11 @@ void state::import_replay(string_view fn) {
             event.key.down = str_to_int(line.substr(++end)) != 0;
             break;
         default:
-            spdlog::warn("Invalid event index");
+            spdlog::warn("Invalid event index, skipping");
             break;
         }
         if (!temp_state.ev.empty() && temp_state.ev.back().frame > event.frame) {
-            spdlog::warn("Invalid frame index order");
+            spdlog::warn("Invalid frame index order, fixing");
             need_sort = true;
         }
         temp_state.ev.push_back(event);
@@ -299,6 +302,10 @@ void state::import_replay(string_view fn) {
     if (need_sort)
         std::stable_sort(temp_state.ev.begin(), temp_state.ev.end(),
                          [](const Event& a, const Event& b) { return a.frame < b.frame; });
+    if (!temp_state.ev.empty() && temp_state.ev.back().frame >= temp_state.total) {
+        spdlog::warn("Invalid total frames counter, fixing");
+        temp_state.total = temp_state.ev.back().frame + 1;
+    }
     st.ev = std::move(temp_state.ev);
     st.total = temp_state.total;
     st.rerec_count = temp_state.rerec_count;
@@ -446,7 +453,7 @@ void state::load_state(int slot) {
         st = std::move(temp_state);
         // TODO: maybe trim on the first frame, not directly when loading?
         st.trim();
-        repl_index = 0;
+        repl_index = st.calc_current_index();
     }
     st.rerec_count = std::max(st.rerec_count, get_rerecords()) + 1;
     set_rerecords(st.rerec_count);
@@ -493,16 +500,16 @@ static void exec_event(Event ev) {
             auto it = std::find(repl_holding.begin(), repl_holding.end(), ev.key.k);
             if (it == repl_holding.end()) {
                 repl_holding.push_back(ev.key.k);
-                input::sim_key_event(ev.key.k, true);
+                input::sim_mouse_event(ev.key.k, true);
             } else
-                spdlog::error("Failed to simulate key: key {} is already down", ev.key.k);
+                spdlog::error("Failed to simulate mouse: button {} is already down", ev.key.k);
         } else {
             auto it = std::find(repl_holding.begin(), repl_holding.end(), ev.key.k);
             if (it != repl_holding.end()) {
                 repl_holding.erase(it);
-                input::sim_key_event(ev.key.k, false);
+                input::sim_mouse_event(ev.key.k, false);
             } else
-                spdlog::error("Failed to simulate key: key {} is already up", ev.key.k);
+                spdlog::error("Failed to simulate mouse: button {} is already up", ev.key.k);
         }
         break;
     case 3:
@@ -536,15 +543,22 @@ bool state::before_update() {
         return false;
     updating = true;
     if (cfg.is_replay) {
+        repl_holding = st.prev_kbd;
         for (; repl_index < st.ev.size(); repl_index++) {
             Event& ev = st.ev[repl_index];
             if (ev.frame > st.frames)
                 break;
-            if (ev.frame < st.frames)
+            if (ev.frame < st.frames) {
+                ASS(false);
                 continue;
+            }
             exec_event(ev);
         }
     } else {
+        for (auto& temp : st.temp_ev) {
+            exec_event(temp);
+        }
+        st.temp_ev.clear();
         for (auto it = holding.begin(); it != holding.end(); it++) {
             auto pit = std::find(st.prev_kbd.begin(), st.prev_kbd.end(), *it);
             if (pit == st.prev_kbd.end()) {
@@ -587,6 +601,7 @@ void state::after_update() {
         if (cfg.is_replay && st.frames == st.total && st.frames > 0) {
             cfg.is_paused = true;
             cfg.is_replay = false;
+            ENSURE(repl_index == st.ev.size());
             on_mode_switch();
             last_msg = "Switched to recording";
         }
@@ -667,7 +682,7 @@ std::pair<int, int> state::get_mouse_pos() {
 
 void state::on_mode_switch() {
     auto& cfg = conf::get();
-    repl_holding.clear(); // TODO: is this right????
+    repl_holding.clear();
     if (cfg.is_replay) {
         repl_index = st.calc_current_index();
     } else {
@@ -686,8 +701,9 @@ void state::draw_info() {
     ImGui::Text("Re-records: %llu", st.rerec_count);
 #ifdef _DEBUG
     ImGui::Text("Replay index: %i", repl_index);
-    ImGui::Text("Event count: %llu", static_cast<uint64_t>(st.ev.size()));
+    ImGui::Text("Event count: %i", static_cast<int>(st.ev.size()));
 #endif
+    ImGui::Text("Temp event count: %i", static_cast<int>(st.temp_ev.size()));
     ImGui::Text("Message: %s", last_msg.c_str());
     if (!cfg.fast_forward) {
         auto win_pos = plug::get().mouse_to_screen(st.mouse_pos.first, st.mouse_pos.second);
