@@ -666,8 +666,8 @@ void state::set_key_down(int vk, bool down) {
     } else if (!down) {
         if (it != holding.end())
             holding.erase(it);
-        else
-            spdlog::warn("Cannot double release key {}", vk);
+        // else
+        //     spdlog::warn("Cannot double release key {}", vk);
     }
 }
 
@@ -697,17 +697,22 @@ void state::draw_info() {
     ImGui::Text("%s%s", cfg.is_replay ? "[REPLAY]" : "[RECORD]",
                 video::is_recording() ? " [VIDEO]" : "");
     ImGui::Text("Frames: %i / %i", st.frames, st.total);
-    ImGui::Text("Scene: %i", st.scene);
-    ImGui::Text("Re-records: %llu", st.rerec_count);
+    if (!cfg.fast_forward) {
+        ImGui::Text("Scene: %i", st.scene);
+        ImGui::Text("Re-records: %llu", st.rerec_count);
+    }
 #ifdef _DEBUG
-    ImGui::Text("Replay index: %i", repl_index);
-    ImGui::Text("Event count: %i", static_cast<int>(st.ev.size()));
+    if (!cfg.fast_forward) {
+        ImGui::Text("Replay index: %i", repl_index);
+        ImGui::Text("Event count: %i", static_cast<int>(st.ev.size()));
+    }
 #endif
-    ImGui::Text("Temp event count: %i", static_cast<int>(st.temp_ev.size()));
+    if (!cfg.fast_forward)
+        ImGui::Text("Temp event count: %i", static_cast<int>(st.temp_ev.size()));
     ImGui::Text("Message: %s", last_msg.c_str());
     if (!cfg.fast_forward) {
         auto win_pos = plug::get().mouse_to_screen(st.mouse_pos.first, st.mouse_pos.second);
-        ImGui::Text("Real mouse pos: %i, %i", win_pos.first, win_pos.second);
+        ImGui::Text("Window mouse pos: %i, %i", win_pos.first, win_pos.second);
         ImGui::Text("Keys: TODO");
     }
 }

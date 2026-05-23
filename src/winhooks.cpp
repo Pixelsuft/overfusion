@@ -306,6 +306,14 @@ std::pair<int, int> winhooks::get_size() {
     return {static_cast<int>(rect.right), static_cast<int>(rect.bottom)};
 }
 
+std::pair<int, int> winhooks::get_real_mouse_pos() {
+    POINT pt;
+    if (GetCursorPos(&pt) && ScreenToClient(::hwnd, &pt))
+        return {pt.x, pt.y};
+    spdlog::warn("Failed to get mouse pos");
+    return {-100, -100};
+}
+
 void winhooks::display_ensure_fail(ost::string_view text) {
     auto buf = uconv::to_utf16(text);
     ENSURE(buf != nullptr);

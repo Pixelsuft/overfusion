@@ -8,5 +8,6 @@ void init_win32_theme();
 void init();
 void after_ui_init();
 std::pair<int, int> get_size();
+std::pair<int, int> get_real_mouse_pos();
 void display_ensure_fail(ost::string_view text);
 } // namespace winhooks
