@@ -98,8 +98,8 @@ struct State {
 
 namespace state {
 static State st;
-static std::vector<int> holding;
-static std::vector<int> repl_holding;
+static std::vector<int> real_holding;
+static std::vector<int> cur_holding;
 static LARGE_INTEGER last_counter;
 static double const_dt;
 static double to_wait;
@@ -150,6 +150,8 @@ void state::init() {
     time_offset = 0;
     repl_index = 0;
     need_scene_slot = -10000;
+    st.temp_ev.reserve(1024);
+    st.ev.reserve(4096);
     spdlog::debug("Init FPS: {}", st.fps);
     QueryPerformanceFrequencyO(&last_counter);
     freq = (double)last_counter.QuadPart;
@@ -475,52 +477,57 @@ bool state::invalidate_process(string_view text) {
     return true;
 }
 
-static void exec_event(Event ev) {
+static bool exec_event(Event ev) {
     switch (ev.idx) {
     case 1:
         // Key down/up
         if (ev.key.down == true) {
-            auto it = std::find(state::repl_holding.begin(), state::repl_holding.end(), ev.key.k);
-            if (it == state::repl_holding.end()) {
-                state::repl_holding.push_back(ev.key.k);
+            auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), ev.key.k);
+            if (it == state::cur_holding.end()) {
+                state::cur_holding.push_back(ev.key.k);
                 input::sim_key_event(ev.key.k, true);
-            } else
+                return true;
+            } else {
                 spdlog::error("Failed to simulate key: key {} is already down", ev.key.k);
+                return false;
+            }
         } else {
-            auto it = std::find(state::repl_holding.begin(), state::repl_holding.end(), ev.key.k);
-            if (it != state::repl_holding.end()) {
-                state::repl_holding.erase(it);
+            auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), ev.key.k);
+            if (it != state::cur_holding.end()) {
+                state::cur_holding.erase(it);
                 input::sim_key_event(ev.key.k, false);
-            } else
+                return true;
+            } else {
                 spdlog::error("Failed to simulate key: key {} is already up", ev.key.k);
+                return false;
+            }
         }
-        break;
     case 2:
         // Mouse down/up
         // TODO
         if (ev.key.down == true) {
-            auto it = std::find(state::repl_holding.begin(), state::repl_holding.end(), ev.key.k);
-            if (it == state::repl_holding.end()) {
-                state::repl_holding.push_back(ev.key.k);
+            auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), ev.key.k);
+            if (it == state::cur_holding.end()) {
+                state::cur_holding.push_back(ev.key.k);
                 input::sim_mouse_event(ev.key.k, true);
             } else
                 spdlog::error("Failed to simulate mouse: button {} is already down", ev.key.k);
         } else {
-            auto it = std::find(state::repl_holding.begin(), state::repl_holding.end(), ev.key.k);
-            if (it != state::repl_holding.end()) {
-                state::repl_holding.erase(it);
+            auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), ev.key.k);
+            if (it != state::cur_holding.end()) {
+                state::cur_holding.erase(it);
                 input::sim_mouse_event(ev.key.k, false);
             } else
                 spdlog::error("Failed to simulate mouse: button {} is already up", ev.key.k);
         }
-        break;
+        return true;
     case 3:
         // Mouse move
-        break;
+        return true;
     default:
         // TODO: custom events for plugins
         ASS(false);
-        break;
+        return false;
     }
 }
 
@@ -544,7 +551,7 @@ bool state::before_update() {
     if ((cfg.is_paused && !cfg.need_advance) || need_scene_slot != -10000)
         return false;
     updating = true;
-    repl_holding = st.prev_kbd;
+    cur_holding = st.prev_kbd;
     if (cfg.is_replay) {
         for (; repl_index < st.ev.size(); repl_index++) {
             Event& ev = st.ev[repl_index];
@@ -557,40 +564,36 @@ bool state::before_update() {
             exec_event(ev);
         }
     } else {
-        st.ev.insert(st.ev.end(), st.temp_ev.begin(), st.temp_ev.end());
-        for (auto& temp : st.temp_ev)
-            exec_event(temp);
-        st.temp_ev.clear();
-        // TODO: refactor and put them into temp_ev
-        // (emporary untill better solution, see another TODO)
-        for (auto it = holding.begin(); it != holding.end(); it++) {
+        for (auto it = real_holding.begin(); it != real_holding.end(); it++) {
             auto pit = std::find(st.prev_kbd.begin(), st.prev_kbd.end(), *it);
             if (pit == st.prev_kbd.end()) {
                 // Down event
-                input::sim_key_event(*it, true);
                 Event event;
                 event.frame = st.frames;
                 event.idx = 1;
                 event.key.k = static_cast<short>(*it);
                 event.key.down = true;
-                st.ev.push_back(event);
+                st.temp_ev.push_back(event);
             }
         }
         for (auto pit = st.prev_kbd.begin(); pit != st.prev_kbd.end(); pit++) {
-            auto it = std::find(holding.begin(), holding.end(), *pit);
-            if (it == holding.end()) {
+            auto it = std::find(real_holding.begin(), real_holding.end(), *pit);
+            if (it == real_holding.end()) {
                 // Up event
-                input::sim_key_event(*pit, false);
                 Event event;
                 event.frame = st.frames;
                 event.idx = 1;
                 event.key.k = static_cast<short>(*pit);
                 event.key.down = false;
-                st.ev.push_back(event);
+                st.temp_ev.push_back(event);
             }
         }
+        st.ev.insert(st.ev.end(), st.temp_ev.begin(), st.temp_ev.end());
+        for (auto& temp : st.temp_ev)
+            exec_event(temp);
+        st.temp_ev.clear();
     }
-    st.prev_kbd = cfg.is_replay ? repl_holding : holding;
+    st.prev_kbd = cur_holding;
     return true;
 }
 
@@ -661,15 +664,15 @@ bool state::get_key_state(int vk) {
 
 void state::set_key_down(int vk, bool down) {
     ASS(vk > 0 && vk < 256);
-    auto it = std::find(holding.begin(), holding.end(), vk);
+    auto it = std::find(real_holding.begin(), real_holding.end(), vk);
     if (down) {
-        if (it == holding.end())
-            holding.push_back(vk);
+        if (it == real_holding.end())
+            real_holding.push_back(vk);
         else
             spdlog::warn("Cannot double press key {}", vk);
     } else if (!down) {
-        if (it != holding.end())
-            holding.erase(it);
+        if (it != real_holding.end())
+            real_holding.erase(it);
         // else
         //     spdlog::warn("Cannot double release key {}", vk);
     }
@@ -686,7 +689,7 @@ std::pair<int, int> state::get_mouse_pos() {
 
 void state::on_mode_switch() {
     auto& cfg = conf::get();
-    repl_holding.clear();
+    cur_holding.clear();
     if (cfg.is_replay) {
         repl_index = st.calc_current_index();
     } else {
@@ -728,7 +731,7 @@ void state::reset_game() {
     st.total = 0;
     st.prev_kbd.clear();
     st.mouse_pos.first = st.mouse_pos.second = -1.f;
-    repl_holding.clear();
+    cur_holding.clear();
     repl_index = 0;
     void* pState = plug::get().get_prop(plug::PtrProp::PState);
     short* ptr =
