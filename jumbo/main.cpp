@@ -1,7 +1,5 @@
-#define WIN32_LEAN_AND_MEAN
 #define IMGUI_DEFINE_MATH_OPERATORS
-#include <Windows.h>
-// For sure
+#define _WINSOCKAPI_
 #include "../imgui/backends/imgui_impl_dx9.cpp"
 #include "../imgui/backends/imgui_impl_win32.cpp"
 #include "../imgui/imgui.cpp"
