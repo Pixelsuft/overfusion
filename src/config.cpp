@@ -36,6 +36,7 @@ static nlohmann::json read_config_file(string& proj_name) {
         return {};
     }
     file.close();
+#if defined(_HAS_EXCEPTIONS) && _HAS_EXCEPTIONS == 1
     try {
         nlohmann::json data = nlohmann::json::parse(buf, buf + size);
         delete[] buf;
@@ -45,6 +46,15 @@ static nlohmann::json read_config_file(string& proj_name) {
         spdlog::error("Failed to parse config: {}", e.what());
         return {};
     }
+#else
+    nlohmann::json data = nlohmann::json::parse(buf, buf + size, nullptr, false);
+    delete[] buf;
+    if (data.is_discarded()) {
+        spdlog::error("Failed to parse config: invalid JSON syntax");
+        return {};
+    }
+    return data;
+#endif
 }
 
 static int vk_from_string(string_view sv) {
