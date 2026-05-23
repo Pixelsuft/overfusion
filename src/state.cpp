@@ -96,6 +96,7 @@ struct State {
     }
 };
 
+namespace state {
 static State st;
 static std::vector<int> holding;
 static std::vector<int> repl_holding;
@@ -112,6 +113,7 @@ static int need_scene_slot;
 static bool processing_save;
 static bool updating;
 static void* temp_handle;
+} // namespace state
 
 inline int str_to_int(const std::string& str) {
     char* endptr;
@@ -122,7 +124,7 @@ inline int str_to_int(const std::string& str) {
 static uint64_t get_rerecords() {
     ofs::File file;
     uint64_t ret = 0;
-    if (file.open(base_path + "\\rerecords.ofbin", 0)) {
+    if (file.open(state::base_path + "\\rerecords.ofbin", 0)) {
         string line;
         if (file.readln(line))
             ret = std::stoull(line);
@@ -133,7 +135,7 @@ static uint64_t get_rerecords() {
 
 static void set_rerecords(uint64_t count) {
     ofs::File file;
-    if (file.open(base_path + "\\rerecords.ofbin", 1))
+    if (file.open(state::base_path + "\\rerecords.ofbin", 1))
         file.writeln(std::to_string(count));
 }
 
@@ -478,16 +480,16 @@ static void exec_event(Event ev) {
     case 1:
         // Key down/up
         if (ev.key.down == true) {
-            auto it = std::find(repl_holding.begin(), repl_holding.end(), ev.key.k);
-            if (it == repl_holding.end()) {
-                repl_holding.push_back(ev.key.k);
+            auto it = std::find(state::repl_holding.begin(), state::repl_holding.end(), ev.key.k);
+            if (it == state::repl_holding.end()) {
+                state::repl_holding.push_back(ev.key.k);
                 input::sim_key_event(ev.key.k, true);
             } else
                 spdlog::error("Failed to simulate key: key {} is already down", ev.key.k);
         } else {
-            auto it = std::find(repl_holding.begin(), repl_holding.end(), ev.key.k);
-            if (it != repl_holding.end()) {
-                repl_holding.erase(it);
+            auto it = std::find(state::repl_holding.begin(), state::repl_holding.end(), ev.key.k);
+            if (it != state::repl_holding.end()) {
+                state::repl_holding.erase(it);
                 input::sim_key_event(ev.key.k, false);
             } else
                 spdlog::error("Failed to simulate key: key {} is already up", ev.key.k);
@@ -497,16 +499,16 @@ static void exec_event(Event ev) {
         // Mouse down/up
         // TODO
         if (ev.key.down == true) {
-            auto it = std::find(repl_holding.begin(), repl_holding.end(), ev.key.k);
-            if (it == repl_holding.end()) {
-                repl_holding.push_back(ev.key.k);
+            auto it = std::find(state::repl_holding.begin(), state::repl_holding.end(), ev.key.k);
+            if (it == state::repl_holding.end()) {
+                state::repl_holding.push_back(ev.key.k);
                 input::sim_mouse_event(ev.key.k, true);
             } else
                 spdlog::error("Failed to simulate mouse: button {} is already down", ev.key.k);
         } else {
-            auto it = std::find(repl_holding.begin(), repl_holding.end(), ev.key.k);
-            if (it != repl_holding.end()) {
-                repl_holding.erase(it);
+            auto it = std::find(state::repl_holding.begin(), state::repl_holding.end(), ev.key.k);
+            if (it != state::repl_holding.end()) {
+                state::repl_holding.erase(it);
                 input::sim_mouse_event(ev.key.k, false);
             } else
                 spdlog::error("Failed to simulate mouse: button {} is already up", ev.key.k);
@@ -542,8 +544,8 @@ bool state::before_update() {
     if ((cfg.is_paused && !cfg.need_advance) || need_scene_slot != -10000)
         return false;
     updating = true;
+    repl_holding = st.prev_kbd;
     if (cfg.is_replay) {
-        repl_holding = st.prev_kbd;
         for (; repl_index < st.ev.size(); repl_index++) {
             Event& ev = st.ev[repl_index];
             if (ev.frame > st.frames)
@@ -555,10 +557,12 @@ bool state::before_update() {
             exec_event(ev);
         }
     } else {
-        for (auto& temp : st.temp_ev) {
+        st.ev.insert(st.ev.end(), st.temp_ev.begin(), st.temp_ev.end());
+        for (auto& temp : st.temp_ev)
             exec_event(temp);
-        }
         st.temp_ev.clear();
+        // TODO: refactor and put them into temp_ev
+        // (emporary untill better solution, see another TODO)
         for (auto it = holding.begin(); it != holding.end(); it++) {
             auto pit = std::find(st.prev_kbd.begin(), st.prev_kbd.end(), *it);
             if (pit == st.prev_kbd.end()) {
