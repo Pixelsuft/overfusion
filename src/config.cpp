@@ -201,7 +201,7 @@ void Config::read() {
             case Task::Map: {
                 auto target_v = key_from_json(val["target"]);
                 if (!target_v.has_value()) {
-                    spdlog::warn("Skipped bind with invalid target");
+                    spdlog::warn("Skipping 'map' bind with invalid target");
                     continue;
                 }
                 bind.extra = target_v.value();
@@ -212,9 +212,20 @@ void Config::read() {
                 }
                 break;
             }
-            case Task::HoldTemp:
-                spdlog::debug("TODO: HoldTemp task");
+            case Task::HoldTemp: {
+                auto target_v = key_from_json(val["target"]);
+                if (!target_v.has_value()) {
+                    spdlog::warn("Skipping 'hold_temp' bind with invalid target");
+                    continue;
+                }
+                bind.extra = target_v.value();
+                if (bind.extra != VK_LBUTTON && bind.extra != VK_MBUTTON &&
+                    bind.extra != VK_RBUTTON) {
+                    spdlog::warn("Cannot use create bind 'hold_temp' for keyboard keys");
+                    continue;
+                }
                 break;
+            }
             case Task::Menu:
             case Task::Advance:
                 break;
