@@ -74,6 +74,22 @@ static conf::Task task_from_string(string_view sv) {
     return it->second;
 }
 
+static ost::optional<int> key_from_json(nlohmann::json& val) {
+    if (val.is_string()) {
+        return input::vk_from_string(val);
+    } else if (val.is_number_integer()) {
+        int ret = val;
+        if (!is_valid_vk(ret)) {
+            spdlog::warn("Invalid key value: {}", ret);
+            return {};
+        }
+        return ret;
+    } else {
+        spdlog::warn("Invalid key value type: {}", val.type_name());
+        return {};
+    }
+}
+
 Config::Config() {
     project_name = "test_proj"; // TODO: configure it
     ffmpeg_cmdline =
@@ -149,38 +165,22 @@ void Config::read() {
                 continue;
             }
             Bind bind;
-            bind.key = 0;
-            if (val["key"].is_string()) {
-                bind.key = input::vk_from_string(val["key"]).value_or(0);
-                if (bind.key == 0)
-                    continue;
-            } else if (val["key"].is_number_integer()) {
-                bind.key = val["key"];
-                if (!is_valid_vk(bind.key)) {
-                    spdlog::warn("Invalid bind key value: {}", bind.key);
-                    continue;
-                }
-            } else {
-                spdlog::warn("Invalid bind key type");
+            auto key_v = key_from_json(val["key"]);
+            if (!key_v.has_value()) {
+                spdlog::warn("Skipping bind (invalid key)");
                 continue;
             }
+            bind.key = key_v.value();
             bind.task = task_from_string(val["task"]);
             if (bind.task == Task::None)
                 continue;
             if (val["mods"].is_array()) {
                 for (auto& mod : val["mods"]) {
-                    if (mod.is_string()) {
-                        auto key = input::vk_from_string(mod).value_or(0);
-                        if (key != 0)
-                            bind.mods.push_back(key);
-                    } else if (mod.is_number_integer()) {
-                        int key = mod;
-                        if (is_valid_vk(key))
-                            bind.mods.push_back(key);
-                        else
-                            spdlog::warn("Invalid key mod value: {}", key);
-                    } else
-                        spdlog::warn("Invalid key mod value type");
+                    auto mod_v = key_from_json(mod);
+                    if (mod_v.has_value())
+                        bind.mods.push_back(mod_v.value());
+                    else
+                        spdlog::warn("Skipping mod key for bind");
                 }
             }
             bind.extra = 0;
@@ -192,20 +192,12 @@ void Config::read() {
                        val["toggle"].is_boolean())
                 bind.extra = val["toggle"];
             else if (bind.task == Task::Map) {
-                if (val["target"].is_string()) {
-                    bind.extra = input::vk_from_string(val["target"]).value_or(0);
-                    if (bind.extra == 0)
-                        continue;
-                } else if (val["target"].is_number_integer()) {
-                    bind.extra = val["target"];
-                    if (!is_valid_vk(bind.extra)) {
-                        spdlog::warn("Invalid bind map target {}", bind.extra);
-                        continue;
-                    }
-                } else {
-                    spdlog::warn("Skipped bind without target");
+                auto target_v = key_from_json(val["target"]);
+                if (!target_v.has_value()) {
+                    spdlog::warn("Skipped bind with invalid target");
                     continue;
                 }
+                bind.extra = target_v.value();
                 if (bind.extra == VK_LBUTTON || bind.extra == VK_MBUTTON ||
                     bind.extra == VK_RBUTTON) {
                     spdlog::warn("Cannot use create bind 'map' for mouse buttons");
