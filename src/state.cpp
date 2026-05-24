@@ -488,7 +488,7 @@ static bool exec_event(Event ev) {
                 input::sim_key_event(ev.key.k, true);
                 return true;
             } else {
-                spdlog::error("Failed to simulate key: key {} is already down", ev.key.k);
+                spdlog::warn("Failed to simulate key: key {} is already down", ev.key.k);
                 return false;
             }
         } else {
@@ -498,7 +498,7 @@ static bool exec_event(Event ev) {
                 input::sim_key_event(ev.key.k, false);
                 return true;
             } else {
-                spdlog::error("Failed to simulate key: key {} is already up", ev.key.k);
+                spdlog::warn("Failed to simulate key: key {} is already up", ev.key.k);
                 return false;
             }
         }
@@ -511,14 +511,14 @@ static bool exec_event(Event ev) {
                 state::cur_holding.push_back(ev.key.k);
                 input::sim_mouse_event(ev.key.k, true);
             } else
-                spdlog::error("Failed to simulate mouse: button {} is already down", ev.key.k);
+                spdlog::warn("Failed to simulate mouse: button {} is already down", ev.key.k);
         } else {
             auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), ev.key.k);
             if (it != state::cur_holding.end()) {
                 state::cur_holding.erase(it);
                 input::sim_mouse_event(ev.key.k, false);
             } else
-                spdlog::error("Failed to simulate mouse: button {} is already up", ev.key.k);
+                spdlog::warn("Failed to simulate mouse: button {} is already up", ev.key.k);
         }
         return true;
     case 3:

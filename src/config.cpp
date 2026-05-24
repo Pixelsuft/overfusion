@@ -60,7 +60,7 @@ static nlohmann::json read_config_file(string& proj_name) {
 
 constexpr bool is_valid_vk(int vk) { return vk > 0 && vk < 256; }
 
-static conf::Task task_from_string(string_view sv) {
+static ost::optional<conf::Task> task_from_string(string_view sv) {
     static std::map<string_view, conf::Task> task_map = {
         {"save", conf::Task::SaveState},     {"load", conf::Task::LoadState},
         {"advance", conf::Task::Advance},    {"play", conf::Task::Play},
@@ -68,8 +68,9 @@ static conf::Task task_from_string(string_view sv) {
         {"push_temp", conf::Task::PushTemp}, {"menu", conf::Task::Menu}};
     auto it = task_map.find(sv);
     if (it == task_map.end()) {
+        // TODO: maybe move warns/errors from this funcs to top level funcs??
         spdlog::warn("Unknown task: {}", sv);
-        return conf::Task::None;
+        return {};
     }
     return it->second;
 }
@@ -171,9 +172,10 @@ void Config::read() {
                 continue;
             }
             bind.key = key_v.value();
-            bind.task = task_from_string(val["task"]);
-            if (bind.task == Task::None)
+            auto temp_task = task_from_string(val["task"]);
+            if (!temp_task.has_value())
                 continue;
+            bind.task = temp_task.value();
             if (val["mods"].is_array()) {
                 for (auto& mod : val["mods"]) {
                     auto mod_v = key_from_json(mod);
@@ -184,14 +186,19 @@ void Config::read() {
                 }
             }
             bind.extra = 0;
-            if ((bind.task == Task::SaveState || bind.task == Task::LoadState) &&
-                val["slot"].is_number_integer()) {
-                bind.extra = val["slot"];
+            switch (bind.task) {
+            case Task::SaveState:
+            case Task::LoadState:
+                if (val["slot"].is_number_integer())
+                    bind.extra = val["slot"];
                 ENSURE(bind.extra >= 0);
-            } else if ((bind.task == Task::Play || bind.task == Task::FastForward) &&
-                       val["toggle"].is_boolean())
-                bind.extra = val["toggle"];
-            else if (bind.task == Task::Map) {
+                break;
+            case Task::Play:
+            case Task::FastForward:
+                if (val["toggle"].is_boolean())
+                    bind.extra = val["toggle"];
+                break;
+            case Task::Map: {
                 auto target_v = key_from_json(val["target"]);
                 if (!target_v.has_value()) {
                     spdlog::warn("Skipped bind with invalid target");
@@ -203,8 +210,19 @@ void Config::read() {
                     spdlog::warn("Cannot use create bind 'map' for mouse buttons");
                     continue;
                 }
-            } else if (bind.task == Task::PushTemp) {
+                break;
+            }
+            case Task::PushTemp:
                 spdlog::debug("TODO: PushTemp task");
+                break;
+            case Task::Menu:
+            case Task::Advance:
+                break;
+#ifndef _DEBUG
+            default:
+                ASS(false);
+                break;
+#endif
             }
             auto key_str = input::vk_to_string(bind.key);
             ASS(key_str.has_value());

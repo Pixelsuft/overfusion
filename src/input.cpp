@@ -366,10 +366,6 @@ void input::handle_input_real(int vk, bool pressed) {
                 cfg.show_menu = !cfg.show_menu;
             break;
         }
-        case conf::Task::None: {
-            ENSURE(false);
-            break;
-        }
         default: {
             ASS(false);
             break;
