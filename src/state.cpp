@@ -121,6 +121,12 @@ inline int str_to_int(const std::string& str) {
     return endptr != str.c_str() ? static_cast<int>(num) : 0;
 }
 
+inline float str_to_float(const std::string& str) noexcept {
+    char* endptr = nullptr;
+    float num = std::strtof(str.c_str(), &endptr);
+    return endptr != str.c_str() ? num : 0.0f;
+}
+
 static uint64_t get_rerecords() {
     ofs::File file;
     uint64_t ret = 0;
@@ -190,6 +196,11 @@ void state::export_replay(string_view fn) {
             fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(e.idx) + ',' +
                                 std::to_string(e.key.k) + ',' +
                                 std::to_string(static_cast<int>(e.key.down)));
+            ENSURE(fret);
+            break;
+        case 2:
+            fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(e.idx) + ',' +
+                                std::to_string(e.mouse.x) + ',' + std::to_string(e.mouse.y));
             ENSURE(fret);
             break;
         default:
@@ -294,6 +305,16 @@ void state::import_replay(string_view fn) {
                 continue;
             }
             event.key.down = str_to_int(line.substr(++end)) != 0;
+            break;
+        case 2:
+            start = end;
+            end = line.find(',', start);
+            if (end == string::npos) {
+                spdlog::error("Invalid mouse move event line (X)");
+                continue;
+            }
+            event.mouse.x = str_to_float(line.substr(start, end));
+            event.mouse.y = str_to_float(line.substr(++end));
             break;
         default:
             spdlog::warn("Invalid event index, skipping");
