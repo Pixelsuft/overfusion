@@ -2,6 +2,7 @@
 #include <cstdint>
 
 namespace event {
+    // TODO: use enum for idx instead???
 struct Event {
     int frame;
     union {

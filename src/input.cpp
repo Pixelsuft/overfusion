@@ -178,12 +178,13 @@ static SHORT WINAPI GetKeyStateH(int nVirtKey) {
 
 static BOOL(WINAPI* GetCursorPosO)(LPPOINT lpPoint);
 static BOOL WINAPI GetCursorPosH(LPPOINT lpPoint) {
+    ASS(lpPoint != nullptr);
     if (ui::is_processing())
         return GetCursorPosO(lpPoint);
     auto mouse_pos = state::get_mouse_pos();
     lpPoint->x = mouse_pos.first;
     lpPoint->y = mouse_pos.second;
-    return TRUE;
+    return ClientToScreen(::hwnd, lpPoint);
 }
 
 static BOOL WINAPI GetInputStateH() {
@@ -234,13 +235,7 @@ static UINT WINAPI SendInputH(UINT cInputs, LPINPUT pInputs, int cbSize) {
 
 static BOOL WINAPI SetCursorPosH(int X, int Y) {
     spdlog::info("SetCursorPos({}, {})", X, Y);
-    if (0) {
-        // TODO: option to allow set cursor pos???
-        auto mouse_pos = state::get_mouse_pos();
-        mouse_pos.first = X;
-        mouse_pos.second = Y;
-        return TRUE;
-    }
+    // TODO: option to allow set cursor pos???
     return FALSE;
 }
 

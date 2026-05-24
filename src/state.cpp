@@ -35,7 +35,7 @@ struct State {
     // and clear them when saving state?
     // or just duplicate them here? (this one might be the best)
     std::vector<Event> temp_ev;
-    std::vector<int> prev_kbd;
+    std::vector<int> prev_input;
     uint64_t rerec_count;
     std::pair<float, float> mouse_pos;
     int scene;
@@ -55,7 +55,7 @@ struct State {
     void clear_lists() {
         ev.clear();
         temp_ev.clear();
-        prev_kbd.clear();
+        prev_input.clear();
     }
 
     void trim() {
@@ -186,6 +186,7 @@ void state::export_replay(string_view fn) {
     for (const auto& e : st.ev) {
         switch (e.idx) {
         case 1:
+        case 3:
             fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(e.idx) + ',' +
                                 std::to_string(e.key.k) + ',' +
                                 std::to_string(static_cast<int>(e.key.down)));
@@ -280,15 +281,16 @@ void state::import_replay(string_view fn) {
         end++;
         switch (event.idx) {
         case 1:
+        case 3:
             start = end;
             end = line.find(',', start);
             if (end == string::npos) {
-                spdlog::error("Invalid keyboard event line (key)");
+                spdlog::error("Invalid keyboard/mouse event line (key)");
                 continue;
             }
             event.key.k = str_to_int(line.substr(start, end));
             if (event.key.k <= 0) {
-                spdlog::error("Invalid keyboard event (key)");
+                spdlog::error("Invalid keyboard/mouse event (key)");
                 continue;
             }
             event.key.down = str_to_int(line.substr(++end)) != 0;
@@ -315,9 +317,9 @@ void state::import_replay(string_view fn) {
     st.rerec_count = temp_state.rerec_count;
     repl_index = st.calc_current_index();
     auto new_holding = st.calc_keys();
-    if (new_holding != st.prev_kbd) {
+    if (new_holding != st.prev_input) {
         spdlog::warn("Keyboard state mismatch during replay load, fixing");
-        st.prev_kbd = std::move(new_holding);
+        st.prev_input = std::move(new_holding);
     }
     cfg.is_replay = true;
     last_msg = "Replay imported";
@@ -344,7 +346,7 @@ void state::save_state(int slot) {
     write_bin(file, st.rerec_count);
     write_bin(file, st.fps);
     write_bin(file, st.mouse_pos);
-    write_bin(file, st.prev_kbd);
+    write_bin(file, st.prev_input);
     write_bin(file, st.temp_ev);
     write_bin(file, st.ev);
     processing_save = true;
@@ -420,7 +422,7 @@ void state::load_state(int slot) {
     load_bin(file, temp_state.rerec_count);
     load_bin(file, temp_state.fps);
     load_bin(file, temp_state.mouse_pos);
-    load_bin(file, temp_state.prev_kbd);
+    load_bin(file, temp_state.prev_input);
     load_bin(file, temp_state.temp_ev);
     load_bin(file, temp_state.ev);
     int prev_frames = st.frames;
@@ -448,9 +450,9 @@ void state::load_state(int slot) {
         st.rerec_count = temp_state.rerec_count;
         repl_index = st.calc_current_index();
         auto new_holding = st.calc_keys();
-        if (new_holding != st.prev_kbd) {
+        if (new_holding != st.prev_input) {
             spdlog::warn("Keyboard state mismatch during replay load, fixing");
-            st.prev_kbd = std::move(new_holding);
+            st.prev_input = std::move(new_holding);
             last_msg = "Keyboard mismatch fixed";
         }
     } else {
@@ -479,7 +481,8 @@ bool state::invalidate_process(string_view text) {
 
 static bool exec_event(Event ev) {
     switch (ev.idx) {
-    case 1:
+    case 1: {
+        auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), ev.key.k);
         // Key down/up
         if (ev.key.down == true) {
             auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), ev.key.k);
@@ -492,7 +495,6 @@ static bool exec_event(Event ev) {
                 return false;
             }
         } else {
-            auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), ev.key.k);
             if (it != state::cur_holding.end()) {
                 state::cur_holding.erase(it);
                 input::sim_key_event(ev.key.k, false);
@@ -502,28 +504,38 @@ static bool exec_event(Event ev) {
                 return false;
             }
         }
-    case 2:
+    }
+    case 2: {
         // Mouse down/up
-        // TODO
+        auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), ev.key.k);
         if (ev.key.down == true) {
-            auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), ev.key.k);
             if (it == state::cur_holding.end()) {
                 state::cur_holding.push_back(ev.key.k);
                 input::sim_mouse_event(ev.key.k, true);
-            } else
+                return true;
+            } else {
                 spdlog::warn("Failed to simulate mouse: button {} is already down", ev.key.k);
+                return false;
+            }
         } else {
-            auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), ev.key.k);
             if (it != state::cur_holding.end()) {
                 state::cur_holding.erase(it);
                 input::sim_mouse_event(ev.key.k, false);
-            } else
+                return true;
+            } else {
                 spdlog::warn("Failed to simulate mouse: button {} is already up", ev.key.k);
+                return false;
+            }
         }
-        return true;
-    case 3:
+    }
+    case 3: {
         // Mouse move
+        auto [xreal, yreal] = plug::get().mouse_to_screen(ev.mouse.x, ev.mouse.y);
+        state::st.mouse_pos.first = ev.mouse.x;
+        state::st.mouse_pos.second = ev.mouse.y;
+        input::sim_mouse_move(xreal, yreal);
         return true;
+    }
     default:
         // TODO: custom events for plugins
         ASS(false);
@@ -551,7 +563,7 @@ bool state::before_update() {
     if ((cfg.is_paused && !cfg.need_advance) || need_scene_slot != -10000)
         return false;
     updating = true;
-    cur_holding = st.prev_kbd;
+    cur_holding = st.prev_input;
     if (cfg.is_replay) {
         for (; repl_index < st.ev.size(); repl_index++) {
             Event& ev = st.ev[repl_index];
@@ -565,8 +577,8 @@ bool state::before_update() {
         }
     } else {
         for (auto it = real_holding.begin(); it != real_holding.end(); it++) {
-            auto pit = std::find(st.prev_kbd.begin(), st.prev_kbd.end(), *it);
-            if (pit == st.prev_kbd.end()) {
+            auto pit = std::find(st.prev_input.begin(), st.prev_input.end(), *it);
+            if (pit == st.prev_input.end()) {
                 // Down event
                 Event event;
                 event.frame = st.frames;
@@ -576,7 +588,7 @@ bool state::before_update() {
                 st.temp_ev.push_back(event);
             }
         }
-        for (auto pit = st.prev_kbd.begin(); pit != st.prev_kbd.end(); pit++) {
+        for (auto pit = st.prev_input.begin(); pit != st.prev_input.end(); pit++) {
             auto it = std::find(real_holding.begin(), real_holding.end(), *pit);
             if (it == real_holding.end()) {
                 // Up event
@@ -593,7 +605,7 @@ bool state::before_update() {
             exec_event(temp);
         st.temp_ev.clear();
     }
-    st.prev_kbd = cur_holding;
+    st.prev_input = cur_holding;
     return true;
 }
 
@@ -659,7 +671,7 @@ uint64_t state::get_time(TimeOffset offset) {
 void state::set_temp_time_offset(int ms) { time_offset = static_cast<int64_t>(ms); }
 
 bool state::get_key_state(int vk) {
-    return std::find(st.prev_kbd.begin(), st.prev_kbd.end(), vk) != st.prev_kbd.end();
+    return std::find(st.prev_input.begin(), st.prev_input.end(), vk) != st.prev_input.end();
 }
 
 void state::set_key_down(int vk, bool down) {
@@ -678,23 +690,35 @@ void state::set_key_down(int vk, bool down) {
     }
 }
 
-void state::add_mouse_toggle(int vk) { spdlog::error("TODO: add_mouse_down {}", vk); }
+void state::add_mouse_toggle(int vk) {
+    auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), vk);
+    auto prev_it = std::find_if(state::st.temp_ev.rbegin(), state::st.temp_ev.rend(),
+                                [vk](const Event& te) { return te.idx == 2 && te.key.k == vk; });
+    Event event;
+    event.frame = st.frames;
+    event.idx = 2;
+    event.key.k = vk;
+    event.key.down = (prev_it == state::st.temp_ev.rend()) ? (it == state::cur_holding.end())
+                                                           : !prev_it->key.down;
+    st.temp_ev.push_back(event);
+    last_msg = std::string("Queued mouse ") + (event.key.down ? "down" : "up");
+}
 
 void state::add_mouse_move() {
-    auto [realx, realy] = input::get_real_mouse_pos();
-    auto [x, y] = plug::get().mouse_from_screen(realx, realy);
+    auto [xreal, yreal] = input::get_real_mouse_pos();
+    auto [x, y] = plug::get().mouse_from_screen(xreal, yreal);
     Event event;
     event.frame = st.frames;
     event.idx = 3;
     event.mouse.x = x;
     event.mouse.y = y;
     st.temp_ev.push_back(event);
-    last_msg = "Added mouse move to (" + std::to_string(x) + ", " + std::to_string(y) + ") with (" +
-               std::to_string(realx) + ", " + std::to_string(realy) + ")";
+    last_msg = "Queued mouse move to (" + std::to_string(x) + ", " + std::to_string(y) +
+               ") with (" + std::to_string(xreal) + ", " + std::to_string(yreal) + ")";
 }
 
 void state::fill_kbd_state(unsigned char* data) {
-    for (auto& val : st.prev_kbd)
+    for (auto& val : st.prev_input)
         data[val] = 1;
 }
 
@@ -736,7 +760,7 @@ void state::draw_info() {
         auto win_pos = plug::get().mouse_to_screen(st.mouse_pos.first, st.mouse_pos.second);
         ImGui::Text("Window mouse pos: %i, %i", win_pos.first, win_pos.second);
         std::string keys_str;
-        for (auto& vk : st.prev_kbd) {
+        for (auto& vk : st.prev_input) {
             auto opt = input::vk_to_string(vk);
             ASS(opt.has_value());
             keys_str += opt.value();
@@ -753,11 +777,11 @@ void state::clear_temp_events() {
 }
 
 void state::reset_game() {
-    st.prev_kbd.clear();
+    st.prev_input.clear();
     st.ev.clear();
     st.frames = 0;
     st.total = 0;
-    st.prev_kbd.clear();
+    st.prev_input.clear();
     st.mouse_pos.first = st.mouse_pos.second = -1.f;
     cur_holding.clear();
     repl_index = 0;
