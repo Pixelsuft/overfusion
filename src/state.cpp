@@ -678,6 +678,21 @@ void state::set_key_down(int vk, bool down) {
     }
 }
 
+void state::add_mouse_toggle(int vk) { spdlog::error("TODO: add_mouse_down {}", vk); }
+
+void state::add_mouse_move() {
+    auto [realx, realy] = input::get_real_mouse_pos();
+    auto [x, y] = plug::get().mouse_from_screen(realx, realy);
+    Event event;
+    event.frame = st.frames;
+    event.idx = 3;
+    event.mouse.x = x;
+    event.mouse.y = y;
+    st.temp_ev.push_back(event);
+    last_msg = "Added mouse move to (" + std::to_string(x) + ", " + std::to_string(y) + ") with (" +
+               std::to_string(realx) + ", " + std::to_string(realy) + ")";
+}
+
 void state::fill_kbd_state(unsigned char* data) {
     for (auto& val : st.prev_kbd)
         data[val] = 1;
@@ -730,6 +745,11 @@ void state::draw_info() {
         ImGui::Text("Keys: %s",
                     keys_str.empty() ? "" : keys_str.substr(0, keys_str.size() - 2).c_str());
     }
+}
+
+void state::clear_temp_events() {
+    st.temp_ev.clear();
+    last_msg = "Temp events queue cleared";
 }
 
 void state::reset_game() {

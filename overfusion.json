@@ -22,8 +22,12 @@
   "binds": [
     {
       "key": "m",
-      "task": "hold_temp",
+      "task": "mouse_down",
       "target": "lbutton"
+    },
+    {
+      "key": "n",
+      "task": "mouse_move"
     },
     {
       "key": "left",

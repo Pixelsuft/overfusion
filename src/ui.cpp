@@ -90,6 +90,8 @@ static void draw_menu() {
             state::export_replay(replay_buf);
         if (ImGui::Button("Import"))
             state::import_replay(replay_buf);
+        if (ImGui::Button("Clear temp events queue"))
+            state::clear_temp_events();
     }
     if (ImGui::Button("Restart"))
         state::reset_game();

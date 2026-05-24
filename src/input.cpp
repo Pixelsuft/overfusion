@@ -17,6 +17,7 @@ namespace input {
 static bool kbd_state[256];
 static std::vector<std::pair<int, bool>> kbd_que;
 
+// TODO: maybe reverse it, and use switch-case for backwards?
 static const std::map<int, ost::string_view> vk_map = {{VK_F1, "F1"},
                                                        {VK_F2, "F2"},
                                                        {VK_F3, "F3"},
@@ -320,24 +321,21 @@ void input::handle_input_real(int vk, bool pressed) {
             continue;
         }
         switch (bind.task) {
-        case conf::Task::SaveState: {
+        case conf::Task::SaveState:
             if (pressed && !prev && !cfg.show_menu)
                 state::save_state(bind.extra);
             break;
-        }
-        case conf::Task::LoadState: {
+        case conf::Task::LoadState:
             if (pressed && !prev && !cfg.show_menu)
                 state::load_state(bind.extra);
             break;
-        }
-        case conf::Task::Advance: {
+        case conf::Task::Advance:
             if (pressed && !cfg.show_menu) {
                 cfg.need_advance = true;
                 cfg.is_paused = true;
             }
             break;
-        }
-        case conf::Task::Play: {
+        case conf::Task::Play:
             if (pressed && cfg.show_menu)
                 break;
             if (!bind.extra)
@@ -345,8 +343,7 @@ void input::handle_input_real(int vk, bool pressed) {
             else if (pressed)
                 cfg.is_paused = !cfg.is_paused;
             break;
-        }
-        case conf::Task::FastForward: {
+        case conf::Task::FastForward:
             if (pressed && cfg.show_menu)
                 break;
             if (!bind.extra)
@@ -354,22 +351,29 @@ void input::handle_input_real(int vk, bool pressed) {
             else if (pressed)
                 cfg.fast_forward = !cfg.fast_forward;
             break;
-        }
-        case conf::Task::Map: {
+        case conf::Task::Map:
             if (pressed && (prev || cfg.show_menu))
                 break;
             state::set_key_down(bind.extra, pressed);
             break;
-        }
-        case conf::Task::Menu: {
+        case conf::Task::MouseDown:
+            if (pressed && !prev && !cfg.show_menu)
+                state::add_mouse_toggle(bind.extra);
+            break;
+        case conf::Task::MouseMove:
+            if (pressed && !prev && !cfg.show_menu)
+                state::add_mouse_move();
+            break;
+        case conf::Task::Menu:
             if (pressed)
                 cfg.show_menu = !cfg.show_menu;
             break;
-        }
+#ifndef _DEBUG
         default: {
             ASS(false);
             break;
         }
+#endif
         }
         it++;
     }
@@ -406,4 +410,12 @@ void input::sim_mouse_move(int x, int y) {
     // TODO: option in config to send WM_MOUSEMOVE
     if (!plug::get().need_key_message)
         return;
+}
+
+std::pair<int, int> input::get_real_mouse_pos() {
+    POINT pt;
+    if (GetCursorPosO(&pt) && ScreenToClient(::hwnd, &pt))
+        return {pt.x, pt.y};
+    spdlog::error("Failed to get mouse pos");
+    return {-100, -100};
 }

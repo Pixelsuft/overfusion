@@ -61,11 +61,16 @@ static nlohmann::json read_config_file(string& proj_name) {
 constexpr bool is_valid_vk(int vk) { return vk > 0 && vk < 256; }
 
 static ost::optional<conf::Task> task_from_string(string_view sv) {
-    static std::map<string_view, conf::Task> task_map = {
-        {"save", conf::Task::SaveState},     {"load", conf::Task::LoadState},
-        {"advance", conf::Task::Advance},    {"play", conf::Task::Play},
-        {"fast", conf::Task::FastForward},   {"map", conf::Task::Map},
-        {"hold_temp", conf::Task::HoldTemp}, {"menu", conf::Task::Menu}};
+    static const std::map<string_view, conf::Task> task_map = {
+        {"save", conf::Task::SaveState},
+        {"load", conf::Task::LoadState},
+        {"advance", conf::Task::Advance},
+        {"play", conf::Task::Play},
+        {"fast", conf::Task::FastForward},
+        {"map", conf::Task::Map},
+        {"mouse_down", conf::Task::MouseDown},
+        {"mouse_move", conf::Task::MouseMove},
+        {"menu", conf::Task::Menu}};
     auto it = task_map.find(sv);
     if (it == task_map.end()) {
         // TODO: maybe move warns/errors from this funcs to top level funcs??
@@ -212,20 +217,21 @@ void Config::read() {
                 }
                 break;
             }
-            case Task::HoldTemp: {
+            case Task::MouseDown: {
                 auto target_v = key_from_json(val["target"]);
                 if (!target_v.has_value()) {
-                    spdlog::warn("Skipping 'hold_temp' bind with invalid target");
+                    spdlog::warn("Skipping 'mouse_down' bind with invalid target");
                     continue;
                 }
                 bind.extra = target_v.value();
                 if (bind.extra != VK_LBUTTON && bind.extra != VK_MBUTTON &&
                     bind.extra != VK_RBUTTON) {
-                    spdlog::warn("Cannot use create bind 'hold_temp' for keyboard keys");
+                    spdlog::warn("Cannot use create bind 'mouse_down' for keyboard keys");
                     continue;
                 }
                 break;
             }
+            case Task::MouseMove:
             case Task::Menu:
             case Task::Advance:
                 break;
