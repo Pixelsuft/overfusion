@@ -151,10 +151,7 @@ void Config::read() {
             Bind bind;
             bind.key = 0;
             if (val["key"].is_string()) {
-                string skey = val["key"];
-                std::transform(skey.begin(), skey.end(), skey.begin(),
-                               [](int c) { return std::tolower(c); });
-                bind.key = input::vk_from_string(skey).value_or(0);
+                bind.key = input::vk_from_string(val["key"]).value_or(0);
                 if (bind.key == 0)
                     continue;
             } else if (val["key"].is_number_integer()) {
@@ -173,10 +170,7 @@ void Config::read() {
             if (val["mods"].is_array()) {
                 for (auto& mod : val["mods"]) {
                     if (mod.is_string()) {
-                        string skey = mod;
-                        std::transform(skey.begin(), skey.end(), skey.begin(),
-                                       [](int c) { return std::tolower(c); });
-                        auto key = input::vk_from_string(skey).value_or(0);
+                        auto key = input::vk_from_string(mod).value_or(0);
                         if (key != 0)
                             bind.mods.push_back(key);
                     } else if (mod.is_number_integer()) {
@@ -199,10 +193,7 @@ void Config::read() {
                 bind.extra = val["toggle"];
             else if (bind.task == Task::Map) {
                 if (val["target"].is_string()) {
-                    string skey = val["target"];
-                    std::transform(skey.begin(), skey.end(), skey.begin(),
-                                   [](int c) { return std::tolower(c); });
-                    bind.extra = input::vk_from_string(skey).value_or(0);
+                    bind.extra = input::vk_from_string(val["target"]).value_or(0);
                     if (bind.extra == 0)
                         continue;
                 } else if (val["target"].is_number_integer()) {
