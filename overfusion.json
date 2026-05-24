@@ -21,6 +21,11 @@
   "ffmpeg_cmdline": "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an -vcodec h264_nvenc -b:v 10000k $PROJ/$NAME.mp4",
   "binds": [
     {
+      "key": "m",
+      "task": "push_temp",
+      "target": "lbutton"
+    },
+    {
       "key": "left",
       "task": "map",
       "target": "left"

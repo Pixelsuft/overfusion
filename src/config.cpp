@@ -58,6 +58,7 @@ static nlohmann::json read_config_file(string& proj_name) {
 }
 
 static int vk_from_string(string_view sv) {
+    // TODO: maybe use global vk_map but reverted (vk_from_string will be fast anyway)
     static std::map<string_view, int> vk_map = {
         {"f1", VK_F1},
         {"f2", VK_F2},
@@ -172,6 +173,10 @@ static int vk_from_string(string_view sv) {
         {"left", VK_LEFT},
         {"right", VK_RIGHT},
 
+        {"lbutton", VK_LBUTTON},
+        {"mbutton", VK_MBUTTON},
+        {"rbutton", VK_RBUTTON},
+
         {"semicolon", VK_OEM_1},   // ;
         {"plus", VK_OEM_PLUS},     // +
         {"comma", VK_OEM_COMMA},   // ,
@@ -196,10 +201,10 @@ constexpr bool is_valid_vk(int vk) { return vk > 0 && vk < 256; }
 
 static conf::Task task_from_string(string_view sv) {
     static std::map<string_view, conf::Task> task_map = {
-        {"save", conf::Task::SaveState},   {"load", conf::Task::LoadState},
-        {"advance", conf::Task::Advance},  {"play", conf::Task::Play},
-        {"fast", conf::Task::FastForward}, {"map", conf::Task::Map},
-        {"menu", conf::Task::Menu}};
+        {"save", conf::Task::SaveState},     {"load", conf::Task::LoadState},
+        {"advance", conf::Task::Advance},    {"play", conf::Task::Play},
+        {"fast", conf::Task::FastForward},   {"map", conf::Task::Map},
+        {"push_temp", conf::Task::PushTemp}, {"menu", conf::Task::Menu}};
     auto it = task_map.find(sv);
     if (it == task_map.end()) {
         spdlog::warn("Unknown task: {}", sv);
@@ -349,6 +354,13 @@ void Config::read() {
                     spdlog::warn("Skipped bind without target");
                     continue;
                 }
+                if (bind.extra == VK_LBUTTON || bind.extra == VK_MBUTTON ||
+                    bind.extra == VK_RBUTTON) {
+                    spdlog::warn("Cannot use create bind 'map' for mouse buttons");
+                    continue;
+                }
+            } else if (bind.task == Task::PushTemp) {
+                spdlog::debug("TODO: PushTemp task");
             }
             spdlog::info("Bind (task={}, extra={}, key={}, mods={})", static_cast<int>(bind.task),
                          bind.extra, bind.key, bind.mods);

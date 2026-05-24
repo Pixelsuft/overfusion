@@ -3,7 +3,7 @@
 #include <vector>
 
 namespace conf {
-enum class Task { None = 0, SaveState, LoadState, Advance, Play, FastForward, Map, Menu };
+enum class Task { None = 0, SaveState, LoadState, Advance, Play, FastForward, Map, PushTemp, Menu };
 
 struct Bind {
     std::vector<int> mods;
