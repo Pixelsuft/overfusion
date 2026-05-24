@@ -192,15 +192,15 @@ void state::export_replay(string_view fn) {
     for (const auto& e : st.ev) {
         switch (e.idx) {
         case 1:
-        case 3:
-            fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(e.idx) + ',' +
-                                std::to_string(e.key.k) + ',' +
-                                std::to_string(static_cast<int>(e.key.down)));
-            ENSURE(fret);
-            break;
         case 2:
             fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(e.idx) + ',' +
-                                std::to_string(e.mouse.x) + ',' + std::to_string(e.mouse.y));
+                                std::to_string(e.key.k) + ',' + std::to_string(e.key.down ? 1 : 0));
+            ENSURE(fret);
+            break;
+        case 3:
+            fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(e.idx) + ',' +
+                                std::to_string(e.mouse.x * 100.f) + ',' +
+                                std::to_string(e.mouse.y * 100.f));
             ENSURE(fret);
             break;
         default:
@@ -292,7 +292,7 @@ void state::import_replay(string_view fn) {
         end++;
         switch (event.idx) {
         case 1:
-        case 3:
+        case 2:
             start = end;
             end = line.find(',', start);
             if (end == string::npos) {
@@ -306,15 +306,15 @@ void state::import_replay(string_view fn) {
             }
             event.key.down = str_to_int(line.substr(++end)) != 0;
             break;
-        case 2:
+        case 3:
             start = end;
             end = line.find(',', start);
             if (end == string::npos) {
                 spdlog::error("Invalid mouse move event line (X)");
                 continue;
             }
-            event.mouse.x = str_to_float(line.substr(start, end));
-            event.mouse.y = str_to_float(line.substr(++end));
+            event.mouse.x = str_to_float(line.substr(start, end)) / 100.f;
+            event.mouse.y = str_to_float(line.substr(++end)) / 100.f;
             break;
         default:
             spdlog::warn("Invalid event index, skipping");
