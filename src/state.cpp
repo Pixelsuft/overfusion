@@ -720,7 +720,15 @@ void state::draw_info() {
     if (!cfg.fast_forward) {
         auto win_pos = plug::get().mouse_to_screen(st.mouse_pos.first, st.mouse_pos.second);
         ImGui::Text("Window mouse pos: %i, %i", win_pos.first, win_pos.second);
-        ImGui::Text("Keys: TODO");
+        std::string keys_str;
+        for (auto& vk : st.prev_kbd) {
+            auto opt = input::vk_to_string(vk);
+            ASS(opt.has_value());
+            keys_str += opt.value();
+            keys_str += ", ";
+        }
+        ImGui::Text("Keys: %s",
+                    keys_str.empty() ? "" : keys_str.substr(0, keys_str.size() - 2).c_str());
     }
 }
 

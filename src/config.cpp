@@ -154,7 +154,7 @@ void Config::read() {
                 string skey = val["key"];
                 std::transform(skey.begin(), skey.end(), skey.begin(),
                                [](int c) { return std::tolower(c); });
-                bind.key = input::vk_from_string(skey);
+                bind.key = input::vk_from_string(skey).value_or(0);
                 if (bind.key == 0)
                     continue;
             } else if (val["key"].is_number_integer()) {
@@ -176,7 +176,7 @@ void Config::read() {
                         string skey = mod;
                         std::transform(skey.begin(), skey.end(), skey.begin(),
                                        [](int c) { return std::tolower(c); });
-                        auto key = input::vk_from_string(skey);
+                        auto key = input::vk_from_string(skey).value_or(0);
                         if (key != 0)
                             bind.mods.push_back(key);
                     } else if (mod.is_number_integer()) {
@@ -202,7 +202,7 @@ void Config::read() {
                     string skey = val["target"];
                     std::transform(skey.begin(), skey.end(), skey.begin(),
                                    [](int c) { return std::tolower(c); });
-                    bind.extra = input::vk_from_string(skey);
+                    bind.extra = input::vk_from_string(skey).value_or(0);
                     if (bind.extra == 0)
                         continue;
                 } else if (val["target"].is_number_integer()) {
@@ -223,8 +223,10 @@ void Config::read() {
             } else if (bind.task == Task::PushTemp) {
                 spdlog::debug("TODO: PushTemp task");
             }
-            spdlog::info("Bind (task={}, extra={}, key={}, mods={})", static_cast<int>(bind.task),
-                         bind.extra, bind.key, bind.mods);
+            auto key_str = input::vk_to_string(bind.key);
+            ASS(key_str.has_value());
+            spdlog::info("Bind (task={}, extra={}, key='{}', mods={})", static_cast<int>(bind.task),
+                         bind.extra, key_str.value(), bind.mods);
             binds.push_back(bind);
         }
         std::sort(binds.begin(), binds.end(),

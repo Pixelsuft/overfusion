@@ -9,17 +9,15 @@
 #include "ui.hpp"
 #include <Windows.h>
 #include <algorithm>
+#include <map>
 #include <spdlog/spdlog.h>
 #include <vector>
-#include <map>
-
-using ost::string_view;
 
 namespace input {
 static bool kbd_state[256];
 static std::vector<std::pair<int, bool>> kbd_que;
 
-static const std::map<int, string_view> vk_map = {{VK_F1, "f1"},
+static const std::map<int, ost::string_view> vk_map = {{VK_F1, "f1"},
                                                        {VK_F2, "f2"},
                                                        {VK_F3, "f3"},
                                                        {VK_F4, "f4"},
@@ -262,14 +260,24 @@ void input::init() {
     HOOK_ONLY("user32.dll", SetCursorPos);
 }
 
-int input::vk_from_string(string_view s) {
+ost::optional<int> input::vk_from_string(ost::string_view s) {
     auto it = std::find_if(vk_map.begin(), vk_map.end(),
                            [&s](const auto& pair) { return pair.second == s; });
     if (it == vk_map.end()) {
-        spdlog::warn("Unknown keycode: {}", s);
-        return 0;
+        spdlog::warn("Unknown keycode string: {}", s);
+        return {};
     }
+    ASS(it->first != 0);
     return it->first;
+}
+
+ost::optional<ost::string_view> input::vk_to_string(int vk) {
+    auto it = vk_map.find(vk);
+    if (it == vk_map.end()) {
+        spdlog::warn("Unknown keycode value: {}", vk);
+        return {};
+    }
+    return it->second;
 }
 
 void input::handle_input(int vk, bool pressed) {
