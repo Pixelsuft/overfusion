@@ -310,7 +310,7 @@ std::pair<int, int> winhooks::get_real_mouse_pos() {
     POINT pt;
     if (GetCursorPos(&pt) && ScreenToClient(::hwnd, &pt))
         return {pt.x, pt.y};
-    spdlog::warn("Failed to get mouse pos");
+    spdlog::error("Failed to get mouse pos");
     return {-100, -100};
 }
 

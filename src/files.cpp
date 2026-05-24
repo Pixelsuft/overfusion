@@ -133,7 +133,7 @@ static bool try_read_file(FileData& ret, string_view path) {
         return false;
     auto temp_size = file.size();
     if (temp_size < 0) {
-        spdlog::warn("Failed to get file size on disk: {}", path);
+        spdlog::error("Failed to get file size on disk: {}", path);
         return false;
     }
     ret.size = static_cast<size_t>(temp_size);
@@ -141,7 +141,7 @@ static bool try_read_file(FileData& ret, string_view path) {
     ENSURE(ret.data != nullptr);
     if (file.read(ret.data, ret.size))
         return true;
-    spdlog::warn("Failed to read file from disk: {}", path);
+    spdlog::error("Failed to read file from disk: {}", path);
     std::free(ret.data);
     ret.data = nullptr;
     return false;

@@ -22,7 +22,7 @@
   "binds": [
     {
       "key": "m",
-      "task": "push_temp",
+      "task": "hold_temp",
       "target": "lbutton"
     },
     {

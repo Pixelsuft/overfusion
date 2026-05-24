@@ -32,11 +32,11 @@ static string get_module_path(HMODULE module) {
     wchar_t path[MAX_PATH];
     DWORD size = GetModuleFileNameW(module, path, MAX_PATH);
     if (size == 0) {
-        spdlog::warn("Failed to get module path, error code: {}", GetLastError());
+        spdlog::error("Failed to get module path, error code: {}", GetLastError());
         return "";
     }
     if (size >= MAX_PATH) {
-        spdlog::warn("Module path is too long");
+        spdlog::error("Module path is too long");
         return "";
     }
     path[size] = L'\0';

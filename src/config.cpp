@@ -65,7 +65,7 @@ static ost::optional<conf::Task> task_from_string(string_view sv) {
         {"save", conf::Task::SaveState},     {"load", conf::Task::LoadState},
         {"advance", conf::Task::Advance},    {"play", conf::Task::Play},
         {"fast", conf::Task::FastForward},   {"map", conf::Task::Map},
-        {"push_temp", conf::Task::PushTemp}, {"menu", conf::Task::Menu}};
+        {"hold_temp", conf::Task::HoldTemp}, {"menu", conf::Task::Menu}};
     auto it = task_map.find(sv);
     if (it == task_map.end()) {
         // TODO: maybe move warns/errors from this funcs to top level funcs??
@@ -212,8 +212,8 @@ void Config::read() {
                 }
                 break;
             }
-            case Task::PushTemp:
-                spdlog::debug("TODO: PushTemp task");
+            case Task::HoldTemp:
+                spdlog::debug("TODO: HoldTemp task");
                 break;
             case Task::Menu:
             case Task::Advance:

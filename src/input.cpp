@@ -269,7 +269,7 @@ ost::optional<int> input::vk_from_string(ost::string_view s) {
                });
     });
     if (it == vk_map.end()) {
-        spdlog::warn("Unknown keycode string: {}", s);
+        spdlog::error("Unknown keycode string: {}", s);
         return {};
     }
     ASS(it->first != 0);
@@ -279,7 +279,7 @@ ost::optional<int> input::vk_from_string(ost::string_view s) {
 ost::optional<ost::string_view> input::vk_to_string(int vk) {
     auto it = vk_map.find(vk);
     if (it == vk_map.end()) {
-        spdlog::warn("Unknown keycode value: {}", vk);
+        spdlog::error("Unknown keycode value: {}", vk);
         return {};
     }
     return it->second;

@@ -265,7 +265,7 @@ void state::import_replay(string_view fn) {
         Event event;
         auto end = line.find(',');
         if (end == string::npos || end == 0) {
-            spdlog::warn("Invalid event line (frame)");
+            spdlog::error("Invalid event line (frame)");
             continue;
         }
         event.frame = str_to_int(line.substr(0, end));
@@ -273,7 +273,7 @@ void state::import_replay(string_view fn) {
         auto start = end;
         end = line.find(',', start);
         if (end == string::npos || end == start) {
-            spdlog::warn("Invalid event line (event index)");
+            spdlog::error("Invalid event line (event index)");
             continue;
         }
         event.idx = str_to_int(line.substr(start, end));
@@ -283,12 +283,12 @@ void state::import_replay(string_view fn) {
             start = end;
             end = line.find(',', start);
             if (end == string::npos) {
-                spdlog::warn("Invalid keyboard event line (key)");
+                spdlog::error("Invalid keyboard event line (key)");
                 continue;
             }
             event.key.k = str_to_int(line.substr(start, end));
             if (event.key.k <= 0) {
-                spdlog::warn("Invalid keyboard event (key)");
+                spdlog::error("Invalid keyboard event (key)");
                 continue;
             }
             event.key.down = str_to_int(line.substr(++end)) != 0;
@@ -351,14 +351,14 @@ void state::save_state(int slot) {
     auto ret = plug::get().save_state(file);
     if (!ret.has_value()) {
         processing_save = false;
-        spdlog::warn("Failed to save state data: {}", ret.error());
+        spdlog::error("Failed to save state data: {}", ret.error());
         last_msg = "Failed to save state data: " + ret.error();
         file.close();
         ofs::remove_file(fp);
         return;
     }
     if (cfg.save_game_state && !processing_save) {
-        spdlog::warn("Failed to save game state: {}", state_error_text);
+        spdlog::error("Failed to save game state: {}", state_error_text);
         last_msg = "Failed to save game state: " + state_error_text;
         return;
     }
@@ -432,13 +432,13 @@ void state::load_state(int slot) {
     if (!ret.has_value()) {
         processing_save = false;
         st.frames = prev_frames;
-        spdlog::warn("Failed to load state data: {}", ret.error());
+        spdlog::error("Failed to load state data: {}", ret.error());
         last_msg = "Failed to load state data: " + ret.error();
         return;
     }
     if (!cfg.is_replay && !processing_save) {
         st.frames = prev_frames;
-        spdlog::warn("Failed to restore game state: {}", state_error_text);
+        spdlog::error("Failed to restore game state: {}", state_error_text);
         last_msg = "Failed to restore game state: " + state_error_text;
         return;
     }
