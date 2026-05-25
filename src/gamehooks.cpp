@@ -26,7 +26,7 @@ static int __stdcall ProcessTransitionH() {
     ASS(pState != nullptr);
     input::process_update();
     state::early_update();
-    state::before_update();
+    state::before_update(true);
     int ret;
     if (cfg.boxed_mode)
         cfg.is_paused = false;
@@ -91,7 +91,7 @@ static int __stdcall UpdateGameFrameH() {
     if (!state::is_processing_save())
         input::process_update();
     int ret;
-    if (!state::before_update() && !cfg.boxed_mode) {
+    if (!state::before_update(false) && !cfg.boxed_mode) {
         *pIsPaused = true;
         ret = UpdateGameFrameO();
         if (cfg.custom_window)

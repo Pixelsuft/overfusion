@@ -20,6 +20,7 @@
 
 constexpr int save_version = 1;
 constexpr int replay_version = 1;
+constexpr int empty_save_slot = -10000;
 
 using event::Event;
 using ost::string_view;
@@ -155,7 +156,7 @@ void state::init() {
     to_wait = 0.0;
     time_offset = 0;
     repl_index = 0;
-    need_scene_slot = -10000;
+    need_scene_slot = empty_save_slot;
     st.temp_ev.reserve(1024);
     st.ev.reserve(4096);
     spdlog::debug("Init FPS: {}", st.fps);
@@ -395,7 +396,7 @@ void state::save_state(int slot) {
 
 void state::load_state(int slot) {
     last_msg.clear();
-    need_scene_slot = -10000;
+    need_scene_slot = empty_save_slot;
     auto& cfg = conf::get();
     if (cfg.is_replay && cfg.reset_on_replay && st.frames != 0) {
         // Need to restart game before replay
@@ -566,13 +567,14 @@ static bool exec_event(Event ev) {
 
 void state::early_update() { updating = false; }
 
-bool state::before_update() {
+bool state::before_update(bool is_transitioning) {
     auto& cfg = conf::get();
-    ASS(need_scene_slot == -10000 || need_scene_slot >= 0);
-    if (need_scene_slot != -10000) {
+    ASS(need_scene_slot == empty_save_slot || need_scene_slot >= 0);
+    if (need_scene_slot != empty_save_slot) {
         load_state(need_scene_slot);
-        // cfg.is_paused = true;
-        // cfg.need_advance = false;
+        cfg.is_paused = true;
+        cfg.need_advance = false;
+        // Should this be enabled?
     }
     void* pGlobalApp = plug::get().get_prop(plug::PtrProp::PGlobalApp);
     ASS(pGlobalApp != nullptr);
@@ -581,7 +583,7 @@ bool state::before_update() {
     st.scene = *pScene;
     if (!cfg.is_paused && IsIconic(::hwnd))
         cfg.is_paused = true;
-    if ((cfg.is_paused && !cfg.need_advance) || need_scene_slot != -10000)
+    if ((cfg.is_paused && !cfg.need_advance) || need_scene_slot != empty_save_slot)
         return false;
     updating = true;
     cur_holding = st.prev_input;

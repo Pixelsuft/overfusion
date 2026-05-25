@@ -10,6 +10,8 @@
 #include <nlohmann/json.hpp>
 #include <spdlog/fmt/ranges.h>
 #include <spdlog/spdlog.h>
+#undef max
+#undef min
 
 using conf::Config;
 using ost::string_view;
@@ -197,6 +199,7 @@ void Config::read() {
                 if (val["slot"].is_number_integer())
                     bind.extra = val["slot"];
                 ENSURE(bind.extra >= 0);
+                bind.extra = std::max(bind.extra, 0);
                 break;
             case Task::Play:
             case Task::FastForward:

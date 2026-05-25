@@ -15,6 +15,7 @@ class PlugFnaf final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
+    size_t trans_ptr;
 
 public:
     PlugFnaf() {
@@ -22,6 +23,7 @@ public:
         need_key_message = false;
         SaveGameState = nullptr;
         LoadGameState = nullptr;
+        trans_ptr = 0;
     }
 
     bool pre_init() override {
@@ -62,6 +64,7 @@ public:
         size_t base = reinterpret_cast<size_t>(mod);
         if (fn == "mmfs2.dll") {
         } else if (fn == "cctrans.dll") {
+            trans_ptr = base + 0x78b8;
             // Disable transitions
             // mem::write(base + 0x78b8, {0xeb});
         } else if (fn == "Perspective.mfx") {
