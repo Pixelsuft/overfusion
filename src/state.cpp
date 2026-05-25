@@ -394,13 +394,15 @@ void state::save_state(int slot) {
     spdlog::info("State saved");
 }
 
-void state::load_state(int slot) {
+void state::load_state(int slot, bool no_recursion) {
     last_msg.clear();
     need_scene_slot = empty_save_slot;
     auto& cfg = conf::get();
-    if (cfg.is_replay && cfg.reset_on_replay && st.frames != 0) {
+    if (cfg.is_replay && cfg.reset_on_replay && st.frames != 0 && !no_recursion) {
         // Need to restart game before replay
         need_scene_slot = slot;
+        if (!plug::get().set_trans_enabled(false))
+            spdlog::debug("Failed to set transitions disabled");
         reset_game();
         last_msg = "Restarting game";
         return;
@@ -426,8 +428,10 @@ void state::load_state(int slot) {
     State temp_state;
     // State& temp_state = st;
     load_bin(file, temp_state.scene);
-    if (!cfg.is_replay && temp_state.scene != st.scene) {
+    if (!cfg.is_replay && temp_state.scene != st.scene && !no_recursion) {
         need_scene_slot = slot;
+        if (!plug::get().set_trans_enabled(false))
+            spdlog::debug("Failed to set transitions disabled");
         spdlog::debug("Preparing scene change: {} -> {}", st.scene, temp_state.scene);
         last_msg = "Changing scene: " + std::to_string(st.scene) + " -> " +
                    std::to_string(temp_state.scene);
@@ -571,10 +575,15 @@ bool state::before_update(bool is_transitioning) {
     auto& cfg = conf::get();
     ASS(need_scene_slot == empty_save_slot || need_scene_slot >= 0);
     if (need_scene_slot != empty_save_slot) {
-        load_state(need_scene_slot);
-        cfg.is_paused = true;
-        cfg.need_advance = false;
-        // Should this be enabled?
+        if (is_transitioning) {
+            cfg.need_advance = true;
+        } else {
+            load_state(need_scene_slot, true);
+            cfg.is_paused = true;
+            cfg.need_advance = false;
+            if (!plug::get().set_trans_enabled(true))
+                spdlog::debug("Failed to set transitions back enabled");
+        }
     }
     void* pGlobalApp = plug::get().get_prop(plug::PtrProp::PGlobalApp);
     ASS(pGlobalApp != nullptr);
