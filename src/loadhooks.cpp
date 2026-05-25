@@ -54,6 +54,7 @@ static optional<std::string> before_load(string_view path) {
                fn == "xinput1_1.dll" || fn == "xinput9_1_0.dll") {
         return "";
     }
+    spdlog::debug("Library loaded: {}", fn);
     return plug::get().before_dll_load(path, fn);
 }
 

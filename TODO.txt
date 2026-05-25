@@ -1,5 +1,6 @@
 [ ] Add version info (jumbo)
 [ ] Use IAT hooks where possible
+[ ] Use CWD:\\ or like path to make FS names protable + user folder
 [ ] Re-record count (separate file in the project dir)
 [ ] Fix that ugly audio recording implementation
 [ ] Fix audio random startup freeze
