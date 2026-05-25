@@ -15,24 +15,36 @@
 namespace mem {
 extern std::string exe_name;
 bool _write_memory(size_t addr, const void* data, size_t size);
+bool _flush_instructions(size_t addr, size_t size);
 void init();
 void terminate();
 size_t get_base();
 size_t get_base(const char* obj_name);
 void* get_addr(const char* obj_name, const char* func_name);
-inline bool write(size_t addr, std::initializer_list<uint8_t> bytes) {
-    return _write_memory(addr, bytes.begin(), bytes.size());
+template <bool Flush = false> inline bool write(size_t addr, std::initializer_list<uint8_t> bytes) {
+    bool result = _write_memory(addr, bytes.begin(), bytes.size());
+    if (result && Flush)
+        result = result && _flush_instructions(addr, bytes.size());
+    return result;
 }
+
 #if (defined(_MSC_VER) ? _MSVC_LANG : __cplusplus) >= 202002L
-template <typename T>
+template <bool Flush = false, typename T>
     requires std::is_trivially_copyable_v<T>
 bool write(size_t addr, const T& value) {
-    return _write_memory(addr, std::addressof(value), sizeof(T));
+    bool result = _write_memory(addr, std::addressof(value), sizeof(T));
+    if (result && Flush)
+        result = result && _flush_instructions(addr, sizeof(T));
+    return result;
 }
 #else
-template <typename T, typename = std::enable_if_t<std::is_trivially_copyable_v<T>>>
+template <bool Flush = false, typename T,
+          typename = std::enable_if_t<std::is_trivially_copyable_v<T>>>
 bool write(size_t addr, const T& value) {
-    return _write_memory(addr, std::addressof(value), sizeof(T));
+    bool result = _write_memory(addr, std::addressof(value), sizeof(T));
+    if (result && Flush)
+        result = result && _flush_instructions(addr, sizeof(T));
+    return result;
 }
 #endif
 } // namespace mem

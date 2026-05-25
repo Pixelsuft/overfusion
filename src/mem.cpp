@@ -60,6 +60,12 @@ void* mem::get_addr(const char* obj_name, const char* func_name) {
     return ret;
 }
 
+bool mem::_flush_instructions(size_t addr, size_t size) {
+    auto ret = FlushInstructionCache(hproc, reinterpret_cast<void*>(addr), size);
+    ENSURE(ret);
+    return ret;
+}
+
 bool mem::_write_memory(size_t addr, const void* data, size_t size) {
     SIZE_T bytesWritten;
     auto ret = WriteProcessMemory(hproc, reinterpret_cast<void*>(addr), data, size, &bytesWritten);
