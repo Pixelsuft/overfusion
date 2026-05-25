@@ -199,8 +199,8 @@ void state::export_replay(string_view fn) {
             break;
         case 3:
             fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(e.idx) + ',' +
-                                std::to_string(e.mouse.x * 100.f) + ',' +
-                                std::to_string(e.mouse.y * 100.f));
+                                std::to_string(e.mouse.x * 1000.f) + ',' +
+                                std::to_string(e.mouse.y * 1000.f));
             ENSURE(fret);
             break;
         default:
@@ -313,8 +313,8 @@ void state::import_replay(string_view fn) {
                 spdlog::error("Invalid mouse move event line (X)");
                 continue;
             }
-            event.mouse.x = str_to_float(line.substr(start, end)) / 100.f;
-            event.mouse.y = str_to_float(line.substr(++end)) / 100.f;
+            event.mouse.x = str_to_float(line.substr(start, end)) / 1000.f;
+            event.mouse.y = str_to_float(line.substr(++end)) / 1000.f;
             break;
         default:
             spdlog::warn("Invalid event index, skipping");
