@@ -78,6 +78,7 @@ static void after_load(string_view path, void* mod) {
         }
     }
     plug::get().after_dll_load(path, fn, mod);
+    hook::patch_iat();
 }
 
 static HMODULE(WINAPI* LoadLibraryAO)(LPCSTR lpLibFileName);

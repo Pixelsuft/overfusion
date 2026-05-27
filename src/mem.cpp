@@ -180,14 +180,14 @@ bool hook::_hook_iat(void* hModule, const char* szImportModName, const char* szF
     return false;
 }
 
-static bool has_no_uppercase(std::string_view sv) {
+static bool has_no_uppercase(ost::string_view sv) {
     return std::all_of(sv.begin(), sv.end(), [](unsigned char c) { return !std::isupper(c); });
 }
 
 bool hook::_reg_iat(ost::string_view dll, ost::string_view func_name, void* pNewFunc,
                     void** ppOriginal) {
     // TODO: assert for no doubling
-    ASS(!has_no_uppercase(dll));
+    ASS(has_no_uppercase(dll));
     HookTarget t;
     t.funcName = func_name;
     t.hookFunc = pNewFunc;
@@ -208,7 +208,7 @@ static bool module_iat_apply(void* hModule) {
 
     auto importDir = pNtHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
     if (importDir.VirtualAddress == 0)
-    return false;
+        return false;
 
     auto pImportDesc = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>(
         (reinterpret_cast<BYTE*>(hModule) + importDir.VirtualAddress));
@@ -258,6 +258,7 @@ static bool module_iat_apply(void* hModule) {
                         if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), dwOldProtect,
                                             &dwOldProtect))
                             spdlog::warn("VirtualProtect failed to IAT hook");
+                        // spdlog::debug("{}->{} iated", dllKey, target.funcName);
                     }
                 }
             }
@@ -273,14 +274,16 @@ bool hook::patch_iat() {
         return 1;
     }
 
-    MODULEENTRY32 me = {0};
+    MODULEENTRY32W me = {0};
     me.dwSize = sizeof(MODULEENTRY32);
 
-    if (Module32First(hSnapshot, &me)) {
+    if (Module32FirstW(hSnapshot, &me)) {
         do {
-            spdlog::debug("IATing {}", uconv::from_utf16(me.szModule));
-            module_iat_apply(me.hModule);
-        } while (Module32Next(hSnapshot, &me));
+            auto mod_fn = uconv::from_utf16(me.szModule);
+            if (module_iat_apply(me.hModule)) {
+                spdlog::debug("IATed {}", mod_fn);
+            }
+        } while (Module32NextW(hSnapshot, &me));
         CloseHandle(hSnapshot);
         return true;
     } else {

@@ -4,6 +4,7 @@
 #include <string>
 #include <type_traits>
 
+/*
 #define HOOK_AUTO(lib, func) hook::hook(mem::get_addr(lib, #func), func##H, &func##O)
 #define HOOK_ONLY(lib, func) hook::hook(mem::get_addr(lib, #func), func##H)
 #define HOOK_STR_AUTO(lib, func)                                                                   \
@@ -12,6 +13,15 @@
 #define HOOK_STR_ONLY(lib, func)                                                                   \
     (hook::hook(mem::get_addr(lib, #func "W"), func##WH) &&                                        \
      hook::hook(mem::get_addr(lib, #func "A"), func##AH))
+*/
+#define HOOK_AUTO(lib, func) hook::iat_reg(lib, #func, func##H, &func##O)
+#define HOOK_ONLY(lib, func) hook::iat_reg(lib, #func, func##H)
+#define HOOK_STR_AUTO(lib, func)                                                                   \
+    (hook::iat_reg(lib, #func "W", func##WH, &func##WO) &&                                         \
+     hook::iat_reg(lib, #func "A", func##AH, &func##AO))
+#define HOOK_STR_ONLY(lib, func)                                                                   \
+    (hook::iat_reg(lib, #func "W", func##WH) && hook::iat_reg(lib, #func "A", func##AH))
+
 #define HOOK_IAT(mod, lib, func) hook::iat_hook(mod, lib, #func, func##H, &func##O)
 
 namespace mem {
@@ -94,6 +104,16 @@ inline bool iat_hook(M module, const char* dll, const void* func, F* pDetour, T*
     return _hook_iat(reinterpret_cast<void*>(module), dll, reinterpret_cast<const char*>(func),
                      reinterpret_cast<void*>(pDetour), reinterpret_cast<void**>(ppOriginal),
                      by_addr);
+}
+
+template <typename F> inline bool iat_reg(ost::string_view dll, ost::string_view func, F* pDetour) {
+    return _reg_iat(dll, func, reinterpret_cast<void*>(pDetour), nullptr);
+}
+
+template <typename F, typename T>
+inline bool iat_reg(ost::string_view dll, ost::string_view func, F* pDetour, T** ppOriginal) {
+    return _reg_iat(dll, func, reinterpret_cast<void*>(pDetour),
+                    reinterpret_cast<void**>(ppOriginal));
 }
 
 inline bool enable() { return _enable_target(nullptr); }
