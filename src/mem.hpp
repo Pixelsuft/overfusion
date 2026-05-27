@@ -11,8 +11,7 @@
 #define HOOK_STR_ONLY(lib, func)                                                                   \
     (hook::hook(mem::get_addr(lib, #func "W"), func##WH) &&                                        \
      hook::hook(mem::get_addr(lib, #func "A"), func##AH))
-#define HOOK_IAT(mod, lib, func)                                                                   \
-    hook::iat_hook(reinterpret_cast<void*>(mod), lib, #func, func##H, &func##O)
+#define HOOK_IAT(mod, lib, func) hook::iat_hook(mod, lib, #func, func##H, &func##O)
 
 namespace mem {
 extern std::string exe_name;
@@ -79,9 +78,9 @@ inline void patch_vtable(void** vtable, int index, A* new_func, B** old_func) {
                   reinterpret_cast<void**>(old_func));
 }
 
-template <typename F, typename T>
-inline bool iat_hook(void* module, const char* dll, const char* func, F* pDetour, T** ppOriginal) {
-    return _hook_iat(module, dll, func, reinterpret_cast<void*>(pDetour),
+template <typename M, typename F, typename T>
+inline bool iat_hook(M module, const char* dll, const char* func, F* pDetour, T** ppOriginal) {
+    return _hook_iat(reinterpret_cast<void*>(module), dll, func, reinterpret_cast<void*>(pDetour),
                      reinterpret_cast<void**>(ppOriginal));
 }
 
