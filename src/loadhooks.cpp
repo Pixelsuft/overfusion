@@ -148,9 +148,12 @@ void loadhooks::init() {
     HOOK_STR_AUTO("kernel32.dll", LoadLibrary);
     HOOK_AUTO("kernel32.dll", GetProcAddress);
     // For really old MMF2 versions
-    auto mmfs2_handle = GetModuleHandleW(L"mmfs2.dll");
-    if (mmfs2_handle != nullptr)
-        after_load("mmfs2.dll", mmfs2_handle);
+    auto handle = GetModuleHandleW(L"mmfs2.dll");
+    if (handle != nullptr)
+        after_load("mmfs2.dll", handle);
+    handle = GetModuleHandleW(L"mmf2d3d9.dll");
+    if (handle != nullptr)
+        after_load("mmf2d3d9.dll", handle);
 }
 
 void* loadhooks::get_func_address(void* handle, const char* func_name) {
