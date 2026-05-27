@@ -99,9 +99,9 @@ void hook::_patch_vtable(void** vtable, int index, void* new_func, void** old_fu
 }
 
 bool hook::_hook_iat(void* hModule, const char* szImportModName, const char* szFuncName,
-                     void* pNewFunc, void** ppOriginal) {
-    ENSURE(hModule && szImportModName && pNewFunc);
-    if (!hModule || !szImportModName || !pNewFunc)
+                     void* pNewFunc, void** ppOriginal, bool by_addr) {
+    ENSURE(hModule && szImportModName && szFuncName && pNewFunc);
+    if (!hModule || !szImportModName || !szFuncName || !pNewFunc)
         return false;
 
     auto pDosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(hModule);
@@ -132,12 +132,13 @@ bool hook::_hook_iat(void* hModule, const char* szImportModName, const char* szF
                                                               pImportDesc->FirstThunk);
 
             for (; pOriginalThunk->u1.AddressOfData != 0; pOriginalThunk++, pThunk++) {
-                if (!szFuncName || !(pOriginalThunk->u1.Ordinal & IMAGE_ORDINAL_FLAG)) {
+                if (by_addr || !(pOriginalThunk->u1.Ordinal & IMAGE_ORDINAL_FLAG)) {
                     auto pImportByName = reinterpret_cast<PIMAGE_IMPORT_BY_NAME>(
                         reinterpret_cast<BYTE*>(hModule) + pOriginalThunk->u1.AddressOfData);
 
-                    if (!szFuncName ||
-                        strcmp(reinterpret_cast<char*>(pImportByName->Name), szFuncName) == 0) {
+                    if (by_addr ? reinterpret_cast<char*>(pThunk->u1.Function) == szFuncName
+                                : strcmp(reinterpret_cast<char*>(pImportByName->Name),
+                                         szFuncName) == 0) {
                         if (reinterpret_cast<PVOID>(pThunk->u1.Function) == pNewFunc)
                             return false;
 

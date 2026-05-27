@@ -491,6 +491,7 @@ static IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {
     spdlog::debug("Direct3DCreate9");
     auto ret = Direct3DCreate9O(SDKVersion);
     if (SUCCEEDED(ret) && !CreateDeviceO) {
+        // FIXME TODO: need to also wrap into proxy instead of using vtables
         void** vtable = *(void***)ret;
         hook::patch_vtable(vtable, 16, CreateDeviceH, &CreateDeviceO);
     }

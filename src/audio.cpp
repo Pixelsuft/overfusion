@@ -358,6 +358,7 @@ public:
 
 static HRESULT(WINAPI* DirectSoundCreateO)(LPCGUID guid, LPDIRECTSOUND* ds, LPUNKNOWN unk);
 static HRESULT WINAPI DirectSoundCreateH(LPCGUID guid, LPDIRECTSOUND* ds, LPUNKNOWN unk) {
+    // spdlog::debug("DirectSoundCreate");
     if (conf::get().disable_audio)
         return DSERR_NODRIVER;
     HRESULT hr = DirectSoundCreateO(guid, ds, unk);
@@ -404,10 +405,15 @@ void audio::init() {
         auto dir_ret = ofs::make_dir(base_path);
         ENSURE(dir_ret);
     }
-    HOOK_STR_ONLY("winmm.dll", mciSendCommand);
-    auto hook_ret = hook::iat_hook(mem::get_base("mmfs2.dll"), "dsound.dll", nullptr,
-                                   DirectSoundCreateH, &DirectSoundCreateO);
-    ENSURE(hook_ret);
+    auto hook_ret1 = hook::iat_hook(mem::get_base("mmfs2.dll"), "winmm.dll", "mciSendCommandA",
+                                    mciSendCommandAH);
+    auto hook_ret2 = hook::iat_hook(mem::get_base("mmfs2.dll"), "winmm.dll", "mciSendCommandW",
+                                    mciSendCommandWH);
+    ENSURE(hook_ret1 || hook_ret2);
+    hook_ret1 = hook::iat_hook(mem::get_base("mmfs2.dll"), "dsound.dll",
+                               mem::get_addr("dsound.dll", "DirectSoundCreate"), DirectSoundCreateH,
+                               &DirectSoundCreateO, true);
+    ENSURE(hook_ret1);
     spdlog::info("Audio hooked");
 }
 
