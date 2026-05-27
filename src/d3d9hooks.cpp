@@ -471,6 +471,73 @@ public:
     }
 };
 
+class IDirect3D9Proxy : public IDirect3D9 {
+    IDirect3D9* pD3D;
+
+public:
+    IDirect3D9Proxy(IDirect3D9* pReal) : pD3D(pReal) {}
+    virtual ~IDirect3D9Proxy() {}
+
+    STDMETHOD(QueryInterface)(REFIID riid, void** ppvObj) override {
+        return pD3D->QueryInterface(riid, ppvObj);
+    }
+    STDMETHOD_(ULONG, AddRef)() override { return pD3D->AddRef(); }
+    STDMETHOD_(ULONG, Release)() override {
+        ULONG count = pD3D->Release();
+        if (count == 0)
+            delete this;
+        return count;
+    }
+
+    STDMETHOD(RegisterSoftwareDevice)(void* pInitializeFunction) override {
+        return pD3D->RegisterSoftwareDevice(pInitializeFunction);
+    }
+    STDMETHOD_(UINT, GetAdapterCount)() override { return pD3D->GetAdapterCount(); }
+    STDMETHOD(GetAdapterIdentifier)(UINT Adapter, DWORD Flags, D3DADAPTER_IDENTIFIER9* pIdentifier) override {
+        return pD3D->GetAdapterIdentifier(Adapter, Flags, pIdentifier);
+    }
+    STDMETHOD_(UINT, GetAdapterModeCount)(UINT Adapter, D3DFORMAT Format) override {
+        return pD3D->GetAdapterModeCount(Adapter, Format);
+    }
+    STDMETHOD(EnumAdapterModes)(UINT Adapter, D3DFORMAT Format, UINT Mode, D3DDISPLAYMODE* pMode) override {
+        return pD3D->EnumAdapterModes(Adapter, Format, Mode, pMode);
+    }
+    STDMETHOD(GetAdapterDisplayMode)(UINT Adapter, D3DDISPLAYMODE* pMode) override {
+        return pD3D->GetAdapterDisplayMode(Adapter, pMode);
+    }
+    STDMETHOD(CheckDeviceType)(UINT Adapter, D3DDEVTYPE DevType, D3DFORMAT DisplayFormat, D3DFORMAT BackBufferFormat, BOOL bWindowed) override {
+        return pD3D->CheckDeviceType(Adapter, DevType, DisplayFormat, BackBufferFormat, bWindowed);
+    }
+    STDMETHOD(CheckDeviceFormat)(UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat, DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) override {
+        return pD3D->CheckDeviceFormat(Adapter, DeviceType, AdapterFormat, Usage, RType, CheckFormat);
+    }
+    STDMETHOD(CheckDeviceMultiSampleType)(UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat, BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType, DWORD* pQualityLevels) override {
+        return pD3D->CheckDeviceMultiSampleType(Adapter, DeviceType, SurfaceFormat, Windowed, MultiSampleType, pQualityLevels);
+    }
+    STDMETHOD(CheckDepthStencilMatch)(UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat, D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat) override {
+        return pD3D->CheckDepthStencilMatch(Adapter, DeviceType, AdapterFormat, RenderTargetFormat, DepthStencilFormat);
+    }
+    STDMETHOD(CheckDeviceFormatConversion)(UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SourceFormat, D3DFORMAT TargetFormat) override {
+        return pD3D->CheckDeviceFormatConversion(Adapter, DeviceType, SourceFormat, TargetFormat);
+    }
+    STDMETHOD(GetDeviceCaps)(UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS9* pCaps) override {
+        return pD3D->GetDeviceCaps(Adapter, DeviceType, pCaps);
+    }
+    STDMETHOD_(HMONITOR, GetAdapterMonitor)(UINT Adapter) override { return pD3D->GetAdapterMonitor(Adapter); }
+
+    STDMETHOD(CreateDevice)(UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, IDirect3DDevice9** ppReturnedDeviceInterface) override {
+        spdlog::debug("IDirect3D9Proxy -> CreateDevice called");
+
+        HRESULT hr = pD3D->CreateDevice(Adapter, DeviceType, hFocusWindow, BehaviorFlags, pPresentationParameters, ppReturnedDeviceInterface);
+
+        if (SUCCEEDED(hr) && ppReturnedDeviceInterface && *ppReturnedDeviceInterface) {
+            spdlog::debug("Wrapping IDirect3DDevice9 into ID3D9Proxy");
+            *ppReturnedDeviceInterface = new ID3D9Proxy(*ppReturnedDeviceInterface);
+        }
+        return hr;
+    }
+};
+
 static HRESULT WINAPI CreateDeviceH(IDirect3D9* pD3D, UINT Adapter, D3DDEVTYPE DeviceType,
                                     HWND hFocusWindow, DWORD BehaviorFlags,
                                     D3DPRESENT_PARAMETERS* pPresentationParameters,
@@ -490,13 +557,13 @@ static IDirect3D9*(WINAPI* Direct3DCreate9O)(UINT SDKVersion);
 static IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {
     spdlog::debug("Direct3DCreate9");
     auto ret = Direct3DCreate9O(SDKVersion);
-    if (ret && !CreateDeviceO) {
-        // FIXME TODO: need to also wrap into proxy instead of using vtables
-        void** vtable = *(void***)ret;
-        hook::patch_vtable(vtable, 16, CreateDeviceH, &CreateDeviceO);
+    if (ret) {
+        spdlog::debug("Wrapping IDirect3D9 into ID3D9Proxy");
+        return new IDirect3D9Proxy(ret);
     }
     return ret;
 }
+
 
 void d3d9hooks::pre_init() { HOOK_IAT(mem::get_base("mmfs2.dll"), "ddraw.dll", DirectDrawCreate); }
 
