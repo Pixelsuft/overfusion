@@ -81,6 +81,7 @@ bool hook::_enable_target(void* target) {
 }
 
 bool hook::_hook_target(void* pTarget, void* pDetour, void** ppOriginal) {
+    ENSURE(pTarget != nullptr);
     auto mh_ret = MH_CreateHook(pTarget, pDetour, ppOriginal);
     ENSURE(mh_ret == MH_OK);
     return mh_ret == MH_OK;
@@ -100,6 +101,8 @@ void hook::_patch_vtable(void** vtable, int index, void* new_func, void** old_fu
 bool hook::_hook_iat(void* hModule, const char* szImportModName, const char* szFuncName,
                      void* pNewFunc, void** ppOriginal) {
     ENSURE(hModule && szImportModName && szFuncName && pNewFunc);
+    if (!hModule || !szImportModName || !szFuncName || !pNewFunc)
+        return false;
 
     auto pDosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(hModule);
     ENSURE(pDosHeader->e_magic == IMAGE_DOS_SIGNATURE);

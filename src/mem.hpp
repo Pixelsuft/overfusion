@@ -11,6 +11,8 @@
 #define HOOK_STR_ONLY(lib, func)                                                                   \
     (hook::hook(mem::get_addr(lib, #func "W"), func##WH) &&                                        \
      hook::hook(mem::get_addr(lib, #func "A"), func##AH))
+#define HOOK_IAT(mod, lib, func)                                                                   \
+    hook::iat_hook(reinterpret_cast<void*>(mod), lib, #func, func##H, &func##O)
 
 namespace mem {
 extern std::string exe_name;
@@ -53,7 +55,8 @@ namespace hook {
 bool _enable_target(void* target);
 bool _hook_target(void* pTarget, void* pDetour, void** ppOriginal);
 void _patch_vtable(void** vtable, int index, void* new_func, void** old_func);
-bool _hook_iat(void* hModule, const char* szImportModName, const char* szFuncName, void* pNewFunc, void** ppOriginal);
+bool _hook_iat(void* hModule, const char* szImportModName, const char* szFuncName, void* pNewFunc,
+               void** ppOriginal);
 
 template <typename A, typename F> inline bool hook(A pTarget, F* pDetour) {
     return _hook_target(reinterpret_cast<void*>(pTarget), reinterpret_cast<void*>(pDetour),
@@ -74,6 +77,12 @@ template <typename A, typename B>
 inline void patch_vtable(void** vtable, int index, A* new_func, B** old_func) {
     _patch_vtable(vtable, index, reinterpret_cast<void*>(new_func),
                   reinterpret_cast<void**>(old_func));
+}
+
+template <typename F, typename T>
+inline bool iat_hook(void* module, const char* dll, const char* func, F* pDetour, T** ppOriginal) {
+    return _hook_iat(module, dll, func, reinterpret_cast<void*>(pDetour),
+                     reinterpret_cast<void**>(ppOriginal));
 }
 
 inline bool enable() { return _enable_target(nullptr); }
