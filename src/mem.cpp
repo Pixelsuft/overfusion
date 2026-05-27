@@ -237,30 +237,31 @@ static bool module_iat_apply(void* hModule) {
                 auto pImportByName = reinterpret_cast<PIMAGE_IMPORT_BY_NAME>(
                     reinterpret_cast<BYTE*>(hModule) + pOriginalThunk->u1.AddressOfData);
                 auto funcName = reinterpret_cast<char*>(pImportByName->Name);
+                auto target =
+                    std::find_if(targets.begin(), targets.end(), [funcName](const auto& t) {
+                        return strcmp(funcName, t.funcName.c_str()) == 0;
+                    });
+                if (target == targets.end())
+                    continue;
+                if (reinterpret_cast<PVOID>(pThunk->u1.Function) == target->hookFunc)
+                    continue;
 
-                for (const auto& target : targets) {
-                    if (strcmp(funcName, target.funcName.c_str()) == 0) {
-                        if (reinterpret_cast<PVOID>(pThunk->u1.Function) == target.hookFunc)
-                            continue;
-
-                        DWORD dwOldProtect;
-                        if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), PAGE_READWRITE,
-                                            &dwOldProtect)) {
-                            spdlog::error("VirtualProtect failed to IAT hook");
-                            return false;
-                        }
-
-                        if (target.origFunc)
-                            *target.origFunc = reinterpret_cast<void*>(pThunk->u1.Function);
-
-                        pThunk->u1.Function = reinterpret_cast<DWORD_PTR>(target.hookFunc);
-
-                        if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), dwOldProtect,
-                                            &dwOldProtect))
-                            spdlog::warn("VirtualProtect failed to IAT hook");
-                        // spdlog::debug("{}->{} iated", dllKey, target.funcName);
-                    }
+                DWORD dwOldProtect;
+                if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), PAGE_READWRITE,
+                                    &dwOldProtect)) {
+                    spdlog::error("VirtualProtect failed to IAT hook");
+                    return false;
                 }
+
+                if (target->origFunc)
+                    *target->origFunc = reinterpret_cast<void*>(pThunk->u1.Function);
+
+                pThunk->u1.Function = reinterpret_cast<DWORD_PTR>(target->hookFunc);
+
+                if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), dwOldProtect,
+                                    &dwOldProtect))
+                    spdlog::warn("VirtualProtect failed to IAT hook");
+                // spdlog::debug("{}->{} iated", dllKey, target->funcName);
             }
         }
     }
@@ -281,7 +282,7 @@ bool hook::patch_iat() {
         do {
             auto mod_fn = uconv::from_utf16(me.szModule);
             std::transform(mod_fn.begin(), mod_fn.end(), mod_fn.begin(), ::tolower);
-            // TODO: do not touch system modules
+            // TODO: do not touch system modules???
             if (module_iat_apply(me.hModule)) {
                 if (!mod_fn.ends_with(".sft") && !mod_fn.ends_with(".ift") &&
                     !mod_fn.ends_with(".mfx") && !mod_fn.ends_with(".mvx"))
