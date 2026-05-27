@@ -1,4 +1,5 @@
 #pragma once
+#include "sv.hpp"
 #include <initializer_list>
 #include <string>
 #include <type_traits>
@@ -56,6 +57,8 @@ bool _hook_target(void* pTarget, void* pDetour, void** ppOriginal);
 void _patch_vtable(void** vtable, int index, void* new_func, void** old_func);
 bool _hook_iat(void* hModule, const char* szImportModName, const char* szFuncName, void* pNewFunc,
                void** ppOriginal, bool by_addr);
+bool _reg_iat(ost::string_view dll, ost::string_view func_name, void* pNewFunc, void** ppOriginal);
+bool patch_iat();
 
 template <typename A, typename F> inline bool hook(A pTarget, F* pDetour) {
     return _hook_target(reinterpret_cast<void*>(pTarget), reinterpret_cast<void*>(pDetour),

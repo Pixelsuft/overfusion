@@ -49,6 +49,7 @@ static void of_main() {
     threadhooks::pre_init();
     video::init();
     hook::enable();
+    hook::patch_iat();
 }
 
 extern "C" BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {

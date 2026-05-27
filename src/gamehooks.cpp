@@ -78,6 +78,7 @@ static int __stdcall UpdateGameFrameH() {
             // Exit???
         }
         hook::enable();
+        hook::patch_iat();
     }
     auto pState = plug::get().get_prop(plug::PtrProp::PState);
     ASS(pState != nullptr);

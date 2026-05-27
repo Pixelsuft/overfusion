@@ -6,8 +6,11 @@
 #include <MinHook.h>
 #include <Psapi.h>
 #include <Windows.h>
+#include <algorithm>
 #include <processthreadsapi.h>
 #include <spdlog/spdlog.h>
+#include <tlhelp32.h>
+#include <unordered_map>
 #include <winternl.h>
 
 using std::string;
@@ -17,6 +20,16 @@ string exe_name;
 static HMODULE base_module;
 static HANDLE hproc;
 } // namespace mem
+
+namespace hook {
+struct HookTarget {
+    std::string funcName;
+    void* hookFunc;
+    void** origFunc;
+};
+
+static std::unordered_map<std::string, std::vector<HookTarget>> iat_map;
+} // namespace hook
 
 void mem::init() {
     base_module = GetModuleHandleW(nullptr);
@@ -165,4 +178,114 @@ bool hook::_hook_iat(void* hModule, const char* szImportModName, const char* szF
         }
     }
     return false;
+}
+
+static bool has_no_uppercase(std::string_view sv) {
+    return std::all_of(sv.begin(), sv.end(), [](unsigned char c) { return !std::isupper(c); });
+}
+
+bool hook::_reg_iat(ost::string_view dll, ost::string_view func_name, void* pNewFunc,
+                    void** ppOriginal) {
+    // TODO: assert for no doubling
+    ASS(!has_no_uppercase(dll));
+    HookTarget t;
+    t.funcName = func_name;
+    t.hookFunc = pNewFunc;
+    t.origFunc = ppOriginal;
+    iat_map[std::string(dll)].push_back(std::move(t));
+    return true;
+}
+
+static bool module_iat_apply(void* hModule) {
+    ENSURE(hModule);
+
+    auto pDosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(hModule);
+    ENSURE(pDosHeader->e_magic == IMAGE_DOS_SIGNATURE);
+
+    auto pNtHeaders = reinterpret_cast<PIMAGE_NT_HEADERS>(
+        (reinterpret_cast<BYTE*>(hModule) + pDosHeader->e_lfanew));
+    ENSURE(pNtHeaders->Signature == IMAGE_NT_SIGNATURE);
+
+    auto importDir = pNtHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+    if (importDir.VirtualAddress == 0)
+    return false;
+
+    auto pImportDesc = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>(
+        (reinterpret_cast<BYTE*>(hModule) + importDir.VirtualAddress));
+
+    for (; pImportDesc->Name != 0; pImportDesc++) {
+        std::string dllKey(
+            reinterpret_cast<char*>(reinterpret_cast<BYTE*>(hModule) + pImportDesc->Name));
+        std::transform(dllKey.begin(), dllKey.end(), dllKey.begin(), ::tolower);
+        auto it = hook::iat_map.find(dllKey);
+        if (it == hook::iat_map.end())
+            continue;
+
+        const auto& targets = it->second;
+        DWORD thunkOffset = pImportDesc->OriginalFirstThunk ? pImportDesc->OriginalFirstThunk
+                                                            : pImportDesc->FirstThunk;
+        if (thunkOffset == 0)
+            continue;
+
+        auto pOriginalThunk =
+            reinterpret_cast<PIMAGE_THUNK_DATA>(reinterpret_cast<BYTE*>(hModule) + thunkOffset);
+        auto pThunk = reinterpret_cast<PIMAGE_THUNK_DATA>(reinterpret_cast<BYTE*>(hModule) +
+                                                          pImportDesc->FirstThunk);
+
+        for (; pOriginalThunk->u1.AddressOfData != 0; pOriginalThunk++, pThunk++) {
+            if (!(pOriginalThunk->u1.Ordinal & IMAGE_ORDINAL_FLAG)) {
+                auto pImportByName = reinterpret_cast<PIMAGE_IMPORT_BY_NAME>(
+                    reinterpret_cast<BYTE*>(hModule) + pOriginalThunk->u1.AddressOfData);
+                auto funcName = reinterpret_cast<char*>(pImportByName->Name);
+
+                for (const auto& target : targets) {
+                    if (strcmp(funcName, target.funcName.c_str()) == 0) {
+                        if (reinterpret_cast<PVOID>(pThunk->u1.Function) == target.hookFunc)
+                            continue;
+
+                        DWORD dwOldProtect;
+                        if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), PAGE_READWRITE,
+                                            &dwOldProtect)) {
+                            spdlog::error("VirtualProtect failed to IAT hook");
+                            return false;
+                        }
+
+                        if (target.origFunc)
+                            *target.origFunc = reinterpret_cast<void*>(pThunk->u1.Function);
+
+                        pThunk->u1.Function = reinterpret_cast<DWORD_PTR>(target.hookFunc);
+
+                        if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), dwOldProtect,
+                                            &dwOldProtect))
+                            spdlog::warn("VirtualProtect failed to IAT hook");
+                    }
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool hook::patch_iat() {
+    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, 0);
+    if (hSnapshot == INVALID_HANDLE_VALUE) {
+        spdlog::error("Failed to create snapshot (code: {})", GetLastError());
+        return 1;
+    }
+
+    MODULEENTRY32 me = {0};
+    me.dwSize = sizeof(MODULEENTRY32);
+
+    if (Module32First(hSnapshot, &me)) {
+        do {
+            spdlog::debug("IATing {}", uconv::from_utf16(me.szModule));
+            module_iat_apply(me.hModule);
+        } while (Module32Next(hSnapshot, &me));
+        CloseHandle(hSnapshot);
+        return true;
+    } else {
+        spdlog::error("Failed to retrieve module information (code: {})", GetLastError());
+        CloseHandle(hSnapshot);
+        return false;
+    }
 }
