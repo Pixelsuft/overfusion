@@ -797,8 +797,9 @@ static size_t (*freadO)(void*, size_t, size_t, FILE*);
 static size_t freadH(void* buffer, size_t size, size_t count, FILE* stream) {
     if (is_our_fd(reinterpret_cast<int>(stream))) {
         DWORD read = 0;
-        if (ReadFileH(reinterpret_cast<HANDLE>(stream), buffer, size * count, &read, nullptr))
-            return (size_t)(read / size);
+        if (size > 0 &&
+            ReadFileH(reinterpret_cast<HANDLE>(stream), buffer, size * count, &read, nullptr))
+            return static_cast<size_t>(read / size);
         return 0;
     }
     return freadO(buffer, size, count, stream);
@@ -809,7 +810,7 @@ static size_t fwriteH(const void* buffer, size_t size, size_t count, FILE* strea
     if (is_our_fd(reinterpret_cast<int>(stream))) {
         DWORD written = 0;
         if (WriteFileH(reinterpret_cast<HANDLE>(stream), buffer, size * count, &written, nullptr))
-            return (size_t)(written / size);
+            return static_cast<size_t>(written / size);
         return 0;
     }
     return fwriteO(buffer, size, count, stream);
@@ -830,7 +831,7 @@ static long (*ftellO)(FILE*);
 static long ftellH(FILE* stream) {
     if (is_our_fd(reinterpret_cast<int>(stream))) {
         lock::CSLock mylock(fcs);
-        return (long)reinterpret_cast<FileHandle*>(stream)->pos;
+        return static_cast<long>(reinterpret_cast<FileHandle*>(stream)->pos);
     }
     return ftellO(stream);
 }
