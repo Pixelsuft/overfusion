@@ -53,6 +53,7 @@ namespace hook {
 bool _enable_target(void* target);
 bool _hook_target(void* pTarget, void* pDetour, void** ppOriginal);
 void _patch_vtable(void** vtable, int index, void* new_func, void** old_func);
+bool _hook_iat(void* hModule, const char* szImportModName, const char* szFuncName, void* pNewFunc, void** ppOriginal);
 
 template <typename A, typename F> inline bool hook(A pTarget, F* pDetour) {
     return _hook_target(reinterpret_cast<void*>(pTarget), reinterpret_cast<void*>(pDetour),
