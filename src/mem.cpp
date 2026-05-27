@@ -280,8 +280,12 @@ bool hook::patch_iat() {
     if (Module32FirstW(hSnapshot, &me)) {
         do {
             auto mod_fn = uconv::from_utf16(me.szModule);
+            std::transform(mod_fn.begin(), mod_fn.end(), mod_fn.begin(), ::tolower);
+            // TODO: do not touch system modules
             if (module_iat_apply(me.hModule)) {
-                spdlog::debug("IATed {}", mod_fn);
+                if (!mod_fn.ends_with(".sft") && !mod_fn.ends_with(".ift") &&
+                    !mod_fn.ends_with(".mfx") && !mod_fn.ends_with(".mvx"))
+                    spdlog::debug("IATed {}", mod_fn);
             }
         } while (Module32NextW(hSnapshot, &me));
         CloseHandle(hSnapshot);
