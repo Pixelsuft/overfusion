@@ -127,7 +127,14 @@ static FARPROC(WINAPI* GetProcAddressO)(HMODULE hModule, LPCSTR lpProcName) = Ge
 static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
     if (!hModule || !lpProcName)
         return GetProcAddressO(hModule, lpProcName);
-    void* temp_ret = reinterpret_cast<void*>(GetProcAddressO(hModule, lpProcName));
+    void* temp_ret = (reinterpret_cast<ULONG_PTR>(lpProcName) > 0xFFFF)
+                         ? hook::get_iated_func(hModule, lpProcName)
+                         : nullptr;
+    if (temp_ret == nullptr) {
+        temp_ret = reinterpret_cast<void*>(GetProcAddressO(hModule, lpProcName));
+    } else {
+        spdlog::warn("GetProcAddress was used to get a hooked function addr: {}", lpProcName);
+    }
     temp_ret = plug::get().after_proc_get(hModule, lpProcName, temp_ret);
     if (reinterpret_cast<ULONG_PTR>(lpProcName) > 0xFFFF) {
         string_view proc(lpProcName);

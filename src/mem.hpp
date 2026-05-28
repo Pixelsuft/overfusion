@@ -68,6 +68,7 @@ bool _hook_iat_by_addr(void* hModule, const char* dll, const void* addr, void* p
                        void** ppOriginal);
 bool _reg_iat(ost::string_view dll, ost::string_view func_name, void* pNewFunc, void** ppOriginal);
 bool patch_iat();
+void* get_iated_func(void* mod, ost::string_view name);
 
 template <typename A, typename F> inline bool hook(A pTarget, F* pDetour) {
     return _hook_target(reinterpret_cast<void*>(pTarget), reinterpret_cast<void*>(pDetour),

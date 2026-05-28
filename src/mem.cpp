@@ -12,6 +12,9 @@
 #include <tlhelp32.h>
 #include <unordered_map>
 #include <winternl.h>
+#ifdef _DEBUG
+#define IAT_SUPPORT_DYNAMIC
+#endif
 
 using std::string;
 
@@ -23,12 +26,15 @@ static HANDLE hproc;
 
 namespace hook {
 struct HookTarget {
-    std::string funcName;
+    string funcName;
     void* hookFunc;
     void** origFunc;
 };
 
-static std::unordered_map<std::string, std::vector<HookTarget>> iat_map;
+static std::unordered_map<string, std::vector<HookTarget>> iat_map;
+#ifdef IAT_SUPPORT_DYNAMIC
+static std::unordered_map<void*, string> mod_map;
+#endif
 } // namespace hook
 
 void mem::init() {
@@ -182,19 +188,26 @@ static bool has_no_uppercase(ost::string_view sv) {
 
 bool hook::_reg_iat(ost::string_view dll, ost::string_view func_name, void* pNewFunc,
                     void** ppOriginal) {
+    string str_dll(dll);
     // TODO: assert for no doubling
     ASS(has_no_uppercase(dll));
-    HookTarget t;
-    t.funcName = func_name;
-    t.hookFunc = pNewFunc;
-    t.origFunc = ppOriginal;
+    HookTarget target;
+    target.funcName = func_name;
+    target.hookFunc = pNewFunc;
+    target.origFunc = ppOriginal;
 #ifdef _DEBUG
-    auto& v = iat_map[std::string(dll)];
-    auto it = std::find_if(v.begin(), v.end(),
-                           [t](const HookTarget& t2) { return t2.funcName == t.funcName; });
+    auto& v = iat_map[str_dll];
+    auto it = std::find_if(v.begin(), v.end(), [target](const HookTarget& t2) {
+        return t2.funcName == target.funcName;
+    });
     ASS(it == v.end());
 #endif
-    iat_map[std::string(dll)].push_back(std::move(t));
+    iat_map[str_dll].push_back(std::move(target));
+#ifdef IAT_SUPPORT_DYNAMIC
+    auto mod_addr = reinterpret_cast<void*>(mem::get_base(str_dll.c_str()));
+    if (mod_map.find(mod_addr) == mod_map.end())
+        mod_map[mod_addr] = str_dll;
+#endif
     return true;
 }
 
@@ -216,7 +229,7 @@ static bool module_iat_apply(void* hModule) {
         (reinterpret_cast<BYTE*>(hModule) + importDir.VirtualAddress));
 
     for (; pImportDesc->Name != 0; pImportDesc++) {
-        std::string dllKey(
+        string dllKey(
             reinterpret_cast<char*>(reinterpret_cast<BYTE*>(hModule) + pImportDesc->Name));
         std::transform(dllKey.begin(), dllKey.end(), dllKey.begin(), ::tolower);
         auto it = hook::iat_map.find(dllKey);
@@ -296,4 +309,20 @@ bool hook::patch_iat() {
         CloseHandle(hSnapshot);
         return false;
     }
+}
+
+void* hook::get_iated_func(void* mod, ost::string_view name) {
+#ifdef IAT_SUPPORT_DYNAMIC
+    auto mod_it = mod_map.find(mod);
+    if (mod_it == mod_map.end())
+        return nullptr;
+    auto& vec = iat_map[mod_it->second];
+    auto it = std::find_if(vec.begin(), vec.end(),
+                           [name](const HookTarget& t) { return t.funcName == name; });
+    if (it == vec.end())
+        return nullptr;
+    return it->hookFunc;
+#else
+    return nullptr;
+#endif
 }
