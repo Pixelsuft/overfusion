@@ -1,6 +1,6 @@
 {
   "fps": 0,
-  "force_resolution": [1280, 720],
+  "force_resolution": [0, 0],
   "show_menu": false,
   "show_info": true,
   "emulate_user_timers": true,
