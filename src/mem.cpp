@@ -111,10 +111,10 @@ void hook::_patch_vtable(void** vtable, int index, void* new_func, void** old_fu
         spdlog::warn("VirtualProtect failed while patching vtable");
 }
 
-bool hook::_hook_iat(void* hModule, const char* szImportModName, const char* szFuncName,
-                     void* pNewFunc, void** ppOriginal, bool by_addr) {
-    ENSURE(hModule && szImportModName && szFuncName && pNewFunc);
-    if (!hModule || !szImportModName || !szFuncName || !pNewFunc)
+bool hook::_hook_iat_by_addr(void* hModule, const char* dll, const void* addr, void* pNewFunc,
+                             void** ppOriginal) {
+    ENSURE(hModule && dll && addr && pNewFunc);
+    if (!hModule || !dll || !addr || !pNewFunc)
         return false;
 
     auto pDosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(hModule);
@@ -133,7 +133,7 @@ bool hook::_hook_iat(void* hModule, const char* szImportModName, const char* szF
     for (; pImportDesc->Name != 0; pImportDesc++) {
         auto szModName =
             reinterpret_cast<char*>(reinterpret_cast<BYTE*>(hModule) + pImportDesc->Name);
-        if (_stricmp(szModName, szImportModName) == 0) {
+        if (_stricmp(szModName, dll) == 0) {
             DWORD thunkOffset = pImportDesc->OriginalFirstThunk ? pImportDesc->OriginalFirstThunk
                                                                 : pImportDesc->FirstThunk;
             if (thunkOffset == 0)
@@ -145,34 +145,30 @@ bool hook::_hook_iat(void* hModule, const char* szImportModName, const char* szF
                                                               pImportDesc->FirstThunk);
 
             for (; pOriginalThunk->u1.AddressOfData != 0; pOriginalThunk++, pThunk++) {
-                if (by_addr || !(pOriginalThunk->u1.Ordinal & IMAGE_ORDINAL_FLAG)) {
-                    auto pImportByName = reinterpret_cast<PIMAGE_IMPORT_BY_NAME>(
-                        reinterpret_cast<BYTE*>(hModule) + pOriginalThunk->u1.AddressOfData);
+                auto pImportByName = reinterpret_cast<PIMAGE_IMPORT_BY_NAME>(
+                    reinterpret_cast<BYTE*>(hModule) + pOriginalThunk->u1.AddressOfData);
 
-                    if (by_addr ? reinterpret_cast<char*>(pThunk->u1.Function) == szFuncName
-                                : strcmp(reinterpret_cast<char*>(pImportByName->Name),
-                                         szFuncName) == 0) {
-                        if (reinterpret_cast<PVOID>(pThunk->u1.Function) == pNewFunc)
-                            return false;
+                if (reinterpret_cast<void*>(pThunk->u1.Function) == addr) {
+                    if (reinterpret_cast<PVOID>(pThunk->u1.Function) == pNewFunc)
+                        return false;
 
-                        DWORD dwOldProtect;
-                        if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), PAGE_READWRITE,
-                                            &dwOldProtect)) {
-                            spdlog::error("VirtualProtect failed to IAT hook");
-                            return false;
-                        }
-
-                        if (ppOriginal)
-                            *ppOriginal = reinterpret_cast<void*>(pThunk->u1.Function);
-
-                        pThunk->u1.Function = reinterpret_cast<DWORD_PTR>(pNewFunc);
-
-                        if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), dwOldProtect,
-                                            &dwOldProtect))
-                            spdlog::warn("VirtualProtect failed to IAT hook");
-
-                        return true;
+                    DWORD dwOldProtect;
+                    if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), PAGE_READWRITE,
+                                        &dwOldProtect)) {
+                        spdlog::error("VirtualProtect failed to IAT hook");
+                        return false;
                     }
+
+                    if (ppOriginal)
+                        *ppOriginal = reinterpret_cast<void*>(pThunk->u1.Function);
+
+                    pThunk->u1.Function = reinterpret_cast<DWORD_PTR>(pNewFunc);
+
+                    if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), dwOldProtect,
+                                        &dwOldProtect))
+                        spdlog::warn("VirtualProtect failed to IAT hook");
+
+                    return true;
                 }
             }
         }

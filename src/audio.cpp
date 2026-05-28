@@ -406,9 +406,11 @@ void audio::init() {
         ENSURE(dir_ret);
     }
     IAT_STR_ONLY("winmm.dll", mciSendCommand);
-    auto hook_ret1 = hook::iat_hook(mem::get_base("mmfs2.dll"), "dsound.dll",
-                                    mem::get_addr("dsound.dll", "DirectSoundCreate"),
-                                    DirectSoundCreateH, &DirectSoundCreateO, true);
+    IAT_AUTO("dsound.dll", DirectSoundCreate);
+    // Keep ordinal hack
+    auto hook_ret1 = hook::iat_hook_by_addr(mem::get_base("mmfs2.dll"), "dsound.dll",
+                                            mem::get_addr("dsound.dll", "DirectSoundCreate"),
+                                            DirectSoundCreateH, &DirectSoundCreateO);
     ENSURE(hook_ret1);
     spdlog::info("Audio hooked");
 }
