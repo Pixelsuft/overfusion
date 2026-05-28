@@ -192,6 +192,12 @@ bool hook::_reg_iat(ost::string_view dll, ost::string_view func_name, void* pNew
     t.funcName = func_name;
     t.hookFunc = pNewFunc;
     t.origFunc = ppOriginal;
+#ifdef _DEBUG
+    auto& v = iat_map[std::string(dll)];
+    auto it = std::find_if(v.begin(), v.end(),
+                           [t](const HookTarget& t2) { return t2.funcName == t.funcName; });
+    ASS(it == v.end());
+#endif
     iat_map[std::string(dll)].push_back(std::move(t));
     return true;
 }
@@ -285,8 +291,9 @@ bool hook::patch_iat() {
             // TODO: do not touch system modules???
             if (module_iat_apply(me.hModule)) {
                 if (!mod_fn.ends_with(".sft") && !mod_fn.ends_with(".ift") &&
-                    !mod_fn.ends_with(".mfx") && !mod_fn.ends_with(".mvx"))
-                    spdlog::debug("IATed {}", mod_fn);
+                    !mod_fn.ends_with(".mfx") && !mod_fn.ends_with(".mvx")) {
+                    // spdlog::debug("IATed {}", mod_fn);
+                }
             }
         } while (Module32NextW(hSnapshot, &me));
         CloseHandle(hSnapshot);
