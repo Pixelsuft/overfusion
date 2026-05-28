@@ -2,7 +2,8 @@
 #include <cstdint>
 
 namespace event {
-    // TODO: use enum for idx instead???
+enum class Type : uint8_t { None = 0, KeyDown = 1, MouseDown = 2, MouseMove = 3 };
+
 struct Event {
     int frame;
     union {
@@ -16,8 +17,8 @@ struct Event {
         } mouse;
         uint64_t dummy;
     };
-    uint8_t idx;
+    Type idx;
 
-    Event() : dummy(0), frame(0), idx(0) {}
+    Event() : dummy(0), frame(0), idx(Type::None) {}
 };
 } // namespace event

@@ -78,7 +78,7 @@ struct State {
         for (auto& e : ev) {
             if (e.frame >= frames)
                 break;
-            if (e.idx != 1)
+            if (e.idx != event::Type::KeyDown)
                 continue;
             auto it = std::find(ret.begin(), ret.end(), e.key.k);
             if (e.key.down) {
@@ -191,21 +191,26 @@ void state::export_replay(string_view fn) {
     fret = file.writeln("-1,events_begin,0");
     ENSURE(fret);
     for (const auto& e : st.ev) {
+        int int_idx = static_cast<int>(e.idx);
         switch (e.idx) {
-        case 1:
-        case 2:
-            fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(e.idx) + ',' +
+        case event::Type::KeyDown:
+        case event::Type::MouseDown:
+            fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(int_idx) + ',' +
                                 std::to_string(e.key.k) + ',' + std::to_string(e.key.down ? 1 : 0));
             ENSURE(fret);
             break;
-        case 3:
-            fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(e.idx) + ',' +
+        case event::Type::MouseMove:
+            fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(int_idx) + ',' +
                                 std::to_string(e.mouse.x * 1000.f) + ',' +
                                 std::to_string(e.mouse.y * 1000.f));
             ENSURE(fret);
             break;
+        case event::Type::None:
+            ASS(false);
+            break;
         default:
             ASS(false);
+            break;
         }
     }
     last_msg = "Replay exported";
@@ -289,11 +294,11 @@ void state::import_replay(string_view fn) {
             spdlog::error("Invalid event line (event index)");
             continue;
         }
-        event.idx = str_to_int(line.substr(start, end));
+        event.idx = static_cast<event::Type>(str_to_int(line.substr(start, end)));
         end++;
         switch (event.idx) {
-        case 1:
-        case 2:
+        case event::Type::KeyDown:
+        case event::Type::MouseDown:
             start = end;
             end = line.find(',', start);
             if (end == string::npos) {
@@ -307,7 +312,7 @@ void state::import_replay(string_view fn) {
             }
             event.key.down = str_to_int(line.substr(++end)) != 0;
             break;
-        case 3:
+        case event::Type::MouseMove:
             start = end;
             end = line.find(',', start);
             if (end == string::npos) {
@@ -317,6 +322,7 @@ void state::import_replay(string_view fn) {
             event.mouse.x = str_to_float(line.substr(start, end)) / 1000.f;
             event.mouse.y = str_to_float(line.substr(++end)) / 1000.f;
             break;
+        case event::Type::None:
         default:
             spdlog::warn("Invalid event index, skipping");
             break;
@@ -507,7 +513,7 @@ bool state::invalidate_process(string_view text) {
 
 static bool exec_event(Event ev) {
     switch (ev.idx) {
-    case 1: {
+    case event::Type::KeyDown: {
         auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), ev.key.k);
         // Key down/up
         if (ev.key.down == true) {
@@ -531,7 +537,7 @@ static bool exec_event(Event ev) {
             }
         }
     }
-    case 2: {
+    case event::Type::MouseDown: {
         // Mouse down/up
         auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), ev.key.k);
         if (ev.key.down == true) {
@@ -554,7 +560,7 @@ static bool exec_event(Event ev) {
             }
         }
     }
-    case 3: {
+    case event::Type::MouseMove: {
         // Mouse move
         auto [xreal, yreal] = plug::get().mouse_to_screen(ev.mouse.x, ev.mouse.y);
         state::st.mouse_pos.first = ev.mouse.x;
@@ -562,6 +568,9 @@ static bool exec_event(Event ev) {
         input::sim_mouse_move(xreal, yreal);
         return true;
     }
+    case event::Type::None:
+        ASS(false);
+        return false;
     default:
         // TODO: custom events for plugins
         ASS(false);
@@ -614,7 +623,7 @@ bool state::before_update(bool is_transitioning) {
                 // Down event
                 Event event;
                 event.frame = st.frames;
-                event.idx = 1;
+                event.idx = event::Type::KeyDown;
                 event.key.k = static_cast<short>(*it);
                 event.key.down = true;
                 st.temp_ev.push_back(event);
@@ -626,7 +635,7 @@ bool state::before_update(bool is_transitioning) {
                 // Up event
                 Event event;
                 event.frame = st.frames;
-                event.idx = 1;
+                event.idx = event::Type::KeyDown;
                 event.key.k = static_cast<short>(*pit);
                 event.key.down = false;
                 st.temp_ev.push_back(event);
@@ -725,10 +734,10 @@ void state::set_key_down(int vk, bool down) {
 void state::add_mouse_toggle(int vk) {
     auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), vk);
     auto prev_it = std::find_if(state::st.temp_ev.rbegin(), state::st.temp_ev.rend(),
-                                [vk](const Event& te) { return te.idx == 2 && te.key.k == vk; });
+                                [vk](const Event& te) { return te.idx == event::Type::MouseDown && te.key.k == vk; });
     Event event;
     event.frame = st.frames;
-    event.idx = 2;
+    event.idx = event::Type::MouseDown;
     event.key.k = vk;
     event.key.down = (prev_it == state::st.temp_ev.rend()) ? (it == state::cur_holding.end())
                                                            : !prev_it->key.down;
@@ -741,7 +750,7 @@ void state::add_mouse_move() {
     auto [x, y] = plug::get().mouse_from_screen(xreal, yreal);
     Event event;
     event.frame = st.frames;
-    event.idx = 3;
+    event.idx = event::Type::MouseMove;
     event.mouse.x = x;
     event.mouse.y = y;
     st.temp_ev.push_back(event);
