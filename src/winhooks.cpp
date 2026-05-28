@@ -28,6 +28,30 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
                                                              LPARAM lParam);
 extern bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* lr);
 
+static int(WINAPI* GetSystemMetricsO)(int nIndex);
+static int WINAPI GetSystemMetricsH(int nIndex) {
+    // TODO
+    // also SM_XVIRTUALSCREEN, SM_XVIRTUALSCREEN, SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN
+    switch (nIndex) {
+    case SM_CMONITORS:
+        return 1;
+    case SM_SAMEDISPLAYFORMAT:
+        return 1;
+    case SM_CYMENU:
+        return conf::get().disable_app_menu ? 0 : GetSystemMetricsO(SM_CYMENU);
+    case SM_CXVSCROLL:
+    case SM_CYHSCROLL:
+    case SM_CYCAPTION:
+    case SM_CYSIZE:
+    case SM_CXFRAME:
+    case SM_CYFRAME:
+    case SM_CYVSCROLL:
+    case SM_CXHSCROLL:
+    default:
+        return GetSystemMetricsO(nIndex);
+    }
+}
+
 LRESULT(__stdcall* MainWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DROPFILES)
@@ -51,9 +75,13 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
         auto& cfg = conf::get();
         if (cfg.forced_res.first > 0 && cfg.forced_res.second > 0) {
             auto mmi = reinterpret_cast<MINMAXINFO*>(lParam);
-            // FIXME: why 32 and 64????
-            mmi->ptMaxTrackSize.x = cfg.forced_res.first + 32;
-            mmi->ptMaxTrackSize.y = cfg.forced_res.second + 64;
+            DWORD style = GetWindowLongPtr(hWnd, GWL_STYLE);
+            DWORD exStyle = GetWindowLongPtr(hWnd, GWL_EXSTYLE);
+            BOOL hasMenu = (GetMenu(hWnd) != nullptr);
+            RECT rect = {0, 0, cfg.forced_res.first, cfg.forced_res.second};
+            AdjustWindowRectEx(&rect, style, hasMenu, exStyle);
+            mmi->ptMaxTrackSize.x = rect.right - rect.left;
+            mmi->ptMaxTrackSize.y = rect.bottom - rect.top;
         }
         return FALSE;
     }
@@ -194,30 +222,6 @@ static HWND WINAPI SetFocusH(HWND hWnd) {
 static HWND WINAPI SetActiveWindowH(HWND hWnd) {
     spdlog::info("Failing SetActiveWindow");
     return nullptr;
-}
-
-static int(WINAPI* GetSystemMetricsO)(int nIndex);
-static int WINAPI GetSystemMetricsH(int nIndex) {
-    // TODO
-    // also SM_XVIRTUALSCREEN, SM_XVIRTUALSCREEN, SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN
-    switch (nIndex) {
-    case SM_CMONITORS:
-        return 1;
-    case SM_SAMEDISPLAYFORMAT:
-        return 1;
-    case SM_CYMENU:
-        return conf::get().disable_app_menu ? 0 : GetSystemMetricsO(SM_CYMENU);
-    case SM_CXVSCROLL:
-    case SM_CYHSCROLL:
-    case SM_CYCAPTION:
-    case SM_CYSIZE:
-    case SM_CXFRAME:
-    case SM_CYFRAME:
-    case SM_CYVSCROLL:
-    case SM_CXHSCROLL:
-    default:
-        return GetSystemMetricsO(nIndex);
-    }
 }
 
 static BOOL WINAPI GetMonitorInfoAH(HMONITOR hMonitor, LPMONITORINFO lpmi) { return FALSE; }
