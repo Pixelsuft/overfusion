@@ -271,35 +271,35 @@ void extrahooks::init() {
             *reinterpret_cast<wchar_t**>(addr2) = my_argv_w;
     }();
     // TODO: GetDateFormatEx, GetLocaleInfoEx, GetTimeFormatEx, GetUserDefaultLocaleName
-    HOOK_AUTO("shell32.dll", DragAcceptFiles);
-    HOOK_STR_ONLY("shell32.dll", DragQueryFile);
-    HOOK_STR_ONLY("shell32.dll", ShellExecute);
-    HOOK_STR_ONLY("shell32.dll", ShellExecuteEx);
-    HOOK_STR_ONLY("kernel32.dll", GetCommandLine);
-    HOOK_STR_ONLY("kernel32.dll", GetVersionEx);
-    HOOK_STR_ONLY("kernel32.dll", EnumSystemLocales);
+    IAT_AUTO("shell32.dll", DragAcceptFiles);
+    IAT_STR_ONLY("shell32.dll", DragQueryFile);
+    IAT_STR_ONLY("shell32.dll", ShellExecute);
+    IAT_STR_ONLY("shell32.dll", ShellExecuteEx);
+    IAT_STR_ONLY("kernel32.dll", GetCommandLine);
+    IAT_STR_ONLY("kernel32.dll", GetVersionEx);
+    IAT_STR_ONLY("kernel32.dll", EnumSystemLocales);
     // FIXME: crashes FNAF (kcini.mfx)
-    // HOOK_ONLY("shell32.dll", SHGetSpecialFolderLocation);
-    HOOK_ONLY("kernel32.dll", GetUserDefaultLCID);
-    HOOK_ONLY("kernel32.dll", GetVersion);
-    HOOK_ONLY("kernel32.dll", Beep);
-    HOOK_STR_ONLY("winmm.dll", joyGetDevCaps);
-    HOOK_ONLY("winmm.dll", joyGetPosEx);
+    // IAT_ONLY("shell32.dll", SHGetSpecialFolderLocation);
+    IAT_ONLY("kernel32.dll", GetUserDefaultLCID);
+    IAT_ONLY("kernel32.dll", GetVersion);
+    IAT_ONLY("kernel32.dll", Beep);
+    IAT_STR_ONLY("winmm.dll", joyGetDevCaps);
+    IAT_ONLY("winmm.dll", joyGetPosEx);
 }
 
 void extrahooks::init_ws32() {
-    HOOK_ONLY("ws2_32.dll", WSAStartup);
-    HOOK_ONLY("ws2_32.dll", bind);
+    IAT_ONLY("ws2_32.dll", WSAStartup);
+    IAT_ONLY("ws2_32.dll", bind);
 }
 
-void extrahooks::init_inet() { HOOK_ONLY("wininet.dll", InternetGetConnectedState); }
+void extrahooks::init_inet() { IAT_ONLY("wininet.dll", InternetGetConnectedState); }
 
 void extrahooks::init_adv() {
-    HOOK_STR_ONLY("advapi32.dll", GetUserName);
-    HOOK_STR_ONLY("advapi32.dll", RegOpenKeyEx);
-    HOOK_STR_ONLY("advapi32.dll", RegCreateKeyEx);
-    HOOK_STR_ONLY("advapi32.dll", RegQueryValueEx);
-    HOOK_STR_ONLY("advapi32.dll", RegOpenKey);
-    HOOK_STR_ONLY("advapi32.dll", RegCreateKey);
-    HOOK_STR_ONLY("advapi32.dll", RegQueryValue);
+    IAT_STR_ONLY("advapi32.dll", GetUserName);
+    IAT_STR_ONLY("advapi32.dll", RegOpenKeyEx);
+    IAT_STR_ONLY("advapi32.dll", RegCreateKeyEx);
+    IAT_STR_ONLY("advapi32.dll", RegQueryValueEx);
+    IAT_STR_ONLY("advapi32.dll", RegOpenKey);
+    IAT_STR_ONLY("advapi32.dll", RegCreateKey);
+    IAT_STR_ONLY("advapi32.dll", RegQueryValue);
 }

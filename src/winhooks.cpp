@@ -267,20 +267,20 @@ void winhooks::init() {
     is_custom_window = false;
     hwnd = mhwnd = nullptr;
     // winhooks::init_win32_theme();
-    // HOOK_STR_ONLY("user32.dll", GetMonitorInfo);
-    HOOK_STR_AUTO("user32.dll", CreateWindowEx);
-    HOOK_STR_AUTO("user32.dll", SetWindowText);
-    HOOK_STR_AUTO("user32.dll", MessageBox);
-    HOOK_STR_ONLY("user32.dll", DialogBoxParam);
-    HOOK_STR_ONLY("user32.dll", SetWindowsHookEx);
-    HOOK_AUTO("user32.dll", GetFocus);
-    HOOK_AUTO("user32.dll", GetForegroundWindow);
-    HOOK_ONLY("user32.dll", SetForegroundWindow);
-    HOOK_AUTO("user32.dll", GetActiveWindow);
-    HOOK_ONLY("user32.dll", SetFocus);
-    HOOK_ONLY("user32.dll", SetActiveWindow);
-    HOOK_AUTO("user32.dll", GetSystemMetrics);
-    HOOK_AUTO("user32.dll", SetMenu);
+    // IAT_STR_ONLY("user32.dll", GetMonitorInfo);
+    IAT_STR_AUTO("user32.dll", CreateWindowEx);
+    IAT_STR_AUTO("user32.dll", SetWindowText);
+    IAT_STR_AUTO("user32.dll", MessageBox);
+    IAT_STR_ONLY("user32.dll", DialogBoxParam);
+    IAT_STR_ONLY("user32.dll", SetWindowsHookEx);
+    IAT_AUTO("user32.dll", GetFocus);
+    IAT_AUTO("user32.dll", GetForegroundWindow);
+    IAT_ONLY("user32.dll", SetForegroundWindow);
+    IAT_AUTO("user32.dll", GetActiveWindow);
+    IAT_ONLY("user32.dll", SetFocus);
+    IAT_ONLY("user32.dll", SetActiveWindow);
+    IAT_AUTO("user32.dll", GetSystemMetrics);
+    IAT_AUTO("user32.dll", SetMenu);
 }
 
 void winhooks::after_ui_init() {

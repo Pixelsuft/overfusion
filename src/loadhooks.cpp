@@ -146,8 +146,8 @@ static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
 }
 
 void loadhooks::init() {
-    HOOK_STR_AUTO("kernel32.dll", LoadLibrary);
-    HOOK_AUTO("kernel32.dll", GetProcAddress);
+    IAT_STR_AUTO("kernel32.dll", LoadLibrary);
+    IAT_AUTO("kernel32.dll", GetProcAddress);
     // For really old MMF2 versions
     auto handle = GetModuleHandleW(L"mmfs2.dll");
     if (handle != nullptr)

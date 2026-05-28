@@ -584,6 +584,6 @@ static IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {
     return ret;
 }
 
-void d3d9hooks::pre_init() { HOOK_AUTO("ddraw.dll", DirectDrawCreate); }
+void d3d9hooks::pre_init() { IAT_AUTO("ddraw.dll", DirectDrawCreate); }
 
-void d3d9hooks::init() { HOOK_AUTO("d3d9.dll", Direct3DCreate9); }
+void d3d9hooks::init() { IAT_AUTO("d3d9.dll", Direct3DCreate9); }

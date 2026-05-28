@@ -241,19 +241,19 @@ static BOOL WINAPI SetCursorPosH(int X, int Y) {
 
 void input::init() {
     std::memset(kbd_state, 0, sizeof(bool) * 256);
-    HOOK_AUTO("user32.dll", GetKeyState);
-    HOOK_AUTO("user32.dll", GetAsyncKeyState);
-    HOOK_AUTO("user32.dll", GetCursorPos);
-    HOOK_ONLY("user32.dll", GetInputState);
-    HOOK_AUTO("user32.dll", GetKeyboardLayout);
-    HOOK_ONLY("user32.dll", GetKeyboardState);
-    HOOK_ONLY("user32.dll", SetKeyboardState);
-    // HOOK_ONLY("user32.dll", OpenClipboard);
-    HOOK_ONLY("user32.dll", IsClipboardFormatAvailable);
-    HOOK_ONLY("user32.dll", keybd_event);
-    HOOK_ONLY("user32.dll", mouse_event);
-    HOOK_ONLY("user32.dll", SendInput);
-    HOOK_ONLY("user32.dll", SetCursorPos);
+    IAT_AUTO("user32.dll", GetKeyState);
+    IAT_AUTO("user32.dll", GetAsyncKeyState);
+    IAT_AUTO("user32.dll", GetCursorPos);
+    IAT_ONLY("user32.dll", GetInputState);
+    IAT_AUTO("user32.dll", GetKeyboardLayout);
+    IAT_ONLY("user32.dll", GetKeyboardState);
+    IAT_ONLY("user32.dll", SetKeyboardState);
+    // IAT_ONLY("user32.dll", OpenClipboard);
+    IAT_ONLY("user32.dll", IsClipboardFormatAvailable);
+    IAT_ONLY("user32.dll", keybd_event);
+    IAT_ONLY("user32.dll", mouse_event);
+    IAT_ONLY("user32.dll", SendInput);
+    IAT_ONLY("user32.dll", SetCursorPos);
 }
 
 ost::optional<int> input::vk_from_string(ost::string_view s) {

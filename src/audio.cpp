@@ -405,7 +405,7 @@ void audio::init() {
         auto dir_ret = ofs::make_dir(base_path);
         ENSURE(dir_ret);
     }
-    HOOK_STR_ONLY("winmm.dll", mciSendCommand);
+    IAT_STR_ONLY("winmm.dll", mciSendCommand);
     auto hook_ret1 = hook::iat_hook(mem::get_base("mmfs2.dll"), "dsound.dll",
                                     mem::get_addr("dsound.dll", "DirectSoundCreate"),
                                     DirectSoundCreateH, &DirectSoundCreateO, true);

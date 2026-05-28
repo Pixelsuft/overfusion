@@ -185,20 +185,20 @@ void timehooks::init() {
     if (cfg.boxed_mode)
         return;
     mm_timer_counter = 1;
-    HOOK_ONLY("winmm.dll", timeGetSystemTime);
-    HOOK_AUTO("winmm.dll", timeGetTime);
-    HOOK_AUTO("kernel32.dll", QueryPerformanceFrequency);
-    HOOK_ONLY("kernel32.dll", GetTickCount);
-    HOOK_ONLY("kernel32.dll", SetLocalTime);
-    HOOK_ONLY("msvcrt.dll", _ftime);
-    HOOK_ONLY("msvcrt.dll", time);
+    IAT_ONLY("winmm.dll", timeGetSystemTime);
+    IAT_AUTO("winmm.dll", timeGetTime);
+    IAT_AUTO("kernel32.dll", QueryPerformanceFrequency);
+    IAT_ONLY("kernel32.dll", GetTickCount);
+    IAT_ONLY("kernel32.dll", SetLocalTime);
+    IAT_ONLY("msvcrt.dll", _ftime);
+    IAT_ONLY("msvcrt.dll", time);
     if (cfg.emulate_user_timers) {
-        HOOK_ONLY("user32.dll", SetTimer);
-        HOOK_ONLY("user32.dll", KillTimer);
+        IAT_ONLY("user32.dll", SetTimer);
+        IAT_ONLY("user32.dll", KillTimer);
     }
     if (cfg.emulate_mm_timers) {
-        HOOK_ONLY("winmm.dll", timeSetEvent);
-        HOOK_ONLY("winmm.dll", timeKillEvent);
+        IAT_ONLY("winmm.dll", timeSetEvent);
+        IAT_ONLY("winmm.dll", timeKillEvent);
     }
 }
 
@@ -207,12 +207,12 @@ void timehooks::update_init() {
     if (cfg.boxed_mode)
         return;
     // FIXME: breaks IWBTB admin mod for some reason
-    HOOK_AUTO("kernel32.dll", QueryPerformanceCounter);
+    IAT_AUTO("kernel32.dll", QueryPerformanceCounter);
     // This breaks fontembed.mfx if hooked earlier
-    HOOK_ONLY("kernel32.dll", GetSystemTimeAsFileTime);
+    IAT_ONLY("kernel32.dll", GetSystemTimeAsFileTime);
     // This breaks Nvidia driver if hooked earlier
     // FIXME: This also crashes FNAF (WTF?)
-    // HOOK_ONLY("kernel32.dll", GetLocalTime);
+    // IAT_ONLY("kernel32.dll", GetLocalTime);
     // TODO: GetSystemTime?
 }
 

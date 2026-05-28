@@ -983,47 +983,47 @@ static BOOL WINAPI WritePrivateProfileStringWH(LPCWSTR lpAppName, LPCWSTR lpKeyN
 }
 
 void files::init() {
-    // HOOK_AUTO("kernel32.dll", SetCurrentDirectoryW);
-    HOOK_STR_ONLY("kernel32.dll", GetTempPath);
+    // IAT_AUTO("kernel32.dll", SetCurrentDirectoryW);
+    IAT_STR_ONLY("kernel32.dll", GetTempPath);
 }
 
 void files::hook_fs() {
-    HOOK_STR_AUTO("kernel32.dll", DeleteFile);
-    HOOK_STR_AUTO("kernel32.dll", CreateFile);
+    IAT_STR_AUTO("kernel32.dll", DeleteFile);
+    IAT_STR_AUTO("kernel32.dll", CreateFile);
     if (!conf::get().no_ini_hooks) {
         // Why this shit is so slow
-        HOOK_STR_ONLY("kernel32.dll", WritePrivateProfileString);
-        HOOK_STR_ONLY("kernel32.dll", GetPrivateProfileString);
+        IAT_STR_ONLY("kernel32.dll", WritePrivateProfileString);
+        IAT_STR_ONLY("kernel32.dll", GetPrivateProfileString);
     }
-    HOOK_AUTO("kernel32.dll", OpenFile);
-    HOOK_AUTO("kernel32.dll", ReadFile);
-    HOOK_AUTO("kernel32.dll", ReadFileEx);
-    HOOK_AUTO("kernel32.dll", WriteFile);
-    HOOK_AUTO("kernel32.dll", WriteFileEx);
-    HOOK_AUTO("kernel32.dll", SetFilePointer);
-    HOOK_AUTO("kernel32.dll", SetFilePointerEx);
-    HOOK_AUTO("kernel32.dll", GetFileSize);
-    HOOK_AUTO("kernel32.dll", GetFileSizeEx);
-    HOOK_AUTO("kernel32.dll", CloseHandle);
-    HOOK_AUTO("kernel32.dll", _lopen);
-    HOOK_AUTO("kernel32.dll", _lclose);
-    HOOK_AUTO("msvcrt.dll", _open);
-    HOOK_AUTO("msvcrt.dll", _wopen);
-    HOOK_AUTO("msvcrt.dll", _read);
-    HOOK_AUTO("msvcrt.dll", _write);
-    HOOK_AUTO("msvcrt.dll", _lseek);
-    HOOK_AUTO("msvcrt.dll", _close);
-    HOOK_AUTO("msvcrt.dll", _access);
-    HOOK_AUTO("msvcrt.dll", _waccess);
-    HOOK_AUTO("msvcrt.dll", fopen);
-    HOOK_AUTO("msvcrt.dll", _wfopen);
-    HOOK_AUTO("msvcrt.dll", fread);
-    HOOK_AUTO("msvcrt.dll", fwrite);
-    HOOK_AUTO("msvcrt.dll", fseek);
-    HOOK_AUTO("msvcrt.dll", ftell);
-    HOOK_AUTO("msvcrt.dll", fclose);
-    HOOK_AUTO("msvcrt.dll", fflush);
-    HOOK_AUTO("msvcrt.dll", fgetc);
+    IAT_AUTO("kernel32.dll", OpenFile);
+    IAT_AUTO("kernel32.dll", ReadFile);
+    IAT_AUTO("kernel32.dll", ReadFileEx);
+    IAT_AUTO("kernel32.dll", WriteFile);
+    IAT_AUTO("kernel32.dll", WriteFileEx);
+    IAT_AUTO("kernel32.dll", SetFilePointer);
+    IAT_AUTO("kernel32.dll", SetFilePointerEx);
+    IAT_AUTO("kernel32.dll", GetFileSize);
+    IAT_AUTO("kernel32.dll", GetFileSizeEx);
+    IAT_AUTO("kernel32.dll", CloseHandle);
+    IAT_AUTO("kernel32.dll", _lopen);
+    IAT_AUTO("kernel32.dll", _lclose);
+    IAT_AUTO("msvcrt.dll", _open);
+    IAT_AUTO("msvcrt.dll", _wopen);
+    IAT_AUTO("msvcrt.dll", _read);
+    IAT_AUTO("msvcrt.dll", _write);
+    IAT_AUTO("msvcrt.dll", _lseek);
+    IAT_AUTO("msvcrt.dll", _close);
+    IAT_AUTO("msvcrt.dll", _access);
+    IAT_AUTO("msvcrt.dll", _waccess);
+    IAT_AUTO("msvcrt.dll", fopen);
+    IAT_AUTO("msvcrt.dll", _wfopen);
+    IAT_AUTO("msvcrt.dll", fread);
+    IAT_AUTO("msvcrt.dll", fwrite);
+    IAT_AUTO("msvcrt.dll", fseek);
+    IAT_AUTO("msvcrt.dll", ftell);
+    IAT_AUTO("msvcrt.dll", fclose);
+    IAT_AUTO("msvcrt.dll", fflush);
+    IAT_AUTO("msvcrt.dll", fgetc);
     spdlog::info("Virtual FS hooks installed");
 }
 

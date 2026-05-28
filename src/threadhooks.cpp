@@ -34,11 +34,11 @@ static BOOL WINAPI CreateProcessAH(LPCSTR lpApplicationName, LPSTR lpCommandLine
 }
 
 BOOL(WINAPI* CreateProcessWO)(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
-                                     LPSECURITY_ATTRIBUTES lpProcessAttributes,
-                                     LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
-                                     DWORD dwCreationFlags, LPVOID lpEnvironment,
-                                     LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
-                                     LPPROCESS_INFORMATION lpProcessInformation);
+                              LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                              LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
+                              DWORD dwCreationFlags, LPVOID lpEnvironment,
+                              LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
+                              LPPROCESS_INFORMATION lpProcessInformation);
 static BOOL WINAPI CreateProcessWH(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
                                    LPSECURITY_ATTRIBUTES lpProcessAttributes,
                                    LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,

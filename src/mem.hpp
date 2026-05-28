@@ -4,7 +4,6 @@
 #include <string>
 #include <type_traits>
 
-#if 0
 // Normal hooking
 #define HOOK_AUTO(lib, func) hook::hook(mem::get_addr(lib, #func), func##H, &func##O)
 #define HOOK_ONLY(lib, func) hook::hook(mem::get_addr(lib, #func), func##H)
@@ -14,18 +13,15 @@
 #define HOOK_STR_ONLY(lib, func)                                                                   \
     (hook::hook(mem::get_addr(lib, #func "W"), func##WH) &&                                        \
      hook::hook(mem::get_addr(lib, #func "A"), func##AH))
-#else
+
 // IAT hooking
-#define HOOK_AUTO(lib, func) hook::iat_reg(lib, #func, func##H, &func##O)
-#define HOOK_ONLY(lib, func) hook::iat_reg(lib, #func, func##H)
-#define HOOK_STR_AUTO(lib, func)                                                                   \
+#define IAT_AUTO(lib, func) hook::iat_reg(lib, #func, func##H, &func##O)
+#define IAT_ONLY(lib, func) hook::iat_reg(lib, #func, func##H)
+#define IAT_STR_AUTO(lib, func)                                                                    \
     (hook::iat_reg(lib, #func "W", func##WH, &func##WO) &&                                         \
      hook::iat_reg(lib, #func "A", func##AH, &func##AO))
-#define HOOK_STR_ONLY(lib, func)                                                                   \
+#define IAT_STR_ONLY(lib, func)                                                                    \
     (hook::iat_reg(lib, #func "W", func##WH) && hook::iat_reg(lib, #func "A", func##AH))
-#endif
-
-#define HOOK_IAT(mod, lib, func) hook::iat_hook(mod, lib, #func, func##H, &func##O)
 
 namespace mem {
 extern std::string exe_name;
