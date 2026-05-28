@@ -63,6 +63,7 @@
       <SetChecksum>true</SetChecksum>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -70,6 +71,12 @@
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="..\settings.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="overfusion.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
