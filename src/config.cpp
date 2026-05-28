@@ -105,6 +105,7 @@ Config::Config() {
     system_offset = local_offset = startup_offset = 0; // TODO: conf them
     tm_fix_event_entry_offset = tm_fix_event_entry_type_offset = 0;
     pUpdateGameFrame = pRenderFrame = pProcessTransition = pRenderTransition = nullptr;
+    forced_res = {0, 0};
     fps = 0;
     show_menu = show_info = true;
     is_replay = false;
@@ -142,6 +143,13 @@ void Config::read() {
     auto data = read_config_file(project_name);
     if (data["fps"].is_number_integer() && data["fps"].is_number_unsigned())
         fps = data["fps"];
+    auto& fr = data["force_resolution"];
+    if (fr.is_array() && fr.size() > 1) {
+        if (fr[0].is_number_integer() && fr[0].is_number_unsigned())
+            forced_res.first = fr[0];
+        if (fr[1].is_number_integer() && fr[1].is_number_unsigned())
+            forced_res.second = fr[1];
+    }
     READ_BOOL(show_info);
     READ_BOOL(show_menu);
     READ_BOOL(emulate_user_timers);

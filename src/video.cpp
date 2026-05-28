@@ -148,7 +148,7 @@ void video::after_draw() {
         bmp = CreateCompatibleBitmap(srcdc, size.first, size.second);
         ENSURE(bmp != nullptr);
         old_bmp = SelectObject(memdc, bmp);
-        spdlog::info("Window capture started");
+        spdlog::info("Window capture started ({}x{})", size.first, size.second);
         break;
     default:
         ASS(false);
@@ -194,7 +194,7 @@ void video::d3d9_draw(void* dev_ptr) {
         d3d_ret = pDevice->CreateOffscreenPlainSurface(desc.Width, desc.Height, desc.Format,
                                                        D3DPOOL_SYSTEMMEM, &pSysSurface, nullptr);
         ENSURE(d3d_ret == D3D_OK);
-        spdlog::info("Direct3D9 capture started");
+        spdlog::info("Direct3D9 capture started ({}x{})", desc.Width, desc.Height);
         break;
     default:
         ASS(false);

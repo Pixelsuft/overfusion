@@ -12,6 +12,8 @@
 #include <backends/imgui_impl_win32.h>
 #include <spdlog/spdlog.h>
 
+// FIXME: forced resolution, make it working not only for recording
+
 using ost::string_view;
 using std::string;
 
@@ -45,6 +47,16 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     case WM_MOUSEHWHEEL:
     case WM_CHAR:
         return FALSE;
+    case WM_GETMINMAXINFO: {
+        auto& cfg = conf::get();
+        if (cfg.forced_res.first > 0 && cfg.forced_res.second > 0) {
+            auto mmi = reinterpret_cast<MINMAXINFO*>(lParam);
+            // FIXME: why 32 and 64????
+            mmi->ptMaxTrackSize.x = cfg.forced_res.first + 32;
+            mmi->ptMaxTrackSize.y = cfg.forced_res.second + 64;
+        }
+        return FALSE;
+    }
     }
     LRESULT lr = 0;
     if (UAHWndProc(hWnd, uMsg, wParam, lParam, &lr))
@@ -56,7 +68,7 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 LRESULT(__stdcall* EditWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static LRESULT __stdcall EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DROPFILES)
-        return 0;
+        return FALSE;
     if (!winhooks::is_custom_window || uMsg < WM_MOUSEFIRST || uMsg > WM_MOUSELAST) {
         ui::set_processing(true);
         ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
@@ -263,6 +275,21 @@ static int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UIN
     return ret;
 }
 
+static BOOL(WINAPI* GetClientRectO)(HWND hWnd, LPRECT lpRect);
+static BOOL WINAPI GetClientRectH(HWND hWnd, LPRECT lpRect) {
+    if (hWnd == ::hwnd) {
+        auto& cfg = conf::get();
+        if (cfg.forced_res.first > 0 && cfg.forced_res.second > 0) {
+            lpRect->left = 0;
+            lpRect->top = 0;
+            lpRect->right = cfg.forced_res.first;
+            lpRect->bottom = cfg.forced_res.second;
+            return TRUE;
+        }
+    }
+    return GetClientRectO(hWnd, lpRect);
+}
+
 void winhooks::init() {
     is_custom_window = false;
     hwnd = mhwnd = nullptr;
@@ -273,6 +300,7 @@ void winhooks::init() {
     IAT_STR_AUTO("user32.dll", MessageBox);
     IAT_STR_ONLY("user32.dll", DialogBoxParam);
     IAT_STR_ONLY("user32.dll", SetWindowsHookEx);
+    IAT_AUTO("user32.dll", GetClientRect);
     IAT_AUTO("user32.dll", GetFocus);
     IAT_AUTO("user32.dll", GetForegroundWindow);
     IAT_ONLY("user32.dll", SetForegroundWindow);
