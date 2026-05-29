@@ -6,6 +6,8 @@
 #include <d3d9.h>
 #include <spdlog/spdlog.h>
 
+// Video recording implementation
+
 using std::string;
 
 extern HWND hwnd;

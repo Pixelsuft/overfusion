@@ -11,6 +11,8 @@
 #include <spdlog/spdlog.h>
 #include <timeapi.h>
 
+// I'm not sure whether all of the implementations are accurate
+
 struct my_timeb {
     __time32_t time;
     unsigned short millitm;

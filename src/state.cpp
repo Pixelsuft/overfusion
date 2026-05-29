@@ -31,17 +31,26 @@ extern BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency);
 extern BOOL(WINAPI* QueryPerformanceCounterO)(LARGE_INTEGER* lpFrequency);
 
 struct State {
+    // Event list
     std::vector<Event> ev;
     // TODO: maybe keep keydowns here instead of holding?
     // and clear them when saving state?
     // or just duplicate them here? (this one might be the best)
+    // Temp event list
     std::vector<Event> temp_ev;
+    // Holding inputs last frame
     std::vector<int> prev_input;
+    // Re-record count
     uint64_t rerec_count;
+    // Normalized mouse pos
     std::pair<float, float> mouse_pos;
+    // Current scene ID
     int scene;
+    // FPS
     int fps;
+    // Current frame
     int frames;
+    // Total frames
     int total;
 
     State() : scene(0), fps(0), frames(0), total(0), rerec_count(0), mouse_pos({-1.f, -1.f}) {}
@@ -59,6 +68,7 @@ struct State {
         prev_input.clear();
     }
 
+    // Trim total frames to current frames
     void trim() {
         total = frames;
         auto it = std::lower_bound(ev.begin(), ev.end(), frames,
@@ -67,12 +77,14 @@ struct State {
             ev.erase(it, ev.end());
     }
 
+    // Calculate replay_index based on a current frame
     size_t calc_current_index() {
         auto it = std::lower_bound(ev.begin(), ev.end(), frames,
                                    [](const Event& e, int f) { return e.frame < f; });
         return std::distance(ev.begin(), it);
     }
 
+    // Calculate holding keys based on a current frame
     std::vector<int> calc_keys() {
         std::vector<int> ret;
         for (auto& e : ev) {
@@ -98,31 +110,46 @@ struct State {
 };
 
 namespace state {
+// Current state
 static State st;
+// Real holding keys
 static std::vector<int> real_holding;
+// Replay/real at the current frame holding keys
 static std::vector<int> cur_holding;
+// Manual waiting stuff
 static LARGE_INTEGER last_counter;
 static double const_dt;
 static double to_wait;
 static double freq;
+// Last info
 static string last_msg;
+// For displaying save/load error
 static string state_error_text;
+// Project path
 static string base_path;
+// Current event id (index)
 static size_t repl_index;
+// Time offset
 static int64_t time_offset;
+// Remember needed scene before switching if needed
 static int need_scene_slot;
+// Are we saving/loading?
 static bool processing_save;
+// Are we processing game frame?
 static bool updating;
+// Save file handle
 static void* temp_handle;
 } // namespace state
 
 inline int str_to_int(const std::string& str) {
+    // No exceptions please
     char* endptr;
     long num = std::strtol(str.c_str(), &endptr, 10);
     return endptr != str.c_str() ? static_cast<int>(num) : 0;
 }
 
 inline float str_to_float(const std::string& str) noexcept {
+    // No exceptions please
     char* endptr = nullptr;
     float num = std::strtof(str.c_str(), &endptr);
     return endptr != str.c_str() ? num : 0.0f;
@@ -134,7 +161,7 @@ static uint64_t get_rerecords() {
     if (file.open(state::base_path + "\\rerecords.ofbin", 0)) {
         string line;
         if (file.readln(line))
-            ret = std::stoull(line);
+            ret = static_cast<uint64_t>(str_to_int(line));
         file.close();
     }
     return ret;
@@ -168,7 +195,7 @@ void state::init() {
 void state::set_last_msg(string_view msg) { last_msg = string(msg); }
 
 bool state::is_save_handle(void* handle) {
-    /* return processing_save;*/
+    // For fast checking file hooks to skip our handle
     return processing_save && handle == temp_handle;
 }
 
@@ -380,6 +407,7 @@ void state::save_state(int slot) {
     processing_save = true;
     auto ret = plug::get().save_state(file);
     if (!ret.has_value()) {
+        // Plugin failed to save it's data
         processing_save = false;
         spdlog::error("Failed to save state data: {}", ret.error());
         last_msg = "Failed to save state data: " + ret.error();
@@ -388,6 +416,7 @@ void state::save_state(int slot) {
         return;
     }
     if (cfg.save_game_state && !processing_save) {
+        // Game failed to save it's data
         spdlog::error("Failed to save game state: {}", state_error_text);
         last_msg = "Failed to save game state: " + state_error_text;
         return;
@@ -431,10 +460,12 @@ void state::load_state(int slot, bool no_recursion) {
         spdlog::error("State version mismatch (expected {}, got {})", save_version, int_data);
         return;
     }
+    // Create temp_state and put it into st only without errors
     State temp_state;
     // State& temp_state = st;
     load_bin(file, temp_state.scene);
     if (!cfg.is_replay && temp_state.scene != st.scene && !no_recursion) {
+        // Need to switch scene before loading state
         need_scene_slot = slot;
         if (!plug::get().set_trans_enabled(false))
             spdlog::debug("Failed to set transitions disabled");
@@ -464,6 +495,7 @@ void state::load_state(int slot, bool no_recursion) {
     }
     auto ret = plug::get().load_state(file);
     if (!ret.has_value()) {
+        // State failed to load it's data
         processing_save = false;
         st.frames = prev_frames;
         spdlog::error("Failed to load state data: {}", ret.error());
@@ -471,6 +503,7 @@ void state::load_state(int slot, bool no_recursion) {
         return;
     }
     if (!cfg.is_replay && !processing_save) {
+        // Game failed to load it's data
         st.frames = prev_frames;
         spdlog::error("Failed to restore game state: {}", state_error_text);
         last_msg = "Failed to restore game state: " + state_error_text;
@@ -599,6 +632,7 @@ bool state::before_update(bool is_transitioning) {
     int* pScene = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSceneID, pGlobalApp));
     ASS(pScene != nullptr);
     st.scene = *pScene;
+    // Do not update when the game is minimized
     if (!cfg.is_paused && IsIconic(::hwnd))
         cfg.is_paused = true;
     if ((cfg.is_paused && !cfg.need_advance) || need_scene_slot != empty_save_slot)
@@ -656,6 +690,7 @@ void state::after_update() {
         updating = false;
         auto prev_time = get_time(TimeOffset::None);
         st.frames++;
+        // Update timers with "real" delta time
         timehooks::update(static_cast<int>(get_time(TimeOffset::None) - prev_time));
         st.total = std::max(st.total, st.frames);
         if (cfg.is_replay && st.frames == st.total && st.frames > 0) {
@@ -676,7 +711,7 @@ void state::after_update() {
     while (to_wait > 0.0) {
         LARGE_INTEGER now_counter;
         QueryPerformanceCounterO(&now_counter);
-        double dt = (double)(now_counter.QuadPart - last_counter.QuadPart) / freq;
+        double dt = static_cast<double>(now_counter.QuadPart - last_counter.QuadPart) / freq;
         last_counter = now_counter;
         to_wait -= dt;
     }
@@ -733,8 +768,10 @@ void state::set_key_down(int vk, bool down) {
 
 void state::add_mouse_toggle(int vk) {
     auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), vk);
-    auto prev_it = std::find_if(state::st.temp_ev.rbegin(), state::st.temp_ev.rend(),
-                                [vk](const Event& te) { return te.idx == event::Type::MouseDown && te.key.k == vk; });
+    auto prev_it =
+        std::find_if(state::st.temp_ev.rbegin(), state::st.temp_ev.rend(), [vk](const Event& te) {
+            return te.idx == event::Type::MouseDown && te.key.k == vk;
+        });
     Event event;
     event.frame = st.frames;
     event.idx = event::Type::MouseDown;

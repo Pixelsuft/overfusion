@@ -4,7 +4,7 @@
 #include "../src/plugbase.hpp"
 #include <spdlog/spdlog.h>
 
-// TODO: how can I skip disabled timers for performance?
+// For some reason these timers get reset when game loads state, so let's manually remember them
 
 ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
     auto& cfg = conf::get();
