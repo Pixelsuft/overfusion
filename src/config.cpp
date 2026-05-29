@@ -257,7 +257,7 @@ void Config::read() {
             // Get string keys from ints
             auto key_str = input::vk_to_string(bind.key);
             ASS(key_str.has_value());
-            std::vector<std::string> mods_str;
+            std::vector<string> mods_str;
             for (int mod : bind.mods) {
                 auto v = input::vk_to_string(mod);
                 ASS(v.has_value());

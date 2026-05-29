@@ -15,10 +15,10 @@
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-static void(__stdcall* RenderFrame)() = nullptr;
-static void(__stdcall* RenderTransition)() = nullptr;
+static void(__stdcall* RenderFrame)();
+static void(__stdcall* RenderTransition)();
 
-static int(__stdcall* ProcessTransitionO)() = nullptr;
+static int(__stdcall* ProcessTransitionO)();
 static int __stdcall ProcessTransitionH() {
     // Oh fuck another code dup
     auto& cfg = conf::get();
@@ -50,7 +50,7 @@ static int __stdcall ProcessTransitionH() {
     return ret;
 }
 
-static int(__stdcall* UpdateGameFrameO)() = nullptr;
+static int(__stdcall* UpdateGameFrameO)();
 static int __stdcall UpdateGameFrameH() {
     static bool inited = false;
     auto& cfg = conf::get();

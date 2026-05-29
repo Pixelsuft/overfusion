@@ -1,4 +1,5 @@
 #pragma once
+// C++11 std::string_view
 #ifdef min
 #undef min
 #endif

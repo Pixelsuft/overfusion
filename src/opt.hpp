@@ -1,4 +1,5 @@
 #pragma once
+// C++11 std::optional
 #if (defined(_MSC_VER) ? _MSVC_LANG : __cplusplus) >= 201703L
 #include <optional>
 

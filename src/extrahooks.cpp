@@ -65,7 +65,7 @@ static LCID WINAPI GetUserDefaultLCIDH() { return 0x1000; }
 static DWORD WINAPI GetVersionH() { return 0x1DB10106; }
 
 static BOOL WINAPI GetVersionExAH(LPOSVERSIONINFOA lpVersionInformation) {
-    if (lpVersionInformation == NULL)
+    if (lpVersionInformation == nullptr)
         return FALSE;
     lpVersionInformation->dwMajorVersion = 6;
     lpVersionInformation->dwMinorVersion = 1;
@@ -82,7 +82,7 @@ static BOOL WINAPI GetVersionExAH(LPOSVERSIONINFOA lpVersionInformation) {
 }
 
 static BOOL WINAPI GetVersionExWH(LPOSVERSIONINFOW lpVersionInformation) {
-    if (lpVersionInformation == NULL)
+    if (lpVersionInformation == nullptr)
         return FALSE;
     lpVersionInformation->dwMajorVersion = 6;
     lpVersionInformation->dwMinorVersion = 1;

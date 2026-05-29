@@ -225,7 +225,3 @@ void customwindow::render() {
     }
     ui::set_processing(false);
 }
-
-HWND customwindow::get_hwnd() { return g_hwnd; }
-
-LPDIRECT3DDEVICE9 customwindow::get_device() { return g_pd3dDevice; }

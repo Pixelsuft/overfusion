@@ -2,6 +2,8 @@
 #include "sv.hpp"
 #include <Windows.h>
 
+// Minimal subprocess library
+
 namespace subprocess {
 class Process {
 private:

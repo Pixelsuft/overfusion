@@ -45,6 +45,7 @@ static string get_module_path(HMODULE module) {
 
 static optional<std::string> before_load(string_view path) {
     auto fn = get_filename(path);
+    // Blocklist some unnecessary modules
     if (fn == "mmf2d3d8.dll") {
         spdlog::warn("Direct3D8 is not supported, a custom window will be used");
         // return "";
@@ -78,6 +79,7 @@ static void after_load(string_view path, void* mod) {
         }
     }
     plug::get().after_dll_load(path, fn, mod);
+    // Fully re-check IAT because DLL may have hidden deps
     hook::patch_iat();
 }
 

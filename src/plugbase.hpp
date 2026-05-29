@@ -32,18 +32,29 @@ public:
     bool need_key_message;
 
     PlugBase() : name("Abstract plugin"), need_key_message(false) {}
+    // Early init
     virtual bool pre_init() { return true; }
+    // Init before processing first frame
     virtual bool update_init() { return true; }
+    // DLL load hook
     virtual ost::optional<std::string> before_dll_load(ost::string_view path, ost::string_view fn) {
         return {};
     }
+    // When DLL was loaded
     virtual void after_dll_load(ost::string_view path, ost::string_view fn, void* mod) {}
+    // GetProcAddress hook
     virtual void* after_proc_get(void* module, const char* proc, void* ret) { return ret; }
+    // You should implement transition enable/disable iuf your game uses so
     virtual bool set_trans_enabled(bool enabled) { return false; }
+    // Normalize mouse coordinates from window
     virtual std::pair<float, float> mouse_from_screen(int x, int y) { return {0.f, 0.f}; }
+    // Get window coordinates from normalized
     virtual std::pair<int, int> mouse_to_screen(float x, float y) { return {0, 0}; }
+    // Get pointer to something
     virtual void* get_prop(PtrProp prop, void* data = nullptr) = 0;
+    // Save game and your data here
     virtual ost::expected<void, std::string> save_state(ofs::File& file) = 0;
+    // Load game and your data here
     virtual ost::expected<void, std::string> load_state(ofs::File& file) = 0;
     virtual ~PlugBase() {}
 };

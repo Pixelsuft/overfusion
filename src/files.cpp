@@ -27,6 +27,7 @@ using ost::optional;
 using ost::string_view;
 using std::string;
 
+// Our file structure we keep in memory
 struct FileData {
     void* data;
     size_t size;
@@ -37,6 +38,7 @@ struct FileData {
     FileData() : data(nullptr), size(0), refcount(0), allow_read(false), allow_write(false) {}
 };
 
+// File structure we give to the game opening a file
 struct FileHandle {
     FileData& data;
     size_t pos;
@@ -74,6 +76,7 @@ static std::string normalize_path(string_view path_view) {
     // TODO:
     // - UTF-8 support
     // - support for '..' and '.'
+    // - support converting CWD and user folder
     std::transform(ret.begin(), ret.end(), ret.begin(),
                    [](unsigned char c) { return c != '/' ? std::tolower(c) : '\\'; });
     // std::replace(ret.begin(), ret.end(), '/', '\\');
@@ -339,6 +342,7 @@ static BOOL WINAPI ReadFileExH(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfByt
     if (state::is_save_handle(hFile))
         return ReadFileExO(hFile, lpBuffer, nNumberOfBytesToRead, lpOverlapped,
                            lpCompletionRoutine);
+    // Yeah thats unsafe but I don't think somebody uses this func
     lock::CSLock mylock(fcs);
     auto it = std::find(our_handles.begin(), our_handles.end(), hFile);
     if (it == our_handles.end())

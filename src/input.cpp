@@ -282,6 +282,8 @@ ost::optional<ost::string_view> input::vk_to_string(int vk) {
 }
 
 void input::handle_input(int vk, bool pressed) {
+    // Let's process input only during frame update
+    // TODO: or maybe add a config variable
     if (1)
         kbd_que.push_back({vk, pressed});
     else
@@ -405,9 +407,11 @@ void input::sim_mouse_move(int x, int y) {
     // TODO: option in config to send WM_MOUSEMOVE
     if (!plug::get().need_key_message)
         return;
+    // TODO: move mouse actually
 }
 
 std::pair<int, int> input::get_real_mouse_pos() {
+    // Get mouse pos relative to the game window
     POINT pt;
     if (GetCursorPosO(&pt) && ScreenToClient(::hwnd, &pt))
         return {pt.x, pt.y};
