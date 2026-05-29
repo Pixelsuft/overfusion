@@ -4,13 +4,16 @@
 namespace event {
 enum class Type : uint8_t { None = 0, KeyDown = 1, MouseDown = 2, MouseMove = 3 };
 
+// Tagged union, in short
 struct Event {
     int frame;
     union {
+        // Keyboard or mouse down/up event
         struct {
             short k;
             bool down;
         } key;
+        // Mouse move event
         struct {
             float x;
             float y;

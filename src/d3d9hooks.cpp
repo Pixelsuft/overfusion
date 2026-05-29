@@ -22,6 +22,7 @@ static HRESULT WINAPI DirectDrawCreateH(void* lpGUID, void** lplpDD, void* pUnkO
     return DirectDrawCreateO(lpGUID, lplpDD, pUnkOuter);
 }
 
+// IDirect3DDevice9 proxy hook
 class ID3D9Proxy : public IDirect3DDevice9 {
     IDirect3DDevice9* pDev;
 
@@ -34,6 +35,7 @@ public:
     STDMETHOD_(ULONG, AddRef)() override { return pDev->AddRef(); }
     STDMETHOD_(ULONG, Release)() override {
         ULONG count = pDev->Release();
+        // Don't forget to release us
         if (count == 0)
             delete this;
         return count;
@@ -66,6 +68,7 @@ public:
     }
     STDMETHOD_(UINT, GetNumberOfSwapChains)() override { return pDev->GetNumberOfSwapChains(); }
     STDMETHOD(Reset)(D3DPRESENT_PARAMETERS* pPresentationParameters) {
+        // Invalidate ImGui
         ImGui_ImplDX9_InvalidateDeviceObjects();
         HRESULT hr = pDev->Reset(pPresentationParameters);
         if (SUCCEEDED(hr))
@@ -183,6 +186,7 @@ public:
     STDMETHOD(BeginScene)() override { return pDev->BeginScene(); }
 
     STDMETHOD(EndScene)() override {
+        // Main D3D9 hook here
         ui::set_processing(true);
         static bool inited = false;
         if (!inited) {
@@ -471,6 +475,7 @@ public:
     }
 };
 
+// IDirect3D9 proxy hook
 class IDirect3D9Proxy : public IDirect3D9 {
     IDirect3D9* pD3D;
 
@@ -484,6 +489,7 @@ public:
     STDMETHOD_(ULONG, AddRef)() override { return pD3D->AddRef(); }
     STDMETHOD_(ULONG, Release)() override {
         ULONG count = pD3D->Release();
+        // Release us
         if (count == 0)
             delete this;
         return count;
@@ -557,21 +563,6 @@ public:
         return hr;
     }
 };
-
-static HRESULT WINAPI CreateDeviceH(IDirect3D9* pD3D, UINT Adapter, D3DDEVTYPE DeviceType,
-                                    HWND hFocusWindow, DWORD BehaviorFlags,
-                                    D3DPRESENT_PARAMETERS* pPresentationParameters,
-                                    IDirect3DDevice9** ppReturnedDeviceInterface) {
-    spdlog::debug("IDirect3D9->CreateDevice");
-    HRESULT hr = CreateDeviceO(pD3D, Adapter, DeviceType, hFocusWindow, BehaviorFlags,
-                               pPresentationParameters, ppReturnedDeviceInterface);
-
-    if (SUCCEEDED(hr) && ppReturnedDeviceInterface && *ppReturnedDeviceInterface) {
-        spdlog::debug("Wrapping IDirect3DDevice9 into ID3D9Proxy");
-        *ppReturnedDeviceInterface = new ID3D9Proxy(*ppReturnedDeviceInterface);
-    }
-    return hr;
-}
 
 static IDirect3D9*(WINAPI* Direct3DCreate9O)(UINT SDKVersion);
 static IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {

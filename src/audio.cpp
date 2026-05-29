@@ -54,6 +54,7 @@ struct WavHeader {
 };
 #pragma pack(pop)
 
+// Happens when something changes in the current audio
 struct AudioEvent {
     uint64_t timeOffset;
     LONG volume;
@@ -61,6 +62,7 @@ struct AudioEvent {
     DWORD frequency;
 };
 
+// Remember the timeline, including events
 struct AudioCapture {
     uint64_t startTime;
     uint64_t endTime;
@@ -71,14 +73,22 @@ struct AudioCapture {
 };
 
 class IDSBProxy;
+// History for generating filter
 static std::vector<AudioCapture> history;
+// Cache so we can include still-not-finished audio on 'flush'
 static std::vector<IDSBProxy*> cache;
+// WAVs path
 static string base_path;
+// Global audio lock
 static lock::CriticalSection acs;
+// Are we capturing?
 static bool capture;
+// For generating fn
 static uint64_t last_time;
+// For generating fn
 static int last_uid;
 
+// Generate deterministic fn based on the current time
 static int gen_uid(uint64_t mytime) {
     if (mytime != last_time) {
         last_time = mytime;
@@ -87,12 +97,15 @@ static int gen_uid(uint64_t mytime) {
     return last_uid++;
 }
 
+// Layer func for getting current audio time
 inline uint64_t audio_get_time() { return state::get_time(state::TimeOffset::None); }
 
+// Generate unique filename via 'time' and 'idx'
 inline string get_fn(uint64_t a, int b) {
     return "a_" + std::to_string(a) + "_" + std::to_string(b) + ".wav";
 }
 
+// IDirectSoundBuffer proxy hook
 class IDSBProxy : public IDirectSoundBuffer {
     AudioCapture cap;
     WavHeader header;
@@ -105,6 +118,7 @@ class IDSBProxy : public IDirectSoundBuffer {
     DWORD originalFreq;
 
     void push_event() {
+        // Remember current params in case something has changed
         DWORD newFreq;
         LONG vol, pan;
         pBuf->GetFrequency(&newFreq);
@@ -131,10 +145,12 @@ class IDSBProxy : public IDirectSoundBuffer {
         uint64_t offset = static_cast<uint64_t>(virtualTimeAcc);
         if (!cap.events.empty()) {
             auto& last = cap.events.back();
+            // Last event has the same time -> override it
             if (last.timeOffset == offset) {
                 last = {offset, vol, pan, newFreq};
                 return;
             }
+            // Last event has the same params -> skip it
             if (last.frequency == newFreq && last.volume == vol && last.pan == pan)
                 return;
         }
@@ -144,6 +160,7 @@ class IDSBProxy : public IDirectSoundBuffer {
     void reinit_wav() {
         if (!capture)
             return;
+        // Open audio file, write default WAV header
         auto cur_time = audio_get_time();
         auto idx = gen_uid(cur_time);
         file = ofs::File(base_path + '\\' + get_fn(cur_time, idx), 1);
@@ -157,6 +174,7 @@ class IDSBProxy : public IDirectSoundBuffer {
 
 public:
     void finalize_wav() {
+        // Update header, close file, remove if empty
         if (file.is_open()) {
             uint64_t now = audio_get_time();
             double scale = static_cast<double>(currentFreq) / static_cast<double>(originalFreq);
@@ -213,6 +231,7 @@ public:
     STDMETHOD_(ULONG, Release)() override {
         ULONG count = pBuf->Release();
         if (count == 0) {
+            // We should manually delete IDSBProxy
             if (capture) {
                 auto it = std::find(cache.begin(), cache.end(), this);
                 ASS(it != cache.end());
@@ -311,6 +330,7 @@ public:
     STDMETHOD(Restore)() override { return pBuf->Restore(); }
 };
 
+// IDirectSound proxy hook
 class IDSProxy : public IDirectSound {
     IDirectSound* pDev;
 
@@ -323,6 +343,7 @@ public:
     STDMETHOD_(ULONG, AddRef)() override { return pDev->AddRef(); }
     STDMETHOD_(ULONG, Release)() override {
         ULONG count = pDev->Release();
+        // Again, IDSProxy should be deleted manually
         if (count == 0)
             delete this;
         return count;
@@ -339,7 +360,9 @@ public:
     STDMETHOD(GetCaps)(LPDSCAPS pDSCaps) override { return pDev->GetCaps(pDSCaps); }
     STDMETHOD(DuplicateSoundBuffer)(LPDIRECTSOUNDBUFFER pDSBufferOriginal,
                                     LPDIRECTSOUNDBUFFER* ppDSBufferDuplicate) override {
+        // Seems to be unused anyway
         spdlog::error("Not implemented: DuplicateSoundBuffer");
+        ASS(false);
         return DSERR_OUTOFMEMORY;
     }
     STDMETHOD(SetCooperativeLevel)(HWND hwnd, DWORD dwLevel) override {
@@ -407,7 +430,7 @@ void audio::init() {
     }
     IAT_STR_ONLY("winmm.dll", mciSendCommand);
     IAT_AUTO("dsound.dll", DirectSoundCreate);
-    // Keep ordinal hack
+    // Keep this because mmfs2.dll might use Ordinal 1 import instead of DirectSoundCreate
     auto hook_ret1 = hook::iat_hook_by_addr(mem::get_base("mmfs2.dll"), "dsound.dll",
                                             mem::get_addr("dsound.dll", "DirectSoundCreate"),
                                             DirectSoundCreateH, &DirectSoundCreateO);
@@ -426,6 +449,7 @@ void audio::flush() {
     if (history.empty())
         return;
 
+    // Let's make a FFmpeg script with filter file to join all the WAVs
     ofs::File filters(base_path + "\\audio_filters.txt", 1);
     ofs::File bat(base_path + "\\..\\audio_merge.bat", 1);
     string mix = "";

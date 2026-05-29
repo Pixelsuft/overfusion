@@ -6,6 +6,8 @@
 #include <Uxtheme.h>
 #include <vsstyle.h>
 
+// This is win32 dark theme support, including menubar (thanks Microslop!)
+
 #ifndef NTAPI
 #define NTAPI __stdcall
 #endif

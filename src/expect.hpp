@@ -1,4 +1,5 @@
 #pragma once
+// C++11 std::expected
 #if (defined(_MSC_VER) ? _MSVC_LANG : __cplusplus) >= 202302L
 #include <expected>
 

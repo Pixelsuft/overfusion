@@ -18,24 +18,25 @@
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam,
                                                              LPARAM lParam);
+extern HWND hwnd;
 
-static HWND g_hwnd = nullptr;
+static HWND g_hwnd;
 static WNDCLASSEXW g_wc;
 static const wchar_t* g_windowClassName = L"OverFusionWindow";
 
 LRESULT WINAPI CustomWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-static LPDIRECT3D9 g_pD3D = nullptr;
-static LPDIRECT3DDEVICE9 g_pd3dDevice = nullptr;
-static D3DPRESENT_PARAMETERS g_d3dpp = {};
+static LPDIRECT3D9 g_pD3D;
+static LPDIRECT3DDEVICE9 g_pd3dDevice;
+static D3DPRESENT_PARAMETERS g_d3dpp;
 
 static HICON GetWindowIcon(HWND targetHwnd) {
     HICON hIcon = nullptr;
-    hIcon = (HICON)SendMessage(targetHwnd, WM_GETICON, ICON_BIG, 0);
+    hIcon = reinterpret_cast<HICON>(SendMessageW(targetHwnd, WM_GETICON, ICON_BIG, 0));
     if (hIcon == nullptr)
-        hIcon = (HICON)GetClassLongPtr(targetHwnd, GCLP_HICON);
+        hIcon = reinterpret_cast<HICON>(GetClassLongPtrW(targetHwnd, GCLP_HICON));
     if (hIcon == nullptr)
-        hIcon = (HICON)SendMessage(targetHwnd, WM_GETICON, ICON_SMALL2, 0);
+        hIcon = reinterpret_cast<HICON>(SendMessageW(targetHwnd, WM_GETICON, ICON_SMALL2, 0));
     return hIcon;
 }
 
@@ -136,9 +137,12 @@ static bool InitImGui() {
     return true;
 }
 
-extern HWND hwnd;
 bool customwindow::init() {
-    HINSTANCE hInstance = GetModuleHandle(nullptr);
+    g_hwnd = nullptr;
+    g_pD3D = nullptr;
+    g_pd3dDevice = nullptr;
+    g_d3dpp = {};
+    HINSTANCE hInstance = GetModuleHandleW(nullptr);
     if (!RegisterCustomWindowClass(hInstance)) {
         spdlog::error("Failed to register custom window class");
         return false;
@@ -149,8 +153,8 @@ bool customwindow::init() {
     }
     winhooks::fix_win32_theme(g_hwnd);
     auto hIcon = GetWindowIcon(::hwnd);
-    SendMessage(g_hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIcon));
-    SendMessage(g_hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIcon));
+    SendMessageW(g_hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIcon));
+    SendMessageW(g_hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIcon));
 #ifdef _DEBUG
     ShowWindow(g_hwnd, SW_SHOWDEFAULT);
 #endif

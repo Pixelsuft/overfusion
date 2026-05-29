@@ -17,8 +17,9 @@
 #include <spdlog/spdlog.h>
 
 static void of_main() {
+    // This function runs as early as possible
     AllocConsole();
-    freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+    freopen_s(reinterpret_cast<FILE**>(stdout), "CONOUT$", "w", stdout);
 #ifdef _DEBUG
     spdlog::set_level(spdlog::level::debug);
 #endif

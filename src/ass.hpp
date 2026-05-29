@@ -2,7 +2,9 @@
 #ifdef _DEBUG
 #include <cassert>
 
+// Assume that 'expr' is always fals
 #define ASS(expr) assert(expr)
+// Run-time assert
 #define ENSURE(expr) assert(expr)
 #else
 #include "winhooks.hpp"

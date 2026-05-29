@@ -20,6 +20,7 @@ using std::string;
 static Config* _conf_ptr;
 
 static nlohmann::json read_config_file(string& proj_name) {
+    // Try to read and parse config file from disk
     auto path = std::string(files::get_cwd()) + '\\' + proj_name + "\\overfusion.json";
     spdlog::info("Config path: {}", path);
     ofs::File file(path, 0);
@@ -133,6 +134,7 @@ Config::Config() {
     allow_setting_cursor_pos = false;
 }
 
+// Read boolean variable
 #define READ_BOOL(name)                                                                            \
     if (data[#name].is_boolean() || data[#name].is_number_integer())                               \
     name = data[#name]
@@ -252,10 +254,17 @@ void Config::read() {
                 break;
 #endif
             }
+            // Get string keys from ints
             auto key_str = input::vk_to_string(bind.key);
             ASS(key_str.has_value());
+            std::vector<std::string> mods_str;
+            for (int mod : bind.mods) {
+                auto v = input::vk_to_string(mod);
+                ASS(v.has_value());
+                mods_str.push_back(std::string(v.value()));
+            }
             spdlog::info("Bind (task={}, extra={}, key='{}', mods={})", static_cast<int>(bind.task),
-                         bind.extra, key_str.value(), bind.mods);
+                         bind.extra, key_str.value(), mods_str);
             binds.push_back(bind);
         }
         std::sort(binds.begin(), binds.end(),
