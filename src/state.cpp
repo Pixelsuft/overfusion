@@ -173,25 +173,27 @@ static void set_rerecords(uint64_t count) {
         file.writeln(std::to_string(count));
 }
 
-static bool get_tas_mouse_down(int vk) {
-    auto prev_it =
-        std::find_if(state::st.temp_ev.rbegin(), state::st.temp_ev.rend(), [vk](const Event& te) {
-            return te.idx == event::Type::MouseDown && te.key.k == vk;
-        });
-    if (prev_it == state::st.temp_ev.rend())
-        return std::find(state::st.prev_input.begin(), state::st.prev_input.end(), vk) !=
-               state::st.prev_input.end();
+bool state::get_tas_mouse_down(int vk) {
+    auto prev_it = std::find_if(st.temp_ev.rbegin(), st.temp_ev.rend(), [vk](const Event& te) {
+        return te.idx == event::Type::MouseDown && te.key.k == vk;
+    });
+    if (prev_it == st.temp_ev.rend())
+        return std::find(st.prev_input.begin(), st.prev_input.end(), vk) != st.prev_input.end();
     else
         return prev_it->key.down;
 }
 
-static std::pair<float, float> get_tas_mouse_pos() {
-    auto prev_it = std::find_if(state::st.temp_ev.rbegin(), state::st.temp_ev.rend(),
+std::pair<float, float> state::get_tas_mouse_pos() {
+    auto prev_it = std::find_if(st.temp_ev.rbegin(), st.temp_ev.rend(),
                                 [](const Event& te) { return te.idx == event::Type::MouseMove; });
-    if (prev_it == state::st.temp_ev.rend())
-        return state::st.mouse_pos;
+    if (prev_it == st.temp_ev.rend())
+        return st.mouse_pos;
     else
         return {prev_it->mouse.x, prev_it->mouse.y};
+}
+
+std::pair<int, int> state::get_mouse_pos() {
+    return plug::get().mouse_to_screen(st.mouse_pos.first, st.mouse_pos.second);
 }
 
 void state::init() {
@@ -821,10 +823,6 @@ void state::fill_kbd_state(unsigned char* data) {
         data[val] = 1;
 }
 
-std::pair<int, int> state::get_mouse_pos() {
-    return plug::get().mouse_to_screen(st.mouse_pos.first, st.mouse_pos.second);
-}
-
 void state::on_mode_switch() {
     auto& cfg = conf::get();
     cur_holding.clear();
@@ -856,8 +854,10 @@ void state::draw_info() {
         ImGui::Text("Temp event count: %i", static_cast<int>(st.temp_ev.size()));
     ImGui::Text("Message: %s", last_msg.c_str());
     if (!cfg.fast_forward) {
-        auto win_pos = plug::get().mouse_to_screen(st.mouse_pos.first, st.mouse_pos.second);
-        ImGui::Text("Window mouse pos: %i, %i", win_pos.first, win_pos.second);
+        auto m_pos = get_tas_mouse_pos();
+        auto win_pos = plug::get().mouse_to_screen(m_pos.first, m_pos.second);
+        ImGui::Text("Window mouse %s: %i, %i", get_tas_mouse_down(VK_LBUTTON) ? "[DOWN]" : "",
+                    win_pos.first, win_pos.second);
         std::string keys_str;
         for (auto& vk : st.prev_input) {
             auto opt = input::vk_to_string(vk);

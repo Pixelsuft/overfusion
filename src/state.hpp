@@ -34,6 +34,8 @@ void set_last_msg(ost::string_view msg);
 void export_replay(ost::string_view fn);
 void import_replay(ost::string_view fn);
 std::pair<int, int> get_mouse_pos();
+bool get_tas_mouse_down(int vk);
+std::pair<float, float> get_tas_mouse_pos();
 
 // TODO: maybe to ofs?
 template <typename T> static void write_bin(ofs::File& file, const std::vector<T>& data) {
