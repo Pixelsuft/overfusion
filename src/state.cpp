@@ -856,7 +856,7 @@ void state::draw_info() {
     if (!cfg.fast_forward) {
         auto m_pos = get_tas_mouse_pos();
         auto win_pos = plug::get().mouse_to_screen(m_pos.first, m_pos.second);
-        ImGui::Text("Window mouse %s: %i, %i", get_tas_mouse_down(VK_LBUTTON) ? "[DOWN]" : "",
+        ImGui::Text("Window mouse%s: %i, %i", get_tas_mouse_down(VK_LBUTTON) ? " [DOWN]" : "",
                     win_pos.first, win_pos.second);
         std::string keys_str;
         for (auto& vk : st.prev_input) {

@@ -137,4 +137,16 @@ void ui::draw() {
     }
     if (cfg.show_menu)
         draw_menu();
+    if (!cfg.custom_window) {
+        // TODO: configure enabling that
+        auto m_pos = state::get_tas_mouse_pos();
+        auto m_down = state::get_tas_mouse_down(VK_LBUTTON);
+        if (m_pos.first >= 0.f && m_pos.second >= 0.f) {
+            auto w_pos = plug::get().mouse_to_screen(m_pos.first, m_pos.second);
+            ImDrawList* draw_list = ImGui::GetBackgroundDrawList();
+            draw_list->AddCircleFilled(
+                ImVec2(static_cast<float>(w_pos.first), static_cast<float>(w_pos.second)), 3.f,
+                m_down ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 0, 0, 255), 8);
+        }
+    }
 }
