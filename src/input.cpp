@@ -235,7 +235,11 @@ static UINT WINAPI SendInputH(UINT cInputs, LPINPUT pInputs, int cbSize) {
 
 static BOOL WINAPI SetCursorPosH(int X, int Y) {
     spdlog::info("SetCursorPos({}, {})", X, Y);
-    // TODO: option to allow set cursor pos???
+    POINT pos;
+    pos.x = X;
+    pos.y = Y;
+    if (ScreenToClient(::hwnd, &pos))
+        return state::set_win_mouse_pos(pos.x, pos.y) ? TRUE : FALSE;
     return FALSE;
 }
 

@@ -818,6 +818,15 @@ void state::add_mouse_move() {
                std::to_string(yreal) + ")";
 }
 
+bool state::set_win_mouse_pos(int x, int y) {
+    // TODO: option to allow set cursor pos???
+    ASS(std::find_if(st.temp_ev.begin(), st.temp_ev.end(), [](const Event& te) {
+            return te.idx == event::Type::MouseMove;
+        }) == st.temp_ev.end());
+    st.mouse_pos = plug::get().mouse_from_screen(x, y);
+    return true;
+}
+
 void state::fill_kbd_state(unsigned char* data) {
     for (auto& val : st.prev_input)
         data[val] = 1;
