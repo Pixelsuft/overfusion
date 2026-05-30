@@ -227,6 +227,8 @@ void timehooks::update(int dt) {
             // FIXME
             if (timer.second.cb && 0)
                 timer.second.cb(timer.first.first, WM_TIMER, timer.second.event, GetTickCountH());
+            else
+                SendMessageW(timer.first.first, WM_TIMER, timer.first.second, 0);
             state::set_temp_time_offset(0);
         }
     }
