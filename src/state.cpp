@@ -595,7 +595,7 @@ static bool exec_event(Event ev) {
     }
     case event::Type::MouseMove: {
         // Mouse move
-        auto [xreal, yreal] = plug::get().mouse_to_screen(ev.mouse.x, ev.mouse.y);
+        auto [xreal, yreal] = plug::get().mouse_to_window(ev.mouse.x, ev.mouse.y);
         state::st.mouse_pos.first = ev.mouse.x;
         state::st.mouse_pos.second = ev.mouse.y;
         input::sim_mouse_move(xreal, yreal);
@@ -797,7 +797,7 @@ void state::add_mouse_toggle(int vk) {
 
 void state::add_mouse_move() {
     auto [xreal, yreal] = input::get_real_mouse_pos();
-    auto pos = plug::get().mouse_from_screen(xreal, yreal);
+    auto pos = plug::get().mouse_from_window(xreal, yreal);
     auto prev_pos = get_tas_mouse_pos();
     if (pos == prev_pos) {
         last_msg = "Mouse move skipped because position is the same";
@@ -818,7 +818,7 @@ std::pair<int, int> state::get_mouse_pos() {
     ASS(std::find_if(st.temp_ev.begin(), st.temp_ev.end(), [](const Event& te) {
             return te.idx == event::Type::MouseMove;
         }) == st.temp_ev.end());
-    return plug::get().mouse_to_screen(st.mouse_pos.first, st.mouse_pos.second);
+    return plug::get().mouse_to_window(st.mouse_pos.first, st.mouse_pos.second);
 }
 
 bool state::set_win_mouse_pos(int x, int y) {
@@ -826,7 +826,7 @@ bool state::set_win_mouse_pos(int x, int y) {
     ASS(std::find_if(st.temp_ev.begin(), st.temp_ev.end(), [](const Event& te) {
             return te.idx == event::Type::MouseMove;
         }) == st.temp_ev.end());
-    st.mouse_pos = plug::get().mouse_from_screen(x, y);
+    st.mouse_pos = plug::get().mouse_from_window(x, y);
     return true;
 }
 
@@ -867,7 +867,7 @@ void state::draw_info() {
     ImGui::Text("Message: %s", last_msg.c_str());
     if (!cfg.fast_forward) {
         auto m_pos = get_tas_mouse_pos();
-        auto win_pos = plug::get().mouse_to_screen(m_pos.first, m_pos.second);
+        auto win_pos = plug::get().mouse_to_window(m_pos.first, m_pos.second);
         ImGui::Text("Window mouse%s: %i, %i", get_tas_mouse_down(VK_LBUTTON) ? " [DOWN]" : "",
                     win_pos.first, win_pos.second);
         std::string keys_str;

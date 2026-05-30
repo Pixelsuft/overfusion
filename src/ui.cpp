@@ -142,7 +142,7 @@ void ui::draw() {
         auto m_pos = state::get_tas_mouse_pos();
         auto m_down = state::get_tas_mouse_down(VK_LBUTTON);
         if (m_pos.first >= 0.f && m_pos.second >= 0.f) {
-            auto w_pos = plug::get().mouse_to_screen(m_pos.first, m_pos.second);
+            auto w_pos = plug::get().mouse_to_window(m_pos.first, m_pos.second);
             ImDrawList* draw_list = ImGui::GetBackgroundDrawList();
             draw_list->AddCircleFilled(
                 ImVec2(static_cast<float>(w_pos.first), static_cast<float>(w_pos.second)), 3.f,

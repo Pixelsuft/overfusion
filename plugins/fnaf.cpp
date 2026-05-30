@@ -79,7 +79,7 @@ public:
         return enabled ? mem::write<true>(trans_ptr, {0x74}) : mem::write<true>(trans_ptr, {0xeb});
     }
 
-    std::pair<float, float> mouse_from_screen(int x, int y) override {
+    std::pair<float, float> mouse_from_window(int x, int y) override {
         if (x < 0 || y < 0)
             return {-1.f, -1.f};
         auto win_size = winhooks::get_size();
@@ -87,7 +87,7 @@ public:
                 static_cast<float>(y) / static_cast<float>(win_size.second)};
     }
 
-    std::pair<int, int> mouse_to_screen(float x, float y) override {
+    std::pair<int, int> mouse_to_window(float x, float y) override {
         if (x < 0.f || y < 0.f)
             return {-100, -100};
         auto win_size = winhooks::get_size();

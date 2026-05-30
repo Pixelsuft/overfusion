@@ -47,9 +47,9 @@ public:
     // You should implement transition enable/disable iuf your game uses so
     virtual bool set_trans_enabled(bool enabled) { return false; }
     // Normalize mouse coordinates from window
-    virtual std::pair<float, float> mouse_from_screen(int x, int y) { return {0.f, 0.f}; }
+    virtual std::pair<float, float> mouse_from_window(int x, int y) { return {0.f, 0.f}; }
     // Get window coordinates from normalized
-    virtual std::pair<int, int> mouse_to_screen(float x, float y) { return {0, 0}; }
+    virtual std::pair<int, int> mouse_to_window(float x, float y) { return {0, 0}; }
     // Get pointer to something
     virtual void* get_prop(PtrProp prop, void* data = nullptr) = 0;
     // Save game and your data here
