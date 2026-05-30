@@ -28,6 +28,8 @@ static void of_main() {
     while (!IsDebuggerPresent())
         Sleep(500);
 #endif
+    SetEnvironmentVariableW(L"GALLIUM_DRIVER", L"llvmpipe");
+    SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", L"true");
     conf::init();
     mem::init();
     ui::init();
