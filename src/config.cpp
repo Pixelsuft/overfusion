@@ -132,6 +132,8 @@ Config::Config() {
     record_audio = false;
     support_audio_panning = true;
     allow_setting_cursor_pos = false;
+    need_key_message = false;
+    need_mouse_move_message = false;
 }
 
 // Read boolean variable

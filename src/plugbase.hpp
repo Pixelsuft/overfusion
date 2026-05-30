@@ -29,9 +29,8 @@ class PlugBase {
 public:
     std::string name;
     std::string cmdline_append;
-    bool need_key_message;
 
-    PlugBase() : name("Abstract plugin"), need_key_message(false) {}
+    PlugBase() : name("Abstract plugin") {}
     // Early init
     virtual bool pre_init() { return true; }
     // Init before processing first frame

@@ -20,9 +20,9 @@ private:
 public:
     PlugIwtDemo() {
         name = "I WANNA TRY - A New Adventure Demo";
-        need_key_message = true;
         SaveGameState = nullptr;
         LoadGameState = nullptr;
+        conf::get().need_key_message = true;
     }
 
     bool pre_init() override {

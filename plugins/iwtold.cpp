@@ -19,9 +19,9 @@ private:
 public:
     PlugIwtOld() {
         name = "I Wanna Try 1.9.8.3";
-        need_key_message = true;
         SaveGameState = nullptr;
         LoadGameState = nullptr;
+        conf::get().need_key_message = true;
     }
 
     bool pre_init() override {

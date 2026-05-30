@@ -381,7 +381,7 @@ void input::handle_input_real(int vk, bool pressed) {
 }
 
 void input::sim_key_event(int vk, bool down) {
-    if (plug::get().need_key_message)
+    if (conf::get().need_key_message)
         MainWindowProcO(::hwnd, down ? WM_KEYDOWN : WM_KEYUP, vk,
                         down ? 0 : ((1 << 30) | (1 << 31)));
 }
@@ -408,10 +408,9 @@ void input::sim_mouse_event(int vk, bool down) {
 }
 
 void input::sim_mouse_move(int x, int y) {
-    // TODO: option in config to send WM_MOUSEMOVE
-    if (!plug::get().need_key_message)
+    if (!conf::get().need_mouse_move_message)
         return;
-    // TODO: implement lParam + wParam if needed
+    // TODO: implement wParam if needed
     EditWindowProcO(::mhwnd, WM_MOUSEMOVE, 0, MAKELPARAM(x, y));
 }
 

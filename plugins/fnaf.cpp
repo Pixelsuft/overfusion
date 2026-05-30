@@ -20,7 +20,6 @@ private:
 public:
     PlugFnaf() {
         name = "Five Nights at Freddy's";
-        need_key_message = false;
         SaveGameState = nullptr;
         LoadGameState = nullptr;
         trans_ptr = 0;

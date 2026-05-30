@@ -64,6 +64,8 @@ public:
     bool record_audio;
     bool support_audio_panning;
     bool allow_setting_cursor_pos;
+    bool need_key_message;
+    bool need_mouse_move_message;
 
     Config();
     void read();

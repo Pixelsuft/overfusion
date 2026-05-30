@@ -47,7 +47,6 @@ private:
 public:
     PlugIwbtbAdmin() {
         name = "I Wanna Be The Boshy [admin]";
-        need_key_message = false;
         SaveGameState = nullptr;
         LoadGameState = nullptr;
     }
