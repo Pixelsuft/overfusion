@@ -335,7 +335,7 @@ std::pair<int, int> winhooks::get_size() {
     RECT rect;
     if (!GetClientRect(::hwnd, &rect))
         return {0, 0};
-    return {static_cast<int>(rect.right), static_cast<int>(rect.bottom)};
+    return {static_cast<int>(rect.right - rect.left), static_cast<int>(rect.bottom - rect.top)};
 }
 
 void winhooks::display_ensure_fail(ost::string_view text) {

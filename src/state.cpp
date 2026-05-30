@@ -173,29 +173,6 @@ static void set_rerecords(uint64_t count) {
         file.writeln(std::to_string(count));
 }
 
-bool state::get_tas_mouse_down(int vk) {
-    auto prev_it = std::find_if(st.temp_ev.rbegin(), st.temp_ev.rend(), [vk](const Event& te) {
-        return te.idx == event::Type::MouseDown && te.key.k == vk;
-    });
-    if (prev_it == st.temp_ev.rend())
-        return std::find(st.prev_input.begin(), st.prev_input.end(), vk) != st.prev_input.end();
-    else
-        return prev_it->key.down;
-}
-
-std::pair<float, float> state::get_tas_mouse_pos() {
-    auto prev_it = std::find_if(st.temp_ev.rbegin(), st.temp_ev.rend(),
-                                [](const Event& te) { return te.idx == event::Type::MouseMove; });
-    if (prev_it == st.temp_ev.rend())
-        return st.mouse_pos;
-    else
-        return {prev_it->mouse.x, prev_it->mouse.y};
-}
-
-std::pair<int, int> state::get_mouse_pos() {
-    return plug::get().mouse_to_screen(st.mouse_pos.first, st.mouse_pos.second);
-}
-
 void state::init() {
     base_path = string(files::get_cwd()) + '\\' + conf::get().project_name;
     last_msg = "None";
@@ -789,6 +766,25 @@ void state::set_key_down(int vk, bool down) {
     }
 }
 
+bool state::get_tas_mouse_down(int vk) {
+    auto prev_it = std::find_if(st.temp_ev.rbegin(), st.temp_ev.rend(), [vk](const Event& te) {
+        return te.idx == event::Type::MouseDown && te.key.k == vk;
+    });
+    if (prev_it == st.temp_ev.rend())
+        return std::find(st.prev_input.begin(), st.prev_input.end(), vk) != st.prev_input.end();
+    else
+        return prev_it->key.down;
+}
+
+std::pair<float, float> state::get_tas_mouse_pos() {
+    auto prev_it = std::find_if(st.temp_ev.rbegin(), st.temp_ev.rend(),
+                                [](const Event& te) { return te.idx == event::Type::MouseMove; });
+    if (prev_it == st.temp_ev.rend())
+        return st.mouse_pos;
+    else
+        return {prev_it->mouse.x, prev_it->mouse.y};
+}
+
 void state::add_mouse_toggle(int vk) {
     Event event;
     event.frame = st.frames;
@@ -816,6 +812,13 @@ void state::add_mouse_move() {
     last_msg = "Queued mouse move to (" + std::to_string(pos.first) + ", " +
                std::to_string(pos.second) + ") with (" + std::to_string(xreal) + ", " +
                std::to_string(yreal) + ")";
+}
+
+std::pair<int, int> state::get_mouse_pos() {
+    ASS(std::find_if(st.temp_ev.begin(), st.temp_ev.end(), [](const Event& te) {
+            return te.idx == event::Type::MouseMove;
+        }) == st.temp_ev.end());
+    return plug::get().mouse_to_screen(st.mouse_pos.first, st.mouse_pos.second);
 }
 
 bool state::set_win_mouse_pos(int x, int y) {

@@ -187,6 +187,16 @@ static BOOL WINAPI GetCursorPosH(LPPOINT lpPoint) {
     return ClientToScreen(::hwnd, lpPoint);
 }
 
+static BOOL WINAPI SetCursorPosH(int X, int Y) {
+    spdlog::info("SetCursorPos({}, {})", X, Y);
+    POINT pos;
+    pos.x = X;
+    pos.y = Y;
+    if (ScreenToClient(::hwnd, &pos))
+        return state::set_win_mouse_pos(pos.x, pos.y) ? TRUE : FALSE;
+    return FALSE;
+}
+
 static BOOL WINAPI GetInputStateH() {
     // Is this proper?
     return FALSE;
@@ -231,16 +241,6 @@ static VOID WINAPI mouse_eventH(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData,
 static UINT WINAPI SendInputH(UINT cInputs, LPINPUT pInputs, int cbSize) {
     spdlog::info("SendInput");
     return 0;
-}
-
-static BOOL WINAPI SetCursorPosH(int X, int Y) {
-    spdlog::info("SetCursorPos({}, {})", X, Y);
-    POINT pos;
-    pos.x = X;
-    pos.y = Y;
-    if (ScreenToClient(::hwnd, &pos))
-        return state::set_win_mouse_pos(pos.x, pos.y) ? TRUE : FALSE;
-    return FALSE;
 }
 
 void input::init() {
