@@ -134,6 +134,8 @@ Config::Config() {
     allow_setting_cursor_pos = false;
     need_key_message = false;
     need_mouse_move_message = false;
+    no_mouse_manipulation = false;
+    draw_cursor = false;
 }
 
 // Read boolean variable
@@ -172,6 +174,8 @@ void Config::read() {
     READ_BOOL(record_audio);
     READ_BOOL(support_audio_panning);
     READ_BOOL(allow_setting_cursor_pos);
+    READ_BOOL(no_mouse_manipulation);
+    READ_BOOL(draw_cursor);
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
     if (data["ffmpeg_cmdline"].is_string())

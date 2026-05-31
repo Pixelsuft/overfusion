@@ -137,8 +137,7 @@ void ui::draw() {
     }
     if (cfg.show_menu)
         draw_menu();
-    if (!cfg.custom_window) {
-        // TODO: configure enabling that
+    if (!cfg.custom_window && cfg.draw_cursor) {
         auto m_pos = state::get_tas_mouse_pos();
         auto m_down = state::get_tas_mouse_down(VK_LBUTTON);
         if (m_pos.first >= 0.f && m_pos.second >= 0.f) {

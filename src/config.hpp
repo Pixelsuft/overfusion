@@ -66,6 +66,8 @@ public:
     bool allow_setting_cursor_pos;
     bool need_key_message;
     bool need_mouse_move_message;
+    bool no_mouse_manipulation;
+    bool draw_cursor;
 
     Config();
     void read();

@@ -188,6 +188,8 @@ static BOOL WINAPI GetCursorPosH(LPPOINT lpPoint) {
 }
 
 static BOOL WINAPI SetCursorPosH(int X, int Y) {
+    if (conf::get().no_mouse_manipulation)
+        return FALSE;
     spdlog::debug("SetCursorPos({}, {})", X, Y);
     POINT pos;
     pos.x = X;
@@ -408,10 +410,9 @@ void input::sim_mouse_event(int vk, bool down) {
 }
 
 void input::sim_mouse_move(int x, int y) {
-    if (!conf::get().need_mouse_move_message)
-        return;
     // TODO: implement wParam if needed
-    EditWindowProcO(::mhwnd, WM_MOUSEMOVE, 0, MAKELPARAM(x, y));
+    if (conf::get().need_mouse_move_message)
+        EditWindowProcO(::mhwnd, WM_MOUSEMOVE, 0, MAKELPARAM(x, y));
 }
 
 std::pair<int, int> input::get_real_mouse_pos() {
