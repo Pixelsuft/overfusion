@@ -3,8 +3,10 @@
 #include <Windows.h>
 #include <vector>
 // Should be after Windows.h
+#include <CommCtrl.h>
 #include <Uxtheme.h>
 #include <vsstyle.h>
+#pragma comment(lib, "comctl32.lib") // FIXME
 
 // This is win32 dark theme support, including menubar (thanks Microslop!)
 
@@ -126,6 +128,7 @@ struct win_shit_type {
     HBRUSH g_brItemBackgroundHot;
     HBRUSH g_brItemBackgroundSelected;
     HBRUSH g_brItemBorder;
+    HBRUSH g_hDarkBgBrush;
     DWORD build_num;
     int enabled;
 };
@@ -184,6 +187,7 @@ void winhooks::init_win32_theme() {
     win_shit.g_brItemBackgroundHot = nullptr;
     win_shit.g_brItemBackgroundSelected = nullptr;
     win_shit.g_brItemBorder = nullptr;
+    win_shit.g_hDarkBgBrush = nullptr;
     win_shit.AllowDarkModeForWindow = nullptr;
     win_shit.ShouldAppsUseDarkMode = nullptr;
     win_shit.SetWindowCompositionAttribute = nullptr;
@@ -249,9 +253,45 @@ void winhooks::init_win32_theme() {
         win_shit.SetPreferredAppMode(WIN_APPMODE_ALLOW_DARK);
     if (win_shit.RefreshImmersiveColorPolicyState)
         win_shit.RefreshImmersiveColorPolicyState();
+    win_shit.g_hDarkBgBrush = CreateSolidBrush(RGB(32, 32, 32));
 }
 
 bool winhooks::should_fix_dark() { return win_shit.enabled == 1; }
+
+static LRESULT CALLBACK TrueDarkMessageBoxSubclass(HWND hWnd, UINT uMsg, WPARAM wParam,
+                                                   LPARAM lParam, UINT_PTR uIdSubclass,
+                                                   DWORD_PTR dwRefData) {
+    switch (uMsg) {
+    case WM_CTLCOLORMSGBOX:
+    case WM_CTLCOLORDLG:
+    case WM_CTLCOLORSTATIC:
+    case WM_CTLCOLORBTN: {
+        HDC hdc = reinterpret_cast<HDC>(wParam);
+        SetBkMode(hdc, TRANSPARENT);
+        SetTextColor(hdc, RGB(255, 255, 255));
+        SetBkColor(hdc, RGB(32, 32, 32));
+        return reinterpret_cast<LRESULT>(win_shit.g_hDarkBgBrush);
+    }
+    case WM_PAINT: {
+        LRESULT res = DefSubclassProc(hWnd, uMsg, wParam, lParam);
+        HDC hdc = GetDC(hWnd);
+        RECT rc;
+        GetClientRect(hWnd, &rc);
+        RECT rcBottom = {rc.left, rc.bottom - 55, rc.right, rc.bottom};
+        FillRect(hdc, &rcBottom, win_shit.g_hDarkBgBrush);
+        ReleaseDC(hWnd, hdc);
+        return res;
+    }
+    case WM_DESTROY:
+        RemoveWindowSubclass(hWnd, TrueDarkMessageBoxSubclass, uIdSubclass);
+        break;
+    case WM_INITDIALOG:
+    case WM_SHOWWINDOW:
+        winhooks::fix_win32_theme_instant(hWnd);
+        break;
+    }
+    return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
 
 static void fix_win32_theme_real(HWND hwnd) {
     if (!win_shit.AllowDarkModeForWindow)
@@ -274,6 +314,10 @@ static void fix_win32_theme_real(HWND hwnd) {
 
 void winhooks::fix_win32_theme_instant(void* _hwnd) {
     fix_win32_theme_real(reinterpret_cast<HWND>(_hwnd));
+}
+
+void winhooks::fix_win32_theme_messagebox(void* _hwnd) {
+    SetWindowSubclass(reinterpret_cast<HWND>(_hwnd), TrueDarkMessageBoxSubclass, 0, 0);
 }
 
 static void UAHDrawMenuNCBottomLine(HWND hWnd) {

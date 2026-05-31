@@ -8,11 +8,9 @@
 #include "state.hpp"
 #include "uconv.hpp"
 #include "ui.hpp"
-#include <CommCtrl.h>
 #include <Windows.h>
 #include <backends/imgui_impl_win32.h>
 #include <spdlog/spdlog.h>
-#pragma comment(lib, "comctl32.lib") // FIXME
 
 // FIXME: forced resolution, make it working not only for recording
 
@@ -22,7 +20,6 @@ using std::string;
 namespace winhooks {
 static bool is_custom_window;
 static HHOOK hCbtHook;
-static HBRUSH hDarkBgBrush;
 } // namespace winhooks
 
 HWND hwnd;
@@ -262,60 +259,14 @@ static BOOL WINAPI SetMenuH(HWND hWnd, HMENU hMenu) {
     return SetMenuO(hWnd, hMenu);
 }
 
-static LRESULT CALLBACK TrueDarkMessageBoxSubclass(HWND hWnd, UINT uMsg, WPARAM wParam,
-                                                   LPARAM lParam, UINT_PTR uIdSubclass,
-                                                   DWORD_PTR dwRefData) {
-    UNREFERENCED_PARAMETER(dwRefData);
-
-    switch (uMsg) {
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSTATIC:
-    case WM_CTLCOLORBTN: {
-        HDC hdc = (HDC)wParam;
-        SetBkMode(hdc, TRANSPARENT);
-        SetTextColor(hdc, RGB(255, 255, 255));
-        SetBkColor(hdc, RGB(32, 32, 32));
-        return (LRESULT)winhooks::hDarkBgBrush;
-    }
-    case WM_PAINT: {
-        LRESULT res = DefSubclassProc(hWnd, uMsg, wParam, lParam);
-        HDC hdc = GetDC(hWnd);
-        RECT rc;
-        GetClientRect(hWnd, &rc);
-        RECT rcBottom = {rc.left, rc.bottom - 55, rc.right, rc.bottom};
-        FillRect(hdc, &rcBottom, winhooks::hDarkBgBrush);
-        ReleaseDC(hWnd, hdc);
-        return res;
-    }
-    case WM_DESTROY: {
-        RemoveWindowSubclass(hWnd, TrueDarkMessageBoxSubclass, uIdSubclass);
-        break;
-    }
-    }
-    return DefSubclassProc(hWnd, uMsg, wParam, lParam);
-}
-
-LRESULT CALLBACK MsgBoxSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
-                                    UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
-    if (uMsg == WM_INITDIALOG || uMsg == WM_SHOWWINDOW) {
-        winhooks::fix_win32_theme_instant(hWnd);
-        RemoveWindowSubclass(hWnd, MsgBoxSubclassProc, uIdSubclass);
-    }
-
-    return DefSubclassProc(hWnd, uMsg, wParam, lParam);
-}
-
 static LRESULT CALLBACK CbtDarkHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode == HCBT_CREATEWND) {
         auto hwnd = reinterpret_cast<HWND>(wParam);
         winhooks::fix_win32_theme_instant(hwnd);
 
         wchar_t className[8];
-        if (GetClassNameW(hwnd, className, 8) == 6 && wcscmp(className, L"#32770") == 0) {
-            SetWindowSubclass(hwnd, TrueDarkMessageBoxSubclass, 0, 0);
-            SetWindowSubclass(hwnd, MsgBoxSubclassProc, 0, 0);
-        }
+        if (GetClassNameW(hwnd, className, 8) == 6 && wcscmp(className, L"#32770") == 0)
+            winhooks::fix_win32_theme_messagebox(hwnd);
     }
     return CallNextHookEx(winhooks::hCbtHook, nCode, wParam, lParam);
 }
@@ -397,7 +348,6 @@ void winhooks::init() {
 }
 
 void winhooks::after_ui_init() {
-    hDarkBgBrush = CreateSolidBrush(RGB(32, 32, 32));
     is_custom_window = conf::get().custom_window;
     winhooks::init_win32_theme();
     bool use_w = conf::get().is_unicode;

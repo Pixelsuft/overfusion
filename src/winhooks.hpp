@@ -5,6 +5,7 @@
 namespace winhooks {
 void fix_win32_theme(void* hwnd);
 void fix_win32_theme_instant(void* hwnd);
+void fix_win32_theme_messagebox(void* hwnd);
 bool should_fix_dark();
 void init_win32_theme();
 void init();
