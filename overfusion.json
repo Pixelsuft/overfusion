@@ -20,7 +20,8 @@
   "allow_setting_cursor_pos": false,
   "no_mouse_manipulation": true,
   "draw_cursor": true,
-  "pixelated_filter": true,
+  "pixel_filter": true,
+  "ui_pixel_filter": true,
   "cmdline_append": " /D3D9 /DEBUG /NOF /NOVSYNC /MIS0 /NOC",
   "ffmpeg_cmdline": "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an -vcodec h264_nvenc -b:v 10000k $PROJ/$NAME.mp4",
   "binds": [
