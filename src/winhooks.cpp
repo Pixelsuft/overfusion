@@ -8,9 +8,11 @@
 #include "state.hpp"
 #include "uconv.hpp"
 #include "ui.hpp"
+#include <CommCtrl.h>
 #include <Windows.h>
 #include <backends/imgui_impl_win32.h>
 #include <spdlog/spdlog.h>
+#pragma comment(lib, "comctl32.lib") // FIXME
 
 // FIXME: forced resolution, make it working not only for recording
 
@@ -19,6 +21,8 @@ using std::string;
 
 namespace winhooks {
 static bool is_custom_window;
+static HHOOK hCbtHook;
+static HBRUSH hDarkBgBrush;
 } // namespace winhooks
 
 HWND hwnd;
@@ -135,6 +139,7 @@ static HWND WINAPI CreateWindowExAH(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR 
                                 nHeight, hWndParent, hMenu, hInstance, lpParam);
     if (ret && reinterpret_cast<size_t>(lpClassName) > 0xFFFF) {
         on_win_create(ret, uconv::from_ansi(lpClassName), false);
+        winhooks::fix_win32_theme_instant(ret);
     }
     return ret;
 }
@@ -149,6 +154,7 @@ static HWND WINAPI CreateWindowExWH(DWORD dwExStyle, LPCWSTR lpClassName, LPCWST
                                 nHeight, hWndParent, hMenu, hInstance, lpParam);
     if (ret && reinterpret_cast<size_t>(lpClassName) > 0xFFFF) {
         on_win_create(ret, uconv::from_utf16(lpClassName), true);
+        winhooks::fix_win32_theme_instant(ret);
     }
     return ret;
 }
@@ -201,6 +207,8 @@ static BOOL WINAPI SetWindowTextAH(HWND hWnd, LPCSTR lpString) {
     return SetWindowTextAO(hWnd, temp_buf);
 }
 
+static HHOOK(WINAPI* SetWindowsHookExAO)(int idHook, HOOKPROC lpfn, HINSTANCE hmod,
+                                         DWORD dwThreadId);
 static HHOOK WINAPI SetWindowsHookExAH(int idHook, HOOKPROC lpfn, HINSTANCE hmod,
                                        DWORD dwThreadId) {
     // No size/move hooks which cause desyncs
@@ -208,6 +216,8 @@ static HHOOK WINAPI SetWindowsHookExAH(int idHook, HOOKPROC lpfn, HINSTANCE hmod
     return nullptr;
 }
 
+static HHOOK(WINAPI* SetWindowsHookExWO)(int idHook, HOOKPROC lpfn, HINSTANCE hmod,
+                                         DWORD dwThreadId);
 static HHOOK WINAPI SetWindowsHookExWH(int idHook, HOOKPROC lpfn, HINSTANCE hmod,
                                        DWORD dwThreadId) {
     spdlog::debug("Failing SetWindowsHookExW");
@@ -252,6 +262,53 @@ static BOOL WINAPI SetMenuH(HWND hWnd, HMENU hMenu) {
     return SetMenuO(hWnd, hMenu);
 }
 
+static LRESULT CALLBACK TrueDarkMessageBoxSubclass(HWND hWnd, UINT uMsg, WPARAM wParam,
+                                                   LPARAM lParam, UINT_PTR uIdSubclass,
+                                                   DWORD_PTR dwRefData) {
+    UNREFERENCED_PARAMETER(dwRefData);
+
+    switch (uMsg) {
+    case WM_CTLCOLORMSGBOX:
+    case WM_CTLCOLORDLG:
+    case WM_CTLCOLORSTATIC:
+    case WM_CTLCOLORBTN: {
+        HDC hdc = (HDC)wParam;
+        SetBkMode(hdc, TRANSPARENT);
+        SetTextColor(hdc, RGB(255, 255, 255));
+        SetBkColor(hdc, RGB(32, 32, 32));
+        return (LRESULT)winhooks::hDarkBgBrush;
+    }
+    case WM_PAINT: {
+        LRESULT res = DefSubclassProc(hWnd, uMsg, wParam, lParam);
+        HDC hdc = GetDC(hWnd);
+        RECT rc;
+        GetClientRect(hWnd, &rc);
+        RECT rcBottom = {rc.left, rc.bottom - 55, rc.right, rc.bottom};
+        FillRect(hdc, &rcBottom, winhooks::hDarkBgBrush);
+        ReleaseDC(hWnd, hdc);
+        return res;
+    }
+    case WM_DESTROY: {
+        RemoveWindowSubclass(hWnd, TrueDarkMessageBoxSubclass, uIdSubclass);
+        break;
+    }
+    }
+    return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
+static LRESULT CALLBACK CbtDarkHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    if (nCode == HCBT_CREATEWND) {
+        auto hwnd = reinterpret_cast<HWND>(wParam);
+        winhooks::fix_win32_theme_instant(hwnd);
+
+        wchar_t className[128];
+        if (GetClassNameW(hwnd, className, 128) == 6 && wcscmp(className, L"#32770") == 0) {
+            SetWindowSubclass(hwnd, TrueDarkMessageBoxSubclass, 0, 0);
+        }
+    }
+    return CallNextHookEx(winhooks::hCbtHook, nCode, wParam, lParam);
+}
+
 static int(WINAPI* MessageBoxAO)(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
 static int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
     ASS(lpText && lpCaption);
@@ -260,7 +317,13 @@ static int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT 
         ret = state::process_message_box(uconv::from_ansi(lpText), uconv::from_ansi(lpCaption),
                                          uType);
     if (ret == 0) {
+        winhooks::hCbtHook =
+            winhooks::should_fix_dark()
+                ? SetWindowsHookExWO(WH_CBT, CbtDarkHookProc, nullptr, GetCurrentThreadId())
+                : nullptr;
         ret = MessageBoxAO(hWnd, lpText, lpCaption, uType);
+        if (winhooks::hCbtHook)
+            UnhookWindowsHookEx(winhooks::hCbtHook);
         state::remember_message_box(ret);
     }
     return ret;
@@ -275,7 +338,13 @@ static int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UIN
         ret = state::process_message_box(uconv::from_utf16(lpText), uconv::from_utf16(lpCaption),
                                          uType);
     if (ret == 0) {
+        winhooks::hCbtHook =
+            winhooks::should_fix_dark()
+                ? SetWindowsHookExWO(WH_CBT, CbtDarkHookProc, nullptr, GetCurrentThreadId())
+                : nullptr;
         ret = MessageBoxWO(hWnd, lpText, lpCaption, uType);
+        if (winhooks::hCbtHook)
+            UnhookWindowsHookEx(winhooks::hCbtHook);
         state::remember_message_box(ret);
     }
     return ret;
@@ -303,9 +372,8 @@ void winhooks::init() {
     // IAT_STR_ONLY("user32.dll", GetMonitorInfo);
     IAT_STR_AUTO("user32.dll", CreateWindowEx);
     IAT_STR_AUTO("user32.dll", SetWindowText);
-    IAT_STR_AUTO("user32.dll", MessageBox);
     IAT_STR_ONLY("user32.dll", DialogBoxParam);
-    IAT_STR_ONLY("user32.dll", SetWindowsHookEx);
+    IAT_STR_AUTO("user32.dll", SetWindowsHookEx);
     IAT_AUTO("user32.dll", GetClientRect);
     IAT_AUTO("user32.dll", GetFocus);
     IAT_AUTO("user32.dll", GetForegroundWindow);
@@ -318,6 +386,7 @@ void winhooks::init() {
 }
 
 void winhooks::after_ui_init() {
+    hDarkBgBrush = CreateSolidBrush(RGB(32, 32, 32));
     is_custom_window = conf::get().custom_window;
     winhooks::init_win32_theme();
     bool use_w = conf::get().is_unicode;
@@ -331,6 +400,8 @@ void winhooks::after_ui_init() {
     EditWindowProcO = reinterpret_cast<WNDPROC>((use_w ? SetWindowLongPtrW : SetWindowLongPtrA)(
         ::mhwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(EditWindowProcH)));
     ENSURE(EditWindowProcO != nullptr);
+    // Let's do it here if the game wants to show an error during startup
+    IAT_STR_AUTO("user32.dll", MessageBox);
 }
 
 std::pair<int, int> winhooks::get_size() {

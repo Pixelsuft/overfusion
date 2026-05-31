@@ -251,6 +251,8 @@ void winhooks::init_win32_theme() {
         win_shit.RefreshImmersiveColorPolicyState();
 }
 
+bool winhooks::should_fix_dark() { return win_shit.enabled == 1; }
+
 static void fix_win32_theme_real(HWND hwnd) {
     if (!win_shit.AllowDarkModeForWindow)
         return;
@@ -268,6 +270,10 @@ static void fix_win32_theme_real(HWND hwnd) {
     }
     if (win_shit.SetWindowTheme)
         win_shit.SetWindowTheme(hwnd, enable_dark ? L"DarkMode_Explorer" : nullptr, nullptr);
+}
+
+void winhooks::fix_win32_theme_instant(void* _hwnd) {
+    fix_win32_theme_real(reinterpret_cast<HWND>(_hwnd));
 }
 
 static void UAHDrawMenuNCBottomLine(HWND hWnd) {
