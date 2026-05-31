@@ -300,6 +300,12 @@ void input::process_update() {
     for (auto& val : kbd_que)
         handle_input_real(val.first, val.second);
     kbd_que.clear();
+    for (int i = 0; i < 256; i++) {
+        if (kbd_state[i] && !(GetKeyStateO(i) & 0x8000)) {
+            // Key up event may not be sent automatically when messagebox appears
+            handle_input_real(i, false);
+        }
+    }
 }
 
 void input::handle_input_real(int vk, bool pressed) {
