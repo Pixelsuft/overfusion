@@ -255,8 +255,6 @@ void winhooks::init_win32_theme() {
         win_shit.RefreshImmersiveColorPolicyState();
 }
 
-bool winhooks::should_fix_dark() { return win_shit.enabled == 1; }
-
 static LRESULT CALLBACK TrueDarkMessageBoxSubclass(HWND hWnd, UINT uMsg, WPARAM wParam,
                                                    LPARAM lParam, UINT_PTR uIdSubclass,
                                                    DWORD_PTR dwRefData) {
@@ -334,7 +332,8 @@ void winhooks::fix_win32_theme_instant(void* _hwnd) {
 }
 
 void winhooks::fix_win32_theme_messagebox(void* _hwnd) {
-    SetWindowSubclass(reinterpret_cast<HWND>(_hwnd), TrueDarkMessageBoxSubclass, 0, 0);
+    if (win_shit.enabled == 1)
+        SetWindowSubclass(reinterpret_cast<HWND>(_hwnd), TrueDarkMessageBoxSubclass, 0, 0);
 }
 
 static void UAHDrawMenuNCBottomLine(HWND hWnd) {

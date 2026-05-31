@@ -280,9 +280,7 @@ static int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT 
                                          uType);
     if (ret == 0) {
         winhooks::hCbtHook =
-            winhooks::should_fix_dark()
-                ? SetWindowsHookExWO(WH_CBT, CbtDarkHookProc, nullptr, GetCurrentThreadId())
-                : nullptr;
+            SetWindowsHookExWO(WH_CBT, CbtDarkHookProc, nullptr, GetCurrentThreadId());
         ret = MessageBoxAO(hWnd, lpText, lpCaption, uType);
         if (winhooks::hCbtHook)
             UnhookWindowsHookEx(winhooks::hCbtHook);
@@ -301,9 +299,7 @@ static int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UIN
                                          uType);
     if (ret == 0) {
         winhooks::hCbtHook =
-            winhooks::should_fix_dark()
-                ? SetWindowsHookExWO(WH_CBT, CbtDarkHookProc, nullptr, GetCurrentThreadId())
-                : nullptr;
+            SetWindowsHookExWO(WH_CBT, CbtDarkHookProc, nullptr, GetCurrentThreadId());
         ret = MessageBoxWO(hWnd, lpText, lpCaption, uType);
         if (winhooks::hCbtHook)
             UnhookWindowsHookEx(winhooks::hCbtHook);
