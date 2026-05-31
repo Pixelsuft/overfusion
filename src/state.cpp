@@ -8,7 +8,6 @@
 #include "ofs.hpp"
 #include "plugbase.hpp"
 #include "timehooks.hpp"
-#include "ui.hpp"
 #include "video.hpp"
 #include <Windows.h>
 #include <algorithm>
@@ -117,6 +116,8 @@ static State st;
 static std::vector<int> real_holding;
 // Replay/real at the current frame holding keys
 static std::vector<int> cur_holding;
+// Ugly needed buffer for message boxes
+static std::vector<int> msgbox_buf;
 // Manual waiting stuff
 static LARGE_INTEGER last_counter;
 static double const_dt;
@@ -179,8 +180,8 @@ void state::init() {
     last_msg = "None";
     processing_save = false;
     updating = false;
-    st.fps = conf::get().fps; // TODO: should I really use st?
-    const_dt = 1.0 / (double)st.fps;
+    st.fps = conf::get().fps; // TODO: should I really use st or how elsewhere?
+    const_dt = 1.0 / static_cast<double>(st.fps);
     to_wait = 0.0;
     time_offset = 0;
     repl_index = 0;
@@ -189,7 +190,7 @@ void state::init() {
     st.ev.reserve(4096);
     spdlog::debug("Init FPS: {}", st.fps);
     QueryPerformanceFrequencyO(&last_counter);
-    freq = (double)last_counter.QuadPart;
+    freq = static_cast<double>(last_counter.QuadPart);
     QueryPerformanceCounterO(&last_counter);
 }
 
@@ -349,6 +350,9 @@ void state::import_replay(string_view fn) {
             }
             event.mouse.x = str_to_float(line.substr(start, end)) / 1000.f;
             event.mouse.y = str_to_float(line.substr(++end)) / 1000.f;
+            break;
+        case event::Type::MsgBox:
+            // TODO
             break;
         case event::Type::None:
         default:
@@ -553,7 +557,12 @@ int state::process_message_box(ost::string_view text, ost::string_view caption,
     spdlog::info("MessageBox: {} - {}", caption, text);
     if (!cfg.is_replay)
         return 0;
-    return 0; // TODO
+    ENSURE(!msgbox_buf.empty());
+    if (msgbox_buf.empty())
+        return 0;
+    auto ret = msgbox_buf.front();
+    msgbox_buf.erase(msgbox_buf.begin());
+    return ret;
 }
 
 void state::remember_message_box(int choice) {
@@ -561,7 +570,7 @@ void state::remember_message_box(int choice) {
         Event event;
         event.frame = st.frames;
         event.idx = event::Type::MsgBox;
-        event.message.choice = choice;
+        event.msgbox.choice = choice;
         st.ev.push_back(event);
     }
 }
@@ -623,6 +632,10 @@ static bool exec_event(Event ev) {
         input::sim_mouse_move(xreal, yreal);
         return true;
     }
+    case event::Type::MsgBox: {
+        state::msgbox_buf.push_back(ev.msgbox.choice);
+        return true;
+    }
     case event::Type::None:
         ASS(false);
         return false;
@@ -661,6 +674,7 @@ bool state::before_update(bool is_transitioning) {
         return false;
     updating = true;
     cur_holding = st.prev_input;
+    msgbox_buf.clear();
     if (cfg.is_replay) {
         for (; repl_index < st.ev.size(); repl_index++) {
             Event& ev = st.ev[repl_index];
@@ -916,6 +930,7 @@ void state::reset_game() {
     st.total = 0;
     st.prev_input.clear();
     st.mouse_pos.first = st.mouse_pos.second = -1.f;
+    msgbox_buf.clear();
     cur_holding.clear();
     repl_index = 0;
     void* pState = plug::get().get_prop(plug::PtrProp::PState);

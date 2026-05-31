@@ -21,7 +21,7 @@ struct Event {
         // Message box event
         struct {
             int choice;
-        } message;
+        } msgbox;
         uint64_t dummy;
     };
     Type idx;
