@@ -68,6 +68,7 @@ public:
     bool need_mouse_move_message;
     bool no_mouse_manipulation;
     bool draw_cursor;
+    bool pixelated_filter;
 
     Config();
     void read();

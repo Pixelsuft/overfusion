@@ -15,6 +15,7 @@ static HRESULT(WINAPI* CreateDeviceO)(IDirect3D9*, UINT, D3DDEVTYPE, HWND, DWORD
                                       D3DPRESENT_PARAMETERS*, IDirect3DDevice9**) = nullptr;
 
 extern HWND hwnd;
+static bool d_pixelated;
 
 static HRESULT(WINAPI* DirectDrawCreateO)(void* lpGUID, void** lplpDD, void* pUnkOuter);
 static HRESULT WINAPI DirectDrawCreateH(void* lpGUID, void** lplpDD, void* pUnkOuter) {
@@ -159,7 +160,8 @@ public:
     STDMETHOD(StretchRect)(IDirect3DSurface9* pSourceSurface, const RECT* pSourceRect,
                            IDirect3DSurface9* pDestSurface, const RECT* pDestRect,
                            D3DTEXTUREFILTERTYPE Filter) override {
-        return pDev->StretchRect(pSourceSurface, pSourceRect, pDestSurface, pDestRect, Filter);
+        return pDev->StretchRect(pSourceSurface, pSourceRect, pDestSurface, pDestRect,
+                                 d_pixelated ? D3DTEXF_POINT : Filter);
     }
     STDMETHOD(ColorFill)(IDirect3DSurface9* pSurface, const RECT* pRect, D3DCOLOR color) override {
         return pDev->ColorFill(pSurface, pRect, color);
@@ -304,6 +306,8 @@ public:
         return pDev->GetSamplerState(Sampler, Type, pValue);
     }
     STDMETHOD(SetSamplerState)(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value) override {
+        if (d_pixelated && Sampler == 0 && (Type == D3DSAMP_MAGFILTER || Type == D3DSAMP_MINFILTER))
+            Value = D3DTEXF_POINT;
         return pDev->SetSamplerState(Sampler, Type, Value);
     }
     STDMETHOD(ValidateDevice)(DWORD* pNumPasses) override {
@@ -569,6 +573,7 @@ static IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {
     spdlog::debug("Direct3DCreate9");
     auto ret = Direct3DCreate9O(SDKVersion);
     if (ret) {
+        d_pixelated = conf::get().pixelated_filter;
         spdlog::debug("Wrapping IDirect3D9 into ID3D9Proxy");
         return new IDirect3D9Proxy(ret);
     }
