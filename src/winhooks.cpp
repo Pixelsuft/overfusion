@@ -296,14 +296,25 @@ static LRESULT CALLBACK TrueDarkMessageBoxSubclass(HWND hWnd, UINT uMsg, WPARAM 
     return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
+LRESULT CALLBACK MsgBoxSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
+                                    UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
+    if (uMsg == WM_INITDIALOG || uMsg == WM_SHOWWINDOW) {
+        winhooks::fix_win32_theme_instant(hWnd);
+        RemoveWindowSubclass(hWnd, MsgBoxSubclassProc, uIdSubclass);
+    }
+
+    return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
 static LRESULT CALLBACK CbtDarkHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode == HCBT_CREATEWND) {
         auto hwnd = reinterpret_cast<HWND>(wParam);
         winhooks::fix_win32_theme_instant(hwnd);
 
-        wchar_t className[128];
-        if (GetClassNameW(hwnd, className, 128) == 6 && wcscmp(className, L"#32770") == 0) {
+        wchar_t className[8];
+        if (GetClassNameW(hwnd, className, 8) == 6 && wcscmp(className, L"#32770") == 0) {
             SetWindowSubclass(hwnd, TrueDarkMessageBoxSubclass, 0, 0);
+            SetWindowSubclass(hwnd, MsgBoxSubclassProc, 0, 0);
         }
     }
     return CallNextHookEx(winhooks::hCbtHook, nCode, wParam, lParam);
