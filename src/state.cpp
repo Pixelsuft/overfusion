@@ -234,6 +234,11 @@ void state::export_replay(string_view fn) {
                                 std::to_string(e.mouse.y * 1000.f));
             ENSURE(fret);
             break;
+        case event::Type::MsgBox:
+            fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(int_idx) + ',' +
+                                std::to_string(e.msgbox.choice));
+            ENSURE(fret);
+            break;
         case event::Type::None:
             ASS(false);
             break;
@@ -352,7 +357,11 @@ void state::import_replay(string_view fn) {
             event.mouse.y = str_to_float(line.substr(++end)) / 1000.f;
             break;
         case event::Type::MsgBox:
-            // TODO
+            event.msgbox.choice = str_to_int(line.substr(end));
+            if (event.msgbox.choice <= 0) {
+                spdlog::error("Invalid message box event line (choice)");
+                continue;
+            }
             break;
         case event::Type::None:
         default:
@@ -633,6 +642,7 @@ static bool exec_event(Event ev) {
         return true;
     }
     case event::Type::MsgBox: {
+        // Message box user choice
         state::msgbox_buf.push_back(ev.msgbox.choice);
         return true;
     }
