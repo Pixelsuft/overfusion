@@ -8,6 +8,7 @@
 #include "ofs.hpp"
 #include "plugbase.hpp"
 #include "timehooks.hpp"
+#include "ui.hpp"
 #include "video.hpp"
 #include <Windows.h>
 #include <algorithm>
@@ -542,6 +543,18 @@ bool state::invalidate_process(string_view text) {
     state_error_text = string(text);
     processing_save = false;
     return true;
+}
+
+int state::process_message_box(ost::string_view text, ost::string_view caption,
+                               unsigned int uType) {
+    if (ui::is_processing())
+        return 0;
+    if (uType == 0x30 && invalidate_process(text))
+        return IDOK;
+    if (caption == "Microsoft Visual C++ Runtime Library")
+        return 0;
+    spdlog::info("MessageBox: {} - {}", caption, text);
+    return 0;
 }
 
 static bool exec_event(Event ev) {

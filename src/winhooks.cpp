@@ -252,20 +252,10 @@ static BOOL WINAPI SetMenuH(HWND hWnd, HMENU hMenu) {
     return SetMenuO(hWnd, hMenu);
 }
 
-static int process_message_box(string_view text, string_view caption, UINT uType) {
-    if (ui::is_processing())
-        return 0;
-    if (uType == 0x30 && state::invalidate_process(text))
-        return IDOK;
-    if (caption == "Microsoft Visual C++ Runtime Library")
-        return 0;
-    spdlog::info("MessageBox: {} - {}", caption, text);
-    return 0;
-}
-
 static int(WINAPI* MessageBoxAO)(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
 static int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
-    auto ret = process_message_box(uconv::from_ansi(lpText), uconv::from_ansi(lpCaption), uType);
+    auto ret =
+        state::process_message_box(uconv::from_ansi(lpText), uconv::from_ansi(lpCaption), uType);
     if (ret == 0)
         ret = MessageBoxAO(hWnd, lpText, lpCaption, uType);
     return ret;
@@ -273,7 +263,8 @@ static int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT 
 
 static int(WINAPI* MessageBoxWO)(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType);
 static int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) {
-    auto ret = process_message_box(uconv::from_utf16(lpText), uconv::from_utf16(lpCaption), uType);
+    auto ret =
+        state::process_message_box(uconv::from_utf16(lpText), uconv::from_utf16(lpCaption), uType);
     if (ret == 0)
         ret = MessageBoxWO(hWnd, lpText, lpCaption, uType);
     return ret;
