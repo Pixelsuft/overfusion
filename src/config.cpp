@@ -107,6 +107,7 @@ Config::Config() {
     tm_fix_event_entry_offset = tm_fix_event_entry_type_offset = 0;
     pUpdateGameFrame = pRenderFrame = pProcessTransition = pRenderTransition = nullptr;
     forced_res = {0, 0};
+    speed = 1.f;
     fps = 0;
     show_menu = show_info = true;
     is_replay = false;
@@ -149,14 +150,18 @@ void Config::read() {
     auto temp_ret = ofs::make_dir(project_name);
     ENSURE(temp_ret);
     auto data = read_config_file(project_name);
-    if (data["fps"].is_number_integer() && data["fps"].is_number_unsigned())
+    if (data["fps"].is_number_unsigned())
         fps = data["fps"];
     auto& fr = data["force_resolution"];
     if (fr.is_array() && fr.size() > 1) {
-        if (fr[0].is_number_integer() && fr[0].is_number_unsigned())
+        if (fr[0].is_number_unsigned())
             forced_res.first = fr[0];
-        if (fr[1].is_number_integer() && fr[1].is_number_unsigned())
+        if (fr[1].is_number_unsigned())
             forced_res.second = fr[1];
+    }
+    if (data["speed"].is_number_float()) {
+        speed = data["speed"];
+        speed = std::min(std::max(speed, 0.05f), 2.f);
     }
     READ_BOOL(show_info);
     READ_BOOL(show_menu);

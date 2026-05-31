@@ -83,6 +83,10 @@ static void draw_menu() {
         ImGui::Checkbox("Reset on replay", &cfg.reset_on_replay);
         ImGui::Checkbox("Paused", &cfg.is_paused);
         ImGui::Checkbox("Fast forward", &cfg.fast_forward);
+        if (ImGui::SliderFloat("Speed", &cfg.speed, 0.05f, 2.f))
+            cfg.speed = std::min(std::max(cfg.speed, 0.05f), 2.f);
+        if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+            cfg.speed = 1.f;
         ImGui::Checkbox("Show info", &cfg.show_info);
         static char replay_buf[1024] = "replay.ofr";
         ImGui::InputText("Replay filename", replay_buf, 1024);

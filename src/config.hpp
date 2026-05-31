@@ -38,6 +38,7 @@ public:
     void* pRenderTransition;
     size_t tm_fix_event_entry_offset;
     size_t tm_fix_event_entry_type_offset;
+    float speed;
     int fps;
     bool show_info;
     bool show_menu;

@@ -705,7 +705,7 @@ void state::after_update() {
         return;
     if (to_wait < 0.0)
         to_wait = 0.0;
-    to_wait += const_dt;
+    to_wait += const_dt / static_cast<double>(cfg.speed);
     if (to_wait > 1.0)
         to_wait = 1.0;
     while (to_wait > 0.0) {
