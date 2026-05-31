@@ -185,7 +185,6 @@ bool hook::_hook_iat_by_addr(void* hModule, const char* dll, const void* addr, v
 static bool has_no_uppercase(ost::string_view sv) {
     return std::all_of(sv.begin(), sv.end(), [](unsigned char c) { return !std::isupper(c); });
 }
-
 bool hook::_reg_iat(ost::string_view dll, ost::string_view func_name, void* pNewFunc,
                     void** ppOriginal) {
     string str_dll(dll);
@@ -283,6 +282,18 @@ static bool module_iat_apply(void* hModule) {
     return true;
 }
 
+static bool is_iat_dll_blocked(ost::string_view dll) {
+#ifdef _DEBUG
+    return false;
+#else
+    return dll == "overfusion.dll" || dll == "ntdll.dll" || dll == "dxcore.dll" ||
+           dll == "dxgi.dll" || dll == "ddraw.dll" || dll == "d3d9.dll" || dll == "d3d8.dll" ||
+           dll == "dsound.dll" || dll == "nvd3dum.dll" || dll == "nvgpucomp32.dll" ||
+           dll == "nvldumd.dll" || dll == "NvMemMapStorage.dll" || dll == "nvppe.dll" ||
+           dll == "nvspcap.dll";
+#endif
+}
+
 bool hook::patch_iat() {
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, 0);
     if (hSnapshot == INVALID_HANDLE_VALUE) {
@@ -298,7 +309,7 @@ bool hook::patch_iat() {
             auto mod_fn = uconv::from_utf16(me.szModule);
             std::transform(mod_fn.begin(), mod_fn.end(), mod_fn.begin(), ::tolower);
             // TODO: do not touch system modules???
-            if (module_iat_apply(me.hModule)) {
+            if (!is_iat_dll_blocked(mod_fn) && module_iat_apply(me.hModule)) {
                 // spdlog::debug("IATed {}", mod_fn);
             }
         } while (Module32NextW(hSnapshot, &me));

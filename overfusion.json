@@ -100,6 +100,11 @@
       "target": "Esc"
     },
     {
+      "key": "Del",
+      "task": "map",
+      "target": "Del"
+    },
+    {
       "key": "TAB",
       "task": "fast",
       "toggle": false
