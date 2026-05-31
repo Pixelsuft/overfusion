@@ -272,14 +272,32 @@ static LRESULT CALLBACK TrueDarkMessageBoxSubclass(HWND hWnd, UINT uMsg, WPARAM 
         SetBkColor(hdc, RGB(32, 32, 32));
         return reinterpret_cast<LRESULT>(win_shit.g_hDarkBgBrush);
     }
+    case WM_ERASEBKGND: {
+        HDC hdc = reinterpret_cast<HDC>(wParam);
+        RECT rc;
+        GetClientRect(hWnd, &rc);
+        FillRect(hdc, &rc, win_shit.g_hDarkBgBrush);
+        return 1;
+    }
     case WM_PAINT: {
         LRESULT res = DefSubclassProc(hWnd, uMsg, wParam, lParam);
         HDC hdc = GetDC(hWnd);
-        RECT rc;
-        GetClientRect(hWnd, &rc);
-        RECT rcBottom = {rc.left, rc.bottom - 55, rc.right, rc.bottom};
-        FillRect(hdc, &rcBottom, win_shit.g_hDarkBgBrush);
-        ReleaseDC(hWnd, hdc);
+        if (hdc) {
+            RECT rc;
+            GetClientRect(hWnd, &rc);
+            int trayHeight = 45;
+            int borderLineHeight = 1;
+            RECT rcTray = {rc.left, rc.bottom - trayHeight, rc.right, rc.bottom};
+            RECT rcLine = {rc.left, rc.bottom - trayHeight, rc.right,
+                           rc.bottom - trayHeight + borderLineHeight};
+            HBRUSH hTrayBrush = CreateSolidBrush(RGB(40, 40, 40));
+            HBRUSH hLineBrush = CreateSolidBrush(RGB(70, 70, 70));
+            FillRect(hdc, &rcTray, hTrayBrush);
+            FillRect(hdc, &rcLine, hLineBrush);
+            DeleteObject(hTrayBrush);
+            DeleteObject(hLineBrush);
+            ReleaseDC(hWnd, hdc);
+        }
         return res;
     }
     case WM_DESTROY:
