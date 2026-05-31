@@ -2,7 +2,7 @@
 #include <cstdint>
 
 namespace event {
-enum class Type : uint8_t { None = 0, KeyDown = 1, MouseDown = 2, MouseMove = 3 };
+enum class Type : uint8_t { None = 0, KeyDown = 1, MouseDown = 2, MouseMove = 3, MsgBox = 20 };
 
 // Tagged union, in short
 struct Event {
@@ -18,6 +18,10 @@ struct Event {
             float x;
             float y;
         } mouse;
+        // Message box event
+        struct {
+            int choice;
+        } message;
         uint64_t dummy;
     };
     Type idx;

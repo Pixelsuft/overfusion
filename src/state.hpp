@@ -38,6 +38,7 @@ bool get_tas_mouse_down(int vk);
 std::pair<float, float> get_tas_mouse_pos();
 bool set_win_mouse_pos(int x, int y);
 int process_message_box(ost::string_view text, ost::string_view caption, unsigned int uType);
+void remember_message_box(int choice);
 
 // TODO: maybe to ofs?
 template <typename T> static void write_bin(ofs::File& file, const std::vector<T>& data) {

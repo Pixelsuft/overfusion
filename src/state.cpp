@@ -547,14 +547,23 @@ bool state::invalidate_process(string_view text) {
 
 int state::process_message_box(ost::string_view text, ost::string_view caption,
                                unsigned int uType) {
-    if (ui::is_processing())
-        return 0;
     if (uType == 0x30 && invalidate_process(text))
         return IDOK;
-    if (caption == "Microsoft Visual C++ Runtime Library")
-        return 0;
+    auto& cfg = conf::get();
     spdlog::info("MessageBox: {} - {}", caption, text);
-    return 0;
+    if (!cfg.is_replay)
+        return 0;
+    return 0; // TODO
+}
+
+void state::remember_message_box(int choice) {
+    if (!conf::get().is_replay) {
+        Event event;
+        event.frame = st.frames;
+        event.idx = event::Type::MsgBox;
+        event.message.choice = choice;
+        st.ev.push_back(event);
+    }
 }
 
 static bool exec_event(Event ev) {

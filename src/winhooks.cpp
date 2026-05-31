@@ -254,19 +254,30 @@ static BOOL WINAPI SetMenuH(HWND hWnd, HMENU hMenu) {
 
 static int(WINAPI* MessageBoxAO)(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
 static int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
-    auto ret =
-        state::process_message_box(uconv::from_ansi(lpText), uconv::from_ansi(lpCaption), uType);
-    if (ret == 0)
+    ASS(lpText && lpCaption);
+    int ret = 0;
+    if (!ui::is_processing() && std::strcmp(lpCaption, "Microsoft Visual C++ Runtime Library") != 0)
+        ret = state::process_message_box(uconv::from_ansi(lpText), uconv::from_ansi(lpCaption),
+                                         uType);
+    if (ret == 0) {
         ret = MessageBoxAO(hWnd, lpText, lpCaption, uType);
+        state::remember_message_box(ret);
+    }
     return ret;
 }
 
 static int(WINAPI* MessageBoxWO)(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType);
 static int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) {
-    auto ret =
-        state::process_message_box(uconv::from_utf16(lpText), uconv::from_utf16(lpCaption), uType);
-    if (ret == 0)
+    ASS(lpText && lpCaption);
+    int ret = 0;
+    if (!ui::is_processing() &&
+        std::wcscmp(lpCaption, L"Microsoft Visual C++ Runtime Library") != 0)
+        ret = state::process_message_box(uconv::from_utf16(lpText), uconv::from_utf16(lpCaption),
+                                         uType);
+    if (ret == 0) {
         ret = MessageBoxWO(hWnd, lpText, lpCaption, uType);
+        state::remember_message_box(ret);
+    }
     return ret;
 }
 
