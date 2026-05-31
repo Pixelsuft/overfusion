@@ -187,7 +187,7 @@ void winhooks::init_win32_theme() {
     win_shit.g_brItemBackgroundHot = nullptr;
     win_shit.g_brItemBackgroundSelected = nullptr;
     win_shit.g_brItemBorder = nullptr;
-    win_shit.g_hDarkBgBrush = nullptr;
+    win_shit.g_hDarkBgBrush = CreateSolidBrush(RGB(32, 32, 32));
     win_shit.AllowDarkModeForWindow = nullptr;
     win_shit.ShouldAppsUseDarkMode = nullptr;
     win_shit.SetWindowCompositionAttribute = nullptr;
@@ -253,7 +253,6 @@ void winhooks::init_win32_theme() {
         win_shit.SetPreferredAppMode(WIN_APPMODE_ALLOW_DARK);
     if (win_shit.RefreshImmersiveColorPolicyState)
         win_shit.RefreshImmersiveColorPolicyState();
-    win_shit.g_hDarkBgBrush = CreateSolidBrush(RGB(32, 32, 32));
 }
 
 bool winhooks::should_fix_dark() { return win_shit.enabled == 1; }
