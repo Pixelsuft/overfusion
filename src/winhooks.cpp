@@ -123,7 +123,19 @@ static void on_win_create(HWND hwnd, string_view class_name, bool unicode) {
     } else if (class_name == "Mf2EditClassTh") {
         ::mhwnd = hwnd;
         spdlog::info("Mf2EditClassTh window created");
-    }
+    } else if (class_name == "SysListView32" || class_name == "SysHeader32")
+        winhooks::fix_win32_set_dark_style(hwnd, L"DarkMode_ItemsView");
+    else if (class_name == "COMBOBOX")
+        winhooks::fix_win32_set_dark_style(hwnd, L"DarkMode_CFD");
+    else if (class_name == "EDIT" || class_name == "BUTTON" || class_name == "LISTBOX" ||
+             class_name == "SCROLLBAR" || class_name == "TOOLTIPS_CLASS" ||
+             class_name == "msctls_trackbar32" || class_name == "msctls_progress32" ||
+             class_name == "SysTabControl32")
+        winhooks::fix_win32_set_dark_style(hwnd, L"DarkMode");
+    else if (class_name == "msctls_statusbar32")
+        winhooks::fix_win32_set_dark_style(hwnd, L"ExplorerStatusBar");
+    else if (class_name == "RebarWindow32")
+        winhooks::fix_win32_set_dark_style(hwnd, L"DarkModeNavbar");
 }
 
 static HWND(WINAPI* CreateWindowExAO)(DWORD, LPCSTR, LPCSTR, DWORD, int, int, int, int, HWND, HMENU,
@@ -265,8 +277,12 @@ static LRESULT CALLBACK CbtDarkHookProc(int nCode, WPARAM wParam, LPARAM lParam)
         winhooks::fix_win32_theme_instant(hwnd);
 
         wchar_t className[8];
-        if (GetClassNameW(hwnd, className, 8) == 6 && wcscmp(className, L"#32770") == 0)
-            winhooks::fix_win32_theme_messagebox(hwnd);
+        if (GetClassNameW(hwnd, className, 8) == 6) {
+            if (wcscmp(className, L"#32770") == 0)
+                winhooks::fix_win32_theme_messagebox(hwnd);
+            else if (wcscmp(className, L"Button") == 0)
+                winhooks::fix_win32_set_dark_style(hwnd, L"DarkMode_Explorer");
+        }
     }
     return CallNextHookEx(winhooks::hCbtHook, nCode, wParam, lParam);
 }

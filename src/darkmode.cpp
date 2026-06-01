@@ -323,8 +323,12 @@ static void fix_win32_theme_real(HWND hwnd) {
         WINDOWCOMPOSITIONATTRIBDATA data = {WCA_USEDARKMODECOLORS, &win_dark, sizeof(win_dark)};
         win_shit.SetWindowCompositionAttribute(hwnd, &data);
     }
+}
+
+void winhooks::fix_win32_set_dark_style(void* _hwnd, const wchar_t* style) {
     if (win_shit.SetWindowTheme)
-        win_shit.SetWindowTheme(hwnd, enable_dark ? L"DarkMode_Explorer" : nullptr, nullptr);
+        win_shit.SetWindowTheme(reinterpret_cast<HWND>(_hwnd),
+                                win_shit.enabled == 1 ? style : nullptr, nullptr);
 }
 
 void winhooks::fix_win32_theme_instant(void* _hwnd) {
@@ -367,7 +371,7 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
     case WM_UAHDRAWMENU: {
         auto pUDM = reinterpret_cast<UAHMENU*>(lParam);
         RECT rc = {0};
-        if (1) {
+        if (true) {
             MENUBARINFO mbi = {sizeof(mbi)};
             GetMenuBarInfo(hWnd, OBJID_MENU, 0, &mbi);
             RECT rcWindow;
