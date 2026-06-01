@@ -22,6 +22,7 @@
   "draw_cursor": true,
   "pixel_filter": true,
   "ui_pixel_filter": true,
+  "save_vfs": true,
   "cmdline_append": " /D3D9 /DEBUG /NOF /NOVSYNC /MIS0 /NOC",
   "ffmpeg_cmdline": "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an -vcodec h264_nvenc -b:v 10000k $PROJ/$NAME.mp4",
   "binds": [

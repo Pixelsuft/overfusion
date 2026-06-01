@@ -1061,6 +1061,10 @@ void files::clear_fs() {
 }
 
 bool files::save_fs(ofs::File& file) {
+    if (!conf::get().save_vfs) {
+        state::write_bin(file, static_cast<size_t>(0));
+        return true;
+    }
     ENSURE(our_handles.empty());
     lock::CSLock mylock(fcs);
     state::write_bin(file, file_map.size());

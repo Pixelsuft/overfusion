@@ -71,6 +71,7 @@ public:
     bool draw_cursor;
     bool pixel_filter;
     bool ui_pixel_filter;
+    bool save_vfs;
 
     Config();
     void read();

@@ -418,8 +418,6 @@ void state::save_state(int slot) {
     write_bin(file, st.prev_input);
     write_bin(file, st.temp_ev);
     write_bin(file, st.ev);
-    bool_ret = files::save_fs(file);
-    ENSURE(bool_ret);
     processing_save = true;
     auto ret = plug::get().save_state(file);
     if (!ret.has_value()) {
@@ -437,6 +435,9 @@ void state::save_state(int slot) {
         last_msg = "Failed to save game state: " + state_error_text;
         return;
     }
+    // Ok, let's do this here
+    bool_ret = files::save_fs(file);
+    ENSURE(bool_ret);
     processing_save = false;
     if (last_msg.empty())
         last_msg = string("State ") + std::to_string(slot) + " saved!";
@@ -504,9 +505,6 @@ void state::load_state(int slot, bool no_recursion) {
     load_bin(file, temp_state.prev_input);
     load_bin(file, temp_state.temp_ev);
     load_bin(file, temp_state.ev);
-    // FIXME, files get resored even if load state fails
-    auto bool_ret = files::load_fs(file);
-    ENSURE(bool_ret);
     int prev_frames = st.frames;
     if (!cfg.is_replay) {
         st.frames = temp_state.frames; // Need to set before load_state
@@ -544,6 +542,9 @@ void state::load_state(int slot, bool no_recursion) {
         // TODO: maybe trim on the first frame, not directly when loading?
         st.trim();
         repl_index = st.calc_current_index();
+        // FIXME, files get resored even if load state fails
+        auto bool_ret = files::load_fs(file);
+        ENSURE(bool_ret);
     }
     st.rerec_count = std::max(st.rerec_count, get_rerecords()) + 1;
     set_rerecords(st.rerec_count);

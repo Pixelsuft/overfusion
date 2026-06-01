@@ -139,6 +139,7 @@ Config::Config() {
     draw_cursor = false;
     pixel_filter = false;
     ui_pixel_filter = false;
+    save_vfs = false;
 }
 
 // Read boolean variable
@@ -185,6 +186,7 @@ void Config::read() {
     READ_BOOL(draw_cursor);
     READ_BOOL(pixel_filter);
     READ_BOOL(ui_pixel_filter);
+    READ_BOOL(save_vfs);
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
     if (data["ffmpeg_cmdline"].is_string())
