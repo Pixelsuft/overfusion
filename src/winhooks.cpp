@@ -131,7 +131,7 @@ static void on_win_create(HWND hwnd, string_view class_name, bool unicode) {
              class_name == "SCROLLBAR" || class_name == "TOOLTIPS_CLASS" ||
              class_name == "msctls_trackbar32" || class_name == "msctls_progress32" ||
              class_name == "SysTabControl32")
-        winhooks::fix_win32_set_dark_style(hwnd, L"DarkMode");
+        winhooks::fix_win32_set_dark_style(hwnd, L"DarkMode_Explorer");
     else if (class_name == "msctls_statusbar32")
         winhooks::fix_win32_set_dark_style(hwnd, L"ExplorerStatusBar");
     else if (class_name == "RebarWindow32")
