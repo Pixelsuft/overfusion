@@ -418,6 +418,8 @@ void state::save_state(int slot) {
     write_bin(file, st.prev_input);
     write_bin(file, st.temp_ev);
     write_bin(file, st.ev);
+    bool_ret = files::save_fs(file);
+    ENSURE(bool_ret);
     processing_save = true;
     auto ret = plug::get().save_state(file);
     if (!ret.has_value()) {
@@ -502,6 +504,9 @@ void state::load_state(int slot, bool no_recursion) {
     load_bin(file, temp_state.prev_input);
     load_bin(file, temp_state.temp_ev);
     load_bin(file, temp_state.ev);
+    // FIXME, files get resored even if load state fails
+    auto bool_ret = files::load_fs(file);
+    ENSURE(bool_ret);
     int prev_frames = st.frames;
     if (!cfg.is_replay) {
         st.frames = temp_state.frames; // Need to set before load_state

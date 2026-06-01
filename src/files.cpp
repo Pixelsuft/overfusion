@@ -1059,3 +1059,46 @@ void files::clear_fs() {
         }
     }
 }
+
+bool files::save_fs(ofs::File& file) {
+    ENSURE(our_handles.empty());
+    lock::CSLock mylock(fcs);
+    state::write_bin(file, file_map.size());
+    for (auto& [fn, data] : file_map) {
+        state::write_bin(file, fn);
+        state::write_bin(file, data.size);
+        state::write_bin(file, data.allow_read);
+        state::write_bin(file, data.allow_write);
+        auto w_ret = file.write(data.data, data.size);
+        ENSURE(w_ret);
+    }
+    return true;
+}
+
+bool files::load_fs(ofs::File& file) {
+    clear_fs();
+    lock::CSLock mylock(fcs);
+    size_t total;
+    state::load_bin(file, total);
+    if (total == 0)
+        return true;
+    for (size_t i = 0; i < total; i++) {
+        std::string fn;
+        state::load_bin(file, fn);
+        if (file_map.find(fn) != file_map.end()) {
+            // WTF
+            ENSURE(false);
+            continue;
+        }
+        FileData data;
+        state::load_bin(file, data.size);
+        state::load_bin(file, data.allow_read);
+        state::load_bin(file, data.allow_write);
+        data.data = std::malloc(data.size);
+        ENSURE(data.data != nullptr);
+        auto w_ret = file.read(data.data, data.size);
+        ENSURE(w_ret);
+        file_map[std::move(fn)] = std::move(data);
+    }
+    return true;
+}

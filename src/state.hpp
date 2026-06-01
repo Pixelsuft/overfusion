@@ -52,6 +52,17 @@ template <typename T> static void write_bin(ofs::File& file, const std::vector<T
     ENSURE(ret);
 }
 
+static void write_bin(ofs::File& file, const std::string& data) {
+    size_t size = data.size();
+    auto ret = file.write(&size, sizeof(size_t));
+    ENSURE(ret);
+    if (size == 0)
+        return;
+    // Everything is trivial, no problems, ok?
+    ret = file.write(data.data(), size);
+    ENSURE(ret);
+}
+
 template <typename A, typename B>
 static void write_bin(ofs::File& file, const std::pair<A, B>& val) {
     auto ret = file.write(&val.first, sizeof(A));
@@ -75,6 +86,19 @@ template <typename T> static void load_bin(ofs::File& file, std::vector<T>& data
     }
     data.resize(size);
     ret = file.read(&data[0], size * sizeof(T));
+    ENSURE(ret);
+}
+
+static void load_bin(ofs::File& file, std::string& data) {
+    size_t size;
+    auto ret = file.read(&size, sizeof(size_t));
+    ENSURE(ret);
+    if (size == 0) {
+        data.clear();
+        return;
+    }
+    data.resize(size);
+    ret = file.read(&data[0], size);
     ENSURE(ret);
 }
 
