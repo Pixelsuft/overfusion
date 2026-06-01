@@ -365,7 +365,7 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
         return false;
     switch (message) {
     case WM_UAHDRAWMENU: {
-        UAHMENU* pUDM = (UAHMENU*)lParam;
+        auto pUDM = reinterpret_cast<UAHMENU*>(lParam);
         RECT rc = {0};
         if (1) {
             MENUBARINFO mbi = {sizeof(mbi)};
@@ -379,7 +379,7 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
         return true;
     }
     case WM_UAHDRAWMENUITEM: {
-        UAHDRAWMENUITEM* pUDMI = (UAHDRAWMENUITEM*)lParam;
+        auto pUDMI = reinterpret_cast<UAHDRAWMENUITEM*>(lParam);
         HBRUSH* pbrBackground = &win_shit.g_brItemBackground;
         HBRUSH* pbrBorder = &win_shit.g_brItemBackground;
         wchar_t menuString[256] = {0};
@@ -435,7 +435,7 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
         return true;
     }
     case WM_UAHMEASUREMENUITEM: {
-        UAHMEASUREMENUITEM* pMmi = (UAHMEASUREMENUITEM*)lParam;
+        auto pMmi = reinterpret_cast<UAHMEASUREMENUITEM*>(lParam);
         *lr = DefWindowProc(hWnd, message, wParam, lParam);
         pMmi->mis.itemWidth = (pMmi->mis.itemWidth * 4) / 3;
         return true;
