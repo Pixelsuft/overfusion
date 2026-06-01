@@ -165,7 +165,7 @@
     <ClCompile Include="tools\timer_fix.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
-    <ClCompile Include="src\subprocess.cpp">
+    <ClCompile Include="src\process.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\video.cpp">
@@ -253,7 +253,7 @@
     <ClInclude Include="tools\timer_fix.hpp">
       <Filter>Tools</Filter>
     </ClInclude>
-    <ClInclude Include="src\subprocess.hpp">
+    <ClInclude Include="src\process.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\video.hpp">

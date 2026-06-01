@@ -2,7 +2,7 @@
 #include "video.hpp"
 #include "ass.hpp"
 #include "config.hpp"
-#include "subprocess.hpp"
+#include "process.hpp"
 #include <d3d9.h>
 #include <spdlog/spdlog.h>
 
@@ -16,7 +16,7 @@ namespace video {
 enum class CheckResult { Ok, Started, Failed };
 
 // General
-static subprocess::Process ffmpeg;
+static process::Subprocess ffmpeg;
 static std::vector<BYTE> data_buffer;
 static std::pair<int, int> size;
 static int file_index;

@@ -4,6 +4,7 @@
 #include "files.hpp"
 #include "input.hpp"
 #include "ofs.hpp"
+#include "process.hpp"
 #include <Windows.h>
 #include <algorithm>
 #include <map>
@@ -100,7 +101,14 @@ static ost::optional<int> key_from_json(nlohmann::json& val) {
 }
 
 Config::Config() {
-    project_name = "test_proj"; // TODO: configure it
+    auto env_name = process::get_env("OVERFUSION_PROJECT_NAME");
+    if (env_name.has_value()) {
+        project_name = std::move(env_name.value());
+        spdlog::info("Project name: {}", project_name);
+    } else {
+        spdlog::warn("No project name was specified, defaulting to 'test_proj'");
+        project_name = "test_proj";
+    }
     ffmpeg_cmdline =
         "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an $PROJ/$NAME.mp4";
     system_offset = local_offset = startup_offset = 0; // TODO: conf them

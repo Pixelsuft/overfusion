@@ -1,30 +1,30 @@
 #define WIN32_LEAN_AND_MEAN
-#include "subprocess.hpp"
+#include "process.hpp"
 #include "ass.hpp"
 #include "uconv.hpp"
 #include <spdlog/spdlog.h>
 
-using subprocess::Process;
+using process::Subprocess;
 
 extern BOOL(WINAPI* CreateProcessWO)(LPCWSTR, LPWSTR, LPSECURITY_ATTRIBUTES, LPSECURITY_ATTRIBUTES,
                                      BOOL, DWORD, LPVOID, LPCWSTR, LPSTARTUPINFOW,
                                      LPPROCESS_INFORMATION);
 
-Process::Process() {
+Subprocess::Subprocess() {
     pi.hProcess = pi.hThread = nullptr;
     pi.dwProcessId = pi.dwThreadId = 0;
     hChildStdinRead = nullptr;
     hChildStdinWrite = nullptr;
 }
 
-Process::~Process() {
+Subprocess::~Subprocess() {
     if (is_open())
         close();
 }
 
-bool Process::is_open() { return pi.hProcess != nullptr; }
+bool Subprocess::is_open() { return pi.hProcess != nullptr; }
 
-bool Process::open(ost::string_view cmdline) {
+bool Subprocess::open(ost::string_view cmdline) {
     ASS(!is_open());
     SECURITY_ATTRIBUTES saAttr;
     ZeroMemory(&saAttr, sizeof(saAttr));
@@ -68,14 +68,14 @@ bool Process::open(ost::string_view cmdline) {
     return ret;
 }
 
-bool Process::write(const void* data, size_t size) {
+bool Subprocess::write(const void* data, size_t size) {
     ASS(is_open());
     DWORD dwWritten;
     BOOL ret = WriteFile(hChildStdinWrite, data, size, &dwWritten, nullptr);
     return ret && static_cast<size_t>(dwWritten) == size;
 }
 
-bool Process::close() {
+bool Subprocess::close() {
     ASS(is_open());
     if (hChildStdinWrite) {
         CloseHandle(hChildStdinWrite);
@@ -96,4 +96,16 @@ bool Process::close() {
     }
     pi.dwProcessId = pi.dwThreadId = 0;
     return true;
+}
+
+ost::optional<std::string> process::get_env(ost::string_view key) {
+    auto key_w = uconv::to_utf16(key);
+    ENSURE(key_w);
+    wchar_t buf[512];
+    auto len = GetEnvironmentVariableW(key_w, buf, 512);
+    std::free(key_w);
+    if (len > 510 || len == 0) {
+        return {};
+    }
+    return uconv::from_utf16(buf);
 }

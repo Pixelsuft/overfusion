@@ -1,4 +1,6 @@
-#include <windows.h>
+#include <Windows.h>
+// After
+#include <processenv.h>
 
 // Our implementation because no stdlib
 #pragma function(memset)
@@ -16,18 +18,22 @@ void __stdcall WinMainCRTStartup() {
     int argc;
 
     argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-    // Assuming: injector.exe "game.exe" "overfusion.dll"
-    if (argc >= 3) {
+    // Assuming: injector.exe "game.exe" "overfusion.dll" "project_name"
+    if (argc >= 4) {
         LPWSTR processPath = argv[1];
         LPWSTR dllPath = argv[2];
+        LPWSTR projectName = argv[3];
 
         STARTUPINFOW si = {sizeof(si)};
         PROCESS_INFORMATION pi = {0};
 
-        // 1. Start our process suspended
+        // Set project name
+        SetEnvironmentVariableW(L"OVERFUSION_PROJECT_NAME", projectName);
+
+        // 2. Start our process suspended
         if (CreateProcessW(processPath, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si,
                            &pi)) {
-            // 2. Do the LoadLibrary DLL injection
+            // 3. Do the LoadLibrary DLL injection
             size_t dllPathLen = (lstrlenW(dllPath) + 1) * sizeof(WCHAR);
 
             LPVOID remoteMem =
@@ -46,7 +52,7 @@ void __stdcall WinMainCRTStartup() {
                     exit_code = 0;
                 }
             }
-            // 3. Resume process and cleanup
+            // 4. Resume process and cleanup
             ResumeThread(pi.hThread);
             CloseHandle(pi.hProcess);
             CloseHandle(pi.hThread);
