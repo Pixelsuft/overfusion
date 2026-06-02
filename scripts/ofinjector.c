@@ -67,7 +67,8 @@ void __stdcall WinMainCRTStartup() {
             CloseHandle(pi.hThread);
         }
     } else {
-        MessageBoxW(NULL, L"Usage: \nofinjector.exe \"game.exe\" \"overfusion.dll\" \"project_name\"",
+        MessageBoxW(NULL,
+                    L"Usage: \nofinjector.exe \"game.exe\" \"overfusion.dll\" \"project_name\"",
                     L"Information!", MB_ICONINFORMATION);
     }
     LocalFree(argv);
