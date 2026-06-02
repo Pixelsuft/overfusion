@@ -25,7 +25,6 @@ void __stdcall WinMainCRTStartup() {
     int argc;
 
     argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-    // Assuming: injector.exe "game.exe" "overfusion.dll" "project_name"
     if (argc >= 4) {
         LPWSTR processPath = argv[1];
         LPWSTR dllPath = argv[2];
@@ -34,7 +33,7 @@ void __stdcall WinMainCRTStartup() {
         STARTUPINFOW si = {sizeof(si)};
         PROCESS_INFORMATION pi = {0};
 
-        // Set project name
+        // 1. Set project name
         SetEnvironmentVariableW(L"OVERFUSION_PROJECT_NAME", projectName);
 
         // 2. Start our process suspended
@@ -65,7 +64,7 @@ void __stdcall WinMainCRTStartup() {
             CloseHandle(pi.hThread);
         }
     } else {
-        MessageBoxW(NULL, L"Usage: \ninjector.exe \"game.exe\" \"overfusion.dll\" \"project_name\"",
+        MessageBoxW(NULL, L"Usage: \nofinjector.exe \"game.exe\" \"overfusion.dll\" \"project_name\"",
                     L"Information!", MB_ICONINFORMATION);
     }
     LocalFree(argv);
