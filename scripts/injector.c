@@ -1,6 +1,13 @@
 #include <Windows.h>
 // After
 #include <processenv.h>
+#include <winuser.h>
+#pragma comment(linker, "\"/manifestdependency:type='win32' \
+name='Microsoft.Windows.Common-Controls' \
+version='6.0.0.0' \
+processorArchitecture='*' \
+publicKeyToken='6595b64144ccf1df' \
+language='*'\"")
 
 // Our implementation because no stdlib
 #pragma function(memset)
@@ -57,6 +64,9 @@ void __stdcall WinMainCRTStartup() {
             CloseHandle(pi.hProcess);
             CloseHandle(pi.hThread);
         }
+    } else {
+        MessageBoxW(NULL, L"Usage: \ninjector.exe \"game.exe\" \"overfusion.dll\" \"project_name\"",
+                    L"Information!", MB_ICONINFORMATION);
     }
     LocalFree(argv);
     ExitProcess(exit_code);

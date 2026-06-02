@@ -8,7 +8,7 @@ ReleaseFast
 x64
 joined.txt
 nul
-*.bat
+scripts/*.manifest
 *.aps
 *.zip
 *.rar
