@@ -1,3 +1,4 @@
+# Join all the files into a single big txt file which you can throw into DeepSeek
 import os
 
 
@@ -14,7 +15,9 @@ def list_files(folder: str, ext: tuple) -> list:
 cwd = os.path.dirname(os.path.dirname(__file__)) or os.getcwd()
 file_list = (
     list_files('src', ('cpp', 'hpp'))
+    + list_files('tools', ('cpp', 'hpp'))
     + list_files('plugins', ('cpp',))
+    + list_files('scripts', ('c', 'py', 'bat'))
     + list_files('.', ('json',))
 )
 

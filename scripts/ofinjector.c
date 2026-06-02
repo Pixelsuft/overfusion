@@ -1,3 +1,4 @@
+// Game runner and OverFusion DLL injector
 #if !defined(_WIN32) || defined(_WIN64)
 #error This project can only be compiled as a 32-bit Windows application.
 #endif
