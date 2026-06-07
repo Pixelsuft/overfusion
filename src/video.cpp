@@ -42,6 +42,11 @@ inline bool is_d3d9_cap() {
     return cfg.allow_direct_capture && cfg.render_type == conf::RenderType::D3D9;
 }
 
+inline bool is_gdi_cap() {
+    auto& cfg = conf::get();
+    return cfg.allow_direct_capture && cfg.render_type == conf::RenderType::GDI;
+}
+
 void video::init() {
     srcdc = nullptr;
     pSysSurface = nullptr;
@@ -86,7 +91,7 @@ void video::stop() {
         SelectObject(memdc, old_bmp);
         DeleteObject(bmp);
         DeleteDC(memdc);
-        ReleaseDC(hwnd, srcdc);
+        ReleaseDC(::mhwnd, srcdc);
         srcdc = nullptr;
     }
     data_buffer.clear();
@@ -127,6 +132,12 @@ static video::CheckResult check_record(std::pair<int, int> new_size) {
     return rec_ret;
 }
 
+void* video::get_mem_dc() {
+    if (!recording || !is_gdi_cap())
+        return nullptr;
+    return memdc;
+}
+
 void video::after_draw() {
     auto& cfg = conf::get();
     if (!recording || is_d3d9_cap())
@@ -162,17 +173,20 @@ void video::after_draw() {
     default:
         ASS(false);
     }
-    BOOL success;
-    // TODO: configure this in config?
-    if (1) {
-        success = BitBltO(memdc, 0, 0, size.first, size.second, srcdc, 0, 0, SRCCOPY | CAPTUREBLT);
-    } else {
-        success = PrintWindow(::mhwnd, memdc, PW_CLIENTONLY);
-    }
-    if (!success) {
-        spdlog::error("Failed to capture window");
-        stop();
-        return;
+    if (!is_gdi_cap()) {
+        BOOL success;
+        // TODO: configure this in config?
+        if (1) {
+            success =
+                BitBltO(memdc, 0, 0, size.first, size.second, srcdc, 0, 0, SRCCOPY | CAPTUREBLT);
+        } else {
+            success = PrintWindow(::mhwnd, memdc, PW_CLIENTONLY);
+        }
+        if (!success) {
+            spdlog::error("Failed to capture window");
+            stop();
+            return;
+        }
     }
     int bits = GetDIBits(memdc, bmp, 0, size.second, data_buffer.data(), &bmi, DIB_RGB_COLORS);
     ENSURE(bits == size.second);

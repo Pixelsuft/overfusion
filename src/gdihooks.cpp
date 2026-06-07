@@ -3,6 +3,7 @@
 #include "ass.hpp"
 #include "config.hpp"
 #include "mem.hpp"
+#include "video.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
@@ -14,12 +15,15 @@ static BOOL WINAPI BitBltH(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, in
                            DWORD rop) {
     auto ret = BitBltO(hdc, x, y, cx, cy, hdcSrc, x1, y1, rop);
     if (rop == SRCCOPY && ::mhwnd && WindowFromDC(hdc) == ::mhwnd) {
-        // Late but should be OK
+        // Late setting but should be OK
         auto& cfg = conf::get();
         ASS(cfg.render_type == conf::RenderType::None || cfg.render_type == conf::RenderType::GDI);
         cfg.render_type = conf::RenderType::GDI;
-        // TODO: direct capture
-        // Maybe we can reconstruct image (create dummy DC and map BitBlt to it?)
+        auto mem_dc = reinterpret_cast<HDC>(video::get_mem_dc());
+        if (mem_dc) {
+            auto ret2 = BitBltO(mem_dc, x, y, cx, cy, hdcSrc, x1, y1, rop);
+            ENSURE(ret2);
+        }
     }
     return ret;
 }
