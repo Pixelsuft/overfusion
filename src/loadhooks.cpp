@@ -2,7 +2,7 @@
 #include "loadhooks.hpp"
 #include "audio.hpp"
 #include "config.hpp"
-#include "d3d9hooks.hpp"
+#include "d3dhooks.hpp"
 #include "extrahooks.hpp"
 #include "mem.hpp"
 #include "opt.hpp"
@@ -63,12 +63,12 @@ static void after_load(string_view path, void* mod) {
     auto fn = get_filename(path);
     if (mod) {
         if (fn == "mmfs2.dll") {
-            d3d9hooks::pre_init();
+            d3dhooks::pre_init();
             audio::init();
             hook::enable();
         } else if (fn == "mmf2d3d9.dll") {
             conf::get().custom_window = false;
-            d3d9hooks::init();
+            d3dhooks::init();
             hook::enable();
         } else if (fn == "Lacewing.mfx") {
             extrahooks::init_ws32();

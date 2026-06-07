@@ -31,7 +31,7 @@
 #include "../src/audio.cpp"
 #include "../src/config.cpp"
 #include "../src/customwindow.cpp"
-#include "../src/d3d9hooks.cpp"
+#include "../src/d3dhooks.cpp"
 #include "../src/darkmode.cpp"
 #include "../src/dllmain.cpp"
 #include "../src/extrahooks.cpp"

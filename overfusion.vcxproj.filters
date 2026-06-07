@@ -111,7 +111,7 @@
     <ClCompile Include="src\darkmode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\d3d9hooks.cpp">
+    <ClCompile Include="src\d3dhooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ui.cpp">
@@ -202,7 +202,7 @@
     <ClInclude Include="src\timehooks.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\d3d9hooks.hpp">
+    <ClInclude Include="src\d3dhooks.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ui.hpp">

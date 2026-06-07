@@ -1,5 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
-#include "d3d9hooks.hpp"
+#include "d3dhooks.hpp"
 #include "ass.hpp"
 #include "config.hpp"
 #include "mem.hpp"
@@ -584,6 +584,6 @@ static IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {
     return ret;
 }
 
-void d3d9hooks::pre_init() { IAT_AUTO("ddraw.dll", DirectDrawCreate); }
+void d3dhooks::pre_init() { IAT_AUTO("ddraw.dll", DirectDrawCreate); }
 
-void d3d9hooks::init() { IAT_AUTO("d3d9.dll", Direct3DCreate9); }
+void d3dhooks::init() { IAT_AUTO("d3d9.dll", Direct3DCreate9); }

@@ -191,7 +191,7 @@
     <ClCompile Include="src\audio.cpp" />
     <ClCompile Include="src\config.cpp" />
     <ClCompile Include="src\customwindow.cpp" />
-    <ClCompile Include="src\d3d9hooks.cpp" />
+    <ClCompile Include="src\d3dhooks.cpp" />
     <ClCompile Include="src\darkmode.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\extrahooks.cpp" />
@@ -220,7 +220,7 @@
     <ClInclude Include="src\audio.hpp" />
     <ClInclude Include="src\config.hpp" />
     <ClInclude Include="src\customwindow.hpp" />
-    <ClInclude Include="src\d3d9hooks.hpp" />
+    <ClInclude Include="src\d3dhooks.hpp" />
     <ClInclude Include="src\event.hpp" />
     <ClInclude Include="src\expect.hpp" />
     <ClInclude Include="src\extrahooks.hpp" />
