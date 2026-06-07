@@ -117,6 +117,7 @@ Config::Config() {
     forced_res = {0, 0};
     speed = 1.f;
     fps = 0;
+    render_type = RenderType::None;
     show_menu = show_info = true;
     is_replay = false;
     is_paused = true;
@@ -135,7 +136,7 @@ Config::Config() {
     save_game_state = true;
     disable_app_menu = false;
     allow_timers_fix = true;
-    allow_d3d9_recording = true;
+    allow_direct_capture = true;
     allow_audio_hook = true;
     disable_audio = false;
     record_audio = false;
@@ -184,7 +185,7 @@ void Config::read() {
     READ_BOOL(save_game_state);
     READ_BOOL(disable_app_menu);
     READ_BOOL(allow_timers_fix);
-    READ_BOOL(allow_d3d9_recording);
+    READ_BOOL(allow_direct_capture);
     READ_BOOL(allow_audio_hook);
     READ_BOOL(disable_audio);
     READ_BOOL(record_audio);

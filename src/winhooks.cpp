@@ -8,6 +8,7 @@
 #include "state.hpp"
 #include "uconv.hpp"
 #include "ui.hpp"
+#include "video.hpp"
 #include <Windows.h>
 #include <backends/imgui_impl_win32.h>
 #include <spdlog/spdlog.h>
@@ -375,6 +376,7 @@ void winhooks::after_ui_init() {
     ENSURE(EditWindowProcO != nullptr);
     // Let's do it here if the game wants to show an error during startup
     IAT_STR_AUTO("user32.dll", MessageBox);
+    video::init();
 }
 
 std::pair<int, int> winhooks::get_size() {

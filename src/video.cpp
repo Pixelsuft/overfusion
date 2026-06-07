@@ -12,6 +12,8 @@ using std::string;
 
 extern HWND hwnd;
 extern HWND mhwnd;
+extern BOOL(WINAPI* BitBltO)(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int x1, int y1,
+                             DWORD rop);
 
 namespace video {
 enum class CheckResult { Ok, Started, Failed };
@@ -23,6 +25,7 @@ static std::pair<int, int> size;
 static int file_index;
 static bool use_d3d9;
 static bool recording;
+static bool allow_frame;
 
 // Win32 recording
 static BITMAPINFO bmi;
@@ -33,20 +36,19 @@ static HGDIOBJ old_bmp;
 
 // D3D9 recording
 static LPDIRECT3DSURFACE9 pSysSurface;
-static bool allow_d3d9_frame;
 } // namespace video
 
 void video::init() {
     srcdc = nullptr;
     pSysSurface = nullptr;
     use_d3d9 = false;
-    allow_d3d9_frame = false;
+    allow_frame = false;
     recording = false;
     size.first = size.second = 0;
     file_index = 0;
 }
 
-void video::set_allow_d3d9_frame(bool allow) { allow_d3d9_frame = allow; }
+void video::set_allow_frame(bool allow) { allow_frame = allow; }
 
 bool video::is_recording() { return recording; }
 
@@ -57,10 +59,10 @@ void video::start() {
     srcdc = nullptr;
     pSysSurface = nullptr;
     data_buffer.clear();
-    allow_d3d9_frame = false;
+    allow_frame = false;
     auto& cfg = conf::get();
     recording = true;
-    use_d3d9 = cfg.allow_d3d9_recording && !cfg.custom_window;
+    use_d3d9 = cfg.allow_direct_capture && !cfg.custom_window; // FIXME
 }
 
 void video::stop() {
@@ -74,7 +76,7 @@ void video::stop() {
             pSysSurface->Release();
             pSysSurface = nullptr;
         }
-        allow_d3d9_frame = false;
+        allow_frame = false;
     } else {
         if (!srcdc)
             return;
@@ -159,7 +161,7 @@ void video::after_draw() {
     BOOL success;
     // TODO: configure this in config?
     if (1) {
-        success = BitBlt(memdc, 0, 0, size.first, size.second, srcdc, 0, 0, SRCCOPY | CAPTUREBLT);
+        success = BitBltO(memdc, 0, 0, size.first, size.second, srcdc, 0, 0, SRCCOPY | CAPTUREBLT);
     } else {
         success = PrintWindow(::mhwnd, memdc, PW_CLIENTONLY);
     }
@@ -177,9 +179,9 @@ void video::after_draw() {
 }
 
 void video::d3d9_draw(void* dev_ptr) {
-    if (!recording || !use_d3d9 || !allow_d3d9_frame)
+    if (!recording || !use_d3d9 || !allow_frame)
         return;
-    allow_d3d9_frame = false;
+    allow_frame = false;
     LPDIRECT3DDEVICE9 pDevice = reinterpret_cast<LPDIRECT3DDEVICE9>(dev_ptr);
     LPDIRECT3DSURFACE9 pBackBuffer;
     auto d3d_ret = pDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer);

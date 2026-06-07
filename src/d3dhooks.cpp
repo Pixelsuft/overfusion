@@ -24,6 +24,8 @@ static bool d3d9_need_pixelated() {
 static HRESULT(WINAPI* DirectDrawCreateO)(void* lpGUID, void** lplpDD, void* pUnkOuter);
 static HRESULT WINAPI DirectDrawCreateH(void* lpGUID, void** lplpDD, void* pUnkOuter) {
     spdlog::warn("The game is using DirectDraw, forcing custom window");
+    ASS(conf::get().render_type == conf::RenderType::None);
+    conf::get().render_type = conf::RenderType::DDRAW;
     return DirectDrawCreateO(lpGUID, lplpDD, pUnkOuter);
 }
 
@@ -568,6 +570,8 @@ public:
         if (SUCCEEDED(hr) && ppReturnedDeviceInterface && *ppReturnedDeviceInterface) {
             spdlog::debug("Wrapping IDirect3DDevice9 into ID3D9Proxy");
             *ppReturnedDeviceInterface = new ID3D9Proxy(*ppReturnedDeviceInterface);
+            ASS(conf::get().render_type == conf::RenderType::None);
+            conf::get().render_type = conf::RenderType::D3D9;
         }
         return hr;
     }

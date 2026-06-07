@@ -12,7 +12,7 @@
   "boxed_mode": false,
   "disable_app_menu": true,
   "allow_timers_fix": true,
-  "allow_d3d9_recording": true,
+  "allow_direct_capture": true,
   "allow_audio_hook": false,
   "disable_audio": true,
   "record_audio": false,

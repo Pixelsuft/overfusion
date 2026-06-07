@@ -22,6 +22,8 @@ struct Bind {
     Task task;
 };
 
+enum class RenderType { None, GDI, DDRAW, D3D8, D3D9 };
+
 class Config {
 public:
     std::vector<Bind> binds;
@@ -40,6 +42,7 @@ public:
     size_t tm_fix_event_entry_type_offset;
     float speed;
     int fps;
+    RenderType render_type;
     bool show_info;
     bool show_menu;
     bool is_replay;
@@ -59,7 +62,7 @@ public:
     bool save_game_state;
     bool disable_app_menu;
     bool allow_timers_fix;
-    bool allow_d3d9_recording;
+    bool allow_direct_capture;
     bool allow_audio_hook;
     bool disable_audio;
     bool record_audio;
