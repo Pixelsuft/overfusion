@@ -9,7 +9,6 @@
 #include "opt.hpp"
 #include "state.hpp"
 #include "uconv.hpp"
-#include <Shlwapi.h>
 #include <SimpleIni.h>
 #include <Windows.h>
 #include <algorithm>
@@ -19,7 +18,6 @@
 #include <spdlog/spdlog.h>
 #undef min
 #undef max
-#pragma comment(lib, "Shlwapi.lib")
 
 // TODO: implement other filesystem functions
 
@@ -150,13 +148,6 @@ static bool try_read_file(FileData& ret, string_view path) {
     return false;
 }
 
-static bool real_path_exists(string_view path) {
-    auto temp = uconv::to_utf16(path);
-    auto ret = PathFileExistsW(temp);
-    std::free(temp);
-    return ret != FALSE;
-}
-
 static bool create_file_data(FileData& ret, string_view path, DWORD dwCreationDisposition) {
     bool exists = ret.data != nullptr;
     // spdlog::debug("create_file_data: {} {} {}", path, dwCreationDisposition, exists);
@@ -168,11 +159,11 @@ static bool create_file_data(FileData& ret, string_view path, DWORD dwCreationDi
             SetLastError(ERROR_ACCESS_DENIED);
             return false;
         }
-        if (dwCreationDisposition == CREATE_NEW && (exists || real_path_exists(path))) {
+        if (dwCreationDisposition == CREATE_NEW && (exists || ofs::file_exists(path))) {
             SetLastError(ERROR_ALREADY_EXISTS);
             return false;
         } else if (dwCreationDisposition == TRUNCATE_EXISTING && !exists &&
-                   !real_path_exists(path)) {
+                   !ofs::file_exists(path)) {
             SetLastError(ERROR_FILE_NOT_FOUND);
             return false;
         }
@@ -183,7 +174,7 @@ static bool create_file_data(FileData& ret, string_view path, DWORD dwCreationDi
         break;
     case OPEN_ALWAYS:
     case OPEN_EXISTING:
-        if (dwCreationDisposition == OPEN_EXISTING && !exists && !real_path_exists(path)) {
+        if (dwCreationDisposition == OPEN_EXISTING && !exists && !ofs::file_exists(path)) {
             SetLastError(ERROR_FILE_NOT_FOUND);
             return false;
         }

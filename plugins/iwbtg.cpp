@@ -2,6 +2,7 @@
 #include "../src/config.hpp"
 #include "../src/files.hpp"
 #include "../src/mem.hpp"
+#include "../src/ofs.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
 #include <Windows.h>
@@ -113,8 +114,8 @@ static void on_plugin_check_iwbtg(plug::PlugBase** buf, bool& check) {
     if (buf) {
         *buf = new PlugIwbtg;
     } else {
-        // FIXME
-        check = mem::exe_name == "stdrt.exe";
+        check = mem::exe_name == "stdrt.exe" &&
+                ofs::file_exists(string(files::get_cwd()) + "\\iwbtg.exe");
     }
 }
 

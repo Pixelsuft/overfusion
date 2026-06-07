@@ -144,3 +144,11 @@ bool ofs::make_dir(ost::string_view path) {
     std::free(converted);
     return ret;
 }
+
+bool ofs::file_exists(ost::string_view path) {
+    wchar_t* converted = uconv::to_utf16(path);
+    ENSURE(converted != nullptr);
+    auto dwAttrib = GetFileAttributesW(converted);
+    std::free(converted);
+    return dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
+}

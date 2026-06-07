@@ -35,4 +35,5 @@ public:
 
 bool remove_file(ost::string_view path);
 bool make_dir(ost::string_view path);
+bool file_exists(ost::string_view path);
 } // namespace ofs
