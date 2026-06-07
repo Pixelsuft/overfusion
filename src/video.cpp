@@ -14,6 +14,7 @@ extern HWND hwnd;
 extern HWND mhwnd;
 extern BOOL(WINAPI* BitBltO)(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int x1, int y1,
                              DWORD rop);
+extern LRESULT(__stdcall* EditWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 namespace video {
 enum class CheckResult { Ok, Started, Failed };
@@ -159,7 +160,6 @@ void video::after_draw() {
     case video::CheckResult::Failed:
         return;
     case video::CheckResult::Started:
-        // FIXME: late start is bad when direct recording GDI
         srcdc = GetDC(::mhwnd);
         ENSURE(srcdc != nullptr);
         memdc = CreateCompatibleDC(srcdc);
@@ -178,6 +178,8 @@ void video::after_draw() {
         if (is_gdi_cap()) {
             ret = PatBlt(memdc, 0, 0, size.first, size.second, BLACKNESS);
             ENSURE(ret);
+            // Force window to redraw so we can capture the first frame
+            EditWindowProcO(::mhwnd, WM_ERASEBKGND, reinterpret_cast<WPARAM>(srcdc), 0);
         }
         spdlog::info("Window capture started ({}x{})", size.first, size.second);
         break;
