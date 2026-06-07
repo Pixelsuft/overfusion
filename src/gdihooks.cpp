@@ -18,7 +18,8 @@ static BOOL WINAPI BitBltH(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, in
         auto& cfg = conf::get();
         ASS(cfg.render_type == conf::RenderType::None || cfg.render_type == conf::RenderType::GDI);
         cfg.render_type = conf::RenderType::GDI;
-        // spdlog::debug("BitBlt {} {} {} {} {} {}", x, y, cx, cy, x1, y1);
+        // TODO: direct capture
+        // Maybe we can reconstruct image (create dummy DC and map BitBlt to it?)
     }
     return ret;
 }
