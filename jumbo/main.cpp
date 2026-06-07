@@ -37,6 +37,7 @@
 #include "../src/extrahooks.cpp"
 #include "../src/files.cpp"
 #include "../src/gamehooks.cpp"
+#include "../src/gdihooks.cpp"
 #include "../src/input.cpp"
 #include "../src/loadhooks.cpp"
 #include "../src/mem.cpp"

@@ -4,6 +4,7 @@
 #include "config.hpp"
 #include "d3dhooks.hpp"
 #include "extrahooks.hpp"
+#include "gdihooks.hpp"
 #include "mem.hpp"
 #include "opt.hpp"
 #include "plugbase.hpp"
@@ -64,6 +65,7 @@ static void after_load(string_view path, void* mod) {
     if (mod) {
         if (fn == "mmfs2.dll") {
             d3dhooks::pre_init();
+            gdihooks::init();
             audio::init();
             hook::enable();
         } else if (fn == "mmf2d3d9.dll") {

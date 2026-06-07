@@ -11,6 +11,7 @@
 using std::string;
 
 extern HWND hwnd;
+extern HWND mhwnd;
 
 namespace video {
 enum class CheckResult { Ok, Started, Failed };
@@ -125,7 +126,7 @@ void video::after_draw() {
     if (!recording || use_d3d9)
         return;
     RECT win_rect;
-    auto ret = GetClientRect(::hwnd, &win_rect);
+    auto ret = GetClientRect(::mhwnd, &win_rect);
     ENSURE(ret);
     if (win_rect.right == 0 || win_rect.bottom == 0)
         return;
@@ -135,7 +136,7 @@ void video::after_draw() {
     case video::CheckResult::Failed:
         return;
     case video::CheckResult::Started:
-        srcdc = GetDC(hwnd);
+        srcdc = GetDC(::mhwnd);
         ENSURE(srcdc != nullptr);
         memdc = CreateCompatibleDC(srcdc);
         ENSURE(memdc != nullptr);
@@ -160,7 +161,7 @@ void video::after_draw() {
     if (1) {
         success = BitBlt(memdc, 0, 0, size.first, size.second, srcdc, 0, 0, SRCCOPY | CAPTUREBLT);
     } else {
-        success = PrintWindow(hwnd, memdc, PW_CLIENTONLY);
+        success = PrintWindow(::mhwnd, memdc, PW_CLIENTONLY);
     }
     if (!success) {
         spdlog::error("Failed to capture window");

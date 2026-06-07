@@ -197,6 +197,7 @@
     <ClCompile Include="src\extrahooks.cpp" />
     <ClCompile Include="src\files.cpp" />
     <ClCompile Include="src\gamehooks.cpp" />
+    <ClCompile Include="src\gdihooks.cpp" />
     <ClCompile Include="src\input.cpp" />
     <ClCompile Include="src\mem.cpp" />
     <ClCompile Include="src\loadhooks.cpp" />
@@ -226,6 +227,7 @@
     <ClInclude Include="src\extrahooks.hpp" />
     <ClInclude Include="src\files.hpp" />
     <ClInclude Include="src\gamehooks.hpp" />
+    <ClInclude Include="src\gdihooks.hpp" />
     <ClInclude Include="src\input.hpp" />
     <ClInclude Include="src\loadhooks.hpp" />
     <ClInclude Include="src\lock.hpp" />
