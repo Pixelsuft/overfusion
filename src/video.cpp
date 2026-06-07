@@ -23,7 +23,6 @@ static process::Subprocess ffmpeg;
 static std::vector<BYTE> data_buffer;
 static std::pair<int, int> size;
 static int file_index;
-static bool use_d3d9;
 static bool recording;
 static bool allow_frame;
 
@@ -41,7 +40,6 @@ static LPDIRECT3DSURFACE9 pSysSurface;
 void video::init() {
     srcdc = nullptr;
     pSysSurface = nullptr;
-    use_d3d9 = false;
     allow_frame = false;
     recording = false;
     size.first = size.second = 0;
@@ -62,16 +60,16 @@ void video::start() {
     allow_frame = false;
     auto& cfg = conf::get();
     recording = true;
-    use_d3d9 = cfg.allow_direct_capture && !cfg.custom_window; // FIXME
 }
 
 void video::stop() {
     if (!recording)
         return;
+    auto& cfg = conf::get();
     spdlog::info("Stopping video recording");
     ffmpeg.close();
     recording = false;
-    if (use_d3d9) {
+    if (cfg.allow_direct_capture && cfg.render_type == conf::RenderType::D3D9) {
         if (pSysSurface) {
             pSysSurface->Release();
             pSysSurface = nullptr;
@@ -125,7 +123,8 @@ static video::CheckResult check_record(std::pair<int, int> new_size) {
 }
 
 void video::after_draw() {
-    if (!recording || use_d3d9)
+    auto& cfg = conf::get();
+    if (!recording || (cfg.allow_direct_capture && cfg.render_type == conf::RenderType::D3D9))
         return;
     RECT win_rect;
     auto ret = GetClientRect(::mhwnd, &win_rect);
@@ -179,7 +178,8 @@ void video::after_draw() {
 }
 
 void video::d3d9_draw(void* dev_ptr) {
-    if (!recording || !use_d3d9 || !allow_frame)
+    auto& cfg = conf::get();
+    if (!recording || !cfg.allow_direct_capture || !allow_frame)
         return;
     allow_frame = false;
     LPDIRECT3DDEVICE9 pDevice = reinterpret_cast<LPDIRECT3DDEVICE9>(dev_ptr);
@@ -224,8 +224,10 @@ void video::d3d9_draw(void* dev_ptr) {
     }
     pBackBuffer->Release();
     if (d3d_ret != D3D_OK || !ffmpeg.write(data_buffer.data(), data_buffer.size())) {
-        spdlog::error((d3d_ret == D3D_OK) ? "Failed to write data to ffmpeg"
-                                          : "Failed to lock D3D9 surface");
+        if (d3d_ret == D3D_OK)
+            spdlog::error("Failed to write data to FFmpeg");
+        else
+            spdlog::error("Failed to lock D3D9 surface");
         stop();
     }
 }
