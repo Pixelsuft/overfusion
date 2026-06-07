@@ -56,7 +56,13 @@ void video::init() {
     file_index = 0;
 }
 
-void video::set_allow_frame(bool allow) { allow_frame = allow; }
+void video::set_allow_frame(bool allow) {
+    allow_frame = allow;
+    if (allow && memdc && is_gdi_cap()) {
+        // Can be useful to see differences
+        // PatBlt(memdc, 0, 0, size.first, size.second, BLACKNESS);
+    }
+}
 
 bool video::is_recording() { return recording; }
 
@@ -153,6 +159,7 @@ void video::after_draw() {
     case video::CheckResult::Failed:
         return;
     case video::CheckResult::Started:
+        // FIXME: late start is bad when direct recording GDI
         srcdc = GetDC(::mhwnd);
         ENSURE(srcdc != nullptr);
         memdc = CreateCompatibleDC(srcdc);
@@ -168,6 +175,10 @@ void video::after_draw() {
         bmp = CreateCompatibleBitmap(srcdc, size.first, size.second);
         ENSURE(bmp != nullptr);
         old_bmp = SelectObject(memdc, bmp);
+        if (is_gdi_cap()) {
+            ret = PatBlt(memdc, 0, 0, size.first, size.second, BLACKNESS);
+            ENSURE(ret);
+        }
         spdlog::info("Window capture started ({}x{})", size.first, size.second);
         break;
     default:
