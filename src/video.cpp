@@ -37,6 +37,11 @@ static HGDIOBJ old_bmp;
 static LPDIRECT3DSURFACE9 pSysSurface;
 } // namespace video
 
+inline bool is_d3d9_cap() {
+    auto& cfg = conf::get();
+    return cfg.allow_direct_capture && cfg.render_type == conf::RenderType::D3D9;
+}
+
 void video::init() {
     srcdc = nullptr;
     pSysSurface = nullptr;
@@ -69,7 +74,7 @@ void video::stop() {
     spdlog::info("Stopping video recording");
     ffmpeg.close();
     recording = false;
-    if (cfg.allow_direct_capture && cfg.render_type == conf::RenderType::D3D9) {
+    if (is_d3d9_cap()) {
         if (pSysSurface) {
             pSysSurface->Release();
             pSysSurface = nullptr;
@@ -124,7 +129,7 @@ static video::CheckResult check_record(std::pair<int, int> new_size) {
 
 void video::after_draw() {
     auto& cfg = conf::get();
-    if (!recording || (cfg.allow_direct_capture && cfg.render_type == conf::RenderType::D3D9))
+    if (!recording || is_d3d9_cap())
         return;
     RECT win_rect;
     auto ret = GetClientRect(::mhwnd, &win_rect);
@@ -179,7 +184,7 @@ void video::after_draw() {
 
 void video::d3d9_draw(void* dev_ptr) {
     auto& cfg = conf::get();
-    if (!recording || !cfg.allow_direct_capture || !allow_frame)
+    if (!recording || !is_d3d9_cap() || !allow_frame)
         return;
     allow_frame = false;
     LPDIRECT3DDEVICE9 pDevice = reinterpret_cast<LPDIRECT3DDEVICE9>(dev_ptr);
