@@ -21,15 +21,32 @@ Creates custom window for OF ImGui UI in case the game doesn't use Direct3D9 ren
 
 ## Direct3D hooks
 
-TODO
+Direct3D9 hooks for drawing OF ImGui UI inside the game window if possible
 
 ## Dark mode
 
-TODO
+Ugly piece of code for supporting dark theme (can be disabled with `disable_dark_mode_support`)
+
+1. Detect system theme
+2. Apply dark theme on titlebar (if needed)
+3. Allow title bar context menu and window sub-menus to be dark
+4. Draw dark window menu manually (if needed)
+5. Draw dark window background manually (if needed)
+6. Manually fix message boxes via CBT hook and window subclass (if needed)
+7. Try to allow dark mode for Win32 UI elements
+8. Detect theme preference change
 
 ## Extra hooks
 
-TODO
+1. Disable dragging from/into window
+2. Disable opening URLs, explorer, etc.
+3. Emulate US locale
+4. Emulate fixed Windows version
+5. Emulate lack of any joystick
+6. Emulate disabled networking
+7. Emulate fixed username
+8. Disable registry access
+9. Emulate custom command line arguments
 
 ## Virtual FS
 

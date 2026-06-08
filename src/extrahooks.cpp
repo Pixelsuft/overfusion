@@ -113,11 +113,6 @@ static MMRESULT WINAPI joyGetPosExH(UINT uJoyID, LPJOYINFOEX pji) {
     return MMSYSERR_NODRIVER;
 }
 
-static BOOL WINAPI BeepH(DWORD dwFreq, DWORD dwDuration) {
-    spdlog::info("Beep (freq={}, duration={})", dwFreq, dwDuration);
-    return FALSE;
-}
-
 static HRESULT SHGetSpecialFolderLocationH(HWND hwnd, int csidl, void* ppidl) {
     return static_cast<HRESULT>(1);
 }
@@ -282,7 +277,6 @@ void extrahooks::init() {
     // IAT_ONLY("shell32.dll", SHGetSpecialFolderLocation);
     IAT_ONLY("kernel32.dll", GetUserDefaultLCID);
     IAT_ONLY("kernel32.dll", GetVersion);
-    IAT_ONLY("kernel32.dll", Beep);
     IAT_STR_ONLY("winmm.dll", joyGetDevCaps);
     IAT_ONLY("winmm.dll", joyGetPosEx);
 }
