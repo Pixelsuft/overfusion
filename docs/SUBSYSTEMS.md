@@ -58,7 +58,11 @@ Optional in-memory FS emulation (set `virtual_fs` to `true` to enable)
 
 ## Game hooks
 
-TODO
+1. Game cycle update hooking/hijacking
+2. Transition processing hooking/hijacking
+3. Late initialization during first frame update
+4. Forcing game to pause/advance
+5. Communication with video recording subsystem
 
 ## GDI hooks
 
