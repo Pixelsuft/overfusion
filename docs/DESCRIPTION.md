@@ -74,7 +74,12 @@ TODO
 
 ## State
 
-TODO
+1. Replay recording/playback logic
+2. Save data saving/loading logic
+3. Replay exporing/importing
+4. TAS event logic
+5. UI info displaying logic
+6. Interaction with other subsystems
 
 ## Thread hooks
 
@@ -82,7 +87,7 @@ Disable subprocess creation and extra thread for determinism if `disable_threads
 
 ## Time hooks
 
-TODO
+Time hooks for deterministic system time emulation and optionally timers
 
 ## UI
 
