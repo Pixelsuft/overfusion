@@ -286,11 +286,10 @@ static bool is_iat_dll_blocked(ost::string_view dll) {
 #ifdef _DEBUG
     return false;
 #else
-    return dll == "overfusion.dll" || dll == "ntdll.dll" || dll == "dxcore.dll" ||
-           dll == "dxgi.dll" || dll == "ddraw.dll" || dll == "d3d9.dll" || dll == "d3d8.dll" ||
-           dll == "dsound.dll" || dll == "nvd3dum.dll" || dll == "nvgpucomp32.dll" ||
-           dll == "nvldumd.dll" || dll == "NvMemMapStorage.dll" || dll == "nvppe.dll" ||
-           dll == "nvspcap.dll";
+    return dll == "ntdll.dll" || dll == "dxcore.dll" || dll == "dxgi.dll" || dll == "ddraw.dll" ||
+           dll == "d3d9.dll" || dll == "d3d8.dll" || dll == "dsound.dll" || dll == "nvd3dum.dll" ||
+           dll == "nvgpucomp32.dll" || dll == "nvldumd.dll" || dll == "NvMemMapStorage.dll" ||
+           dll == "nvppe.dll" || dll == "nvspcap.dll";
 #endif
 }
 

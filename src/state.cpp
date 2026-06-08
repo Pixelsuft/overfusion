@@ -46,19 +46,16 @@ struct State {
     std::pair<float, float> mouse_pos;
     // Current scene ID
     int scene;
-    // FPS
-    int fps;
     // Current frame
     int frames;
     // Total frames
     int total;
 
-    State() : scene(0), fps(0), frames(0), total(0), rerec_count(0), mouse_pos({-1.f, -1.f}) {}
+    State() : scene(0), frames(0), total(0), rerec_count(0), mouse_pos({-1.f, -1.f}) {}
 
     void clear_values() {
         scene = 0;
         frames = total = 0;
-        fps = 0;
         mouse_pos.first = mouse_pos.second = -1.f;
     }
 
@@ -180,15 +177,13 @@ void state::init() {
     last_msg = "None";
     processing_save = false;
     updating = false;
-    st.fps = conf::get().fps; // TODO: should I really use st or how elsewhere?
-    const_dt = 1.0 / static_cast<double>(st.fps);
+    const_dt = 1.0 / static_cast<double>(conf::get().fps);
     to_wait = 0.0;
     time_offset = 0;
     repl_index = 0;
     need_scene_slot = empty_save_slot;
     st.temp_ev.reserve(1024);
     st.ev.reserve(4096);
-    spdlog::debug("Init FPS: {}", st.fps);
     QueryPerformanceFrequencyO(&last_counter);
     freq = static_cast<double>(last_counter.QuadPart);
     QueryPerformanceCounterO(&last_counter);
@@ -413,7 +408,6 @@ void state::save_state(int slot) {
     write_bin(file, st.frames);
     write_bin(file, st.total);
     write_bin(file, st.rerec_count);
-    write_bin(file, st.fps);
     write_bin(file, st.mouse_pos);
     write_bin(file, st.prev_input);
     write_bin(file, st.temp_ev);
@@ -500,7 +494,6 @@ void state::load_state(int slot, bool no_recursion) {
     load_bin(file, temp_state.frames);
     load_bin(file, temp_state.total);
     load_bin(file, temp_state.rerec_count);
-    load_bin(file, temp_state.fps);
     load_bin(file, temp_state.mouse_pos);
     load_bin(file, temp_state.prev_input);
     load_bin(file, temp_state.temp_ev);
@@ -776,7 +769,7 @@ int64_t state::get_utc_offset() {
 
 uint64_t state::get_time(TimeOffset offset) {
     auto& cfg = conf::get();
-    auto fps = static_cast<int64_t>(st.fps);
+    auto fps = static_cast<int64_t>(cfg.fps);
     uint64_t ret =
         static_cast<uint64_t>(static_cast<int64_t>(st.frames) * 1000 / fps + time_offset);
     switch (offset) {

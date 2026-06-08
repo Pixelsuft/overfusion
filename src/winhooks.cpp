@@ -352,7 +352,8 @@ static LRESULT CALLBACK CbtDarkHookProc(int nCode, WPARAM wParam, LPARAM lParam)
     return CallNextHookEx(winhooks::hCbtHook, nCode, wParam, lParam);
 }
 
-static int(WINAPI* MessageBoxAO)(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
+static int(WINAPI* MessageBoxAO)(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption,
+                                 UINT uType) = MessageBoxA;
 static int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
     ASS(lpText && lpCaption);
     int ret = 0;
@@ -370,7 +371,8 @@ static int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT 
     return ret;
 }
 
-static int(WINAPI* MessageBoxWO)(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType);
+static int(WINAPI* MessageBoxWO)(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption,
+                                 UINT uType) = MessageBoxW;
 static int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) {
     ASS(lpText && lpCaption);
     int ret = 0;
@@ -447,6 +449,9 @@ std::pair<int, int> winhooks::get_size() {
 void winhooks::display_ensure_fail(ost::string_view text) {
     auto buf = uconv::to_utf16(text);
     ENSURE(buf != nullptr);
-    MessageBoxWO(::hwnd, buf, L"Assertion failed!", MB_ICONERROR);
+    auto prev = ui::is_processing();
+    ui::set_processing(true);
+    MessageBoxWH(::hwnd, buf, L"Assertion failed!", MB_ICONERROR);
+    ui::set_processing(prev);
     std::free(buf);
 }
