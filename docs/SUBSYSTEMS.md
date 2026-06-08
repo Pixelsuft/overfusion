@@ -88,7 +88,8 @@ Some sort of the game backends
 3. Should implement getting pointers to the game data
 4. Should implement in-game state saving/loading
 5. Should implement mouse coordinates convertion
-6. Can do some extra operations/hooks/patches
+6. Should patch game to make it at least running without big issues (ex. frame drops)
+7. Can do some extra operations/hooks/patches
 
 ## State
 
@@ -121,6 +122,10 @@ Video capturing logic. See more [here](CAPTURING.md)
 2. Event processing hooks (for UI, dark mode, input manipulation, determinism)
 3. Message boxes hooks for manipulation
 4. Some extra hooks for determinism
+
+## Tools
+
+Some sort of useful functions for making the game running better inside the OF
 
 ## Jumbo (unity) build
 
