@@ -16,134 +16,133 @@ namespace input {
 static bool kbd_state[256];
 static std::vector<std::pair<int, bool>> kbd_que;
 
-// TODO: maybe reverse it, and use switch-case for backwards?
-static const std::map<int, ost::string_view> vk_map = {{VK_F1, "F1"},
-                                                       {VK_F2, "F2"},
-                                                       {VK_F3, "F3"},
-                                                       {VK_F4, "F4"},
-                                                       {VK_F5, "F5"},
-                                                       {VK_F6, "F6"},
-                                                       {VK_F7, "F7"},
-                                                       {VK_F8, "F8"},
-                                                       {VK_F9, "F9"},
-                                                       {VK_F10, "F10"},
-                                                       {VK_F11, "F11"},
-                                                       {VK_F12, "F12"},
-                                                       {VK_F13, "F13"},
-                                                       {VK_F14, "F14"},
-                                                       {VK_F15, "F15"},
-                                                       {VK_F16, "F16"},
-                                                       {VK_F17, "F17"},
-                                                       {VK_F18, "F18"},
-                                                       {VK_F19, "F19"},
-                                                       {VK_F20, "F20"},
-                                                       {VK_F21, "F21"},
-                                                       {VK_F22, "F22"},
-                                                       {VK_F23, "F23"},
-                                                       {VK_F24, "F24"},
+static const std::map<ost::string_view, int> vk_map = {{"f1", VK_F1},
+                                                       {"f2", VK_F2},
+                                                       {"f3", VK_F3},
+                                                       {"f4", VK_F4},
+                                                       {"f5", VK_F5},
+                                                       {"f6", VK_F6},
+                                                       {"f7", VK_F7},
+                                                       {"f8", VK_F8},
+                                                       {"f9", VK_F9},
+                                                       {"f10", VK_F10},
+                                                       {"f11", VK_F11},
+                                                       {"f12", VK_F12},
+                                                       {"f13", VK_F13},
+                                                       {"f14", VK_F14},
+                                                       {"f15", VK_F15},
+                                                       {"f16", VK_F16},
+                                                       {"f17", VK_F17},
+                                                       {"f18", VK_F18},
+                                                       {"f19", VK_F19},
+                                                       {"f20", VK_F20},
+                                                       {"f21", VK_F21},
+                                                       {"f22", VK_F22},
+                                                       {"f23", VK_F23},
+                                                       {"f24", VK_F24},
 
-                                                       {'A', "A"},
-                                                       {'B', "B"},
-                                                       {'C', "C"},
-                                                       {'D', "D"},
-                                                       {'E', "E"},
-                                                       {'F', "F"},
-                                                       {'G', "G"},
-                                                       {'H', "H"},
-                                                       {'I', "I"},
-                                                       {'J', "J"},
-                                                       {'K', "K"},
-                                                       {'L', "L"},
-                                                       {'M', "M"},
-                                                       {'N', "N"},
-                                                       {'O', "O"},
-                                                       {'P', "P"},
-                                                       {'Q', "Q"},
-                                                       {'R', "R"},
-                                                       {'S', "S"},
-                                                       {'T', "T"},
-                                                       {'U', "U"},
-                                                       {'V', "V"},
-                                                       {'W', "W"},
-                                                       {'X', "X"},
-                                                       {'Y', "Y"},
-                                                       {'Z', "Z"},
+                                                       {"a", 'A'},
+                                                       {"b", 'B'},
+                                                       {"c", 'C'},
+                                                       {"d", 'D'},
+                                                       {"e", 'E'},
+                                                       {"f", 'F'},
+                                                       {"g", 'G'},
+                                                       {"h", 'H'},
+                                                       {"i", 'I'},
+                                                       {"j", 'J'},
+                                                       {"k", 'K'},
+                                                       {"l", 'L'},
+                                                       {"m", 'M'},
+                                                       {"n", 'N'},
+                                                       {"o", 'O'},
+                                                       {"p", 'P'},
+                                                       {"q", 'Q'},
+                                                       {"r", 'R'},
+                                                       {"s", 'S'},
+                                                       {"t", 'T'},
+                                                       {"u", 'U'},
+                                                       {"v", 'V'},
+                                                       {"w", 'W'},
+                                                       {"x", 'X'},
+                                                       {"y", 'Y'},
+                                                       {"z", 'Z'},
 
-                                                       {'0', "0"},
-                                                       {'1', "1"},
-                                                       {'2', "2"},
-                                                       {'3', "3"},
-                                                       {'4', "4"},
-                                                       {'5', "5"},
-                                                       {'6', "6"},
-                                                       {'7', "7"},
-                                                       {'8', "8"},
-                                                       {'9', "9"},
+                                                       {"0", '0'},
+                                                       {"1", '1'},
+                                                       {"2", '2'},
+                                                       {"3", '3'},
+                                                       {"4", '4'},
+                                                       {"5", '5'},
+                                                       {"6", '6'},
+                                                       {"7", '7'},
+                                                       {"8", '8'},
+                                                       {"9", '9'},
 
-                                                       {VK_NUMPAD0, "Num0"},
-                                                       {VK_NUMPAD1, "Num1"},
-                                                       {VK_NUMPAD2, "Num2"},
-                                                       {VK_NUMPAD3, "Num3"},
-                                                       {VK_NUMPAD4, "Num4"},
-                                                       {VK_NUMPAD5, "Num5"},
-                                                       {VK_NUMPAD6, "Num6"},
-                                                       {VK_NUMPAD7, "Num7"},
-                                                       {VK_NUMPAD8, "Num8"},
-                                                       {VK_NUMPAD9, "Num9"},
-                                                       {VK_MULTIPLY, "Num_Mul"},
-                                                       {VK_ADD, "Num_Add"},
-                                                       {VK_SEPARATOR, "Num_Sep"},
-                                                       {VK_SUBTRACT, "Num_Sub"},
-                                                       {VK_DECIMAL, "Num_Dec"},
-                                                       {VK_DIVIDE, "Num_Div"},
+                                                       {"num0", VK_NUMPAD0},
+                                                       {"num1", VK_NUMPAD1},
+                                                       {"num2", VK_NUMPAD2},
+                                                       {"num3", VK_NUMPAD3},
+                                                       {"num4", VK_NUMPAD4},
+                                                       {"num5", VK_NUMPAD5},
+                                                       {"num6", VK_NUMPAD6},
+                                                       {"num7", VK_NUMPAD7},
+                                                       {"num8", VK_NUMPAD8},
+                                                       {"num9", VK_NUMPAD9},
+                                                       {"num_mul", VK_MULTIPLY},
+                                                       {"num_add", VK_ADD},
+                                                       {"num_sep", VK_SEPARATOR},
+                                                       {"num_sub", VK_SUBTRACT},
+                                                       {"num_dec", VK_DECIMAL},
+                                                       {"num_div", VK_DIVIDE},
 
-                                                       {VK_TAB, "Tab"},
-                                                       {VK_SPACE, "Space"},
-                                                       {VK_ESCAPE, "Esc"},
-                                                       {VK_RETURN, "Enter"},
-                                                       {VK_BACK, "Backspace"},
-                                                       {VK_INSERT, "Insert"},
-                                                       {VK_DELETE, "Del"},
-                                                       {VK_HOME, "Home"},
-                                                       {VK_END, "End"},
-                                                       {VK_PRIOR, "PgUp"},
-                                                       {VK_NEXT, "PgDn"},
-                                                       {VK_PAUSE, "Pause"},
-                                                       {VK_SNAPSHOT, "Print"},
+                                                       {"tab", VK_TAB},
+                                                       {"space", VK_SPACE},
+                                                       {"esc", VK_ESCAPE},
+                                                       {"enter", VK_RETURN},
+                                                       {"backspace", VK_BACK},
+                                                       {"insert", VK_INSERT},
+                                                       {"del", VK_DELETE},
+                                                       {"home", VK_HOME},
+                                                       {"end", VK_END},
+                                                       {"pgup", VK_PRIOR},
+                                                       {"pgdn", VK_NEXT},
+                                                       {"pause", VK_PAUSE},
+                                                       {"print", VK_SNAPSHOT},
 
-                                                       {VK_CONTROL, "Ctrl"},
-                                                       {VK_LCONTROL, "LCtrl"},
-                                                       {VK_RCONTROL, "RCtrl"},
-                                                       {VK_SHIFT, "Shift"},
-                                                       {VK_LSHIFT, "LShift"},
-                                                       {VK_RSHIFT, "RShift"},
-                                                       {VK_MENU, "Alt"},
-                                                       {VK_LMENU, "LAlt"},
-                                                       {VK_RMENU, "RAlt"},
-                                                       {VK_LWIN, "LWin"},
-                                                       {VK_RWIN, "RWin"},
-                                                       {VK_CAPITAL, "Caps"},
+                                                       {"ctrl", VK_CONTROL},
+                                                       {"lctrl", VK_LCONTROL},
+                                                       {"rctrl", VK_RCONTROL},
+                                                       {"shift", VK_SHIFT},
+                                                       {"lshift", VK_LSHIFT},
+                                                       {"rshift", VK_RSHIFT},
+                                                       {"alt", VK_MENU},
+                                                       {"lalt", VK_LMENU},
+                                                       {"ralt", VK_RMENU},
+                                                       {"lwin", VK_LWIN},
+                                                       {"rwin", VK_RWIN},
+                                                       {"caps", VK_CAPITAL},
 
-                                                       {VK_UP, "Up"},
-                                                       {VK_DOWN, "Down"},
-                                                       {VK_LEFT, "Left"},
-                                                       {VK_RIGHT, "Right"},
+                                                       {"up", VK_UP},
+                                                       {"down", VK_DOWN},
+                                                       {"left", VK_LEFT},
+                                                       {"right", VK_RIGHT},
 
-                                                       {VK_LBUTTON, "LButton"},
-                                                       {VK_MBUTTON, "MButton"},
-                                                       {VK_RBUTTON, "RButton"},
+                                                       {"lbutton", VK_LBUTTON},
+                                                       {"mbutton", VK_MBUTTON},
+                                                       {"rbutton", VK_RBUTTON},
 
-                                                       {VK_OEM_1, "Semicolon"},
-                                                       {VK_OEM_PLUS, "Plus"},
-                                                       {VK_OEM_COMMA, "Comma"},
-                                                       {VK_OEM_MINUS, "Minus"},
-                                                       {VK_OEM_PERIOD, "Period"},
-                                                       {VK_OEM_2, "Slash"},
-                                                       {VK_OEM_3, "Tilde"},
-                                                       {VK_OEM_4, "LBracket"},
-                                                       {VK_OEM_5, "Backslash"},
-                                                       {VK_OEM_6, "RBracket"},
-                                                       {VK_OEM_7, "Quote"}};
+                                                       {"semicolon", VK_OEM_1},
+                                                       {"plus", VK_OEM_PLUS},
+                                                       {"comma", VK_OEM_COMMA},
+                                                       {"minus", VK_OEM_MINUS},
+                                                       {"period", VK_OEM_PERIOD},
+                                                       {"slash", VK_OEM_2},
+                                                       {"tilde", VK_OEM_3},
+                                                       {"lbracket", VK_OEM_4},
+                                                       {"backslash", VK_OEM_5},
+                                                       {"rbracket", VK_OEM_6},
+                                                       {"quote", VK_OEM_7}};
 } // namespace input
 
 extern HWND hwnd;
@@ -262,28 +261,270 @@ void input::init() {
 }
 
 ost::optional<int> input::vk_from_string(ost::string_view s) {
-    auto it = std::find_if(vk_map.begin(), vk_map.end(), [&s](const auto& pair) {
-        return pair.second.size() == s.size() &&
-               std::equal(pair.second.begin(), pair.second.end(), s.begin(), [](char a, char b) {
-                   return std::tolower(static_cast<unsigned char>(a)) ==
-                          std::tolower(static_cast<unsigned char>(b));
-               });
-    });
+    std::string lowered(s);
+    std::transform(lowered.begin(), lowered.end(), lowered.begin(), ::tolower);
+    auto it = vk_map.find(lowered);
     if (it == vk_map.end()) {
         spdlog::error("Unknown keycode string: {}", s);
         return {};
     }
-    ASS(it->first != 0);
-    return it->first;
+    ASS(it->second != 0);
+    return it->second;
 }
 
 ost::optional<ost::string_view> input::vk_to_string(int vk) {
-    auto it = vk_map.find(vk);
-    if (it == vk_map.end()) {
+    switch (vk) {
+    case VK_F1:
+        return "F1";
+    case VK_F2:
+        return "F2";
+    case VK_F3:
+        return "F3";
+    case VK_F4:
+        return "F4";
+    case VK_F5:
+        return "F5";
+    case VK_F6:
+        return "F6";
+    case VK_F7:
+        return "F7";
+    case VK_F8:
+        return "F8";
+    case VK_F9:
+        return "F9";
+    case VK_F10:
+        return "F10";
+    case VK_F11:
+        return "F11";
+    case VK_F12:
+        return "F12";
+    case VK_F13:
+        return "F13";
+    case VK_F14:
+        return "F14";
+    case VK_F15:
+        return "F15";
+    case VK_F16:
+        return "F16";
+    case VK_F17:
+        return "F17";
+    case VK_F18:
+        return "F18";
+    case VK_F19:
+        return "F19";
+    case VK_F20:
+        return "F20";
+    case VK_F21:
+        return "F21";
+    case VK_F22:
+        return "F22";
+    case VK_F23:
+        return "F23";
+    case VK_F24:
+        return "F24";
+
+    case 'A':
+        return "A";
+    case 'B':
+        return "B";
+    case 'C':
+        return "C";
+    case 'D':
+        return "D";
+    case 'E':
+        return "E";
+    case 'F':
+        return "F";
+    case 'G':
+        return "G";
+    case 'H':
+        return "H";
+    case 'I':
+        return "I";
+    case 'J':
+        return "J";
+    case 'K':
+        return "K";
+    case 'L':
+        return "L";
+    case 'M':
+        return "M";
+    case 'N':
+        return "N";
+    case 'O':
+        return "O";
+    case 'P':
+        return "P";
+    case 'Q':
+        return "Q";
+    case 'R':
+        return "R";
+    case 'S':
+        return "S";
+    case 'T':
+        return "T";
+    case 'U':
+        return "U";
+    case 'V':
+        return "V";
+    case 'W':
+        return "W";
+    case 'X':
+        return "X";
+    case 'Y':
+        return "Y";
+    case 'Z':
+        return "Z";
+
+    case '0':
+        return "0";
+    case '1':
+        return "1";
+    case '2':
+        return "2";
+    case '3':
+        return "3";
+    case '4':
+        return "4";
+    case '5':
+        return "5";
+    case '6':
+        return "6";
+    case '7':
+        return "7";
+    case '8':
+        return "8";
+    case '9':
+        return "9";
+
+    case VK_NUMPAD0:
+        return "Num0";
+    case VK_NUMPAD1:
+        return "Num1";
+    case VK_NUMPAD2:
+        return "Num2";
+    case VK_NUMPAD3:
+        return "Num3";
+    case VK_NUMPAD4:
+        return "Num4";
+    case VK_NUMPAD5:
+        return "Num5";
+    case VK_NUMPAD6:
+        return "Num6";
+    case VK_NUMPAD7:
+        return "Num7";
+    case VK_NUMPAD8:
+        return "Num8";
+    case VK_NUMPAD9:
+        return "Num9";
+    case VK_MULTIPLY:
+        return "Num_Mul";
+    case VK_ADD:
+        return "Num_Add";
+    case VK_SEPARATOR:
+        return "Num_Sep";
+    case VK_SUBTRACT:
+        return "Num_Sub";
+    case VK_DECIMAL:
+        return "Num_Dec";
+    case VK_DIVIDE:
+        return "Num_Div";
+
+    case VK_TAB:
+        return "Tab";
+    case VK_SPACE:
+        return "Space";
+    case VK_ESCAPE:
+        return "Esc";
+    case VK_RETURN:
+        return "Enter";
+    case VK_BACK:
+        return "Backspace";
+    case VK_INSERT:
+        return "Insert";
+    case VK_DELETE:
+        return "Del";
+    case VK_HOME:
+        return "Home";
+    case VK_END:
+        return "End";
+    case VK_PRIOR:
+        return "PgUp";
+    case VK_NEXT:
+        return "PgDn";
+    case VK_PAUSE:
+        return "Pause";
+    case VK_SNAPSHOT:
+        return "Print";
+
+    case VK_CONTROL:
+        return "Ctrl";
+    case VK_LCONTROL:
+        return "LCtrl";
+    case VK_RCONTROL:
+        return "RCtrl";
+    case VK_SHIFT:
+        return "Shift";
+    case VK_LSHIFT:
+        return "LShift";
+    case VK_RSHIFT:
+        return "RShift";
+    case VK_MENU:
+        return "Alt";
+    case VK_LMENU:
+        return "LAlt";
+    case VK_RMENU:
+        return "RAlt";
+    case VK_LWIN:
+        return "LWin";
+    case VK_RWIN:
+        return "RWin";
+    case VK_CAPITAL:
+        return "Caps";
+
+    case VK_UP:
+        return "Up";
+    case VK_DOWN:
+        return "Down";
+    case VK_LEFT:
+        return "Left";
+    case VK_RIGHT:
+        return "Right";
+
+    case VK_LBUTTON:
+        return "LButton";
+    case VK_MBUTTON:
+        return "MButton";
+    case VK_RBUTTON:
+        return "RButton";
+
+    case VK_OEM_1:
+        return "Semicolon";
+    case VK_OEM_PLUS:
+        return "Plus";
+    case VK_OEM_COMMA:
+        return "Comma";
+    case VK_OEM_MINUS:
+        return "Minus";
+    case VK_OEM_PERIOD:
+        return "Period";
+    case VK_OEM_2:
+        return "Slash";
+    case VK_OEM_3:
+        return "Tilde";
+    case VK_OEM_4:
+        return "LBracket";
+    case VK_OEM_5:
+        return "Backslash";
+    case VK_OEM_6:
+        return "RBracket";
+    case VK_OEM_7:
+        return "Quote";
+
+    default:
         spdlog::error("Unknown keycode value: {}", vk);
         return {};
     }
-    return it->second;
 }
 
 void input::handle_input(int vk, bool pressed) {

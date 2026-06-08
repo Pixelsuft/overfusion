@@ -1,5 +1,5 @@
 [ ] Use CWD:\\ or like path to make FS names protable + user folder
 [ ] Fix that ugly audio recording implementation
-[ ] Fix rare audio random startup freeze
+[ ] More use of ost::optional, ost::expected
 [ ] Support random manipulation (+rand() and srand() stable reimpl)
 [ ] Fix TODO/FIXME in code
