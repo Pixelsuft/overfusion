@@ -191,7 +191,7 @@ bool hook::_reg_iat(ost::string_view dll, ost::string_view func_name, void* pNew
     // TODO: assert for no doubling
     ASS(has_no_uppercase(dll));
     HookTarget target;
-    target.funcName = func_name;
+    target.funcName = std::string(func_name);
     target.hookFunc = pNewFunc;
     target.origFunc = ppOriginal;
 #ifdef _DEBUG

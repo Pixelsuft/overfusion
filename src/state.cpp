@@ -641,10 +641,10 @@ static bool exec_event(Event ev) {
     }
     case event::Type::MouseMove: {
         // Mouse move
-        auto [xreal, yreal] = plug::get().mouse_to_window(ev.mouse.x, ev.mouse.y);
+        auto real_p = plug::get().mouse_to_window(ev.mouse.x, ev.mouse.y);
         state::st.mouse_pos.first = ev.mouse.x;
         state::st.mouse_pos.second = ev.mouse.y;
-        input::sim_mouse_move(xreal, yreal);
+        input::sim_mouse_move(real_p.first, real_p.second);
         return true;
     }
     case event::Type::MsgBox: {
@@ -848,8 +848,8 @@ void state::add_mouse_toggle(int vk) {
 }
 
 void state::add_mouse_move() {
-    auto [xreal, yreal] = input::get_real_mouse_pos();
-    auto pos = plug::get().mouse_from_window(xreal, yreal);
+    auto real_p = input::get_real_mouse_pos();
+    auto pos = plug::get().mouse_from_window(real_p.first, real_p.second);
     auto prev_pos = get_tas_mouse_pos();
     if (pos == prev_pos) {
         last_msg = "Mouse move skipped because position is the same";
@@ -862,8 +862,8 @@ void state::add_mouse_move() {
     event.mouse.y = pos.second;
     st.temp_ev.push_back(event);
     last_msg = "Queued mouse move to (" + std::to_string(pos.first) + ", " +
-               std::to_string(pos.second) + ") with (" + std::to_string(xreal) + ", " +
-               std::to_string(yreal) + ")";
+               std::to_string(pos.second) + ") with (" + std::to_string(real_p.first) + ", " +
+               std::to_string(real_p.second) + ")";
 }
 
 std::pair<int, int> state::get_mouse_pos() {
@@ -926,7 +926,7 @@ void state::draw_info() {
         for (auto& vk : st.prev_input) {
             auto opt = input::vk_to_string(vk);
             ASS(opt.has_value());
-            keys_str += opt.value();
+            keys_str += std::string(opt.value());
             keys_str += ", ";
         }
         ImGui::Text("Keys: %s",

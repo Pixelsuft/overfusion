@@ -1059,12 +1059,12 @@ bool files::save_fs(ofs::File& file) {
     ENSURE(our_handles.empty());
     lock::CSLock mylock(fcs);
     state::write_bin(file, file_map.size());
-    for (auto& [fn, data] : file_map) {
-        state::write_bin(file, fn);
-        state::write_bin(file, data.size);
-        state::write_bin(file, data.allow_read);
-        state::write_bin(file, data.allow_write);
-        auto w_ret = file.write(data.data, data.size);
+    for (auto& pair : file_map) {
+        state::write_bin(file, pair.first);
+        state::write_bin(file, pair.second.size);
+        state::write_bin(file, pair.second.allow_read);
+        state::write_bin(file, pair.second.allow_write);
+        auto w_ret = file.write(pair.second.data, pair.second.size);
         ENSURE(w_ret);
     }
     return true;
