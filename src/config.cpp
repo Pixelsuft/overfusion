@@ -109,6 +109,7 @@ Config::Config() {
         spdlog::warn("No project name was specified, defaulting to 'test_proj'");
         project_name = "test_proj";
     }
+    // TODO: validate project_name
     ffmpeg_cmdline =
         "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an $PROJ/$NAME.mp4";
     system_offset = local_offset = startup_offset = 0; // TODO: conf them

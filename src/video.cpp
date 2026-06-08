@@ -125,8 +125,8 @@ static video::CheckResult check_record(std::pair<int, int> new_size) {
         while ((pos = cmd.find("$PROJ")) != std::string::npos)
             cmd.replace(pos, 5, cfg.project_name);
         video::file_index++;
-        while ((pos = cmd.find("$NAME")) != std::string::npos)
-            cmd.replace(pos, 5, string("video_") + std::to_string(video::file_index));
+        while ((pos = cmd.find("$ID")) != std::string::npos)
+            cmd.replace(pos, 3, std::to_string(video::file_index));
         spdlog::info("running: {}", cmd);
         if (!video::ffmpeg.open(cmd)) {
             video::recording = false;
