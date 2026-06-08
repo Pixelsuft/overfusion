@@ -289,7 +289,7 @@ void state::import_replay(string_view fn) {
         } else if (sub == "total") {
             temp_state.total = str_to_int(sub2);
         } else if (sub == "rerecords") {
-            temp_state.rerec_count = str_to_int(sub2);
+            temp_state.rerec_count = std::max(str_to_int(sub2), 0);
         } else if (sub == "events_begin") {
             break;
         } else {
