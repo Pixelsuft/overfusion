@@ -39,7 +39,7 @@ Ugly piece of code for supporting dark theme (can be disabled with `disable_dark
 ## Extra hooks
 
 1. Disable dragging from/into window
-2. Disable opening URLs, explorer, etc.
+2. Disable opening URLs, explorer, etc
 3. Emulate US locale
 4. Emulate fixed Windows version
 5. Emulate lack of any joystick
@@ -103,6 +103,10 @@ Time hooks for deterministic system time emulation and optionally timers
 ## UI
 
 Main OF user interface code utilizing the [ImGui](https://github.com/ocornut/imgui) library
+
+## Video
+
+Video capturing logic. See more [here](CAPTURING.md)
 
 ## Window hooks
 
