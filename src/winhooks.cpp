@@ -121,11 +121,15 @@ static LRESULT __stdcall EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 static void on_win_create(HWND hwnd, string_view class_name, bool unicode) {
     if (class_name == "Mf2MainClassTh") {
+        ENSURE(MainWindowProcO != nullptr);
         ::hwnd = hwnd;
         winhooks::init_win32_theme();
         winhooks::fix_win32_theme(hwnd);
+        LRESULT lr;
+        UAHWndProc(::hwnd, WM_THEMECHANGED, 0, 0, &lr); // Hacky update for dark mode menu
         spdlog::info("Mf2MainClassTh window created");
     } else if (class_name == "Mf2EditClassTh") {
+        ENSURE(EditWindowProcO != nullptr);
         ::mhwnd = hwnd;
         spdlog::info("Mf2EditClassTh window created");
     } else if (class_name == "SysListView32" || class_name == "SysHeader32")
@@ -174,6 +178,7 @@ static HWND WINAPI CreateWindowExWH(DWORD dwExStyle, LPCWSTR lpClassName, LPCWST
 }
 
 static void on_class_create_ansi(const char* name, WNDPROC& proc) {
+    ASS(name != nullptr);
     // We all know it's editable :)
     if (!MainWindowProcO && strcmp(name, "Mf2MainClassTh") == 0) {
         MainWindowProcO = proc;
@@ -185,6 +190,7 @@ static void on_class_create_ansi(const char* name, WNDPROC& proc) {
 }
 
 static void on_class_create_wide(const wchar_t* name, WNDPROC& proc) {
+    ASS(name != nullptr);
     if (!MainWindowProcO && wcscmp(name, L"Mf2MainClassTh") == 0) {
         MainWindowProcO = proc;
         proc = MainWindowProcH;
@@ -418,10 +424,6 @@ void winhooks::after_ui_init() {
     is_custom_window = conf::get().custom_window;
     ENSURE(hwnd != nullptr);
     ENSURE(mhwnd != nullptr);
-    ENSURE(MainWindowProcO != nullptr);
-    ENSURE(EditWindowProcO != nullptr);
-    LRESULT lr;
-    UAHWndProc(::hwnd, WM_THEMECHANGED, 0, 0, &lr); // Hacky update for dark mode
     // Let's do it here if the game wants to show an error during startup
     IAT_STR_AUTO("user32.dll", MessageBox);
 }
