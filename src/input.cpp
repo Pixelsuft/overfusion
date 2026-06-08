@@ -3,7 +3,6 @@
 #include "ass.hpp"
 #include "config.hpp"
 #include "mem.hpp"
-#include "plugbase.hpp"
 #include "state.hpp"
 #include "sv.hpp"
 #include "ui.hpp"

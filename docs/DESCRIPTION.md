@@ -48,9 +48,13 @@ Ugly piece of code for supporting dark theme (can be disabled with `disable_dark
 8. Disable registry access
 9. Emulate custom command line arguments
 
-## Virtual FS
+## Virtual filesystem
 
-TODO
+Optional in-memory FS emulation (set `virtual_fs` to `true` to enable)
+
+1. Hooks for `CreateFile`, `OpenFile`, `_lopen`, `_open`, `_fopen` and other related functions
+2. Legacy INI API emulation (very slow via [SimpleIni](https://github.com/brofield/simpleini))
+3. Saving/loading support for states
 
 ## Game hooks
 
@@ -62,7 +66,10 @@ Blitting operating hooks to support direct video recording when the game uses GD
 
 ## Input
 
-TODO
+1. Emulation of the keyboard and mouse state
+2. Mapping key codes from and to string
+3. Bindings logic
+4. Helper functions
 
 ## Load hooks
 
