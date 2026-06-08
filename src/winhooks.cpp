@@ -89,6 +89,11 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
         }
         return FALSE;
     }
+    case WM_PAINT:
+        winhooks::fix_win32_window_bg(hWnd);
+        break;
+    case WM_ERASEBKGND:
+        return TRUE;
     }
     LRESULT lr = 0;
     if (UAHWndProc(hWnd, uMsg, wParam, lParam, &lr))
@@ -209,6 +214,8 @@ static ATOM WINAPI RegisterClassAH(WNDCLASSA* cls) {
 static ATOM(WINAPI* RegisterClassExAO)(WNDCLASSEXA* cls);
 static ATOM WINAPI RegisterClassExAH(WNDCLASSEXA* cls) {
     on_class_create_ansi(cls->lpszClassName, cls->lpfnWndProc);
+    if (strcmp(cls->lpszClassName, "Mf2MainClassTh") == 0)
+        cls->hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
     return RegisterClassExAO(cls);
 }
 

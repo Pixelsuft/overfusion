@@ -343,6 +343,16 @@ void winhooks::fix_win32_theme_messagebox(void* _hwnd) {
         SetWindowSubclass(reinterpret_cast<HWND>(_hwnd), TrueDarkMessageBoxSubclass, 0, 0);
 }
 
+void winhooks::fix_win32_window_bg(void* _hwnd) {
+    if (win_shit.enabled == 1) {
+        auto hWnd = reinterpret_cast<HWND>(_hwnd);
+        PAINTSTRUCT ps;
+        HDC hdc = BeginPaint(hWnd, &ps);
+        FillRect(hdc, &ps.rcPaint, win_shit.g_hDarkBgBrush);
+        EndPaint(hWnd, &ps);
+    }
+}
+
 static void UAHDrawMenuNCBottomLine(HWND hWnd) {
     MENUBARINFO mbi = {sizeof(mbi)};
     if (!GetMenuBarInfo(hWnd, OBJID_MENU, 0, &mbi)) {
