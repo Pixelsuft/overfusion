@@ -1,3 +1,4 @@
+#define WIN32_LEAN_AND_MEAN
 #include "ui.hpp"
 #include "audio.hpp"
 #include "config.hpp"
@@ -5,10 +6,14 @@
 #include "plugbase.hpp"
 #include "state.hpp"
 #include "video.hpp"
+#include <Windows.h>
 #include <backends/imgui_impl_dx9.h>
 #include <backends/imgui_impl_win32.h>
+#include <d3d9.h>
 #include <imgui.h>
 #include <spdlog/spdlog.h>
+#undef min
+#undef max
 
 constexpr bool ui_save_sets = true;
 
@@ -33,14 +38,14 @@ bool ui::init_imgui_context() {
     return true;
 }
 
-bool ui::init_imgui_platform(HWND hwnd, LPDIRECT3DDEVICE9 device) {
+bool ui::init_imgui_platform(void* hwnd, void* device) {
     processing = true;
-    if (!ImGui_ImplWin32_Init(hwnd)) {
+    if (!ImGui_ImplWin32_Init(reinterpret_cast<HWND>(hwnd))) {
         spdlog::error("Failed to initialize ImGui Win32 impl");
         processing = false;
         return false;
     }
-    if (!ImGui_ImplDX9_Init(device)) {
+    if (!ImGui_ImplDX9_Init(reinterpret_cast<LPDIRECT3DDEVICE9>(device))) {
         spdlog::error("Failed to initialize ImGui DX9 impl");
         processing = false;
         return false;

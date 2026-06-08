@@ -12,7 +12,7 @@ static HANDLE(WINAPI* CreateThreadO)(LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_STA
 static HANDLE WINAPI CreateThreadH(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
                                    LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter,
                                    DWORD dwCreationFlags, LPDWORD lpThreadId) {
-    if (0)
+    if (false)
         spdlog::debug("CreateThread: {}", reinterpret_cast<void*>(lpStartAddress));
     if (conf::get().disable_threads)
         return nullptr;

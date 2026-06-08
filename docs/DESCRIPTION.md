@@ -29,7 +29,7 @@ Ugly piece of code for supporting dark theme (can be disabled with `disable_dark
 
 1. Detect system theme
 2. Apply dark theme on titlebar (if needed)
-3. Allow title bar context menu and window sub-menus to be dark
+3. Allow title bar context menu and window submenus to be dark
 4. Draw dark window menu manually (if needed)
 5. Draw dark window background manually (if needed)
 6. Manually fix message boxes via CBT hook and window subclass (if needed)
@@ -58,7 +58,7 @@ TODO
 
 ## GDI hooks
 
-TODO
+Blitting operating hooks to support direct video recording when the game uses GDI backend
 
 ## Input
 
@@ -66,7 +66,7 @@ TODO
 
 ## Load hooks
 
-TODO
+`LoadLibrary`, `GetProcAddress` hooks for observating (and faking) some imports and IAT patching
 
 ## Plugins
 
@@ -78,7 +78,7 @@ TODO
 
 ## Thread hooks
 
-TODO
+Disable subprocess creation and extra thread for determinism if `disable_threads` is `true`
 
 ## Time hooks
 
@@ -86,10 +86,15 @@ TODO
 
 ## UI
 
-TODO
+Main OF user interface code utilizing the [ImGui](https://github.com/ocornut/imgui) library
 
 ## Window hooks
 
-TODO
+1. Window creation hooks
+2. Event processing hooks (for UI, dark mode, input manipulation, determinism)
+3. Message boxes hooks for manipulation
+4. Some extra hooks for determinism
 
 ## Jumbo (unity) build
+
+Is used to build all the source files as a single one for faster compilation from strach and runtime performance
