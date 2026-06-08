@@ -32,4 +32,17 @@ You can use [default config](../overfusion.json) as well.
 `save_vfs` - save/load VFS state into state file <br />
 `cmdline_append` - extra command line arguments passed to the game <br />
 `ffmpeg_cmdline` - FFmpeg command line for video capturing <br />
-`binds` - keyboard bindings <br />
+`binds` - keyboard bindings
+
+## Bindings
+
+`task` triggers by pressing `key` bind: <br /> <br />
+`map` - emulate (map) keyboard key to the in-game keyboard press `target` <br />
+`mouse_down` - toggle virtual mouse button `target` down/up <br />
+`mouse_move` - virtual cursor mouse to the real mouse position <br />
+`fast` - fast forward (use `toggle` to toggle this mode instead of holding the `key`) <br />
+`play` - play (unpause) the game (use `toggle` to toggle this mode instead of holding the `key`) <br />
+`advance` - frame advance <br />
+`menu` - toggle OF menu <br />
+`save` - save game state to slot `slot` <br />
+`load` - load game state from slot `slot`
