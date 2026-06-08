@@ -566,18 +566,22 @@ public:
 
         HRESULT hr = pD3D->CreateDevice(Adapter, DeviceType, hFocusWindow, BehaviorFlags,
                                         pPresentationParameters, ppReturnedDeviceInterface);
-
+        auto& cfg = conf::get();
+        if (cfg.render_type != conf::RenderType::None &&
+            cfg.render_type != conf::RenderType::D3D9) {
+            spdlog::debug("Skipping D3D9 CreateDevice hook");
+            return hr;
+        }
         if (SUCCEEDED(hr) && ppReturnedDeviceInterface && *ppReturnedDeviceInterface) {
             spdlog::debug("Wrapping IDirect3DDevice9 into ID3D9Proxy");
             *ppReturnedDeviceInterface = new ID3D9Proxy(*ppReturnedDeviceInterface);
-            ASS(conf::get().render_type == conf::RenderType::None);
-            conf::get().render_type = conf::RenderType::D3D9;
+            cfg.render_type = conf::RenderType::D3D9;
         }
         return hr;
     }
 };
 
-static IDirect3D9*(WINAPI* Direct3DCreate9O)(UINT SDKVersion);
+IDirect3D9*(WINAPI* Direct3DCreate9O)(UINT SDKVersion) = Direct3DCreate9;
 static IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {
     spdlog::debug("Direct3DCreate9");
     auto ret = Direct3DCreate9O(SDKVersion);

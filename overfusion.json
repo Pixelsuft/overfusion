@@ -1,6 +1,7 @@
 {
   "fps": 0,
   "force_resolution": [0, 0],
+  "force_custom_window": false,
   "show_menu": false,
   "show_info": true,
   "emulate_user_timers": true,

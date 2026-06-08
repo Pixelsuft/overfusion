@@ -69,7 +69,8 @@ static void after_load(string_view path, void* mod) {
             audio::init();
             hook::enable();
         } else if (fn == "mmf2d3d9.dll") {
-            conf::get().custom_window = false;
+            auto& cfg = conf::get();
+            cfg.custom_window = cfg.force_custom_window;
             d3dhooks::init();
             hook::enable();
         } else if (fn == "Lacewing.mfx") {

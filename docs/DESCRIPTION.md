@@ -13,11 +13,11 @@ DirectSound proxy used for capturing audio. See more [here](CAPTURING.md)
 
 ## Config
 
-TODO
+Config parsing, binds parsing, filling default values. See more [here](CONFIGURATION.md)
 
 ## Custom window
 
-TODO
+Creates custom window for OF ImGui UI in case the game doesn't use Direct3D9 render or `force_custom_window` is set to `true`
 
 ## Direct3D hooks
 

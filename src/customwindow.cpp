@@ -18,6 +18,7 @@
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam,
                                                              LPARAM lParam);
+extern IDirect3D9*(WINAPI* Direct3DCreate9O)(UINT SDKVersion);
 extern HWND hwnd;
 
 static HWND g_hwnd;
@@ -96,7 +97,7 @@ static bool CreateCustomWindow(HINSTANCE hInstance) {
 }
 
 static bool InitD3D9() {
-    g_pD3D = Direct3DCreate9(D3D_SDK_VERSION);
+    g_pD3D = Direct3DCreate9O(D3D_SDK_VERSION);
     if (g_pD3D == nullptr) {
         spdlog::error("Failed to create D3D9 object");
         return false;

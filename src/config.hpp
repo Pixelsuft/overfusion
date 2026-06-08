@@ -75,6 +75,7 @@ public:
     bool ui_pixel_filter;
     bool save_vfs;
     bool disable_dark_mode_support;
+    bool force_custom_window;
 
     Config();
     void read();
