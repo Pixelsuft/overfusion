@@ -10,6 +10,7 @@
   "delay_thread_hook": false,
   "no_ini_hooks": true,
   "boxed_mode": false,
+  "disable_dark_mode_support": false,
   "disable_app_menu": true,
   "allow_timers_fix": true,
   "allow_direct_capture": true,

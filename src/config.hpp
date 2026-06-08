@@ -74,6 +74,7 @@ public:
     bool pixel_filter;
     bool ui_pixel_filter;
     bool save_vfs;
+    bool disable_dark_mode_support;
 
     Config();
     void read();

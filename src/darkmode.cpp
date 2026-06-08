@@ -1,4 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
+#include "config.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
 #include <vector>
@@ -181,6 +182,7 @@ void winhooks::fix_win32_theme(void* _hwnd) {
 
 void winhooks::pre_init_win32_theme() {
     win_shit.enabled = -1;
+    win_shit.g_hDarkBgBrush = nullptr;
     win_shit.g_menuTheme = nullptr;
     win_shit.g_brBarBackground = nullptr;
     win_shit.g_brItemBackground = nullptr;
@@ -197,7 +199,8 @@ void winhooks::pre_init_win32_theme() {
 }
 
 void winhooks::init_win32_theme() {
-    win_shit.g_hDarkBgBrush = CreateSolidBrush(RGB(32, 32, 32));
+    if (conf::get().disable_dark_mode_support)
+        return;
     auto ntdll_handle = GetModuleHandleW(L"ntdll.dll");
     if (!ntdll_handle)
         return;
@@ -215,6 +218,7 @@ void winhooks::init_win32_theme() {
     auto uxtheme_handle = GetModuleHandleW(L"uxtheme.dll");
     if (uxtheme_handle == nullptr)
         return;
+    win_shit.g_hDarkBgBrush = CreateSolidBrush(RGB(32, 32, 32));
     win_shit.CloseThemeData = reinterpret_cast<decltype(win_shit.CloseThemeData)>(
         GetProcAddress(uxtheme_handle, "CloseThemeData"));
     win_shit.DrawThemeTextEx = reinterpret_cast<decltype(win_shit.DrawThemeTextEx)>(
@@ -343,14 +347,16 @@ void winhooks::fix_win32_theme_messagebox(void* _hwnd) {
         SetWindowSubclass(reinterpret_cast<HWND>(_hwnd), TrueDarkMessageBoxSubclass, 0, 0);
 }
 
-void winhooks::fix_win32_window_bg(void* _hwnd) {
+bool winhooks::fix_win32_window_bg(void* _hwnd) {
     if (win_shit.enabled == 1) {
         auto hWnd = reinterpret_cast<HWND>(_hwnd);
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hWnd, &ps);
         FillRect(hdc, &ps.rcPaint, win_shit.g_hDarkBgBrush);
         EndPaint(hWnd, &ps);
+        return true;
     }
+    return false;
 }
 
 static void UAHDrawMenuNCBottomLine(HWND hWnd) {

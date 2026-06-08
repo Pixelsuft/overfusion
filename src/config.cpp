@@ -149,6 +149,7 @@ Config::Config() {
     pixel_filter = false;
     ui_pixel_filter = false;
     save_vfs = false;
+    disable_dark_mode_support = false;
 }
 
 // Read boolean variable
@@ -196,6 +197,7 @@ void Config::read() {
     READ_BOOL(pixel_filter);
     READ_BOOL(ui_pixel_filter);
     READ_BOOL(save_vfs);
+    READ_BOOL(disable_dark_mode_support);
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
     if (data["ffmpeg_cmdline"].is_string())

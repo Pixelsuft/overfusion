@@ -93,7 +93,9 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
         winhooks::fix_win32_window_bg(hWnd);
         break;
     case WM_ERASEBKGND:
-        return TRUE;
+        if (winhooks::fix_win32_window_bg(hWnd))
+            return TRUE;
+        break;
     }
     LRESULT lr = 0;
     if (UAHWndProc(hWnd, uMsg, wParam, lParam, &lr))
