@@ -51,7 +51,6 @@ public:
     bool fast_forward;
     bool emulate_user_timers;
     bool emulate_mm_timers;
-    bool is_unicode;
     bool custom_window;
     bool virtual_fs;
     bool disable_threads;

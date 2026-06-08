@@ -179,7 +179,7 @@ void winhooks::fix_win32_theme(void* _hwnd) {
     win_shit.cached_windows.push_back(reinterpret_cast<HWND>(_hwnd));
 }
 
-void winhooks::init_win32_theme() {
+void winhooks::pre_init_win32_theme() {
     win_shit.enabled = -1;
     win_shit.g_menuTheme = nullptr;
     win_shit.g_brBarBackground = nullptr;
@@ -187,7 +187,6 @@ void winhooks::init_win32_theme() {
     win_shit.g_brItemBackgroundHot = nullptr;
     win_shit.g_brItemBackgroundSelected = nullptr;
     win_shit.g_brItemBorder = nullptr;
-    win_shit.g_hDarkBgBrush = CreateSolidBrush(RGB(32, 32, 32));
     win_shit.AllowDarkModeForWindow = nullptr;
     win_shit.ShouldAppsUseDarkMode = nullptr;
     win_shit.SetWindowCompositionAttribute = nullptr;
@@ -195,6 +194,10 @@ void winhooks::init_win32_theme() {
     win_shit.DrawThemeTextEx = nullptr;
     win_shit.OpenThemeData = nullptr;
     win_shit.SetWindowTheme = nullptr;
+}
+
+void winhooks::init_win32_theme() {
+    win_shit.g_hDarkBgBrush = CreateSolidBrush(RGB(32, 32, 32));
     auto ntdll_handle = GetModuleHandleW(L"ntdll.dll");
     if (!ntdll_handle)
         return;
@@ -438,12 +441,6 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
 
         return true;
     }
-    case WM_UAHMEASUREMENUITEM: {
-        auto pMmi = reinterpret_cast<UAHMEASUREMENUITEM*>(lParam);
-        *lr = DefWindowProc(hWnd, message, wParam, lParam);
-        pMmi->mis.itemWidth = (pMmi->mis.itemWidth * 4) / 3;
-        return true;
-    }
     case WM_THEMECHANGED: {
         win_shit.enabled = -1;
         if (win_shit.g_menuTheme) {
@@ -473,7 +470,7 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
     }
     case WM_NCPAINT:
     case WM_NCACTIVATE:
-        *lr = DefWindowProc(hWnd, message, wParam, lParam);
+        *lr = DefWindowProcW(hWnd, message, wParam, lParam);
         UAHDrawMenuNCBottomLine(hWnd);
         return true;
     default:

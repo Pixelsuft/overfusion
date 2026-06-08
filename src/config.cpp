@@ -128,7 +128,6 @@ Config::Config() {
     emulate_mm_timers = false;
     disable_threads = false;
     delay_thread_hook = false;
-    is_unicode = false;
     custom_window = true;
     virtual_fs = true;
     no_ini_hooks = false;

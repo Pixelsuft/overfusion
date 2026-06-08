@@ -20,6 +20,7 @@ using std::string;
 namespace winhooks {
 static bool is_custom_window;
 static HHOOK hCbtHook;
+static bool inited;
 } // namespace winhooks
 
 HWND hwnd;
@@ -57,7 +58,8 @@ LRESULT(__stdcall* MainWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DROPFILES)
         return 0;
-    if (!winhooks::is_custom_window || uMsg < WM_MOUSEFIRST || uMsg > WM_MOUSELAST) {
+    if (winhooks::inited && !winhooks::is_custom_window || uMsg < WM_MOUSEFIRST ||
+        uMsg > WM_MOUSELAST) {
         ui::set_processing(true);
         ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
         ui::set_processing(false);
@@ -65,7 +67,8 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     switch (uMsg) {
     case WM_KEYDOWN:
     case WM_KEYUP:
-        input::handle_input(wParam, uMsg == WM_KEYDOWN);
+        if (winhooks::inited)
+            input::handle_input(wParam, uMsg == WM_KEYDOWN);
         return FALSE;
     case WM_MOUSEMOVE:
     case WM_MOUSELEAVE:
@@ -74,7 +77,7 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
         return FALSE;
     case WM_GETMINMAXINFO: {
         auto& cfg = conf::get();
-        if (cfg.forced_res.first > 0 && cfg.forced_res.second > 0) {
+        if (winhooks::inited && cfg.forced_res.first > 0 && cfg.forced_res.second > 0) {
             auto mmi = reinterpret_cast<MINMAXINFO*>(lParam);
             DWORD style = GetWindowLongPtr(hWnd, GWL_STYLE);
             DWORD exStyle = GetWindowLongPtr(hWnd, GWL_EXSTYLE);
@@ -98,14 +101,16 @@ LRESULT(__stdcall* EditWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 static LRESULT __stdcall EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DROPFILES)
         return FALSE;
-    if (!winhooks::is_custom_window || uMsg < WM_MOUSEFIRST || uMsg > WM_MOUSELAST) {
+    if (winhooks::inited && !winhooks::is_custom_window || uMsg < WM_MOUSEFIRST ||
+        uMsg > WM_MOUSELAST) {
         ui::set_processing(true);
         ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
         ui::set_processing(false);
     }
     if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP) {
         // lParam = 0;
-        input::handle_input(wParam, uMsg == WM_KEYDOWN);
+        if (winhooks::inited)
+            input::handle_input(wParam, uMsg == WM_KEYDOWN);
         return FALSE;
     }
     if (uMsg == WM_MOUSELEAVE || uMsg == WM_MOUSEHWHEEL || uMsg == WM_CHAR)
@@ -116,8 +121,8 @@ static LRESULT __stdcall EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 static void on_win_create(HWND hwnd, string_view class_name, bool unicode) {
     if (class_name == "Mf2MainClassTh") {
-        conf::get().is_unicode = unicode;
         ::hwnd = hwnd;
+        winhooks::init_win32_theme();
         winhooks::fix_win32_theme(hwnd);
         spdlog::info("Mf2MainClassTh window created");
     } else if (class_name == "Mf2EditClassTh") {
@@ -166,6 +171,51 @@ static HWND WINAPI CreateWindowExWH(DWORD dwExStyle, LPCWSTR lpClassName, LPCWST
         winhooks::fix_win32_theme_instant(ret);
     }
     return ret;
+}
+
+static void on_class_create_ansi(const char* name, WNDPROC& proc) {
+    // We all know it's editable :)
+    if (!MainWindowProcO && strcmp(name, "Mf2MainClassTh") == 0) {
+        MainWindowProcO = proc;
+        proc = MainWindowProcH;
+    } else if (!EditWindowProcO && strcmp(name, "Mf2EditClassTh") == 0) {
+        EditWindowProcO = proc;
+        proc = EditWindowProcH;
+    }
+}
+
+static void on_class_create_wide(const wchar_t* name, WNDPROC& proc) {
+    if (!MainWindowProcO && wcscmp(name, L"Mf2MainClassTh") == 0) {
+        MainWindowProcO = proc;
+        proc = MainWindowProcH;
+    } else if (!EditWindowProcO && wcscmp(name, L"Mf2EditClassTh") == 0) {
+        EditWindowProcO = proc;
+        proc = EditWindowProcH;
+    }
+}
+
+static ATOM(WINAPI* RegisterClassAO)(WNDCLASSA* cls);
+static ATOM WINAPI RegisterClassAH(WNDCLASSA* cls) {
+    on_class_create_ansi(cls->lpszClassName, cls->lpfnWndProc);
+    return RegisterClassAO(cls);
+}
+
+static ATOM(WINAPI* RegisterClassExAO)(WNDCLASSEXA* cls);
+static ATOM WINAPI RegisterClassExAH(WNDCLASSEXA* cls) {
+    on_class_create_ansi(cls->lpszClassName, cls->lpfnWndProc);
+    return RegisterClassExAO(cls);
+}
+
+static ATOM(WINAPI* RegisterClassWO)(WNDCLASSW* cls);
+static ATOM WINAPI RegisterClassWH(WNDCLASSW* cls) {
+    on_class_create_wide(cls->lpszClassName, cls->lpfnWndProc);
+    return RegisterClassWO(cls);
+}
+
+static ATOM(WINAPI* RegisterClassExWO)(WNDCLASSEXW* cls);
+static ATOM WINAPI RegisterClassExWH(WNDCLASSEXW* cls) {
+    on_class_create_wide(cls->lpszClassName, cls->lpfnWndProc);
+    return RegisterClassExWO(cls);
 }
 
 static HWND(WINAPI* GetFocusO)();
@@ -340,11 +390,15 @@ static BOOL WINAPI GetClientRectH(HWND hWnd, LPRECT lpRect) {
 }
 
 void winhooks::init() {
-    is_custom_window = false;
     hwnd = mhwnd = nullptr;
-    // winhooks::init_win32_theme();
+    MainWindowProcO = EditWindowProcO = nullptr;
+    is_custom_window = false;
+    inited = false;
+    winhooks::pre_init_win32_theme();
     // IAT_STR_ONLY("user32.dll", GetMonitorInfo);
     IAT_STR_AUTO("user32.dll", CreateWindowEx);
+    IAT_STR_AUTO("user32.dll", RegisterClassEx);
+    IAT_STR_AUTO("user32.dll", RegisterClass);
     IAT_STR_AUTO("user32.dll", SetWindowText);
     IAT_STR_ONLY("user32.dll", DialogBoxParam);
     IAT_STR_AUTO("user32.dll", SetWindowsHookEx);
@@ -360,17 +414,11 @@ void winhooks::init() {
 }
 
 void winhooks::after_ui_init() {
+    inited = true;
     is_custom_window = conf::get().custom_window;
-    winhooks::init_win32_theme();
-    bool use_w = conf::get().is_unicode;
     ENSURE(hwnd != nullptr);
     ENSURE(mhwnd != nullptr);
-    // TODO: hook during class registration? will require extra if check
-    MainWindowProcO = reinterpret_cast<WNDPROC>((use_w ? SetWindowLongPtrW : SetWindowLongPtrA)(
-        ::hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(MainWindowProcH)));
     ENSURE(MainWindowProcO != nullptr);
-    EditWindowProcO = reinterpret_cast<WNDPROC>((use_w ? SetWindowLongPtrW : SetWindowLongPtrA)(
-        ::mhwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(EditWindowProcH)));
     ENSURE(EditWindowProcO != nullptr);
     LRESULT lr;
     UAHWndProc(::hwnd, WM_THEMECHANGED, 0, 0, &lr); // Hacky update for dark mode
