@@ -87,8 +87,8 @@ Some sort of the game backends
 2. Should implement init functions
 3. Should implement getting pointers to the game data
 4. Should implement in-game state saving/loading
-5. Should implement mouse coordinates convertion
-6. Should patch game to make it at least running without big issues (ex. frame drops)
+5. Should patch game to make it at least running without big issues (ex. frame drops)
+6. Can implement mouse coords convertion and transition patching if needed
 7. Can do some extra operations/hooks/patches
 
 ## State
