@@ -29,8 +29,8 @@ static BOOL WINAPI BitBltH(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, in
     return ret;
 }
 
-BOOL(WINAPI* StretchBltO)(HDC hdcDest, int xDest, int yDest, int wDest, int hDest, HDC hdcSrc,
-                          int xSrc, int ySrc, int wSrc, int hSrc, DWORD rop);
+static BOOL(WINAPI* StretchBltO)(HDC hdcDest, int xDest, int yDest, int wDest, int hDest,
+                                 HDC hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, DWORD rop);
 static BOOL WINAPI StretchBltH(HDC hdcDest, int xDest, int yDest, int wDest, int hDest, HDC hdcSrc,
                                int xSrc, int ySrc, int wSrc, int hSrc, DWORD rop) {
     auto ret =

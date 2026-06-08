@@ -14,8 +14,6 @@ extern HWND hwnd;
 extern HWND mhwnd;
 extern BOOL(WINAPI* BitBltO)(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int x1, int y1,
                              DWORD rop);
-extern BOOL(WINAPI* StretchBltO)(HDC hdcDest, int xDest, int yDest, int wDest, int hDest,
-                                 HDC hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, DWORD rop);
 extern LRESULT(__stdcall* EditWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 namespace video {
