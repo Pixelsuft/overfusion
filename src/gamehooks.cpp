@@ -68,6 +68,7 @@ static int __stdcall UpdateGameFrameH() {
         }
         inited = true;
         winhooks::after_ui_init();
+        video::init();
         timehooks::update_init();
         threadhooks::update_init();
         extrahooks::init_adv();

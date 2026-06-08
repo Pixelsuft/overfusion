@@ -8,7 +8,6 @@
 #include "state.hpp"
 #include "uconv.hpp"
 #include "ui.hpp"
-#include "video.hpp"
 #include <Windows.h>
 #include <backends/imgui_impl_win32.h>
 #include <spdlog/spdlog.h>
@@ -366,17 +365,17 @@ void winhooks::after_ui_init() {
     bool use_w = conf::get().is_unicode;
     ENSURE(hwnd != nullptr);
     ENSURE(mhwnd != nullptr);
-    LRESULT lr;
-    UAHWndProc(::hwnd, WM_THEMECHANGED, 0, 0, &lr); // Hacky update for dark mode
+    // TODO: hook during class registration? will require extra if check
     MainWindowProcO = reinterpret_cast<WNDPROC>((use_w ? SetWindowLongPtrW : SetWindowLongPtrA)(
         ::hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(MainWindowProcH)));
     ENSURE(MainWindowProcO != nullptr);
     EditWindowProcO = reinterpret_cast<WNDPROC>((use_w ? SetWindowLongPtrW : SetWindowLongPtrA)(
         ::mhwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(EditWindowProcH)));
     ENSURE(EditWindowProcO != nullptr);
+    LRESULT lr;
+    UAHWndProc(::hwnd, WM_THEMECHANGED, 0, 0, &lr); // Hacky update for dark mode
     // Let's do it here if the game wants to show an error during startup
     IAT_STR_AUTO("user32.dll", MessageBox);
-    video::init();
 }
 
 std::pair<int, int> winhooks::get_size() {
