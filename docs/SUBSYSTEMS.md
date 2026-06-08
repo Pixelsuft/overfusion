@@ -17,11 +17,11 @@ Config parsing, binds parsing, filling default values. See more [here](CONFIGURA
 
 ## Custom window
 
-Creates custom window for OF ImGui UI in case the game doesn't use Direct3D9 render or `force_custom_window` is set to `true`
+Creates custom window for OF ImGui UI in case the game doesn't use Direct3D 9 render or `force_custom_window` is set to `true`
 
 ## Direct3D hooks
 
-Direct3D9 hooks for drawing OF ImGui UI inside the game window if possible
+Direct3D 9 hooks for drawing OF ImGui UI inside the game window if possible
 
 ## Dark mode
 
@@ -129,4 +129,4 @@ Some sort of useful functions for making the game running better inside the OF
 
 ## Jumbo (unity) build
 
-Is used to build all the source files as a single one for faster compilation from strach and runtime performance
+Is used to build all the source files as a single one for faster compilation from scratch and runtime performance

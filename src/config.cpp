@@ -141,7 +141,6 @@ Config::Config() {
     disable_audio = false;
     record_audio = false;
     support_audio_panning = true;
-    allow_setting_cursor_pos = false;
     need_key_message = false;
     need_mouse_move_message = false;
     no_mouse_manipulation = false;
@@ -192,7 +191,6 @@ void Config::read() {
     READ_BOOL(disable_audio);
     READ_BOOL(record_audio);
     READ_BOOL(support_audio_panning);
-    READ_BOOL(allow_setting_cursor_pos);
     READ_BOOL(no_mouse_manipulation);
     READ_BOOL(draw_cursor);
     READ_BOOL(pixel_filter);
