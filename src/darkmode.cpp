@@ -130,6 +130,7 @@ struct win_shit_type {
     HBRUSH g_brItemBackgroundSelected;
     HBRUSH g_brItemBorder;
     HBRUSH g_hDarkBgBrush;
+    HBRUSH g_hLightDarkBgBrush;
     DWORD build_num;
     int enabled;
 };
@@ -183,6 +184,7 @@ void winhooks::fix_win32_theme(void* _hwnd) {
 void winhooks::pre_init_win32_theme() {
     win_shit.enabled = -1;
     win_shit.g_hDarkBgBrush = nullptr;
+    win_shit.g_hLightDarkBgBrush = nullptr;
     win_shit.g_menuTheme = nullptr;
     win_shit.g_brBarBackground = nullptr;
     win_shit.g_brItemBackground = nullptr;
@@ -219,6 +221,7 @@ void winhooks::init_win32_theme() {
     if (uxtheme_handle == nullptr)
         return;
     win_shit.g_hDarkBgBrush = CreateSolidBrush(RGB(32, 32, 32));
+    win_shit.g_hLightDarkBgBrush = CreateSolidBrush(RGB(40, 40, 40));
     win_shit.CloseThemeData = reinterpret_cast<decltype(win_shit.CloseThemeData)>(
         GetProcAddress(uxtheme_handle, "CloseThemeData"));
     win_shit.DrawThemeTextEx = reinterpret_cast<decltype(win_shit.DrawThemeTextEx)>(
@@ -273,8 +276,11 @@ static LRESULT CALLBACK TrueDarkMessageBoxSubclass(HWND hWnd, UINT uMsg, WPARAM 
         HDC hdc = reinterpret_cast<HDC>(wParam);
         SetBkMode(hdc, TRANSPARENT);
         SetTextColor(hdc, RGB(255, 255, 255));
-        SetBkColor(hdc, RGB(32, 32, 32));
-        return reinterpret_cast<LRESULT>(win_shit.g_hDarkBgBrush);
+        // TODO: wine check
+        bool tray_color = uMsg == WM_CTLCOLORBTN;
+        SetBkColor(hdc, tray_color ? RGB(40, 40, 40) : RGB(32, 32, 32));
+        return reinterpret_cast<LRESULT>(tray_color ? win_shit.g_hLightDarkBgBrush
+                                                    : win_shit.g_hDarkBgBrush);
     }
     case WM_ERASEBKGND: {
         HDC hdc = reinterpret_cast<HDC>(wParam);
@@ -289,17 +295,9 @@ static LRESULT CALLBACK TrueDarkMessageBoxSubclass(HWND hWnd, UINT uMsg, WPARAM 
         if (hdc) {
             RECT rc;
             GetClientRect(hWnd, &rc);
-            int trayHeight = 45;
-            int borderLineHeight = 1;
+            int trayHeight = 42;
             RECT rcTray = {rc.left, rc.bottom - trayHeight, rc.right, rc.bottom};
-            RECT rcLine = {rc.left, rc.bottom - trayHeight, rc.right,
-                           rc.bottom - trayHeight + borderLineHeight};
-            HBRUSH hTrayBrush = CreateSolidBrush(RGB(40, 40, 40));
-            HBRUSH hLineBrush = CreateSolidBrush(RGB(70, 70, 70));
-            FillRect(hdc, &rcTray, hTrayBrush);
-            FillRect(hdc, &rcLine, hLineBrush);
-            DeleteObject(hTrayBrush);
-            DeleteObject(hLineBrush);
+            FillRect(hdc, &rcTray, win_shit.g_hLightDarkBgBrush);
             ReleaseDC(hWnd, hdc);
         }
         return res;

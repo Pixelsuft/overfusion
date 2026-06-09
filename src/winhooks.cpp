@@ -339,7 +339,7 @@ static BOOL WINAPI SetMenuH(HWND hWnd, HMENU hMenu) {
 static LRESULT CALLBACK CbtDarkHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode == HCBT_CREATEWND) {
         auto hwnd = reinterpret_cast<HWND>(wParam);
-        winhooks::fix_win32_theme_instant(hwnd);
+        // winhooks::fix_win32_theme_instant(hwnd);
 
         wchar_t className[8];
         if (GetClassNameW(hwnd, className, 8) == 6) {
@@ -447,11 +447,15 @@ std::pair<int, int> winhooks::get_size() {
 }
 
 void winhooks::display_ensure_fail(ost::string_view text) {
+    auto& cfg = conf::get();
     auto buf = uconv::to_utf16(text);
     ENSURE(buf != nullptr);
-    auto prev = ui::is_processing();
+    auto prev_proc = ui::is_processing();
+    auto prev_repl = cfg.is_replay;
     ui::set_processing(true);
+    cfg.is_replay = true;
     MessageBoxWH(::hwnd, buf, L"Assertion failed!", MB_ICONERROR);
-    ui::set_processing(prev);
+    cfg.is_replay = prev_repl;
+    ui::set_processing(prev_proc);
     std::free(buf);
 }
