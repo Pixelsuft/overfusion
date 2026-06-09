@@ -265,6 +265,7 @@ void winhooks::init_win32_theme() {
         win_shit.RefreshImmersiveColorPolicyState();
 }
 
+#include <spdlog/spdlog.h>
 static LRESULT CALLBACK TrueDarkMessageBoxSubclass(HWND hWnd, UINT uMsg, WPARAM wParam,
                                                    LPARAM lParam, UINT_PTR uIdSubclass,
                                                    DWORD_PTR dwRefData) {
@@ -295,9 +296,16 @@ static LRESULT CALLBACK TrueDarkMessageBoxSubclass(HWND hWnd, UINT uMsg, WPARAM 
         if (hdc) {
             RECT rc;
             GetClientRect(hWnd, &rc);
-            int trayHeight = 42;
-            RECT rcTray = {rc.left, rc.bottom - trayHeight, rc.right, rc.bottom};
-            FillRect(hdc, &rcTray, win_shit.g_hLightDarkBgBrush);
+            // Ugly way to calc tray height
+            rc.top = rc.bottom - 10;
+            while (rc.top > 10) {
+                COLORREF color = GetPixel(hdc, 4, rc.top);
+                if (GetRValue(color) <= 128 || GetRValue(color) <= 128 || GetRValue(color) <= 128)
+                    break;
+                rc.top--;
+            }
+            rc.top++;
+            FillRect(hdc, &rc, win_shit.g_hLightDarkBgBrush);
             ReleaseDC(hWnd, hdc);
         }
         return res;
