@@ -6,6 +6,7 @@
 // Should be after Windows.h
 #include <CommCtrl.h>
 #include <Uxtheme.h>
+#include <algorithm>
 #include <vsstyle.h>
 #pragma comment(lib, "comctl32.lib") // FIXME
 
@@ -133,6 +134,7 @@ struct win_shit_type {
     HBRUSH g_hLightDarkBgBrush;
     DWORD build_num;
     int enabled;
+    bool is_wine;
 };
 
 union UAHMENUITEMMETRICS {
@@ -198,6 +200,7 @@ void winhooks::pre_init_win32_theme() {
     win_shit.DrawThemeTextEx = nullptr;
     win_shit.OpenThemeData = nullptr;
     win_shit.SetWindowTheme = nullptr;
+    win_shit.is_wine = false;
 }
 
 void winhooks::init_win32_theme() {
@@ -206,6 +209,7 @@ void winhooks::init_win32_theme() {
     auto ntdll_handle = GetModuleHandleW(L"ntdll.dll");
     if (!ntdll_handle)
         return;
+    win_shit.is_wine = GetProcAddress(ntdll_handle, "wine_get_version") != nullptr;
     win_shit.RtlGetVersion =
         reinterpret_cast<RtlGetVersion_t>(GetProcAddress(ntdll_handle, "RtlGetVersion"));
     if (!win_shit.RtlGetVersion)
@@ -265,7 +269,6 @@ void winhooks::init_win32_theme() {
         win_shit.RefreshImmersiveColorPolicyState();
 }
 
-#include <spdlog/spdlog.h>
 static LRESULT CALLBACK TrueDarkMessageBoxSubclass(HWND hWnd, UINT uMsg, WPARAM wParam,
                                                    LPARAM lParam, UINT_PTR uIdSubclass,
                                                    DWORD_PTR dwRefData) {
@@ -277,8 +280,7 @@ static LRESULT CALLBACK TrueDarkMessageBoxSubclass(HWND hWnd, UINT uMsg, WPARAM 
         HDC hdc = reinterpret_cast<HDC>(wParam);
         SetBkMode(hdc, TRANSPARENT);
         SetTextColor(hdc, RGB(255, 255, 255));
-        // TODO: wine check
-        bool tray_color = uMsg == WM_CTLCOLORBTN;
+        bool tray_color = !win_shit.is_wine && uMsg == WM_CTLCOLORBTN;
         SetBkColor(hdc, tray_color ? RGB(40, 40, 40) : RGB(32, 32, 32));
         return reinterpret_cast<LRESULT>(tray_color ? win_shit.g_hLightDarkBgBrush
                                                     : win_shit.g_hDarkBgBrush);
@@ -291,16 +293,17 @@ static LRESULT CALLBACK TrueDarkMessageBoxSubclass(HWND hWnd, UINT uMsg, WPARAM 
         return 1;
     }
     case WM_PAINT: {
+        if (win_shit.is_wine)
+            break;
         LRESULT res = DefSubclassProc(hWnd, uMsg, wParam, lParam);
         HDC hdc = GetDC(hWnd);
         if (hdc) {
             RECT rc;
             GetClientRect(hWnd, &rc);
             // Ugly way to calc tray height
-            rc.top = rc.bottom - 10;
-            while (rc.top > 10) {
-                COLORREF color = GetPixel(hdc, 4, rc.top);
-                if (GetRValue(color) <= 128 || GetRValue(color) <= 128 || GetRValue(color) <= 128)
+            rc.top = rc.bottom - 40;
+            while (rc.top > 40) {
+                if (GetPixel(hdc, 0, rc.top) == RGB(32, 32, 32))
                     break;
                 rc.top--;
             }
