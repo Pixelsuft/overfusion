@@ -20,7 +20,7 @@ Direct GDI capture: <br />
 ![capture_gdi_direct](../screenshots/capture_gdi_direct.png) <br />
 Default Direct3D 9 capture: <br />
 ![capture_d3d9_default](../screenshots/capture_d3d9_default.png) <br />
-Direct Direct3D capture: <br />
+Direct Direct3D 9 capture: <br />
 ![capture_d3d9_direct](../screenshots/capture_d3d9_direct.png)
 
 ## Capturing audio
