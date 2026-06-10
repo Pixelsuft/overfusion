@@ -411,6 +411,12 @@ static BOOL WINAPI BeepH(DWORD dwFreq, DWORD dwDuration) {
 
 bool audio::is_recording() { return capturing; }
 
+void audio::reinit_capture() {
+    capturing = conf::get().record_audio;
+    last_uid = 0;
+    last_time = 0;
+}
+
 void audio::init() {
     auto& cfg = conf::get();
     if (!cfg.allow_audio_hook && cfg.record_audio) {
@@ -427,9 +433,7 @@ void audio::init() {
         return;
     if (cfg.record_audio)
         spdlog::warn("Audio recording is still in BETA");
-    capturing = cfg.record_audio;
-    last_uid = 0;
-    last_time = 0;
+    reinit_capture();
     if (capturing) {
         base_path = string(files::get_cwd()) + '\\' + cfg.project_name + "\\temp_audio";
         auto dir_ret = ofs::make_dir(base_path);

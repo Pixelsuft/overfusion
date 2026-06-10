@@ -949,4 +949,5 @@ void state::reset_game() {
     ptr = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
     *ptr = 0;
     files::clear_fs();
+    audio::reinit_capture();
 }
