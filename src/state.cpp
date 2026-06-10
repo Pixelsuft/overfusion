@@ -860,14 +860,13 @@ void state::add_mouse_move() {
 }
 
 std::pair<int, int> state::get_mouse_pos() {
-    ASS(std::find_if(st.temp_ev.begin(), st.temp_ev.end(), [](const Event& te) {
+    /*ASS(std::find_if(st.temp_ev.begin(), st.temp_ev.end(), [](const Event& te) {
             return te.idx == event::Type::MouseMove;
-        }) == st.temp_ev.end());
+            }) == st.temp_ev.end());*/
     return plug::get().mouse_to_window(st.mouse_pos.first, st.mouse_pos.second);
 }
 
 bool state::set_win_mouse_pos(int x, int y) {
-    // TODO: option to allow set cursor pos???
     ASS(std::find_if(st.temp_ev.begin(), st.temp_ev.end(), [](const Event& te) {
             return te.idx == event::Type::MouseMove;
         }) == st.temp_ev.end());
