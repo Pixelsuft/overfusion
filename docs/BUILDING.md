@@ -32,11 +32,3 @@ Now you have `overfusion` folder
 2. Navigate to the `scripts` folder
 3. Run `build_injector.bat` script inside the opened terminal
 4. Now you have `ofinjector.exe` binary
-
-## Running
-
-Use injector to run the game with OverFusion:
-
-```sh
-"path-to-the-ofinjector.exe" "path-to-the-game.exe" "path-to-the-overfusion.dll-relative-to-the-game" "project-name-here"
-```

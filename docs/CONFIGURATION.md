@@ -55,7 +55,7 @@ In-game key maps: `Left`, `Right`, `Up`, `Down`, `Enter`, `R`, `S`, `Z`, `X`, `D
 `P` - maps to `Esc` <br />
 `M` - mouse down/up toggle <br />
 `N` - move in-game cursor to the position of the real cursor <br />
-`Insert` - toggle menu
+`Insert` - toggle menu <br />
 `Tab` - fast forward <br />
 `Space` - playback <br />
 `Pause` - toggle playback <br />
