@@ -46,3 +46,19 @@ You can use [default config](../overfusion.json) as well.
 `menu` - toggle OF menu <br />
 `save` - save game state to slot `slot` <br />
 `load` - load game state from slot `slot`
+
+## Default bindings
+
+In-game key maps: `Left`, `Right`, `Up`, `Down`, `Enter`, `R`, `S`, `Z`, `X`, `DEL` <br />
+`I` - maps to `F2` <br />
+`O` - maps to `F3` <br />
+`P` - maps to `Esc` <br />
+`M` - mouse down/up toggle <br />
+`N` - move in-game cursor to the position of the real cursor <br />
+`Insert` - toggle menu
+`Tab` - fast forward <br />
+`Space` - playback <br />
+`Pause` - toggle playback <br />
+`V` - frame advance <br />
+`F1` ... `F9` - save state <br />
+`1` ... `9` - load state
