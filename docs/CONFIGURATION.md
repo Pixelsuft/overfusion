@@ -27,7 +27,7 @@ You can use [default config](../overfusion.json) as well.
 `support_audio_panning` - support panning for recording audio <br />
 `no_mouse_manipulation` - disallow the game to manipulate the mouse <br />
 `draw_cursor` - draw dot in the virtual mouse position (currently works only without the custom window) <br />
-`pixel_filter` - make the game look pixelated instead of blurry (only for Direct3D 9 game) <br />
+`pixel_filter` - make the game look pixelated instead of blurry (only for Direct3D 9 games) <br />
 `ui_pixel_filter` - do the same but for OF UI <br />
 `save_vfs` - save/load VFS state into state file <br />
 `cmdline_append` - extra command line arguments passed to the game <br />
