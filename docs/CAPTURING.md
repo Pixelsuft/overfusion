@@ -5,8 +5,10 @@ FFmpeg in the PATH variable
 ## Capturing video
 
 1. Configure `ffmpeg_cmdline` (note that it uses NVENC codec by default that works only with NVIDIA cards)
-2. You can start/stop video capture any time inside the `Recording` section of the menu
-3. Get the video(s) inside the project folder (by default)
+2. Start video capture any time inside the `Recording` section of the menu
+3. You can see the `[VIDEO]` sign inside the info window
+4. Stop video capture
+5. Get the video(s) inside the project folder (by default)
 
 ### Direct capture
 
