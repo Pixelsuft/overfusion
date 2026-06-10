@@ -2,6 +2,11 @@
 
 TAS tool/framework for games based on the MMF2/CTF2.5 runtime
 
+## Screenshots
+
+![Screenshot1](screenshots/screen1.png) <br />
+![Screenshot2](screenshots/screen2.png)
+
 ## List of the supported games
 
 - `I Wanna be The Boshy`: PoC, use [boshyst](https://github.com/Pixelsuft/boshyst) instead

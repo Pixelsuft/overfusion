@@ -2,4 +2,7 @@
 [ ] Fix that ugly audio recording implementation
 [ ] More use of ost::optional, ost::expected
 [ ] Support random manipulation (+rand() and srand() stable reimpl)
+[ ] Add skip drawing
+[ ] Executetriggeredevent
+[ ] Switch to https://github.com/ozone10/win32-darkmodelib? check XP compat first!
 [ ] Fix TODO/FIXME in code
