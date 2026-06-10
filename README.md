@@ -4,11 +4,11 @@ TAS tool/framework for games based on the MMF2/CTF2.5 runtime
 
 ## List of the supported games
 
-- I Wanna be The Boshy: POC, use [boshyst](https://github.com/Pixelsuft/boshyst) instead
-- I Wanna be The Guy: Very old MMF2 runtime, requires `stdrt.exe` and related stuff unpacking; doesn't support in-game states
-- I Wanna be The Try (1.9.8.3): Save states are very broken because of Box2D physics; restarting works strange
-- I Wanna be The Try: A New Adventure (DEMO): Same but every frame INI writes are really slow and should be disabled
-- Five Nights at Freddy's: Works good but not really because of transitions and random strange behaviour after state load
+- `I Wanna be The Boshy`: POC, use [boshyst](https://github.com/Pixelsuft/boshyst) instead
+- `I Wanna be The Guy`: Very old MMF2 runtime, requires `stdrt.exe` and related stuff unpacking; doesn't support in-game states
+- `I Wanna be The Try (1.9.8.3)`: Save states are very broken because of Box2D physics; restarting works strange
+- `I Wanna be The Try: A New Adventure (DEMO)`: Same but every frame INI writes are really slow and should be disabled
+- `Five Nights at Freddy's`: Works good but not really because of transitions and random strange behaviour after state load
 
 ## Docs
 
