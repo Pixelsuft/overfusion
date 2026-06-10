@@ -8,7 +8,7 @@ FFmpeg in the PATH variable
 2. You can start/stop video capture any time inside the `Recording` section of the menu
 3. Get the video(s) inside the project folder (by default)
 
-## Direct capture
+### Direct capture
 
 Set `allow_direct_capture` to `true` <br />
 By default, the capturing works by taking screenshots of the game window.
@@ -22,3 +22,5 @@ Default Direct3D 9 capture: <br />
 ![capture_d3d9_default](../screenshots/capture_d3d9_default.png) <br />
 Direct Direct3D capture: <br />
 ![capture_d3d9_direct](../screenshots/capture_d3d9_direct.png)
+
+## Capturing audio
