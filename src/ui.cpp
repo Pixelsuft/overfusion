@@ -92,7 +92,7 @@ static void draw_menu() {
             cfg.speed = std::min(std::max(cfg.speed, 0.05f), 2.f);
         if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
             cfg.speed = 1.f;
-        ImGui::Checkbox("Show info", &cfg.show_info);
+        ImGui::Checkbox("Show info window", &cfg.show_info);
         static char replay_buf[1024] = "replay.ofr";
         ImGui::InputText("Replay filename", replay_buf, 1024);
         if (ImGui::Button("Export"))
