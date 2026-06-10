@@ -13,7 +13,7 @@ There is an info window which might be useful. It displays playback state (RECOR
 ![info_window](../screenshots/info_window.png) <br />
 By default, game runs in a paused state. You can unpause it or use frame advance. <br />
 You can save/load states. Most of the games are not friendly with them (I think there should be other external ways to do that, not only via virtual machine snapshots). <br />
-You can use menu to switch into replay mode, export or load replay (which are readable and does not keep game state itself): <br />
+You can use menu to switch into replay mode, export or import replay (unlike states, they are readable and do not keep game state itself): <br />
 ![menu](../screenshots/menu_window.png) <br />
 You can switch into replay mode during recording. <br />
 If you load state in replay mode, it will act like replay importing. <br />
