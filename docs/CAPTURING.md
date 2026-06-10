@@ -26,3 +26,21 @@ Direct Direct3D 9 capture: <br />
 ![capture_d3d9_direct](../screenshots/capture_d3d9_direct.png)
 
 ## Capturing audio
+
+Unlike video recording, audio recording must be started from the game start
+
+1. Set `record_audio` to `true` (also optionally `support_audio_panning`, beta)
+2. Start the game inside the OF
+3. You can see the `[AUDIO]` sign inside the info window
+4. Play the game at normal speed (no fast forward)
+5. Stop audio capture inside the `Recording` section of the menu
+6. Now run the `audio_merge.bat` script created in the project folder (configure it optionally)
+7. Now you have `audio.wav` audio output
+
+## Joining video and audio
+
+Exmaple command:
+
+```sh
+ffmpeg -i video_1.mp4 -i audio.wav -c:v copy -c:a copy merged.mp4
+```

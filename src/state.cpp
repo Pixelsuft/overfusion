@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include "state.hpp"
 #include "ass.hpp"
+#include "audio.hpp"
 #include "config.hpp"
 #include "event.hpp"
 #include "files.hpp"
@@ -893,8 +894,8 @@ void state::on_mode_switch() {
 
 void state::draw_info() {
     auto& cfg = conf::get();
-    ImGui::Text("%s%s", cfg.is_replay ? "[REPLAY]" : "[RECORD]",
-                video::is_recording() ? " [VIDEO]" : "");
+    ImGui::Text("[RE%s]%s%s", cfg.is_replay ? "PLAY" : "CORD",
+                video::is_recording() ? " [VIDEO]" : "", audio::is_recording() ? " [AUDIO]" : "");
     ImGui::Text("Frames: %i / %i", st.frames, st.total);
     if (!cfg.fast_forward) {
         ImGui::Text("Scene: %i", st.scene);

@@ -115,7 +115,7 @@ static void draw_menu() {
             if (ImGui::Button("Stop video recording"))
                 video::stop();
         }
-        if (cfg.record_audio) {
+        if (cfg.record_audio && audio::is_recording()) {
             if (ImGui::Button("Stop audio capture"))
                 audio::flush();
         }

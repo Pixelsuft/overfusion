@@ -82,7 +82,7 @@ static string base_path;
 // Global audio lock
 static lock::CriticalSection acs;
 // Are we capturing?
-static bool capture;
+static bool capturing;
 // For generating fn
 static uint64_t last_time;
 // For generating fn
@@ -158,7 +158,7 @@ class IDSBProxy : public IDirectSoundBuffer {
     }
 
     void reinit_wav() {
-        if (!capture)
+        if (!capturing)
             return;
         // Open audio file, write default WAV header
         auto cur_time = audio_get_time();
@@ -221,7 +221,7 @@ public:
         virtualTimeAcc = 0.0;
         reinit_wav();
         lock::CSLock lock(acs);
-        if (capture)
+        if (capturing)
             cache.push_back(this);
     }
     STDMETHOD(QueryInterface)(REFIID riid, void** ppvObj) override {
@@ -232,7 +232,7 @@ public:
         ULONG count = pBuf->Release();
         if (count == 0) {
             // We should manually delete IDSBProxy
-            if (capture) {
+            if (capturing) {
                 auto it = std::find(cache.begin(), cache.end(), this);
                 ASS(it != cache.end());
                 cache.erase(it);
@@ -279,7 +279,7 @@ public:
     }
     STDMETHOD(SetFrequency)(DWORD f) override {
         HRESULT hr = pBuf->SetFrequency(f);
-        if (capture) {
+        if (capturing) {
             lock::CSLock lock(acs);
             push_event();
         }
@@ -287,7 +287,7 @@ public:
     }
     STDMETHOD(SetVolume)(LONG v) override {
         HRESULT hr = pBuf->SetVolume(v);
-        if (capture) {
+        if (capturing) {
             lock::CSLock lock(acs);
             push_event();
         }
@@ -295,14 +295,14 @@ public:
     }
     STDMETHOD(SetPan)(LONG p) override {
         HRESULT hr = pBuf->SetPan(p);
-        if (capture) {
+        if (capturing) {
             lock::CSLock lock(acs);
             push_event();
         }
         return hr;
     }
     STDMETHOD(Stop)() override {
-        if (capture) {
+        if (capturing) {
             lock::CSLock lock(acs);
             finalize_wav();
         }
@@ -310,7 +310,7 @@ public:
         return pBuf->Stop();
     }
     STDMETHOD(Unlock)(LPVOID pv1, DWORD db1, LPVOID pv2, DWORD db2) override {
-        if (capture) {
+        if (capturing) {
             lock::CSLock lock(acs);
             if (!file.is_open()) {
                 reinit_wav();
@@ -409,6 +409,8 @@ static BOOL WINAPI BeepH(DWORD dwFreq, DWORD dwDuration) {
     return FALSE;
 }
 
+bool audio::is_recording() { return capturing; }
+
 void audio::init() {
     auto& cfg = conf::get();
     if (!cfg.allow_audio_hook && cfg.record_audio) {
@@ -425,10 +427,10 @@ void audio::init() {
         return;
     if (cfg.record_audio)
         spdlog::warn("Audio recording is still in BETA");
-    capture = cfg.record_audio;
+    capturing = cfg.record_audio;
     last_uid = 0;
     last_time = 0;
-    if (capture) {
+    if (capturing) {
         base_path = string(files::get_cwd()) + '\\' + cfg.project_name + "\\temp_audio";
         auto dir_ret = ofs::make_dir(base_path);
         ENSURE(dir_ret);
@@ -445,19 +447,19 @@ void audio::init() {
 }
 
 void audio::flush() {
-    if (!capture)
+    if (!capturing)
         return;
     lock::CSLock lock(acs);
     auto& cfg = conf::get();
     for (IDSBProxy* c : cache)
         c->finalize_wav();
+    capturing = false;
     spdlog::debug("flush {}", history.size());
     if (history.empty())
         return;
 
     // Let's make a FFmpeg script with filter file to join all the WAVs
     ofs::File filters(base_path + "\\audio_filters.txt", 1);
-    ofs::File bat(base_path + "\\..\\audio_merge.bat", 1);
     string mix = "";
     size_t count = 0;
     bool support_pan = cfg.support_audio_panning;
@@ -473,10 +475,10 @@ void audio::flush() {
             filters.write("[b" + std::to_string(count) + "s" + std::to_string(e) + "]");
         }
         filters.writeln(";");
-        std::string segmentLabels = "";
+        string segmentLabels = "";
         for (size_t e = 0; e < c.events.size(); e++) {
-            std::string branchIn = "[b" + std::to_string(count) + "s" + std::to_string(e) + "]";
-            std::string branchOut = "[p" + std::to_string(count) + "s" + std::to_string(e) + "]";
+            string branchIn = "[b" + std::to_string(count) + "s" + std::to_string(e) + "]";
+            string branchOut = "[p" + std::to_string(count) + "s" + std::to_string(e) + "]";
 
             double start = static_cast<double>(c.events[e].timeOffset) / 1000.0;
             double end = (e + 1 < c.events.size())
@@ -504,14 +506,19 @@ void audio::flush() {
         count++;
     }
     filters.write(mix + "amix=inputs=" + std::to_string(count) + ":normalize=0[out]");
-    bat.writeln("@echo off");
-    bat.writeln("cd " + base_path);
-    bat.writeln(
-        "ffmpeg -y -/filter_complex audio_filters.txt -map \"[out]\" -ar 48000 ../audio.wav");
-    bat.writeln("echo Waiting to delete wav cache...");
-    bat.writeln("pause");
-    bat.writeln("del a_*.wav");
-    bat.writeln("del audio_filters.txt");
+    auto bat_path = base_path + "\\..\\audio_merge.bat";
+    if (!ofs::file_exists(bat_path)) {
+        // Write bat script only once, don't touch if user modified it
+        ofs::File bat(bat_path, 1);
+        bat.writeln("@echo off");
+        bat.writeln("cd " + base_path);
+        bat.writeln(
+            "ffmpeg -y -/filter_complex audio_filters.txt -map \"[out]\" -ar 48000 ../audio.wav");
+        bat.writeln("echo Waiting to delete wav cache...");
+        bat.writeln("pause");
+        bat.writeln("del a_*.wav");
+        bat.writeln("del audio_filters.txt");
+    }
     history.clear();
     state::set_last_msg("Audio flushed, run audio_merge.bat script!");
 }
