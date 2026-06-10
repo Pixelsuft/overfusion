@@ -317,7 +317,7 @@ static LRESULT CALLBACK TrueDarkMessageBoxSubclass(HWND hWnd, UINT uMsg, WPARAM 
         RemoveWindowSubclass(hWnd, TrueDarkMessageBoxSubclass, uIdSubclass);
         break;
     case WM_INITDIALOG:
-    case WM_SHOWWINDOW:
+        SetWindowLongPtrW(hWnd, GWL_STYLE, GetWindowLongPtrW(hWnd, GWL_STYLE) | WS_CLIPCHILDREN);
         winhooks::fix_win32_theme_instant(hWnd);
         break;
     }
