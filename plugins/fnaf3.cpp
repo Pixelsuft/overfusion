@@ -34,7 +34,7 @@ public:
         SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x48080);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49c70);
         cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x46010);
-        cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0);
+        cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2c270);
         cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0);
         cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0);
         // No waiting

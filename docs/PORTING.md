@@ -34,7 +34,7 @@ void(__fastcall* LoadGameState)(void* hfile);
 LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49c70);
 ```
 
-Find a function which refs both `SaveGameState` and `LoadGameState` (using the same `Find References to` tool) and looks like this: <br />
+Find a function which refs to both `SaveGameState` and `LoadGameState` (using the same `Find References to` tool) and looks like this: <br />
 ![porting2](../screenshots/porting2.png) <br />
 Rename it into `UpdateGameFrame` and remember offset:
 
@@ -43,7 +43,18 @@ cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x46010);
 ```
 
 Rename red function into `ExecuteEvents` and green into `ExecuteTriggeredEvent`: <br />
-![porting3](../screenshots/porting3.png)
+![porting3](../screenshots/porting3.png) <br />
+
+In the bottom of `ExecuteEvents` rename this function into `RenderFrame` and remember offsets: <br />
+![porting4](../screenshots/porting4.png)
+
+```cpp
+cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2c270);
+```
+
+Now find a function which refs to `UpdateGameFrame` and looks like this (switch-case usage): <br />
+![porting5](../screenshots/porting5.png) <br />
+Rename it into `MainLoopTick`.
 
 ## TODO
 
