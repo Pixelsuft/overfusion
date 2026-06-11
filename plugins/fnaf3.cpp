@@ -35,8 +35,8 @@ public:
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49c70);
         cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x46010);
         cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2c270);
-        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0);
-        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0);
+        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x28a80);
+        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x29e10);
         // No waiting
         // mem::write(mem::get_base() + 0x2f28, {0xeb});
         // mem::write(mem::get_base() + 0x2f57, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});

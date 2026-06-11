@@ -45,16 +45,28 @@ cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x46010);
 Rename red function into `ExecuteEvents` and green into `ExecuteTriggeredEvent`: <br />
 ![porting3](../screenshots/porting3.png) <br />
 
-In the bottom of `ExecuteEvents` rename this function into `RenderFrame` and remember offsets: <br />
+At the bottom of `ExecuteEvents` rename this function into `RenderFrame` and remember offsets: <br />
 ![porting4](../screenshots/porting4.png)
 
 ```cpp
 cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2c270);
 ```
 
-Now find a function which refs to `UpdateGameFrame` and looks like this (switch-case usage): <br />
+Now find a function which refs to `UpdateGameFrame` and looks like this (uses switch-case): <br />
 ![porting5](../screenshots/porting5.png) <br />
-Rename it into `MainLoopTick`.
+Rename it into `MainLoopTick`. Now inside this function rename this function into `ProcessTransition` and remember it's offsets:
+![porting6](../screenshots/porting6.png)
+
+```cpp
+cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x28a80);
+```
+
+At the bottom of `ProcessTransition` rename this function into `RenderTransition` and remember it's offsets:
+![porting7](../screenshots/porting7.png)
+
+```cpp
+cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x29e10);
+```
 
 ## TODO
 
