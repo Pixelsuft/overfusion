@@ -29,9 +29,7 @@ public:
         if (cfg.fps <= 0)
             cfg.fps = 60;
         SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x48350);
-        ASS(SaveGameState != nullptr);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49f40);
-        ASS(LoadGameState != nullptr);
         cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x462e0);
         cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2c3f0);
         cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x28b50);
