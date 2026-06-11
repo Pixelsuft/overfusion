@@ -16,6 +16,7 @@
 #include "../minhook/src/hook.c"
 #include "../minhook/src/trampoline.c"
 #include "../plugins/fnaf.cpp"
+#include "../plugins/fnaf3.cpp"
 #include "../plugins/iwbtb.cpp"
 #include "../plugins/iwbtbadmin.cpp"
 #include "../plugins/iwbtg.cpp"
