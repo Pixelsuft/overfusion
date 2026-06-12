@@ -10,7 +10,7 @@ If you port game for the first time, I strongly recommend you to try porting alr
 
 ## FNAF3 porting example
 
-In the plugins folder, copy `fnaf.cpp` into `fnaf3.cpp` (since there is no template yet, we will just adopt another plugin). Add it to the Visual Studio project inside the `Plugins` section and put it into the jumbo build file `jumbo/main.cpp`. Edit `fnaf3.cpp`: rename `PlugFnaf` class into `PlugFnaf3` (and change `name` variable for the class), `on_plugin_check_fnaf` into `on_plugin_check_fnaf3`, change exe name to `FiveNightsatFreddys3.exe` in it. Comment all memory writes, change all offsets to 0 to not forget to implement something. Change default FPS to your game FPS. <br />
+In the `plugins` folder, copy `fnaf.cpp` into `fnaf3.cpp` (since there is no template yet, we will just adopt another plugin). Add it to the Visual Studio project inside the `Plugins` section and put it into the jumbo build file `jumbo/main.cpp`. Edit `fnaf3.cpp`: rename `PlugFnaf` class into `PlugFnaf3` (and change `name` variable for the class), `on_plugin_check_fnaf` into `on_plugin_check_fnaf3`, change exe name to `FiveNightsatFreddys3.exe` in it. Comment all memory writes, change all offsets to 0 to not forget to implement something. Change default FPS to your game FPS. <br />
 Obtain the game. Create `FNAF3` folder on my drive and put `FiveNightsatFreddys3.exe` into it. Now we need to dump all the plugins. Open `%temp%` folder (cleanup it to make finding easier), run the game, see newly created folder with name like `mrt460C.tmp` or something (inside the temp folder), copy it to our `FNAF3` folder and rename to `dump`, close the game <br />
 Now let's create a Ghidra project. Set project dir to our `FNAF3` folder and let's call a project `defnaf3`. Add game exe to it (drag). Then double click on it, start analyzing it, wait. Save the project. <br />
 Go to `Symbol Tree`->`Imports`->`COMDLG32.dll`->`GetSaveFileNameA`/`GetSaveFileNameW`->Right click->`Show References to`. Find a function which uses it, rename it into `ShowStateSaveDialog`. Now find references to `ShowStateSaveDialog` by right clicking on it. You can find a big function which uses it. Rename it into `SaveGameState`. Remember it's offset `48080` and calling conversion `__fastcall`. <br />
@@ -83,6 +83,7 @@ case plug::PtrProp::PState:
 
 Then use `EditDataType` tool on `isPaused` to see `isPaused` offset: <br />
 ![porting11](../screenshots/porting11.png)
+
 ```cpp
 case plug::PtrProp::PIsPaused:
     return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x178);
@@ -90,6 +91,7 @@ case plug::PtrProp::PIsPaused:
 
 Now slightly scroll `ExecuteEvents`. Rename this into `subTickStep` and remember offset: <br />
 ![porting12](../screenshots/porting12.png)
+
 ```cpp
 case plug::PtrProp::PSubTickStep:
     return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x4d8);
@@ -98,6 +100,7 @@ case plug::PtrProp::PSubTickStep:
 Now inside `case 7` of `UpdateGameFrame` rename red one into `nextFrameTask` and green into `nextFrameData` (use `Auto Fill in Structure` tool on `pState` to fix ugly `uint` cast): <br />
 ![porting13](../screenshots/porting13.png) <br />
 Seems to be `nextFrameTask` and `nextFrameData` always have the same offsets:
+
 ```cpp
 case plug::PtrProp::PNextFrameTask:
     return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x30);
@@ -106,6 +109,7 @@ case plug::PtrProp::PNextFrameData:
 ```
 
 Now create a struct called `gApp` from a blue pointer (same screenshot) and remember offset (like with `pState`): <br />
+
 ```cpp
 case plug::PtrProp::PGlobalApp:
     return *reinterpret_cast<void**>(mem::get_base() + 0xb39cc);
@@ -113,6 +117,7 @@ case plug::PtrProp::PGlobalApp:
 
 Now rename this variable into `sceneID` and remember offset:
 ![porting14](../screenshots/porting14.png) <br />
+
 ```cpp
 case plug::PtrProp::PSceneID:
     return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x1f0);
@@ -120,12 +125,13 @@ case plug::PtrProp::PSceneID:
 
 Now inside the `case 3` of `MainLoopTick` create a `gStats` struct from this pointer and remember offsets: <br />
 ![porting15](../screenshots/porting15.png)
+
 ```cpp
 case plug::PtrProp::PStats:
     return *reinterpret_cast<void**>(mem::get_base() + 0xb39d0);
 ```
 
-At this point, the game should at least start under OF!
+At this point, the game should at least start under OF (don't forget about configuring OF)!
 
 ## TODO
 
