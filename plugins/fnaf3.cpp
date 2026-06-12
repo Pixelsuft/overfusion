@@ -38,8 +38,8 @@ public:
         cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x28a80);
         cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x29e10);
         // No waiting
-        // mem::write(mem::get_base() + 0x2f28, {0xeb});
-        // mem::write(mem::get_base() + 0x2f57, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x2fae, {0xeb});
+        mem::write(mem::get_base() + 0x2fdb, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         // Use high precision timer instead of ugly SetTimer
         // mem::write(mem::get_base() + 0x23b88, {0xeb});
         // By saying pause I mean pause
@@ -80,7 +80,7 @@ public:
     std::pair<float, float> mouse_from_window(int x, int y) override {
         if (x < 0 || y < 0)
             return {-1.f, -1.f};
-        auto win_size = winhooks::get_size();
+        auto win_size = winhooks::get_client_size();
         return {static_cast<float>(x) / static_cast<float>(win_size.first),
                 static_cast<float>(y) / static_cast<float>(win_size.second)};
     }
@@ -88,7 +88,7 @@ public:
     std::pair<int, int> mouse_to_window(float x, float y) override {
         if (x < 0.f || y < 0.f)
             return {-100, -100};
-        auto win_size = winhooks::get_size();
+        auto win_size = winhooks::get_client_size();
         return {static_cast<int>(x * static_cast<float>(win_size.first)),
                 static_cast<int>(y * static_cast<float>(win_size.second))};
     }

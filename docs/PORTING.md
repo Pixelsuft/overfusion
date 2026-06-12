@@ -133,6 +133,23 @@ case plug::PtrProp::PStats:
 
 At this point, the game should at least start under OF (don't forget about configuring OF)!
 
+Let's patch some memory. Find a func which refs `USER32.dll`->`MsgWaitForMultipleObjects` and looks like this (rename it into `SyncFrameRate`): <br />
+![porting16](../screenshots/porting16.png) <br />
+Firstly, let's patch this `do-while` loop to be executed only once (to avoid softlocks due to time manipulation). Just NOP this jump.
+
+```cpp
+mem::write(mem::get_base() + 0x2fdb, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+```
+
+Secondly, we need to remove this extra sleeping (just patch the `JZ` to `JMP` to make `if` condition always fail): <br />
+![porting17](../screenshots/porting17.png) <br />
+
+```cpp
+mem::write(mem::get_base() + 0x2fae, {0xeb});
+```
+
+Please note that the Fusion runtime usually uses `timeGetTime` as the main time function, but it also may use custom `QueryPerformanceCounter` wrapper function instead as well!
+
 ## TODO
 
 finish this doc (patching transition, other memory patching, timer fix)

@@ -439,9 +439,9 @@ void winhooks::after_ui_init() {
     IAT_STR_AUTO("user32.dll", MessageBox);
 }
 
-std::pair<int, int> winhooks::get_size() {
+std::pair<int, int> winhooks::get_client_size() {
     RECT rect;
-    if (!GetClientRect(::hwnd, &rect))
+    if (!GetClientRectO(::mhwnd, &rect))
         return {0, 0};
     return {static_cast<int>(rect.right - rect.left), static_cast<int>(rect.bottom - rect.top)};
 }
