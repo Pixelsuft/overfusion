@@ -32,6 +32,7 @@ You can use [default config](../overfusion.json) as well.
 `save_vfs` - save/load VFS state into state file <br />
 `cmdline_append` - extra command line arguments passed to the game <br />
 `ffmpeg_cmdline` - FFmpeg command line for video capturing <br />
+`wait_for_debugger` - Wait till the debugger attached before running a game <br />
 `binds` - keyboard bindings
 
 ## Bindings

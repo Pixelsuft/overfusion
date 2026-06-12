@@ -6,6 +6,7 @@ If you port game for the first time, I strongly recommend you to try porting alr
 
 - Ghidra
 - Cheat Engine (or any other dynamic analysis tool)
+- Some Assembler knowledge
 
 ## FNAF3 porting example
 
@@ -68,6 +69,64 @@ At the bottom of `ProcessTransition` rename this function into `RenderTransition
 cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x29e10);
 ```
 
+Inside `ExecuteEvents` use `Auto Create Structure` tool on this pointer and rename it into `pState`: <br />
+![porting8](../screenshots/porting8.png) <br />
+Check at the top is a pause check (code may look diferent), let's rename this variable (usually `0x178` offset) into `isPaused`: <br />
+![porting9](../screenshots/porting9.png) <br />
+Double click on `pState` to see it's offset: <br />
+![porting10](../screenshots/porting10.png)
+
+```cpp
+case plug::PtrProp::PState:
+    return *reinterpret_cast<void**>(mem::get_base() + 0xb39d4);
+```
+
+Then use `EditDataType` tool on `isPaused` to see `isPaused` offset: <br />
+![porting11](../screenshots/porting11.png)
+```cpp
+case plug::PtrProp::PIsPaused:
+    return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x178);
+```
+
+Now slightly scroll `ExecuteEvents`. Rename this into `subTickStep` and remember offset: <br />
+![porting12](../screenshots/porting12.png)
+```cpp
+case plug::PtrProp::PSubTickStep:
+    return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x4d8);
+```
+
+Now inside `case 7` of `UpdateGameFrame` rename red one into `nextFrameTask` and green into `nextFrameData` (use `Auto Fill in Structure` tool on `pState` to fix ugly `uint` cast): <br />
+![porting13](../screenshots/porting13.png) <br />
+Seems to be `nextFrameTask` and `nextFrameData` always have the same offsets:
+```cpp
+case plug::PtrProp::PNextFrameTask:
+    return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x30);
+case plug::PtrProp::PNextFrameData:
+    return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x38);
+```
+
+Now create a struct called `gApp` from a blue pointer (same screenshot) and remember offset (like with `pState`): <br />
+```cpp
+case plug::PtrProp::PGlobalApp:
+    return *reinterpret_cast<void**>(mem::get_base() + 0xb39cc);
+```
+
+Now rename this variable into `sceneID` and remember offset:
+![porting14](../screenshots/porting14.png) <br />
+```cpp
+case plug::PtrProp::PSceneID:
+    return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x1f0);
+```
+
+Now inside the `case 3` of `MainLoopTick` create a `gStats` struct from this pointer and remember offsets: <br />
+![porting15](../screenshots/porting15.png)
+```cpp
+case plug::PtrProp::PStats:
+    return *reinterpret_cast<void**>(mem::get_base() + 0xb39d0);
+```
+
+At this point, the game should at least start under OF!
+
 ## TODO
 
-finish this doc
+finish this doc (patching transition, other memory patching, timer fix)

@@ -75,6 +75,7 @@ public:
     bool save_vfs;
     bool disable_dark_mode_support;
     bool force_custom_window;
+    bool wait_for_debugger;
 
     Config();
     void read();

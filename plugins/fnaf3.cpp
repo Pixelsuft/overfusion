@@ -96,26 +96,26 @@ public:
     void* get_prop(plug::PtrProp prop, void* data) override {
         switch (prop) {
         case plug::PtrProp::PState:
-            return *reinterpret_cast<void**>(mem::get_base() + 0);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb39d4);
         case plug::PtrProp::PStats:
-            return *reinterpret_cast<void**>(mem::get_base() + 0);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb39d0);
         case plug::PtrProp::PGlobalApp:
-            return *reinterpret_cast<void**>(mem::get_base() + 0);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb39cc);
         case plug::PtrProp::PNextFrameTask:
             // From pState
-            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0);
+            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x30);
         case plug::PtrProp::PNextFrameData:
             // From pState
-            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0);
+            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x38);
         case plug::PtrProp::PSubTickStep:
             // From pState
-            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0);
+            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x4d8);
         case plug::PtrProp::PIsPaused:
             // From pState
-            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0);
+            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x178);
         case plug::PtrProp::PSceneID:
             // From pGlobalApp
-            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0);
+            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x1f0);
         default:
             return nullptr;
         }

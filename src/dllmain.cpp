@@ -23,13 +23,13 @@ static void of_main() {
     spdlog::set_level(spdlog::level::debug);
 #endif
     spdlog::info("OverFusion injected!");
-#if 0
-    while (!IsDebuggerPresent())
-        Sleep(500);
-#endif
     SetEnvironmentVariableW(L"GALLIUM_DRIVER", L"llvmpipe");
     SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", L"true");
     conf::init();
+    if (conf::get().wait_for_debugger) {
+        while (!IsDebuggerPresent())
+            Sleep(500);
+    }
     mem::init();
     ui::init();
     files::pre_init();

@@ -1,6 +1,7 @@
 [ ] Use CWD:\\ or like path to make FS names protable + user folder
 [ ] Fix that ugly audio recording implementation
 [ ] More use of ost::optional, ost::expected
+[ ] Fix transition breaking manual scene switching and restarting
 [ ] Support random manipulation (+rand() and srand() stable reimpl)
 [ ] Add skip drawing
 [ ] Executetriggeredevent
