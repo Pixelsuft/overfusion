@@ -62,7 +62,7 @@ Rename it into `MainLoopTick`. Now inside this function rename this function int
 cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x28a80);
 ```
 
-At the bottom of `ProcessTransition` rename this function into `RenderTransition` and remember it's offsets:
+At the bottom of `ProcessTransition` rename this function into `RenderTransition` and remember it's offsets: <br />
 ![porting7](../screenshots/porting7.png)
 
 ```cpp
