@@ -18,7 +18,7 @@
   "allow_direct_capture": false,
   "allow_audio_hook": false,
   "disable_audio": true,
-  "record_audio": true,
+  "record_audio": false,
   "support_audio_panning": false,
   "allow_setting_cursor_pos": false,
   "no_mouse_manipulation": true,
