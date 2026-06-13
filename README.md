@@ -14,6 +14,7 @@ TAS tool/framework for games based on the MMF2/CTF2.5 runtime
 - `I Wanna be The Try (1.9.8.3)`: Save states are very broken because of Box2D physics; restarting works strange
 - `I Wanna be The Try: A New Adventure (DEMO)`: Same but every frame INI writes are really slow and should be disabled
 - `Five Nights at Freddy's`: Works good but not really because of transitions and random strange behaviour after state load
+- `Five Nights at Freddy's 3`: Same but starts in fullscreen windowed mode FSR
 
 ## Docs
 

@@ -251,9 +251,10 @@ ost::expected<void, string> load_state(ofs::File& file) override {
 }
 ```
 
-You can see a message while saving a state (on a specific scene) (in debug mode): `timers fix size: 16`. This means that the game actually uses that timers.
+You can see a message while saving a state (on a specific scene) (in debug mode): `timers fix size: 16`. This means that the game actually uses that timers. <br />
+
+Other patching: I strongly recommend you to walk through `.mfx` plugins (and their all imports) to attempt to make them create less threads without breaking, be more stable when using states, etc.
 
 ## TODO
 
 - somehow patch breaking collision
-- finish this doc (other memory patching)
