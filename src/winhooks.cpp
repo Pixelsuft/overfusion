@@ -460,10 +460,12 @@ static BOOL WINAPI SetWindowPlacementH(HWND hWnd, const WINDOWPLACEMENT* lpwndpl
 static LONG(WINAPI* SetWindowLongAO)(HWND hWnd, int nIndex, LONG dwNewLong);
 static LONG WINAPI SetWindowLongAH(HWND hWnd, int nIndex, LONG dwNewLong) {
     if (hWnd == ::hwnd && nIndex == GWL_STYLE) {
-        dwNewLong |= WS_CAPTION | WS_BORDER | WS_SYSMENU | WS_POPUP | WS_MAXIMIZEBOX |
-                     WS_MINIMIZEBOX | WS_THICKFRAME;
         spdlog::debug("SetWindowLongA: {} {}", nIndex, dwNewLong);
-        return 0;
+        if (conf::get().disable_fullscreen) {
+            dwNewLong |= WS_CAPTION | WS_BORDER | WS_SYSMENU | WS_POPUP | WS_MAXIMIZEBOX |
+                         WS_MINIMIZEBOX | WS_THICKFRAME;
+            return 0;
+        }
     }
     return SetWindowLongAO(hWnd, nIndex, dwNewLong);
 }
@@ -471,10 +473,12 @@ static LONG WINAPI SetWindowLongAH(HWND hWnd, int nIndex, LONG dwNewLong) {
 static LONG(WINAPI* SetWindowLongWO)(HWND hWnd, int nIndex, LONG dwNewLong);
 static LONG WINAPI SetWindowLongWH(HWND hWnd, int nIndex, LONG dwNewLong) {
     if (hWnd == ::hwnd && nIndex == GWL_STYLE) {
-        dwNewLong |= WS_CAPTION | WS_BORDER | WS_SYSMENU | WS_POPUP | WS_MAXIMIZEBOX |
-                     WS_MINIMIZEBOX | WS_THICKFRAME;
         spdlog::debug("SetWindowLongW: {} {}", nIndex, dwNewLong);
-        return 0;
+        if (conf::get().disable_fullscreen) {
+            dwNewLong |= WS_CAPTION | WS_BORDER | WS_SYSMENU | WS_POPUP | WS_MAXIMIZEBOX |
+                         WS_MINIMIZEBOX | WS_THICKFRAME;
+            return 0;
+        }
     }
     return SetWindowLongWO(hWnd, nIndex, dwNewLong);
 }
@@ -483,8 +487,10 @@ static BOOL(WINAPI* ShowWindowO)(HWND hWnd, int nCmdShow);
 static BOOL WINAPI ShowWindowH(HWND hWnd, int nCmdShow) {
     if (hWnd == ::hwnd) {
         spdlog::debug("ShowWindow {}", nCmdShow);
-        nCmdShow &= ~SW_SHOWMAXIMIZED;
-        nCmdShow |= SW_SHOWDEFAULT;
+        if (conf::get().disable_fullscreen) {
+            nCmdShow &= ~SW_SHOWMAXIMIZED;
+            nCmdShow |= SW_SHOWDEFAULT;
+        }
     }
     return ShowWindowO(hWnd, nCmdShow);
 }

@@ -2,6 +2,7 @@
   "fps": 0,
   "force_resolution": [0, 0],
   "force_custom_window": false,
+  "disable_fullscreen": true,
   "wait_for_debugger": false,
   "show_menu": false,
   "show_info": true,
@@ -26,7 +27,7 @@
   "pixel_filter": true,
   "ui_pixel_filter": true,
   "save_vfs": true,
-  "cmdline_append": " /DEBUG /NOF /NOVSYNC /MIS0 /NOC",
+  "cmdline_append": " /DEBUG /NOVSYNC /MIS0 /NOC",
   "ffmpeg_cmdline": "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an -vcodec h264_nvenc -b:v 10000k $PROJ/video_$ID.mp4",
   "binds": [
     {

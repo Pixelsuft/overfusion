@@ -76,6 +76,7 @@ public:
     bool disable_dark_mode_support;
     bool force_custom_window;
     bool wait_for_debugger;
+    bool disable_fullscreen;
 
     Config();
     void read();

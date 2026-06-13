@@ -250,12 +250,16 @@ static LPWSTR GetCommandLineWH() {
 
 void extrahooks::init() {
     [] {
+        auto& cfg = conf::get();
         strcpy(my_argv_a, GetCommandLineA());
         wcscpy(my_argv_w, GetCommandLineW());
-        auto temp1 = uconv::to_ansi(plug::get().cmdline_append + conf::get().cmdline_append);
+        auto str_cmd = plug::get().cmdline_append + cfg.cmdline_append;
+        if (cfg.disable_fullscreen)
+            str_cmd += " /NOF";
+        auto temp1 = uconv::to_ansi(str_cmd);
         strcat(my_argv_a, temp1);
         std::free(temp1);
-        auto temp2 = uconv::to_utf16(plug::get().cmdline_append + conf::get().cmdline_append);
+        auto temp2 = uconv::to_utf16(str_cmd);
         wcscat(my_argv_w, temp2);
         std::free(temp2);
         auto addr1 = mem::get_addr("msvcrt.dll", "_acmdln");
