@@ -215,8 +215,8 @@ Let's patch the code (blue is `tm_fix_event_entry_offset` and green is `tm_fix_e
 ```cpp
 bool update_init() override {
     auto& cfg = conf::get();
-    cfg.tm_fix_event_entry_offset = 0xe;
-    cfg.tm_fix_event_entry_type_offset = 0x10;
+    cfg.tm_fix_event_entry_offset = 0x8;
+    cfg.tm_fix_event_entry_type_offset = 0x9;
     return true;
 }
 
@@ -251,9 +251,9 @@ ost::expected<void, string> load_state(ofs::File& file) override {
 }
 ```
 
-You can see a message while saving a state (in debug mode): `timers fix size: 18`. This means that the game actually uses that timers.
+You can see a message while saving a state (on a specific scene) (in debug mode): `timers fix size: 16`. This means that the game actually uses that timers.
 
 ## TODO
 
 - somehow patch breaking collision
-- finish this doc (other memory patching, timer fix)
+- finish this doc (other memory patching)

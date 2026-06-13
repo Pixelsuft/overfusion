@@ -53,8 +53,8 @@ public:
 
     bool update_init() override {
         auto& cfg = conf::get();
-        cfg.tm_fix_event_entry_offset = 0xe;
-        cfg.tm_fix_event_entry_type_offset = 0x10;
+        cfg.tm_fix_event_entry_offset = 0x8;
+        cfg.tm_fix_event_entry_type_offset = 0x9;
         return true;
     }
 
