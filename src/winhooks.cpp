@@ -416,6 +416,79 @@ static DWORD WINAPI MsgWaitForMultipleObjectsH(DWORD nCount, const HANDLE* pHand
     return MsgWaitForMultipleObjectsO(nCount, pHandles, fWaitAll, dwMilliseconds, dwWakeMask);
 }
 
+static BOOL(WINAPI* SetWindowPosO)(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy,
+                                   UINT uFlags);
+static BOOL WINAPI SetWindowPosH(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy,
+                                 UINT uFlags) {
+    if (hWnd == ::hwnd || hWnd == ::mhwnd) {
+        spdlog::debug("SetWindowPos: {} {} {} {} {}", X, Y, cx, cy, uFlags);
+        // return FALSE;
+    }
+    return SetWindowPosO(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
+}
+
+static BOOL(WINAPI* MoveWindowO)(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint);
+static BOOL WINAPI MoveWindowH(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint) {
+    if (hWnd == ::hwnd || hWnd == ::mhwnd) {
+        spdlog::debug("MoveWindow: {} {} {} {} {}", X, Y, nWidth, nHeight, bRepaint);
+        return FALSE;
+    }
+    return MoveWindowO(hWnd, X, Y, nWidth, nHeight, bRepaint);
+}
+
+static HDWP(WINAPI* DeferWindowPosO)(HDWP hWinPosInfo, HWND hWnd, HWND hWndInsertAfter, int x,
+                                     int y, int cx, int cy, UINT uFlags);
+static HDWP WINAPI DeferWindowPosH(HDWP hWinPosInfo, HWND hWnd, HWND hWndInsertAfter, int x, int y,
+                                   int cx, int cy, UINT uFlags) {
+    return FALSE;
+    if (hWnd == ::hwnd || hWnd == ::mhwnd) {
+        spdlog::debug("DeferWindowPos: {} {} {} {} {}", x, y, cx, cy, uFlags);
+        return FALSE;
+    }
+    return DeferWindowPosO(hWinPosInfo, hWnd, hWndInsertAfter, x, y, cx, cy, uFlags);
+}
+
+static BOOL(WINAPI* SetWindowPlacementO)(HWND hWnd, const WINDOWPLACEMENT* lpwndpl);
+static BOOL WINAPI SetWindowPlacementH(HWND hWnd, const WINDOWPLACEMENT* lpwndpl) {
+    if (hWnd == ::hwnd || hWnd == ::mhwnd) {
+        spdlog::debug("SetWindowPlacement");
+        return FALSE;
+    }
+    return SetWindowPlacementO(hWnd, lpwndpl);
+}
+
+static LONG(WINAPI* SetWindowLongAO)(HWND hWnd, int nIndex, LONG dwNewLong);
+static LONG WINAPI SetWindowLongAH(HWND hWnd, int nIndex, LONG dwNewLong) {
+    if (hWnd == ::hwnd && nIndex == GWL_STYLE) {
+        dwNewLong |= WS_CAPTION | WS_BORDER | WS_SYSMENU | WS_POPUP | WS_MAXIMIZEBOX |
+                     WS_MINIMIZEBOX | WS_THICKFRAME;
+        spdlog::debug("SetWindowLongA: {} {}", nIndex, dwNewLong);
+        return 0;
+    }
+    return SetWindowLongAO(hWnd, nIndex, dwNewLong);
+}
+
+static LONG(WINAPI* SetWindowLongWO)(HWND hWnd, int nIndex, LONG dwNewLong);
+static LONG WINAPI SetWindowLongWH(HWND hWnd, int nIndex, LONG dwNewLong) {
+    if (hWnd == ::hwnd && nIndex == GWL_STYLE) {
+        dwNewLong |= WS_CAPTION | WS_BORDER | WS_SYSMENU | WS_POPUP | WS_MAXIMIZEBOX |
+                     WS_MINIMIZEBOX | WS_THICKFRAME;
+        spdlog::debug("SetWindowLongW: {} {}", nIndex, dwNewLong);
+        return 0;
+    }
+    return SetWindowLongWO(hWnd, nIndex, dwNewLong);
+}
+
+static BOOL(WINAPI* ShowWindowO)(HWND hWnd, int nCmdShow);
+static BOOL WINAPI ShowWindowH(HWND hWnd, int nCmdShow) {
+    if (hWnd == ::hwnd) {
+        spdlog::debug("ShowWindow {}", nCmdShow);
+        nCmdShow &= ~SW_SHOWMAXIMIZED;
+        nCmdShow |= SW_SHOWDEFAULT;
+    }
+    return ShowWindowO(hWnd, nCmdShow);
+}
+
 void winhooks::init() {
     hwnd = mhwnd = nullptr;
     MainWindowProcO = EditWindowProcO = nullptr;
@@ -429,6 +502,7 @@ void winhooks::init() {
     IAT_STR_AUTO("user32.dll", SetWindowText);
     IAT_STR_ONLY("user32.dll", DialogBoxParam);
     IAT_STR_AUTO("user32.dll", SetWindowsHookEx);
+    IAT_STR_AUTO("user32.dll", SetWindowLong);
     IAT_AUTO("user32.dll", GetClientRect);
     IAT_AUTO("user32.dll", GetFocus);
     IAT_AUTO("user32.dll", GetForegroundWindow);
@@ -439,6 +513,11 @@ void winhooks::init() {
     IAT_AUTO("user32.dll", GetSystemMetrics);
     IAT_AUTO("user32.dll", SetMenu);
     IAT_AUTO("user32.dll", MsgWaitForMultipleObjects);
+    IAT_AUTO("user32.dll", SetWindowPos);
+    IAT_AUTO("user32.dll", MoveWindow);
+    IAT_AUTO("user32.dll", DeferWindowPos);
+    IAT_AUTO("user32.dll", SetWindowPlacement);
+    IAT_AUTO("user32.dll", ShowWindow);
 }
 
 void winhooks::after_ui_init() {

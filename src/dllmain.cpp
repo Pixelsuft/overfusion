@@ -26,14 +26,15 @@ static void of_main() {
     SetEnvironmentVariableW(L"GALLIUM_DRIVER", L"llvmpipe");
     SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", L"true");
     conf::init();
-    if (conf::get().wait_for_debugger) {
-        while (!IsDebuggerPresent())
-            Sleep(500);
-    }
     mem::init();
     ui::init();
     files::pre_init();
     conf::get().read();
+    spdlog::debug("Base address: {}", reinterpret_cast<void*>(mem::get_base()));
+    if (conf::get().wait_for_debugger) {
+        while (!IsDebuggerPresent())
+            Sleep(500);
+    }
     if (!plug::search_and_run())
         mem::terminate();
     if (!plug::get().pre_init()) {
