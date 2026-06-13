@@ -43,7 +43,7 @@ public:
         // By saying pause I mean pause
         mem::write(mem::get_base() + 0x2a9c8, {0xeb});
         // Game FPS is fine
-        // mem::write(mem::get_base() + 0x29f7a, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x2aa40, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         // Game title
         // mem::write(mem::get_base() + 0x268d8, {0x90, 0x90});
         // mem::write(mem::get_base() + 0x268df, {0x90, 0x90});

@@ -13,7 +13,7 @@ If you port game for the first time, I strongly recommend you to try porting alr
 In the `plugins` folder, copy `fnaf.cpp` into `fnaf3.cpp` (since there is no template yet, we will just adopt another plugin). Add it to the Visual Studio project inside the `Plugins` section and put it into the jumbo build file `jumbo/main.cpp`. Edit `fnaf3.cpp`: rename `PlugFnaf` class into `PlugFnaf3` (and change `name` variable for the class), `on_plugin_check_fnaf` into `on_plugin_check_fnaf3`, change exe name to `FiveNightsatFreddys3.exe` in it. Comment all memory writes, change all offsets to 0 to not forget to implement something. Change default FPS to your game FPS. <br />
 Obtain the game. Create `FNAF3` folder on my drive and put `FiveNightsatFreddys3.exe` into it. Now we need to dump all the plugins. Open `%temp%` folder (cleanup it to make finding easier), run the game, see newly created folder with name like `mrt460C.tmp` or something (inside the temp folder), copy it to our `FNAF3` folder and rename to `dump`, close the game <br />
 Now let's create a Ghidra project. Set project dir to our `FNAF3` folder and let's call a project `defnaf3`. Add game exe to it (drag). Then double click on it, start analyzing it, wait. Save the project. <br />
-Go to `Symbol Tree`->`Imports`->`COMDLG32.dll`->`GetSaveFileNameA`/`GetSaveFileNameW`->Right click->`Show References to`. Find a function which uses it, rename it into `ShowStateSaveDialog`. Now find references to `ShowStateSaveDialog` by right clicking on it. You can find a big function which uses it. Rename it into `SaveGameState`. Remember it's offset `48080` and calling conversion `__fastcall`. <br />
+Go to `Symbol Tree`->`Imports`->`COMDLG32.DLL`->`GetSaveFileNameA`/`GetSaveFileNameW`->Right click->`Show References to`. Find a function which uses it, rename it into `ShowStateSaveDialog`. Now find references to `ShowStateSaveDialog` by right clicking on it. You can find a big function which uses it. Rename it into `SaveGameState`. Remember it's offset `48080` and calling conversion `__fastcall`. <br />
 ![porting1](../screenshots/porting1.png) <br />
 Let's modify our plugin:
 
@@ -133,7 +133,7 @@ case plug::PtrProp::PStats:
 
 At this point, the game should at least start under OF (don't forget about configuring OF)!
 
-Let's patch some memory. Find a func which refs `USER32.dll`->`MsgWaitForMultipleObjects` and looks like this (rename it into `SyncFrameRate`): <br />
+Let's patch some memory. Find a func which refs `USER32.DLL`->`MsgWaitForMultipleObjects` and looks like this (rename it into `SyncFrameRate`): <br />
 ![porting16](../screenshots/porting16.png) <br />
 Firstly, let's patch this `do-while` loop to be executed only once (to avoid softlocks due to time manipulation). Just NOP this jump.
 
@@ -156,6 +156,16 @@ Now let's patch `isPaused` block (inside `ExecuteEvents`) (which might be empty 
 ```cpp
 mem::write(mem::get_base() + 0x2a9c8, {0xeb});
 ```
+
+Now we need to patch `ExecuteEvents` to skip this block (to avoid frame skipping): <br />
+![porting19](../screenshots/porting19.png)
+
+```cpp
+mem::write(mem::get_base() + 0x2aa40, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+```
+
+Now let's patch setting window title (optional but cool). Search for `USER32.DLL`->`SetWindowText` imports and find a function which looks like this: <br />
+![porting19](../screenshots/porting19.png) <br />
 
 ## TODO
 
