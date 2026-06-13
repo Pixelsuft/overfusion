@@ -148,7 +148,14 @@ Secondly, we need to remove this extra sleeping (just patch the `JZ` to `JMP` to
 mem::write(mem::get_base() + 0x2fae, {0xeb});
 ```
 
-Please note that the Fusion runtime usually uses `timeGetTime` as the main time function, but it also may use custom `QueryPerformanceCounter` wrapper function instead as well!
+Please note that the Fusion runtime usually uses `timeGetTime` as the main time function, but it also may use custom `QueryPerformanceCounter` wrapper function instead as well! <br />
+
+Now let's patch `isPaused` block (inside `ExecuteEvents`) (which might be empty for different runtimes) to not execute any code (just need to patch first `if` jump from `JNZ` into `JMP`): <br />
+![porting18](../screenshots/porting18.png)
+
+```cpp
+mem::write(mem::get_base() + 0x2a9c8, {0xeb});
+```
 
 ## TODO
 
