@@ -212,7 +212,9 @@
     <ClCompile Include="src\uconv.cpp" />
     <ClCompile Include="src\ui.cpp" />
     <ClCompile Include="src\winhooks.cpp" />
+    <ClCompile Include="tools\perspective.cpp" />
     <ClCompile Include="tools\timer_fix.cpp" />
+    <ClCompile Include="tools\viewport.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest" />
@@ -245,7 +247,9 @@
     <ClInclude Include="src\uconv.hpp" />
     <ClInclude Include="src\ui.hpp" />
     <ClInclude Include="src\winhooks.hpp" />
+    <ClInclude Include="tools\perspective.hpp" />
     <ClInclude Include="tools\timer_fix.hpp" />
+    <ClInclude Include="tools\viewport.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

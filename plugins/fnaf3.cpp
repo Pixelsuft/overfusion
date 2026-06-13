@@ -4,6 +4,7 @@
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
 #include "../src/winhooks.hpp"
+#include "../tools/perspective.hpp"
 #include "../tools/timer_fix.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
@@ -63,7 +64,12 @@ public:
         if (fn == "cctrans.dll") {
             trans_addr = base + 0x7557;
         }
+        perspective::after_dll_load(fn, mod);
     };
+
+    void* after_proc_get(void* module, const char* proc, void* ret) override {
+        return perspective::after_proc_get(module, proc, ret);
+    }
 
     bool set_trans_enabled(bool enabled) override {
         if (trans_addr == 0)

@@ -3,6 +3,7 @@
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/winhooks.hpp"
+#include "../tools/perspective.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
@@ -61,13 +62,13 @@ public:
         if (fn == "mmfs2.dll") {
         } else if (fn == "cctrans.dll") {
             trans_ptr = base + 0x78b8;
-            // Disable transitions
-            // mem::write(base + 0x78b8, {0xeb});
-        } else if (fn == "Perspective.mfx") {
-            // Patch for disabling Perspective
-            // mem::write(base + 0x169d, {0x31, 0xc0, 0xc2, 0x04, 0x00});
         }
+        perspective::after_dll_load(fn, mod);
     };
+
+    void* after_proc_get(void* module, const char* proc, void* ret) override {
+        return perspective::after_proc_get(module, proc, ret);
+    }
 
     bool set_trans_enabled(bool enabled) override {
         if (trans_ptr == 0)

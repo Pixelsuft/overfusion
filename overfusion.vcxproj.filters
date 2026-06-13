@@ -177,6 +177,12 @@
     <ClCompile Include="plugins\fnaf3.cpp">
       <Filter>Plugins</Filter>
     </ClCompile>
+    <ClCompile Include="tools\perspective.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="tools\viewport.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest">
@@ -267,6 +273,12 @@
     </ClInclude>
     <ClInclude Include="src\gdihooks.hpp">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tools\perspective.hpp">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="tools\viewport.hpp">
+      <Filter>Tools</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

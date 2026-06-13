@@ -52,4 +52,6 @@
 #include "../src/ui.cpp"
 #include "../src/video.cpp"
 #include "../src/winhooks.cpp"
+#include "../tools/perspective.cpp"
 #include "../tools/timer_fix.cpp"
+#include "../tools/viewport.cpp"
