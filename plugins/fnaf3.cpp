@@ -8,8 +8,6 @@
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-// WIP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 using ost::optional;
 using ost::string_view;
 using std::string;

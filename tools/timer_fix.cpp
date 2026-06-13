@@ -72,7 +72,7 @@ ost::expected<void, std::string> timer_fix::load(std::vector<int> data) {
     size_t eventPtr = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(gStats) + 0x80);
     if (eventPtr == 0) {
         spdlog::error("eventPtr is nullptr WTF");
-        return ost::unexpected<std::string>("failed to save timers - eventPtr was nullptr");
+        return ost::unexpected<std::string>("Failed to save timers - eventPtr was nullptr");
     }
     while (*reinterpret_cast<short*>(eventPtr) != 0) {
         uint8_t nEvents = *reinterpret_cast<uint8_t*>(eventPtr + 2);

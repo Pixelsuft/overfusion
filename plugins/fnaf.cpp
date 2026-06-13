@@ -1,5 +1,4 @@
 #define WIN32_LEAN_AND_MEAN
-#include "../src/ass.hpp"
 #include "../src/config.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
