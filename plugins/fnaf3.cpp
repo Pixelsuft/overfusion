@@ -1,5 +1,4 @@
 #define WIN32_LEAN_AND_MEAN
-#include "../src/ass.hpp"
 #include "../src/config.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
@@ -56,14 +55,8 @@ public:
         if (mod == nullptr)
             return;
         size_t base = reinterpret_cast<size_t>(mod);
-        if (fn == "mmfs2.dll") {
-        } else if (fn == "cctrans.dll") {
-            trans_ptr = base + 0;
-            // Disable transitions
-            // mem::write(base + 0x78b8, {0xeb});
-        } else if (fn == "Perspective.mfx") {
-            // Patch for disabling Perspective
-            // mem::write(base + 0x169d, {0x31, 0xc0, 0xc2, 0x04, 0x00});
+        if (fn == "cctrans.dll") {
+            trans_ptr = base + 0x7557;
         }
     };
 

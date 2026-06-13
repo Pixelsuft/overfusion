@@ -173,6 +173,36 @@ mem::write(mem::get_base() + 0x272ad, {0xeb});
 mem::write(mem::get_base() + 0x272d8, {0x90, 0x90});
 ```
 
+Now let's write code for patching transitions. Add `cctrans.dll` (from the `dump` folder) into our `defnaf3` project, open and analyze it. Search for `WINMM.DLL`->`timeGetTime` refs (may be different if the runtime uses another time function) and find one function which looks like this: <br />
+![porting21](../screenshots/porting21.png) <br />
+We need to implement `set_trans_enabled` to patch this `if` to be skipped:
+
+```cpp
+class PlugFnaf3 final : public plug::PlugBase {
+private:
+    ...
+    size_t trans_ptr;
+```
+
+```cpp
+void after_dll_load(string_view path, string_view fn, void* mod) override {
+    if (mod == nullptr)
+        return;
+    size_t base = reinterpret_cast<size_t>(mod);
+    if (fn == "cctrans.dll") {
+        trans_ptr = base + 0x7557;
+    }
+};
+```
+
+```cpp
+bool set_trans_enabled(bool enabled) override {
+    if (trans_ptr == 0)
+        return false;
+    return enabled ? mem::write<true>(trans_ptr, {0x74}) : mem::write<true>(trans_ptr, {0xeb});
+}
+```
+
 ## TODO
 
-finish this doc (patching transition, other memory patching, timer fix)
+finish this doc (other memory patching, timer fix)
