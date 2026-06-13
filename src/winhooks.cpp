@@ -406,6 +406,16 @@ static BOOL WINAPI GetClientRectH(HWND hWnd, LPRECT lpRect) {
     return GetClientRectO(hWnd, lpRect);
 }
 
+static DWORD(WINAPI* MsgWaitForMultipleObjectsO)(DWORD nCount, const HANDLE* pHandles,
+                                                 BOOL fWaitAll, DWORD dwMilliseconds,
+                                                 DWORD dwWakeMask);
+static DWORD WINAPI MsgWaitForMultipleObjectsH(DWORD nCount, const HANDLE* pHandles, BOOL fWaitAll,
+                                               DWORD dwMilliseconds, DWORD dwWakeMask) {
+    spdlog::warn("MsgWaitForMultipleObjects was not patched: {} {} {} {}", nCount, fWaitAll,
+                 dwMilliseconds, dwWakeMask);
+    return MsgWaitForMultipleObjectsO(nCount, pHandles, fWaitAll, dwMilliseconds, dwWakeMask);
+}
+
 void winhooks::init() {
     hwnd = mhwnd = nullptr;
     MainWindowProcO = EditWindowProcO = nullptr;
@@ -428,6 +438,7 @@ void winhooks::init() {
     IAT_ONLY("user32.dll", SetActiveWindow);
     IAT_AUTO("user32.dll", GetSystemMetrics);
     IAT_AUTO("user32.dll", SetMenu);
+    IAT_AUTO("user32.dll", MsgWaitForMultipleObjects);
 }
 
 void winhooks::after_ui_init() {
