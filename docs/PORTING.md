@@ -181,7 +181,7 @@ We need to implement `set_trans_enabled` to patch this `if` to be skipped:
 class PlugFnaf3 final : public plug::PlugBase {
 private:
     ...
-    size_t trans_ptr;
+    size_t trans_addr;
 ```
 
 ```cpp
@@ -190,19 +190,70 @@ void after_dll_load(string_view path, string_view fn, void* mod) override {
         return;
     size_t base = reinterpret_cast<size_t>(mod);
     if (fn == "cctrans.dll") {
-        trans_ptr = base + 0x7557;
+        trans_addr = base + 0x7557;
     }
 };
 ```
 
 ```cpp
 bool set_trans_enabled(bool enabled) override {
-    if (trans_ptr == 0)
+    if (trans_addr == 0)
         return false;
-    return enabled ? mem::write<true>(trans_ptr, {0x74}) : mem::write<true>(trans_ptr, {0xeb});
+    return enabled ? mem::write<true>(trans_addr, {0x74})
+                    : mem::write<true>(trans_addr, {0xeb});
 }
 ```
 
+Now let's add support for manual saving event timers (which are getting reset after loading a state FSR). Use `Search`->`Decompiled text...` tool to find all uses of `-0xa0001`, wait for scan, then find a function which contains this piece of code: <br />
+![porting22](../screenshots/porting22.png) <br />
+Let's patch the code (blue is `tm_fix_event_entry_offset` and green is `tm_fix_event_entry_type_offset`):
+
+```cpp
+#include "../tools/timer_fix.hpp"
+```
+
+```cpp
+bool update_init() override {
+    auto& cfg = conf::get();
+    cfg.tm_fix_event_entry_offset = 0xe;
+    cfg.tm_fix_event_entry_type_offset = 0x10;
+    return true;
+}
+
+ost::expected<void, string> save_state(ofs::File& file) override {
+    if (conf::get().save_game_state) {
+        std::vector<int> timer_data;
+        auto timer_ret = timer_fix::save(timer_data);
+        // If timers saving failed
+        if (!timer_ret.has_value())
+            return timer_ret;
+        state::write_bin(file, timer_data);
+        SaveGameState(file.get_handle());
+    }
+    return {};
+}
+
+ost::expected<void, string> load_state(ofs::File& file) override {
+    unsigned int outframe = 0;
+    if (!conf::get().is_replay) {
+        std::vector<int> timer_data;
+        // Load timer data
+        state::load_bin(file, timer_data);
+        // Load game state
+        LoadGameState(file.get_handle(), &outframe);
+        // Check if game state failed to load
+        if (!state::is_processing_save())
+            return {};
+        // If timer loading fails, we fail too
+        return timer_fix::load(timer_data);
+    }
+    return {};
+}
+```
+
+You can see a message while saving a state (in debug mode): `timers fix size: 18`. This means that the game actually uses that timers.
+
 ## TODO
 
-finish this doc (other memory patching, timer fix)
+- somehow patch breaking collision
+- finish this doc (other memory patching, timer fix)

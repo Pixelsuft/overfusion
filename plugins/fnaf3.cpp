@@ -2,7 +2,9 @@
 #include "../src/config.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
+#include "../src/state.hpp"
 #include "../src/winhooks.hpp"
+#include "../tools/timer_fix.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
@@ -16,14 +18,14 @@ class PlugFnaf3 final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
-    size_t trans_ptr;
+    size_t trans_addr;
 
 public:
     PlugFnaf3() {
         name = "Five Nights at Freddy's 3";
         SaveGameState = nullptr;
         LoadGameState = nullptr;
-        trans_ptr = 0;
+        trans_addr = 0;
     }
 
     bool pre_init() override {
@@ -49,21 +51,27 @@ public:
         return true;
     }
 
-    bool update_init() override { return true; }
+    bool update_init() override {
+        auto& cfg = conf::get();
+        cfg.tm_fix_event_entry_offset = 0xe;
+        cfg.tm_fix_event_entry_type_offset = 0x10;
+        return true;
+    }
 
     void after_dll_load(string_view path, string_view fn, void* mod) override {
         if (mod == nullptr)
             return;
         size_t base = reinterpret_cast<size_t>(mod);
         if (fn == "cctrans.dll") {
-            trans_ptr = base + 0x7557;
+            trans_addr = base + 0x7557;
         }
     };
 
     bool set_trans_enabled(bool enabled) override {
-        if (trans_ptr == 0)
+        if (trans_addr == 0)
             return false;
-        return enabled ? mem::write<true>(trans_ptr, {0x74}) : mem::write<true>(trans_ptr, {0xeb});
+        return enabled ? mem::write<true>(trans_addr, {0x74})
+                       : mem::write<true>(trans_addr, {0xeb});
     }
 
     std::pair<float, float> mouse_from_window(int x, int y) override {
@@ -111,15 +119,27 @@ public:
     }
 
     ost::expected<void, string> save_state(ofs::File& file) override {
-        if (conf::get().save_game_state)
+        if (conf::get().save_game_state) {
+            std::vector<int> timer_data;
+            auto timer_ret = timer_fix::save(timer_data);
+            if (!timer_ret.has_value())
+                return timer_ret;
+            state::write_bin(file, timer_data);
             SaveGameState(file.get_handle());
+        }
         return {};
     }
 
     ost::expected<void, string> load_state(ofs::File& file) override {
         unsigned int outframe = 0;
-        if (!conf::get().is_replay)
+        if (!conf::get().is_replay) {
+            std::vector<int> timer_data;
+            state::load_bin(file, timer_data);
             LoadGameState(file.get_handle(), &outframe);
+            if (!state::is_processing_save())
+                return {};
+            return timer_fix::load(timer_data);
+        }
         return {};
     }
 };
