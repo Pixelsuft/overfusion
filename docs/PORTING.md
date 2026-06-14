@@ -173,6 +173,17 @@ mem::write(mem::get_base() + 0x272ad, {0xeb});
 mem::write(mem::get_base() + 0x272d8, {0x90, 0x90});
 ```
 
+Now let's go back and remember `ExecuteTriggeredEvent` call conv and offsets:
+
+```cpp
+void(__fastcall* ExecuteTriggeredEvent)(unsigned int p);
+```
+
+```cpp
+ExecuteTriggeredEvent =
+    reinterpret_cast<decltype(ExecuteTriggeredEvent)>(mem::get_base() + 0x596a0);
+```
+
 Now let's write code for patching transitions. Add `cctrans.dll` (from the `dump` folder) into our `defnaf3` project, open and analyze it. Search for `WINMM.DLL`->`timeGetTime` refs (may be different if the runtime uses another time function) and find one function which looks like this: <br />
 ![porting21](../screenshots/porting21.png) <br />
 We need to implement `set_trans_enabled` to patch this `if` to be skipped:

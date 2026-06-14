@@ -526,6 +526,7 @@ void state::load_state(int slot, bool no_recursion) {
         *ptr = 3;
         ptr = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
         *ptr = static_cast<short>(temp_state.scene) | 0x8000;
+        plug::get().execute_triggered_event(0xfffefffd);
         return;
     }
     load_bin(file, temp_state.frames);
@@ -1002,4 +1003,5 @@ void state::reset_game() {
     *ptr = 0;
     files::clear_fs();
     audio::reinit_capture();
+    plug::get().execute_triggered_event(0xfffefffd);
 }

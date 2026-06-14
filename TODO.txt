@@ -4,7 +4,6 @@
 [ ] Fix transition breaking manual scene switching and restarting
 [ ] Support random manipulation (+rand() and srand() stable reimpl)
 [ ] Add skip drawing
-[ ] Executetriggeredevent
 [ ] Maybe use a different config (ofproject.json) for keeping replay info such as fps, time offsets, pre-made files??
 [ ] Switch to https://github.com/ozone10/win32-darkmodelib? check XP compat first!
 [ ] Fix TODO/FIXME in code

@@ -15,6 +15,7 @@ class PlugFnaf final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
+    void(__fastcall* ExecuteTriggeredEvent)(unsigned int p);
     size_t trans_ptr;
 
 public:
@@ -22,6 +23,7 @@ public:
         name = "Five Nights at Freddy's";
         SaveGameState = nullptr;
         LoadGameState = nullptr;
+        ExecuteTriggeredEvent = nullptr;
         trans_ptr = 0;
     }
 
@@ -31,6 +33,8 @@ public:
             cfg.fps = 60;
         SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x47470);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49060);
+        ExecuteTriggeredEvent =
+            reinterpret_cast<decltype(ExecuteTriggeredEvent)>(mem::get_base() + 0x58b00);
         cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x45430);
         cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2b970);
         cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x28060);
@@ -121,6 +125,8 @@ public:
             return nullptr;
         }
     }
+
+    void execute_triggered_event(unsigned int p) override { ExecuteTriggeredEvent(p); }
 
     ost::expected<void, string> save_state(ofs::File& file) override {
         if (conf::get().save_game_state)
