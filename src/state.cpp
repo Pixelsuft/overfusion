@@ -141,18 +141,22 @@ static bool updating;
 static void* temp_handle;
 } // namespace state
 
-inline int str_to_int(const std::string& str) {
+inline ost::optional<int> str_to_int(const std::string& str) {
     // No exceptions please
     char* endptr;
     long num = std::strtol(str.c_str(), &endptr, 10);
-    return endptr != str.c_str() ? static_cast<int>(num) : 0;
+    if (endptr != str.c_str())
+        return static_cast<int>(num);
+    return {};
 }
 
-inline float str_to_float(const std::string& str) noexcept {
+inline ost::optional<float> str_to_float(const std::string& str) noexcept {
     // No exceptions please
     char* endptr = nullptr;
     float num = std::strtof(str.c_str(), &endptr);
-    return endptr != str.c_str() ? num : 0.0f;
+    if (endptr != str.c_str())
+        return num;
+    return {};
 }
 
 static uint64_t get_rerecords() {
@@ -161,7 +165,7 @@ static uint64_t get_rerecords() {
     if (file.open(state::base_path + "\\rerecords.ofbin", 0)) {
         string line;
         if (file.readln(line))
-            ret = static_cast<uint64_t>(str_to_int(line));
+            ret = static_cast<uint64_t>(str_to_int(line).value_or(0));
         file.close();
     }
     return ret;
@@ -288,7 +292,7 @@ void state::import_replay(string_view fn) {
         end++;
         auto sub2 = line.substr(end);
         if (sub == "pixelsuft_overfusion") {
-            int st_ver = str_to_int(sub2);
+            int st_ver = str_to_int(sub2).value_or(0);
             if (st_ver != replay_version) {
                 spdlog::error("Invalid replay version (expected {}, got {})", replay_version,
                               st_ver);
@@ -297,28 +301,28 @@ void state::import_replay(string_view fn) {
             }
             is_of = true;
         } else if (sub == "total") {
-            temp_state.total = str_to_int(sub2);
+            temp_state.total = str_to_int(sub2).value_or(0);
         } else if (sub == "rerecords") {
-            temp_state.rerec_count = std::max(str_to_int(sub2), 0);
+            temp_state.rerec_count = std::max(str_to_int(sub2).value_or(0), 0);
         } else if (sub == "fps") {
-            int need_fps = str_to_int(sub2);
+            int need_fps = str_to_int(sub2).value_or(0);
             if (need_fps != cfg.fps) {
                 spdlog::warn("Mismatch between config FPS ({}) and replay ({})", cfg.fps, need_fps);
             }
         } else if (sub == "system_offset") {
-            auto offset = static_cast<uint64_t>(str_to_int(sub2));
+            auto offset = static_cast<uint64_t>(str_to_int(sub2).value_or(0));
             if (offset != cfg.system_offset) {
                 spdlog::warn("Mismatch between config system time offset ({}) and replay ({})",
                              cfg.system_offset, offset);
             }
         } else if (sub == "local_offset") {
-            auto offset = static_cast<uint64_t>(str_to_int(sub2));
+            auto offset = static_cast<uint64_t>(str_to_int(sub2).value_or(0));
             if (offset != cfg.local_offset) {
                 spdlog::warn("Mismatch between config local time offset ({}) and replay ({})",
                              cfg.local_offset, offset);
             }
         } else if (sub == "startup_offset") {
-            auto offset = static_cast<uint64_t>(str_to_int(sub2));
+            auto offset = static_cast<uint64_t>(str_to_int(sub2).value_or(0));
             if (offset != cfg.startup_offset) {
                 spdlog::warn("Mismatch between config startup time offset ({}) and replay ({})",
                              cfg.startup_offset, offset);
@@ -348,7 +352,7 @@ void state::import_replay(string_view fn) {
             spdlog::error("Invalid event line (frame)");
             continue;
         }
-        event.frame = str_to_int(line.substr(0, end));
+        event.frame = str_to_int(line.substr(0, end)).value_or(0);
         end++;
         auto start = end;
         end = line.find(',', start);
@@ -356,7 +360,7 @@ void state::import_replay(string_view fn) {
             spdlog::error("Invalid event line (event index)");
             continue;
         }
-        event.idx = static_cast<event::Type>(str_to_int(line.substr(start, end)));
+        event.idx = static_cast<event::Type>(str_to_int(line.substr(start, end)).value_or(0));
         end++;
         switch (event.idx) {
         case event::Type::KeyDown:
@@ -367,12 +371,12 @@ void state::import_replay(string_view fn) {
                 spdlog::error("Invalid keyboard/mouse event line (key)");
                 continue;
             }
-            event.key.k = str_to_int(line.substr(start, end));
+            event.key.k = str_to_int(line.substr(start, end)).value_or(0);
             if (event.key.k <= 0) {
                 spdlog::error("Invalid keyboard/mouse event (key)");
                 continue;
             }
-            event.key.down = str_to_int(line.substr(++end)) != 0;
+            event.key.down = str_to_int(line.substr(++end)).value_or(0) != 0;
             break;
         case event::Type::MouseMove:
             start = end;
@@ -381,11 +385,11 @@ void state::import_replay(string_view fn) {
                 spdlog::error("Invalid mouse move event line (X)");
                 continue;
             }
-            event.mouse.x = str_to_float(line.substr(start, end)) / 1000.f;
-            event.mouse.y = str_to_float(line.substr(++end)) / 1000.f;
+            event.mouse.x = str_to_float(line.substr(start, end)).value_or(-1000.f) / 1000.f;
+            event.mouse.y = str_to_float(line.substr(++end)).value_or(-1000.f) / 1000.f;
             break;
         case event::Type::MsgBox:
-            event.msgbox.choice = str_to_int(line.substr(end));
+            event.msgbox.choice = str_to_int(line.substr(end)).value_or(0);
             if (event.msgbox.choice <= 0) {
                 spdlog::error("Invalid message box event line (choice)");
                 continue;
