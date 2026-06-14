@@ -41,7 +41,7 @@ public:
         mem::write(mem::get_base() + 0x1314f, {0x90, 0x90});
         // No FPS limit/subtick fixes
         mem::write(mem::get_base() + 0x1604d, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
-        mem::write(mem::get_base() + 0x16508, {0xeb});
+        // mem::write(mem::get_base() + 0x16508, {0xeb});
         return true;
     }
 

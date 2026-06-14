@@ -21,7 +21,7 @@ def convert_wtf_to_overfusion(input_file, output_file):
         f.seek(1024)
         for frame_idx in range(total_frames):
             frame_data = f.read(8)
-            current_keys = set(b for b in frame_data if b != 0)
+            current_keys = set(b for b in frame_data if b != 0 and b != 240)
             for vk in current_keys:
                 if vk not in last_frame_keys:
                     events.append(f'{frame_idx + 1},1,{vk},1')

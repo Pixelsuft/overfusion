@@ -778,6 +778,18 @@ void state::after_update() {
             on_mode_switch();
             last_msg = "Switched to recording";
         }
+        /*
+        auto pState = plug::get().get_prop(plug::PtrProp::PState);
+        short* pTask =
+            reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
+        if (*pTask) {
+            spdlog::debug("Scene changed on frame {}", st.frames);
+            for (auto& ev : st.ev) {
+                if (ev.frame >= st.frames)
+                    ev.frame++;
+            }
+        }
+        */
     }
     if (cfg.fast_forward)
         return;
