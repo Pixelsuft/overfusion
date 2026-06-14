@@ -126,6 +126,18 @@ public:
         perspective::draw_menu();
     }
 
+    std::pair<float, float> mouse_from_window(int x, int y) override {
+        if (x < 0 || y < 0)
+            return {-1.f, -1.f};
+        return {static_cast<float>(x) / 640.f, static_cast<float>(y) / 480.f};
+    }
+
+    std::pair<int, int> mouse_to_window(float x, float y) override {
+        if (x < 0.f || y < 0.f)
+            return {-100, -100};
+        return {static_cast<int>(x * 640.f), static_cast<int>(y * 480.f)};
+    }
+
     void* get_prop(plug::PtrProp prop, void* data) override {
         switch (prop) {
         case plug::PtrProp::PState:

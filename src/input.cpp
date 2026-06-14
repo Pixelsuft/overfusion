@@ -182,7 +182,7 @@ static BOOL WINAPI GetCursorPosH(LPPOINT lpPoint) {
     auto mouse_pos = state::get_mouse_pos();
     lpPoint->x = mouse_pos.first;
     lpPoint->y = mouse_pos.second;
-    return ClientToScreen(::hwnd, lpPoint);
+    return ClientToScreen(::mhwnd, lpPoint);
 }
 
 static BOOL WINAPI SetCursorPosH(int X, int Y) {
@@ -192,7 +192,7 @@ static BOOL WINAPI SetCursorPosH(int X, int Y) {
     POINT pos;
     pos.x = X;
     pos.y = Y;
-    if (ScreenToClient(::hwnd, &pos))
+    if (ScreenToClient(::mhwnd, &pos))
         return state::set_win_mouse_pos(pos.x, pos.y) ? TRUE : FALSE;
     return FALSE;
 }
