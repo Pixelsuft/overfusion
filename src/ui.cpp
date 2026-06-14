@@ -92,7 +92,6 @@ static void draw_menu() {
             cfg.speed = std::min(std::max(cfg.speed, 0.05f), 2.f);
         if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
             cfg.speed = 1.f;
-        ImGui::Checkbox("Show info window", &cfg.show_info);
         static char replay_buf[1024] = "replay";
         ImGui::InputText("Replay filename", replay_buf, 1024);
         if (ImGui::Button("Export"))
@@ -100,11 +99,11 @@ static void draw_menu() {
         ImGui::SameLine();
         if (ImGui::Button("Import"))
             state::import_replay(replay_buf);
+        if (ImGui::Button("Restart"))
+            state::reset_game();
         if (ImGui::Button("Clear temp events queue"))
             state::clear_temp_events();
     }
-    if (ImGui::Button("Restart"))
-        state::reset_game();
     if (cfg.virtual_fs && ImGui::CollapsingHeader("Virtual Filesystem")) {
         files::draw_ui();
     }
@@ -129,6 +128,7 @@ static void draw_menu() {
         ImGui::Checkbox("Pause on scene switch", &cfg.pause_on_scene_switch);
         ImGui::Checkbox("Save game state", &cfg.save_game_state);
         ImGui::Checkbox("Save VFS in state", &cfg.save_vfs);
+        ImGui::Checkbox("Show info window", &cfg.show_info);
     }
 #ifdef _DEBUG
     if (ImGui::CollapsingHeader("Debug")) {

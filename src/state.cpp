@@ -205,6 +205,11 @@ bool state::is_processing_save() { return processing_save; }
 
 void state::export_replay(string_view fn) {
     last_msg.clear();
+    if (st.ev.empty()) {
+        last_msg = "Skipping export of the empty replay";
+        spdlog::warn("Replay is empty, skipped");
+        return;
+    }
     ofs::File file;
     if (!file.open(base_path + '\\' + string(fn) + ".ofr", 1, false)) {
         spdlog::error("Failed to open replay file \"{}\" for writing", fn);
@@ -998,16 +1003,18 @@ void state::reset_game() {
         return;
     st.prev_input.clear();
     st.ev.clear();
-    st.frames = 0;
     st.total = 0;
     st.prev_input.clear();
     st.mouse_pos.first = st.mouse_pos.second = -1.f;
     msgbox_buf.clear();
     cur_holding.clear();
     repl_index = 0;
-    *ptr = 4;
-    ptr = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
-    *ptr = 0;
+    if (st.frames != 0) {
+        st.frames = 0;
+        *ptr = 4;
+        ptr = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
+        *ptr = 0;
+    }
     files::clear_fs();
     audio::reinit_capture();
     last_msg = "Restarting game";
