@@ -18,4 +18,4 @@ You can use menu to switch into replay mode, export or import replay (unlike sta
 You can switch into replay mode during recording. <br />
 If you load state in replay mode, it will act like replay importing. <br />
 Note: if you import different replay/state during replay, incompatible with previous, it will likely cause desync. <br />
-You can switch from replay mode to recording mode as well without any problems. <br />
+You can switch from replay mode to recording mode and continue TASing your game as well without any problems. <br />
