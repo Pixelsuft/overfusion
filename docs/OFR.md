@@ -15,11 +15,11 @@ First lines (order may be different): <br />
 Then event lines (sorted by `frame number`): <br />
 `frame number`,`event id`,`event data seperated with comma` <br />
 
-`event data` for each `frame number`: <br />
-1 (key down/up) (the same VK once per frame at maximum) (no double press/release allowed) - `virtual keycode`,`is down? (1/0)` <br />
-2 (mouse down/up) (no double press/release allowed) - `virtual keycode`,`is down? (1/0)` <br />
-3 (mouse move) - `normalized x (float) in [0; 1000]`,`normalized y (float) in [0; 1000]` <br />
-20 (message box choice) - `message box choice (int)`
+`frame number` with the corresponding `event data`: <br />
+`1` (key down/up) (the same VK once per frame at maximum) (no double press/release allowed) - `virtual keycode`,`is down? (1/0)` <br />
+`2` (mouse down/up) (no double press/release allowed) - `virtual keycode`,`is down? (1/0)` <br />
+`3` (mouse move) - `normalized x (float) in [0; 1000]`,`normalized y (float) in [0; 1000]` <br />
+`20` (message box choice) - `message box choice (int)`
 
 Example replay:
 
