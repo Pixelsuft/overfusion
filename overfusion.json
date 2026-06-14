@@ -30,6 +30,7 @@
   "pixel_filter": true,
   "ui_pixel_filter": true,
   "save_vfs": true,
+  "pause_on_scene_switch": false,
   "disable_viewport": false,
   "disable_perspective": false,
   "cmdline_append": " /DEBUG /NOVSYNC /MIS0 /NOC",

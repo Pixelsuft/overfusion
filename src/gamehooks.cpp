@@ -114,8 +114,11 @@ static int __stdcall UpdateGameFrameH() {
             *pStep = 0;
         }
     }
-    if (ret != 0)
+    if (ret != 0) {
         spdlog::debug("UpdateGameFrame got ret {} on frame {}", ret, state::get_frame_counter());
+        if (cfg.pause_on_scene_switch && state::get_frame_counter() != 0)
+            cfg.is_paused = true;
+    }
     state::after_update();
     return ret;
 }

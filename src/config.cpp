@@ -154,6 +154,7 @@ Config::Config() {
     disable_fullscreen = false;
     disable_perspective = false;
     disable_viewport = false;
+    pause_on_scene_switch = false;
 }
 
 // Read boolean variable
@@ -206,6 +207,7 @@ void Config::read() {
     READ_BOOL(disable_fullscreen);
     READ_BOOL(disable_perspective);
     READ_BOOL(disable_viewport);
+    READ_BOOL(pause_on_scene_switch);
     if (data["system_time_offset"].is_number_unsigned())
         system_offset = data["system_time_offset"];
     if (data["local_time_offset"].is_number_unsigned())
