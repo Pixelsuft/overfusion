@@ -18,14 +18,12 @@ class PlugIwbtb final : public plug::PlugBase {
 private:
     void(__cdecl* SaveGameState)(void* hfile);
     void(__cdecl* LoadGameState)(void* hfile, unsigned int* outframe);
-    void(__cdecl* ExecuteTriggeredEvent)(unsigned int p);
 
 public:
     PlugIwbtb() {
         name = "I Wanna Be The Boshy";
         SaveGameState = nullptr;
         LoadGameState = nullptr;
-        ExecuteTriggeredEvent = nullptr;
     }
 
     bool pre_init() override {
@@ -34,8 +32,6 @@ public:
             cfg.fps = 50;
         SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x37dc0);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x39780);
-        ExecuteTriggeredEvent =
-            reinterpret_cast<decltype(ExecuteTriggeredEvent)>(mem::get_base() + 0x47cb0);
         cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x365a0);
         cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x1ebf0);
         cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x1aac0);
@@ -164,8 +160,6 @@ public:
             return nullptr;
         }
     }
-
-    void execute_triggered_event(unsigned int p) override { ExecuteTriggeredEvent(p); }
 
     ost::expected<void, string> save_state(ofs::File& file) override {
         if (conf::get().save_game_state) {

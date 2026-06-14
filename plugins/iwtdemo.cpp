@@ -16,14 +16,12 @@ class PlugIwtDemo final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
-    void(__fastcall* ExecuteTriggeredEvent)(unsigned int p);
 
 public:
     PlugIwtDemo() {
         name = "I WANNA TRY - A New Adventure Demo";
         SaveGameState = nullptr;
         LoadGameState = nullptr;
-        ExecuteTriggeredEvent = nullptr;
         conf::get().need_key_message = true;
     }
 
@@ -33,8 +31,6 @@ public:
             cfg.fps = 60;
         SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x48350);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49f40);
-        ExecuteTriggeredEvent =
-            reinterpret_cast<decltype(ExecuteTriggeredEvent)>(mem::get_base() + 0x59970);
         cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x462e0);
         cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2c3f0);
         cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x28b50);
@@ -147,8 +143,6 @@ public:
             return nullptr;
         }
     }
-
-    void execute_triggered_event(unsigned int p) override { ExecuteTriggeredEvent(p); }
 
     ost::expected<void, string> save_state(ofs::File& file) override {
         if (conf::get().save_game_state) {

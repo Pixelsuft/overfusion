@@ -49,8 +49,6 @@ public:
     virtual std::pair<int, int> mouse_to_window(float x, float y);
     // Draw menu inside the "Plugin" collapsing header
     virtual void draw_menu();
-    // ExecuteTriggeredEvent in games runtime
-    virtual void execute_triggered_event(unsigned int p);
     // Get pointer to something
     virtual void* get_prop(PtrProp prop, void* data = nullptr) = 0;
     // Save game and your data here

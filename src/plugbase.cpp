@@ -27,8 +27,6 @@ std::pair<int, int> PlugBase::mouse_to_window(float x, float y) { return {-100, 
 
 void PlugBase::draw_menu() {}
 
-void PlugBase::execute_triggered_event(unsigned int p) {}
-
 PlugBase::~PlugBase() {}
 
 static PlugBase* _cur_plug;
