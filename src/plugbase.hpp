@@ -35,13 +35,13 @@ public:
     virtual bool pre_init();
     // Init before processing first frame
     virtual bool update_init();
-    // DLL load hook
+    // DLL load hook: nullopt for default value, empty string for failing
     virtual ost::optional<std::string> before_dll_load(ost::string_view path, ost::string_view fn);
     // When DLL was loaded
     virtual void after_dll_load(ost::string_view path, ost::string_view fn, void* mod);
-    // GetProcAddress hook
+    // GetProcAddress hook: return ret by default or your custom pointer
     virtual void* after_proc_get(void* module, const char* proc, void* ret);
-    // You should implement transition enable/disable iuf your game uses so
+    // You should implement transition enable/disable if your game uses so
     virtual bool set_trans_enabled(bool enabled);
     // Normalize mouse coordinates from window
     virtual std::pair<float, float> mouse_from_window(int x, int y);
