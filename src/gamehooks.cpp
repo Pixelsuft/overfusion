@@ -113,13 +113,15 @@ static int __stdcall UpdateGameFrameH() {
             spdlog::error("Subtick step check failed: got {} instead of 0", *pStep);
             *pStep = 0;
         }
+        /*
         short* pTask =
             reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
         if (*pTask)
-            spdlog::debug("Next frame task: {}", *pTask);
+            spdlog::debug("Next frame task on frame {}: {}", state::get_frame_counter(), *pTask);
+        */
     }
     if (ret != 0)
-        spdlog::debug("UpdateGameFrame got ret={}", ret);
+        spdlog::debug("UpdateGameFrame got ret {} on frame {}", ret, state::get_frame_counter());
     state::after_update();
     return ret;
 }

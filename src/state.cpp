@@ -778,18 +778,19 @@ void state::after_update() {
             on_mode_switch();
             last_msg = "Switched to recording";
         }
-        /*
-        auto pState = plug::get().get_prop(plug::PtrProp::PState);
-        short* pTask =
-            reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
-        if (*pTask) {
-            spdlog::debug("Scene changed on frame {}", st.frames);
-            for (auto& ev : st.ev) {
-                if (ev.frame >= st.frames)
-                    ev.frame++;
+        // Attempting to sync with hourglass
+        if (false) {
+            auto pState = plug::get().get_prop(plug::PtrProp::PState);
+            short* pTask = reinterpret_cast<short*>(
+                plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
+            if (*pTask) {
+                spdlog::debug("Scene changed on frame {}", st.frames);
+                for (auto& ev : st.ev) {
+                    if (ev.frame >= st.frames)
+                        ev.frame++;
+                }
             }
         }
-        */
     }
     if (cfg.fast_forward)
         return;
@@ -806,6 +807,8 @@ void state::after_update() {
         to_wait -= dt;
     }
 }
+
+int state::get_frame_counter() { return st.frames; }
 
 int64_t state::get_utc_offset() {
     auto& cfg = conf::get();

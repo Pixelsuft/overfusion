@@ -20,6 +20,7 @@ void on_mode_switch();
 uint64_t get_time(TimeOffset offset);
 int64_t get_utc_offset();
 void set_temp_time_offset(int ms);
+int get_frame_counter();
 bool get_key_state(int vk);
 void set_key_down(int vk, bool down);
 void add_mouse_toggle(int vk);
