@@ -121,24 +121,24 @@ static LARGE_INTEGER last_counter;
 static double const_dt;
 static double to_wait;
 static double freq;
+// Time offset
+static int64_t time_offset;
 // Last info
 static string last_msg;
 // For displaying save/load error
 static string state_error_text;
 // Project path
 static string base_path;
+// Save file handle
+static void* temp_handle;
 // Current event id (index)
 static size_t repl_index;
-// Time offset
-static int64_t time_offset;
 // Remember needed scene before switching if needed
 static int need_scene_slot;
 // Are we saving/loading?
 static bool processing_save;
 // Are we processing game frame?
 static bool updating;
-// Save file handle
-static void* temp_handle;
 } // namespace state
 
 inline ost::optional<int> str_to_int(const std::string& str) {
@@ -526,7 +526,7 @@ void state::load_state(int slot, bool no_recursion) {
         *ptr = 3;
         ptr = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
         *ptr = static_cast<short>(temp_state.scene) | 0x8000;
-        plug::get().execute_triggered_event(0xfffefffd);
+        // plug::get().execute_triggered_event(0xfffefffd);
         return;
     }
     load_bin(file, temp_state.frames);
@@ -1006,5 +1006,5 @@ void state::reset_game() {
     *ptr = 0;
     files::clear_fs();
     audio::reinit_capture();
-    plug::get().execute_triggered_event(0xfffefffd);
+    // plug::get().execute_triggered_event(0xfffefffd);
 }
