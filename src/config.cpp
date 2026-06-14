@@ -112,7 +112,7 @@ Config::Config() {
     // TODO: validate project_name
     ffmpeg_cmdline =
         "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an $PROJ/$NAME.mp4";
-    system_offset = local_offset = startup_offset = 0; // TODO: conf them
+    system_offset = local_offset = startup_offset = 0;
     tm_fix_event_entry_offset = tm_fix_event_entry_type_offset = 0;
     pUpdateGameFrame = pRenderFrame = pProcessTransition = pRenderTransition = nullptr;
     forced_res = {0, 0};
@@ -206,6 +206,12 @@ void Config::read() {
     READ_BOOL(disable_fullscreen);
     READ_BOOL(disable_perspective);
     READ_BOOL(disable_viewport);
+    if (data["system_time_offset"].is_number_unsigned())
+        system_offset = data["system_time_offset"];
+    if (data["local_time_offset"].is_number_unsigned())
+        local_offset = data["local_time_offset"];
+    if (data["startup_time_offset"].is_number_unsigned())
+        startup_offset = data["startup_time_offset"];
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
     if (data["ffmpeg_cmdline"].is_string())

@@ -8,6 +8,7 @@ You can use [default config](../overfusion.json) as well.
 `fps` - game FPS <br />
 `force_resolution` - can be used to force game thinking that window resolution is this one (useful for direct video capturing) <br />
 `force_custom_window` - force custom window for UI (for Direct3D 9 games) <br />
+`system_time_offset`, `local_time_offset`, `startup_time_offset` - emulated virtual time (in ms, relative to when starting a game) <br />
 `disable_fullscreen` - Prevent game from entering into fullscreen mode <br />
 `wait_for_debugger` - Wait till the debugger attached before running a game <br />
 `show_menu` - show OF menu by fault <br />
