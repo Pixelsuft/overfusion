@@ -16,12 +16,14 @@ class PlugIwtDemo final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
+    size_t trans_ptr;
 
 public:
     PlugIwtDemo() {
         name = "I WANNA TRY - A New Adventure Demo";
         SaveGameState = nullptr;
         LoadGameState = nullptr;
+        trans_ptr = 0;
         conf::get().need_key_message = true;
     }
 
@@ -88,24 +90,25 @@ public:
     void after_dll_load(string_view path, string_view fn, void* mod) override {
         if (mod == nullptr)
             return;
+        size_t base = reinterpret_cast<size_t>(mod);
         if (fn == "mmfs2.dll") {
             // No __security_check_cookie
-            mem::write(reinterpret_cast<size_t>(mod) + 0x483cc,
-                       {0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+            mem::write(base + 0x483cc, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
             // Somehow fixes game state save
-            // mem::write(reinterpret_cast<size_t>(mod) + 0x14928, {0x90, 0x90});
+            // mem::write(base + 0x14928, {0x90, 0x90});
         } else if (fn == "Lacewing.mfx") {
             // No theading stuff
-            mem::write(reinterpret_cast<size_t>(mod) + 0xb209, {0xeb});
+            mem::write(base + 0xb209, {0xeb});
         } else if (fn == "Download.mfx") {
             // No crash when blocking wininet.dll
-            mem::write(reinterpret_cast<size_t>(mod) + 0x16f9, {0xeb});
-            mem::write(reinterpret_cast<size_t>(mod) + 0x1727, {0x90, 0x90});
+            mem::write(base + 0x16f9, {0xeb});
+            mem::write(base + 0x1727, {0x90, 0x90});
         } else if (fn == "ZipObject.mfx") {
             // No random
-            mem::write(reinterpret_cast<size_t>(mod) + 0x8eb7, {0xeb});
-            mem::write(reinterpret_cast<size_t>(mod) + 0x8ed3,
-                       {0x31, 0xc0, 0x90, 0x90, 0x90, 0x90});
+            mem::write(base + 0x8eb7, {0xeb});
+            mem::write(base + 0x8ed3, {0x31, 0xc0, 0x90, 0x90, 0x90, 0x90});
+        } else if (fn == "cctrans.dll") {
+            trans_ptr = base + 0x7547;
         }
         perspective::after_dll_load(fn, mod);
     };
@@ -115,6 +118,12 @@ public:
     }
 
     void draw_menu() override { perspective::draw_menu(); }
+
+    bool set_trans_enabled(bool enabled) override {
+        if (trans_ptr == 0)
+            return false;
+        return enabled ? mem::write<true>(trans_ptr, {0x74}) : mem::write<true>(trans_ptr, {0xeb});
+    }
 
     void* get_prop(plug::PtrProp prop, void* data) override {
         switch (prop) {

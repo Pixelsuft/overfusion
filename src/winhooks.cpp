@@ -299,6 +299,7 @@ static HHOOK WINAPI SetWindowsHookExWH(int idHook, HOOKPROC lpfn, HINSTANCE hmod
 }
 
 static HWND WINAPI SetFocusH(HWND hWnd) {
+    // Note: it's breaks win32 controls, we don't support them anyway
     spdlog::info("Failing SetFocus");
     return nullptr;
 }
