@@ -109,11 +109,11 @@ inline string get_fn(uint64_t a, int b) {
 class IDSBProxy : public IDirectSoundBuffer {
     AudioCapture cap;
     WavHeader header;
+    uint64_t lastRealTime;
+    double virtualTimeAcc;
     ofs::File file;
     IDirectSoundBuffer* pBuf;
     uint32_t bytesWritten;
-    uint64_t lastRealTime;
-    double virtualTimeAcc;
     DWORD currentFreq;
     DWORD originalFreq;
 
