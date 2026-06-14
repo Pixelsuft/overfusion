@@ -120,6 +120,9 @@ static void draw_menu() {
                 audio::flush();
         }
     }
+    if (ImGui::CollapsingHeader("Plugin")) {
+        plug::get().draw_menu();
+    }
     if (ImGui::CollapsingHeader("About")) {
         ImGui::Text("Created by Pixelsuft");
     }

@@ -77,6 +77,8 @@ public:
     bool force_custom_window;
     bool wait_for_debugger;
     bool disable_fullscreen;
+    bool disable_perspective;
+    bool disable_viewport;
 
     Config();
     void read();

@@ -70,6 +70,8 @@ public:
         return perspective::after_proc_get(module, proc, ret);
     }
 
+    void draw_menu() override { perspective::draw_menu(); }
+
     bool set_trans_enabled(bool enabled) override {
         if (trans_ptr == 0)
             return false;

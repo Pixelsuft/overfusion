@@ -152,6 +152,8 @@ Config::Config() {
     force_custom_window = false;
     wait_for_debugger = false;
     disable_fullscreen = false;
+    disable_perspective = false;
+    disable_viewport = false;
 }
 
 // Read boolean variable
@@ -202,6 +204,8 @@ void Config::read() {
     READ_BOOL(force_custom_window);
     READ_BOOL(wait_for_debugger);
     READ_BOOL(disable_fullscreen);
+    READ_BOOL(disable_perspective);
+    READ_BOOL(disable_viewport);
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
     if (data["ffmpeg_cmdline"].is_string())

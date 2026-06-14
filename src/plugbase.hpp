@@ -30,32 +30,32 @@ public:
     std::string name;
     std::string cmdline_append;
 
-    PlugBase() : name("Abstract plugin") {}
+    PlugBase();
     // Early init
-    virtual bool pre_init() { return true; }
+    virtual bool pre_init();
     // Init before processing first frame
-    virtual bool update_init() { return true; }
+    virtual bool update_init();
     // DLL load hook
-    virtual ost::optional<std::string> before_dll_load(ost::string_view path, ost::string_view fn) {
-        return {};
-    }
+    virtual ost::optional<std::string> before_dll_load(ost::string_view path, ost::string_view fn);
     // When DLL was loaded
-    virtual void after_dll_load(ost::string_view path, ost::string_view fn, void* mod) {}
+    virtual void after_dll_load(ost::string_view path, ost::string_view fn, void* mod);
     // GetProcAddress hook
-    virtual void* after_proc_get(void* module, const char* proc, void* ret) { return ret; }
+    virtual void* after_proc_get(void* module, const char* proc, void* ret);
     // You should implement transition enable/disable iuf your game uses so
-    virtual bool set_trans_enabled(bool enabled) { return false; }
+    virtual bool set_trans_enabled(bool enabled);
     // Normalize mouse coordinates from window
-    virtual std::pair<float, float> mouse_from_window(int x, int y) { return {0.f, 0.f}; }
+    virtual std::pair<float, float> mouse_from_window(int x, int y);
     // Get window coordinates from normalized
-    virtual std::pair<int, int> mouse_to_window(float x, float y) { return {0, 0}; }
+    virtual std::pair<int, int> mouse_to_window(float x, float y);
+    // Draw menu inside the "Plugin" collapsing header
+    virtual void draw_menu();
     // Get pointer to something
     virtual void* get_prop(PtrProp prop, void* data = nullptr) = 0;
     // Save game and your data here
     virtual ost::expected<void, std::string> save_state(ofs::File& file) = 0;
     // Load game and your data here
     virtual ost::expected<void, std::string> load_state(ofs::File& file) = 0;
-    virtual ~PlugBase() {}
+    virtual ~PlugBase();
 };
 
 using PlugCheckCallback = void (*)(PlugBase** buf, bool& check);

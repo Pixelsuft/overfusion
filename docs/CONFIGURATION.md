@@ -32,6 +32,8 @@ You can use [default config](../overfusion.json) as well.
 `pixel_filter` - make the game look pixelated instead of blurry (only for Direct3D 9 games) <br />
 `ui_pixel_filter` - do the same but for OF UI <br />
 `save_vfs` - save/load VFS state into state file <br />
+`disable_viewport` - disable `Viewport.mfx` Fusion plugin display <br />
+`disable_perspective` - disable `Perspective.mfx` Fusion plugin display <br />
 `cmdline_append` - extra command line arguments passed to the game <br />
 `ffmpeg_cmdline` - FFmpeg command line for video capturing <br />
 `binds` - keyboard bindings
