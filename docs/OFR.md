@@ -10,7 +10,7 @@ First lines (order may be different): <br />
 5th line starts with: `negative number (-4)`,system_offset,`system time offset in ms (info)` <br />
 6th line starts with: `negative number (-3)`,local_offset,`local time offset in ms (info)` <br />
 7th line starts with: `negative number (-2)`,startup_offset,`startup time offset in ms (info)` <br />
-8th line starts with: `negative number (-1)`,events_begin <br />
+8th line starts with: `negative number (-1)`,events_begin,`0` <br />
 
 Then event lines (sorted by `frame number`): <br />
 `frame number`,`event id`,`event data seperated with comma` <br />

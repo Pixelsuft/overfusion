@@ -202,7 +202,7 @@ bool state::is_processing_save() { return processing_save; }
 void state::export_replay(string_view fn) {
     last_msg.clear();
     ofs::File file;
-    if (!file.open(base_path + '\\' + string(fn), 1, false)) {
+    if (!file.open(base_path + '\\' + string(fn) + ".ofr", 1, false)) {
         spdlog::error("Failed to open replay file \"{}\" for writing", fn);
         last_msg = "Failed to save replay file";
         return;
@@ -260,7 +260,7 @@ void state::import_replay(string_view fn) {
     auto& cfg = conf::get();
     ofs::File file;
     last_msg.clear();
-    if (!file.open(base_path + '\\' + string(fn), 0, false)) {
+    if (!file.open(base_path + '\\' + string(fn) + ".ofr", 0, false)) {
         spdlog::error("Failed to open replay file \"{}\" for reading", fn);
         last_msg = "Failed to open replay file";
         return;
@@ -301,9 +301,28 @@ void state::import_replay(string_view fn) {
         } else if (sub == "rerecords") {
             temp_state.rerec_count = std::max(str_to_int(sub2), 0);
         } else if (sub == "fps") {
+            int need_fps = str_to_int(sub2);
+            if (need_fps != cfg.fps) {
+                spdlog::warn("Mismatch between config FPS ({}) and replay ({})", cfg.fps, need_fps);
+            }
         } else if (sub == "system_offset") {
+            auto offset = static_cast<uint64_t>(str_to_int(sub2));
+            if (offset != cfg.system_offset) {
+                spdlog::warn("Mismatch between config system time offset ({}) and replay ({})",
+                             cfg.system_offset, offset);
+            }
         } else if (sub == "local_offset") {
+            auto offset = static_cast<uint64_t>(str_to_int(sub2));
+            if (offset != cfg.local_offset) {
+                spdlog::warn("Mismatch between config local time offset ({}) and replay ({})",
+                             cfg.local_offset, offset);
+            }
         } else if (sub == "startup_offset") {
+            auto offset = static_cast<uint64_t>(str_to_int(sub2));
+            if (offset != cfg.startup_offset) {
+                spdlog::warn("Mismatch between config startup time offset ({}) and replay ({})",
+                             cfg.startup_offset, offset);
+            }
         } else if (sub == "events_begin") {
             break;
         } else {

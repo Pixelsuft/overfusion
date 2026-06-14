@@ -664,7 +664,7 @@ void input::sim_mouse_move(int x, int y) {
 std::pair<int, int> input::get_real_mouse_pos() {
     // Get mouse pos relative to the game window
     POINT pt;
-    if (GetCursorPosO(&pt) && ScreenToClient(::hwnd, &pt))
+    if (GetCursorPosO(&pt) && ScreenToClient(::mhwnd, &pt))
         return {pt.x, pt.y};
     spdlog::error("Failed to get mouse pos");
     return {-100, -100};
