@@ -16,7 +16,7 @@ short __stdcall DisplayRunObjectH(void* pthis) {
 } // namespace perspective
 
 void perspective::after_dll_load(ost::string_view fn, void* mod) {
-    if (fn == "Perspective.mfx")
+    if (!mod_handle && fn == "Perspective.mfx")
         mod_handle = mod;
 }
 

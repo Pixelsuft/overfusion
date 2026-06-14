@@ -27,8 +27,8 @@
   "pixel_filter": true,
   "ui_pixel_filter": true,
   "save_vfs": true,
-  "disable_viewport": true,
-  "disable_perspective": true,
+  "disable_viewport": false,
+  "disable_perspective": false,
   "cmdline_append": " /DEBUG /NOVSYNC /MIS0 /NOC",
   "ffmpeg_cmdline": "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an -vcodec h264_nvenc -b:v 10000k $PROJ/video_$ID.mp4",
   "binds": [

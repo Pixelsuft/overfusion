@@ -1,9 +1,9 @@
 #define WIN32_LEAN_AND_MEAN
-#include "../src/ass.hpp"
 #include "../src/config.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
+#include "../tools/perspective.hpp"
 #include "../tools/timer_fix.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
@@ -107,7 +107,14 @@ public:
             mem::write(reinterpret_cast<size_t>(mod) + 0x8ed3,
                        {0x31, 0xc0, 0x90, 0x90, 0x90, 0x90});
         }
+        perspective::after_dll_load(fn, mod);
     };
+
+    void* after_proc_get(void* module, const char* proc, void* ret) override {
+        return perspective::after_proc_get(module, proc, ret);
+    }
+
+    void draw_menu() override { perspective::draw_menu(); }
 
     void* get_prop(plug::PtrProp prop, void* data) override {
         switch (prop) {

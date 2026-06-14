@@ -1,11 +1,12 @@
 #define WIN32_LEAN_AND_MEAN
-#include "../src/ass.hpp"
 #include "../src/config.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
 #include "../src/winhooks.hpp"
+#include "../tools/perspective.hpp"
 #include "../tools/timer_fix.hpp"
+#include "../tools/viewport.hpp"
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
@@ -102,7 +103,19 @@ public:
             mem::write(base + 0xb209, {0xeb});
             mem::write(base + 0x88cb, {0x90, 0x90, 0x90, 0x90, 0x90});
         }
+        viewport::after_dll_load(fn, mod);
+        perspective::after_dll_load(fn, mod);
     };
+
+    void* after_proc_get(void* module, const char* proc, void* ret) override {
+        return perspective::after_proc_get(module, proc,
+                                           viewport::after_proc_get(module, proc, ret));
+    }
+
+    void draw_menu() override {
+        viewport::draw_menu();
+        perspective::draw_menu();
+    }
 
     std::pair<float, float> mouse_from_window(int x, int y) override {
         if (x < 0 || y < 0)
