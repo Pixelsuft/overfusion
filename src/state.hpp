@@ -28,7 +28,7 @@ void add_mouse_move();
 void fill_kbd_state(unsigned char* data);
 void draw_info();
 void save_state(int slot);
-void load_state(int slot, bool no_recursion = false);
+void load_state(int slot);
 void reset_game();
 void clear_temp_events();
 void set_last_msg(ost::string_view msg);

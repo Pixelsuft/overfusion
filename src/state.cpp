@@ -477,17 +477,16 @@ void state::save_state(int slot) {
     spdlog::info("State saved");
 }
 
-void state::load_state(int slot, bool no_recursion) {
+void state::load_state(int slot) {
     last_msg.clear();
     need_scene_slot = empty_save_slot;
     auto& cfg = conf::get();
-    if (cfg.is_replay && cfg.reset_on_replay && st.frames != 0 && !no_recursion) {
+    if (cfg.is_replay && cfg.reset_on_replay && st.frames != 0) {
         // Need to restart game before replay
         need_scene_slot = slot;
         if (!plug::get().set_trans_enabled(false))
             spdlog::debug("Failed to set transitions disabled");
         reset_game();
-        last_msg = "Restarting game";
         return;
     }
     ofs::File file(base_path + "\\state_" + std::to_string(slot) + ".ofstate", 0);
@@ -498,7 +497,7 @@ void state::load_state(int slot, bool no_recursion) {
     }
     temp_handle = file.get_handle();
     static char test_buf[8];
-    if (!file.read(test_buf, 8) || memcmp(test_buf, "ofstate!", 8) != 0) {
+    if (!file.read(test_buf, 8) || std::memcmp(test_buf, "ofstate!", 8) != 0) {
         spdlog::error("Invalid state file");
         return;
     }
@@ -512,20 +511,23 @@ void state::load_state(int slot, bool no_recursion) {
     State temp_state;
     // State& temp_state = st;
     load_bin(file, temp_state.scene);
-    if (!cfg.is_replay && temp_state.scene != st.scene && !no_recursion) {
+    if (!cfg.is_replay && temp_state.scene != st.scene) {
         // Need to switch scene before loading state
         need_scene_slot = slot;
-        if (!plug::get().set_trans_enabled(false))
-            spdlog::debug("Failed to set transitions disabled");
-        spdlog::debug("Preparing scene change: {} -> {}", st.scene, temp_state.scene);
-        last_msg = "Changing scene: " + std::to_string(st.scene) + " -> " +
-                   std::to_string(temp_state.scene);
         void* pState = plug::get().get_prop(plug::PtrProp::PState);
         short* ptr =
             reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
+        // Skip if change is already in progress
+        if (*ptr)
+            return;
+        spdlog::debug("Preparing scene change: {} -> {}", st.scene, temp_state.scene);
+        last_msg = "Changing scene: " + std::to_string(st.scene) + " -> " +
+                   std::to_string(temp_state.scene);
         *ptr = 3;
         ptr = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
         *ptr = static_cast<short>(temp_state.scene) | 0x8000;
+        if (!plug::get().set_trans_enabled(false))
+            spdlog::debug("Failed to set transitions disabled");
         return;
     }
     load_bin(file, temp_state.frames);
@@ -701,10 +703,10 @@ bool state::before_update(bool is_transitioning) {
         if (is_transitioning) {
             cfg.need_advance = true;
         } else {
-            load_state(need_scene_slot, true);
+            load_state(need_scene_slot);
             cfg.is_paused = true;
             cfg.need_advance = false;
-            if (!plug::get().set_trans_enabled(true))
+            if (need_scene_slot == empty_save_slot && !plug::get().set_trans_enabled(true))
                 spdlog::debug("Failed to set transitions back enabled");
         }
     }
@@ -988,6 +990,12 @@ void state::reset_game() {
     // Seems to be pausing the game prevents it from desyncing by 1 frame FSR lul
     conf::get().is_paused = true;
     updating = false;
+    void* pState = plug::get().get_prop(plug::PtrProp::PState);
+    short* ptr =
+        reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
+    // Skip if reset is already in progress
+    if (*ptr)
+        return;
     st.prev_input.clear();
     st.ev.clear();
     st.frames = 0;
@@ -997,12 +1005,10 @@ void state::reset_game() {
     msgbox_buf.clear();
     cur_holding.clear();
     repl_index = 0;
-    void* pState = plug::get().get_prop(plug::PtrProp::PState);
-    short* ptr =
-        reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
     *ptr = 4;
     ptr = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
     *ptr = 0;
     files::clear_fs();
     audio::reinit_capture();
+    last_msg = "Restarting game";
 }
