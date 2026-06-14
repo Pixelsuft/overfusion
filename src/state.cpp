@@ -986,6 +986,9 @@ void state::clear_temp_events() {
 }
 
 void state::reset_game() {
+    // Seems to be pausing the game prevents it from desyncing by 1 frame FSR lul
+    conf::get().is_paused = true;
+    updating = false;
     st.prev_input.clear();
     st.ev.clear();
     st.frames = 0;
