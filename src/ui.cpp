@@ -97,6 +97,7 @@ static void draw_menu() {
         ImGui::InputText("Replay filename", replay_buf, 1024);
         if (ImGui::Button("Export"))
             state::export_replay(replay_buf);
+        ImGui::SameLine();
         if (ImGui::Button("Import"))
             state::import_replay(replay_buf);
         if (ImGui::Button("Clear temp events queue"))
@@ -123,8 +124,11 @@ static void draw_menu() {
     if (ImGui::CollapsingHeader("Plugin")) {
         plug::get().draw_menu();
     }
-    if (ImGui::CollapsingHeader("About")) {
-        ImGui::Text("Created by Pixelsuft");
+    if (ImGui::CollapsingHeader("Settings")) {
+        ImGui::Checkbox("Draw cursor", &cfg.draw_cursor);
+        ImGui::Checkbox("Pause on scene switch", &cfg.pause_on_scene_switch);
+        ImGui::Checkbox("Save game state", &cfg.save_game_state);
+        ImGui::Checkbox("Save VFS in state", &cfg.save_vfs);
     }
 #ifdef _DEBUG
     if (ImGui::CollapsingHeader("Debug")) {
@@ -142,6 +146,9 @@ static void draw_menu() {
         }
     }
 #endif
+    if (ImGui::CollapsingHeader("About")) {
+        ImGui::Text("Created by Pixelsuft");
+    }
     ImGui::End();
 }
 
