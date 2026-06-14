@@ -522,7 +522,7 @@ ost::optional<ost::string_view> input::vk_to_string(int vk) {
         return "Quote";
 
     default:
-        spdlog::error("Unknown keycode value: {}", vk);
+        // spdlog::error("Unknown keycode value: {}", vk);
         return {};
     }
 }

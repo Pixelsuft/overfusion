@@ -109,6 +109,10 @@ static int __stdcall UpdateGameFrameH() {
         video::after_draw();
         if (cfg.custom_window)
             customwindow::render();
+        if (*pStep != 0) {
+            spdlog::error("Subtick step check failed: got {} instead of 0", *pStep);
+            *pStep = 0;
+        }
     }
     if (ret != 0)
         spdlog::debug("UpdateGameFrame got ret={}", ret);
