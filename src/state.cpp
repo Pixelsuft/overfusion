@@ -207,11 +207,20 @@ void state::export_replay(string_view fn) {
         last_msg = "Failed to save replay file";
         return;
     }
-    auto fret = file.writeln("-4,pixelsuft_overfusion," + std::to_string(replay_version));
+    auto& cfg = conf::get();
+    auto fret = file.writeln("-8,pixelsuft_overfusion," + std::to_string(replay_version));
     ENSURE(fret);
-    fret = file.writeln("-3,total," + std::to_string(st.total));
+    fret = file.writeln("-7,total," + std::to_string(st.total));
     ENSURE(fret);
-    fret = file.writeln("-2,rerecords," + std::to_string(st.rerec_count));
+    fret = file.writeln("-6,rerecords," + std::to_string(st.rerec_count));
+    ENSURE(fret);
+    fret = file.writeln("-5,fps," + std::to_string(cfg.fps));
+    ENSURE(fret);
+    fret = file.writeln("-4,system_offset," + std::to_string(cfg.system_offset));
+    ENSURE(fret);
+    fret = file.writeln("-3,local_offset," + std::to_string(cfg.local_offset));
+    ENSURE(fret);
+    fret = file.writeln("-2,startup_offset," + std::to_string(cfg.startup_offset));
     ENSURE(fret);
     fret = file.writeln("-1,events_begin,0");
     ENSURE(fret);
@@ -291,6 +300,10 @@ void state::import_replay(string_view fn) {
             temp_state.total = str_to_int(sub2);
         } else if (sub == "rerecords") {
             temp_state.rerec_count = std::max(str_to_int(sub2), 0);
+        } else if (sub == "fps") {
+        } else if (sub == "system_offset") {
+        } else if (sub == "local_offset") {
+        } else if (sub == "startup_offset") {
         } else if (sub == "events_begin") {
             break;
         } else {
