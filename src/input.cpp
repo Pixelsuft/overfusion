@@ -605,6 +605,16 @@ void input::handle_input_real(int vk, bool pressed) {
                 break;
             state::set_key_down(bind.extra, pressed);
             break;
+        case conf::Task::ReplayMode:
+            if (pressed && !prev && !cfg.show_menu) {
+                ASS(bind.extra == -1 || bind.extra == 0 || bind.extra == 1);
+                if (bind.extra == 0)
+                    cfg.is_replay = !cfg.is_replay;
+                else
+                    cfg.is_replay = bind.extra == 1;
+                state::on_mode_switch();
+            }
+            break;
         case conf::Task::MouseDown:
             if (pressed && !prev && !cfg.show_menu)
                 state::add_mouse_toggle(bind.extra);

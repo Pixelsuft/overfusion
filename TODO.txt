@@ -1,7 +1,7 @@
-[ ] Use CWD:\\ or like path to make FS names protable + user folder
+[ ] Use CWD:\\ or like path to make FS names portable + user folder
 [ ] Fix that ugly audio recording implementation
 [ ] More use of ost::optional, ost::expected
-[ ] Add more binds (reset game, toggle replay mode, load state in record mode)
+[ ] Add more binds (reset game, load state in record mode)
 [ ] Support random manipulation (+rand() and srand() stable reimpl)
 [ ] Add skip drawing
 [ ] Maybe use a different config (ofproject.json) for keeping replay info such as fps, time offsets, mouse manipulation cfg, pre-made files??

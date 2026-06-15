@@ -20,9 +20,8 @@ using std::string;
 
 static Config* _conf_ptr;
 
-static nlohmann::json read_config_file(string& proj_name) {
+static nlohmann::json read_config_file(ost::string_view path) {
     // Try to read and parse config file from disk
-    auto path = std::string(files::get_cwd()) + '\\' + proj_name + "\\overfusion.json";
     spdlog::info("Config path: {}", path);
     ofs::File file(path, 0);
     if (!file.is_open()) {
@@ -74,7 +73,8 @@ static ost::optional<conf::Task> task_from_string(string_view sv) {
         {"map", conf::Task::Map},
         {"mouse_down", conf::Task::MouseDown},
         {"mouse_move", conf::Task::MouseMove},
-        {"menu", conf::Task::Menu}};
+        {"menu", conf::Task::Menu},
+        {"replay_mode", conf::Task::ReplayMode}};
     auto it = task_map.find(sv);
     if (it == task_map.end()) {
         // TODO: maybe move warns/errors from this funcs to top level funcs??
@@ -165,7 +165,8 @@ Config::Config() {
 void Config::read() {
     auto temp_ret = ofs::make_dir(project_name);
     ENSURE(temp_ret);
-    auto data = read_config_file(project_name);
+    auto data =
+        read_config_file(std::string(files::get_cwd()) + '\\' + project_name + "\\overfusion.json");
     if (data["fps"].is_number_unsigned())
         fps = data["fps"];
     auto& fr = data["force_resolution"];
@@ -259,6 +260,12 @@ void Config::read() {
             case Task::FastForward:
                 if (val["toggle"].is_boolean())
                     bind.extra = val["toggle"];
+                break;
+            case Task::ReplayMode:
+                if (val["value"].is_number_integer()) {
+                    bind.extra = val["value"];
+                    bind.extra = std::min(std::max(bind.extra, -1), 1);
+                }
                 break;
             case Task::Map: {
                 auto target_v = key_from_json(val["target"]);

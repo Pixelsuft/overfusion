@@ -787,7 +787,6 @@ void state::after_update() {
             cfg.is_replay = false;
             ENSURE(repl_index == st.ev.size());
             on_mode_switch();
-            last_msg = "Switched to recording";
         }
         // Attempting to sync with hourglass
         if (false) {
@@ -943,10 +942,12 @@ void state::on_mode_switch() {
     cur_holding.clear();
     if (cfg.is_replay) {
         repl_index = st.calc_current_index();
+        last_msg = "Switched to replay mode";
     } else {
         // TODO: maybe trim on the first frame, not directly when loading?
         st.trim();
         repl_index = 0;
+        last_msg = "Switched to recording";
     }
 }
 

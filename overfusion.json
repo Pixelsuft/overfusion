@@ -131,6 +131,11 @@
       "toggle": false
     },
     {
+      "key": "Q",
+      "task": "replay_mode",
+      "value": 0
+    },
+    {
       "key": "V",
       "task": "advance"
     },
