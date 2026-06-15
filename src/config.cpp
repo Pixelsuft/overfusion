@@ -118,6 +118,7 @@ Config::Config() {
     pUpdateGameFrame = pRenderFrame = pProcessTransition = pRenderTransition = nullptr;
     forced_res = {0, 0};
     speed = 1.f;
+    font_scale = 1.f;
     fps = 0;
     render_type = RenderType::None;
     show_menu = show_info = true;
@@ -181,6 +182,10 @@ void Config::read() {
     if (data["speed"].is_number_float()) {
         speed = data["speed"];
         speed = std::min(std::max(speed, 0.05f), 2.f);
+    }
+    if (data["font_scale"].is_number_float()) {
+        font_scale = data["font_scale"];
+        font_scale = std::min(std::max(font_scale, 0.05f), 3.f);
     }
     READ_BOOL(show_info);
     READ_BOOL(show_menu);

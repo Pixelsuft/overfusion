@@ -43,6 +43,7 @@ public:
     size_t tm_fix_event_entry_offset;
     size_t tm_fix_event_entry_type_offset;
     float speed;
+    float font_scale;
     int fps;
     RenderType render_type;
     bool show_info;

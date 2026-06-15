@@ -141,12 +141,18 @@ static void draw_menu(bool custom_window) {
         plug::get().draw_menu();
     }
     if (ImGui::CollapsingHeader("Settings")) {
+        if (ImGui::SliderFloat("Font scale", &cfg.font_scale, 0.05f, 3.f))
+            cfg.font_scale = std::min(std::max(cfg.font_scale, 0.05f), 3.f);
+        if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+            cfg.font_scale = 1.f;
         ImGui::Checkbox("Draw cursor", &cfg.draw_cursor);
         ImGui::Checkbox("Pause on scene switch", &cfg.pause_on_scene_switch);
         ImGui::Checkbox("Save game state", &cfg.save_game_state);
         ImGui::Checkbox("Save VFS in state", &cfg.save_vfs);
-        if (!cfg.custom_window)
+        if (!cfg.custom_window) {
             ImGui::Checkbox("Show info window", &cfg.show_info);
+            ImGui::Checkbox("Pixel filter", &cfg.pixel_filter);
+        }
     }
 #ifdef _DEBUG
     if (ImGui::CollapsingHeader("Debug")) {
@@ -172,6 +178,7 @@ static void draw_menu(bool custom_window) {
 
 void ui::draw(bool force_custom_menu) {
     auto& cfg = conf::get();
+    ImGui::GetIO().FontGlobalScale = cfg.font_scale;
     if (cfg.show_info && !force_custom_menu) {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
         draw_info(cfg.custom_window);
