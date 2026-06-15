@@ -85,6 +85,8 @@ static lock::CriticalSection acs;
 static bool capturing;
 // For generating fn
 static uint64_t last_time;
+// Time offset
+static uint64_t cap_time_offset;
 // For generating fn
 static int last_uid;
 
@@ -98,10 +100,12 @@ static int gen_uid(uint64_t mytime) {
 }
 
 // Layer func for getting current audio time
-inline uint64_t audio_get_time() { return state::get_time(state::TimeOffset::None); }
+inline uint64_t audio_get_time() {
+    return state::get_time(state::TimeOffset::None) - audio::cap_time_offset;
+}
 
 // Generate unique filename via 'time' and 'idx'
-inline string get_fn(uint64_t a, int b) {
+inline string audio_get_fn(uint64_t a, int b) {
     return "a_" + std::to_string(a) + "_" + std::to_string(b) + ".wav";
 }
 
@@ -163,7 +167,7 @@ class IDSBProxy : public IDirectSoundBuffer {
         // Open audio file, write default WAV header
         auto cur_time = audio_get_time();
         auto idx = gen_uid(cur_time);
-        file = ofs::File(base_path + '\\' + get_fn(cur_time, idx), 1);
+        file = ofs::File(base_path + '\\' + audio_get_fn(cur_time, idx), 1);
         file.write(&header, sizeof(WavHeader));
         bytesWritten = 0;
         cap.startTime = cap.endTime = cur_time;
@@ -182,7 +186,8 @@ public:
             if (virtualTimeAcc <= 0.0) {
                 spdlog::debug("Sound: got virtualTimeAcc <= 0");
                 file.close();
-                auto rem_ret = ofs::remove_file(base_path + '\\' + get_fn(cap.startTime, cap.idx));
+                auto rem_ret =
+                    ofs::remove_file(base_path + '\\' + audio_get_fn(cap.startTime, cap.idx));
                 ENSURE(rem_ret);
                 return;
             }
@@ -202,7 +207,8 @@ public:
                 return;
             }
             spdlog::debug("Sound: got endTime <= startTime");
-            auto rem_ret = ofs::remove_file(base_path + '\\' + get_fn(cap.startTime, cap.idx));
+            auto rem_ret =
+                ofs::remove_file(base_path + '\\' + audio_get_fn(cap.startTime, cap.idx));
             ENSURE(rem_ret);
         }
     }
@@ -415,6 +421,7 @@ void audio::reinit_capture() {
     capturing = conf::get().record_audio;
     last_uid = 0;
     last_time = 0;
+    cap_time_offset = 0; // TODO: configure it
 }
 
 void audio::init() {
@@ -473,7 +480,7 @@ void audio::flush() {
         double totalDuration = static_cast<double>(c.endTime - c.startTime) / 1000.0;
         ASS(!c.events.empty());
         size_t numSegs = c.events.size();
-        filters.write("amovie=" + get_fn(c.startTime, c.idx) +
+        filters.write("amovie=" + audio_get_fn(c.startTime, c.idx) +
                       ",asplit=" + std::to_string(numSegs));
         for (size_t e = 0; e < numSegs; e++) {
             filters.write("[b" + std::to_string(count) + "s" + std::to_string(e) + "]");

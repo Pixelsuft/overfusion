@@ -125,6 +125,13 @@ static void draw_menu(bool custom_window) {
             if (ImGui::Button("Stop video recording"))
                 video::stop();
         }
+        if (cfg.allow_audio_hook && !cfg.disable_audio && !audio::is_recording() &&
+            state::get_frame_counter() == 0) {
+            if (ImGui::Button("Start audio capture")) {
+                cfg.record_audio = true;
+                audio::reinit_capture();
+            }
+        }
         if (cfg.record_audio && audio::is_recording()) {
             if (ImGui::Button("Stop audio capture"))
                 audio::flush();
