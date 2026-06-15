@@ -166,8 +166,10 @@ Config::Config() {
 void Config::read() {
     auto temp_ret = ofs::make_dir(project_name);
     ENSURE(temp_ret);
-    auto data =
-        read_config_file(std::string(files::get_cwd()) + '\\' + project_name + "\\overfusion.json");
+    // auto data =
+    //     read_config_file(string(files::get_cwd()) + '\\' + project_name +
+    //     "\\overfusion.json");
+    auto data = read_config_file(string(files::get_cwd()) + "\\overfusion.json");
     if (data["fps"].is_number_unsigned())
         fps = data["fps"];
     auto& fr = data["force_resolution"];
@@ -314,7 +316,7 @@ void Config::read() {
             for (int mod : bind.mods) {
                 auto v = input::vk_to_string(mod);
                 ASS(v.has_value());
-                mods_str.push_back(std::string(v.value()));
+                mods_str.push_back(string(v.value()));
             }
             spdlog::info("Bind (task={}, extra={}, key='{}', mods={})", static_cast<int>(bind.task),
                          bind.extra, key_str.value(), mods_str);

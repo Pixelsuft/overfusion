@@ -1,14 +1,12 @@
 ## Config file
 
-Create config file `overfusion.json` inside the `path-to-the-game\project-name` folder. <br />
+Create config file `overfusion.json` inside the game folder. <br />
 You can use [default config](../overfusion.json) as well.
 
 ## Settings
 
-`fps` - game FPS <br />
 `force_resolution` - can be used to force game thinking that window resolution is this one (useful for direct video capturing) <br />
 `force_custom_window` - force custom window for UI (for Direct3D 9 games) <br />
-`system_time_offset`, `local_time_offset`, `startup_time_offset` - emulated virtual time (in ms, relative to when starting a game) <br />
 `disable_fullscreen` - Prevent game from entering into fullscreen mode <br />
 `wait_for_debugger` - Wait till the debugger attached before running a game <br />
 `show_menu` - show OF menu by fault <br />
@@ -28,7 +26,6 @@ You can use [default config](../overfusion.json) as well.
 `disable_audio` - disable audio playback completely <br />
 `record_audio` - record in-game audio <br />
 `support_audio_panning` - support panning for recording audio <br />
-`no_mouse_manipulation` - disallow the game to manipulate the mouse <br />
 `draw_cursor` - draw dot in the virtual mouse position (currently works only without the custom window) <br />
 `pixel_filter` - make the game look pixelated instead of blurry (only for Direct3D 9 games) <br />
 `ui_pixel_filter` - do the same but for OF UI <br />
@@ -38,7 +35,11 @@ You can use [default config](../overfusion.json) as well.
 `disable_perspective` - disable `Perspective.mfx` Fusion plugin display <br />
 `cmdline_append` - extra command line arguments passed to the game <br />
 `ffmpeg_cmdline` - FFmpeg command line for video capturing <br />
-`binds` - keyboard bindings
+`binds` - keyboard bindings <br />
+
+`fps` - game FPS <br />
+`system_time_offset`, `local_time_offset`, `startup_time_offset` - emulated virtual time (in ms, relative to when starting a game) <br />
+`no_mouse_manipulation` - disallow the game to manipulate the mouse
 
 ## Bindings
 
