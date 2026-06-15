@@ -123,6 +123,8 @@ struct win_shit_type {
                                      const DTTOPTS*);
     HTHEME(WINAPI* OpenThemeData)(HWND hwnd, LPCWSTR pszClassList);
     HRESULT(WINAPI* SetWindowTheme)(HWND hwnd, LPCWSTR pszSubAppName, LPCWSTR pszSubIdList);
+    HRESULT(WINAPI* DwmSetWindowAttribute)(HWND hwnd, DWORD dwAttribute, LPCVOID pvAttribute,
+                                           DWORD cbAttribute);
     RtlGetVersion_t RtlGetVersion;
     HTHEME g_menuTheme;
     HBRUSH g_brBarBackground;
@@ -214,6 +216,11 @@ void winhooks::init_win32_theme() {
         reinterpret_cast<RtlGetVersion_t>(GetProcAddress(ntdll_handle, "RtlGetVersion"));
     if (!win_shit.RtlGetVersion)
         return;
+    auto dwmapi_handle = GetModuleHandleW(L"dwmapi.dll");
+    if (dwmapi_handle) {
+        win_shit.DwmSetWindowAttribute = reinterpret_cast<decltype(win_shit.DwmSetWindowAttribute)>(
+            GetProcAddress(dwmapi_handle, "DwmSetWindowAttribute"));
+    }
     WIN_NTDLL_OSVERSIONINFOEXW os_ver;
     os_ver.dwOSVersionInfoSize = sizeof(WIN_NTDLL_OSVERSIONINFOEXW);
     win_shit.RtlGetVersion(&os_ver);
@@ -222,7 +229,7 @@ void winhooks::init_win32_theme() {
     if (win_shit.build_num < 17763)
         return;
     auto uxtheme_handle = GetModuleHandleW(L"uxtheme.dll");
-    if (uxtheme_handle == nullptr)
+    if (!uxtheme_handle)
         return;
     win_shit.g_hDarkBgBrush = CreateSolidBrush(RGB(32, 32, 32));
     win_shit.g_hLightDarkBgBrush = CreateSolidBrush(RGB(40, 40, 40));
@@ -237,7 +244,7 @@ void winhooks::init_win32_theme() {
     if (win_shit.DrawThemeTextEx == nullptr || win_shit.OpenThemeData == nullptr)
         win_shit.CloseThemeData = nullptr;
     auto user32_handle = GetModuleHandleW(L"user32.dll");
-    if (user32_handle == nullptr)
+    if (!user32_handle)
         return;
     win_shit.SetWindowCompositionAttribute = reinterpret_cast<SetWindowCompositionAttribute_t>(
         GetProcAddress(user32_handle, "SetWindowCompositionAttribute"));
@@ -366,6 +373,13 @@ bool winhooks::fix_win32_window_bg(void* _hwnd) {
         return true;
     }
     return false;
+}
+
+void winhooks::fix_win32_sys_anim(void* _hwnd, bool enabled) {
+    if (!win_shit.DwmSetWindowAttribute)
+        return;
+    BOOL value = enabled ? 1 : 0;
+    win_shit.DwmSetWindowAttribute(reinterpret_cast<HWND>(_hwnd), 3, &value, sizeof(value));
 }
 
 static void UAHDrawMenuNCBottomLine(HWND hWnd) {

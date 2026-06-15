@@ -1,7 +1,7 @@
 [ ] Use CWD:\\ or like path to make FS names portable + user folder
 [ ] Fix that ugly audio recording implementation
 [ ] Add more binds (import/export replay by name or current name in ui???)
-[ ] Improve the codebase (ex.: custom window)
+[ ] Improve the codebase (ex.: custom window, darkmode api)
 [ ] Support random manipulation (+rand() and srand() stable reimpl)
 [ ] Add skip drawing
 [ ] Optimize jumbo builds via Python (devirtualize calls, etc)

@@ -16,7 +16,6 @@
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam,
                                                              LPARAM lParam);
 extern IDirect3D9*(WINAPI* Direct3DCreate9O)(UINT SDKVersion);
-// TODO: extern ShowWindowO, etc
 extern HWND hwnd;
 
 namespace customwindow {
@@ -309,7 +308,7 @@ void customwindow::render() {
 }
 
 void customwindow::update_menu_show() {
-    // TODO: DwmSetWindowAttribute(hWnd, DWMWA_TRANSITIONS_FORCEDISABLED, &bDisableAnim,
-    // sizeof(bDisableAnim));
+    winhooks::fix_win32_sys_anim(g_menu->get_handle(), true);
     g_menu->set_shown(conf::get().show_menu);
+    winhooks::fix_win32_sys_anim(g_menu->get_handle(), false);
 }

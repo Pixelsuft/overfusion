@@ -8,6 +8,7 @@ void fix_win32_theme_instant(void* hwnd);
 void fix_win32_theme_messagebox(void* hwnd);
 void fix_win32_set_dark_style(void* hwnd, const wchar_t* style);
 bool fix_win32_window_bg(void* hwnd);
+void fix_win32_sys_anim(void* hwnd, bool enabled);
 void init_win32_theme();
 void pre_init_win32_theme();
 void init();
