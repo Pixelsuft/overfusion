@@ -1,7 +1,6 @@
 [ ] Use CWD:\\ or like path to make FS names portable + user folder
 [ ] Fix that ugly audio recording implementation
-[ ] More use of ost::optional, ost::expected
-[ ] Add more binds (import/export replay by name or current name???)
+[ ] Add more binds (import/export replay by name or current name in ui???)
 [ ] Support random manipulation (+rand() and srand() stable reimpl)
 [ ] Add skip drawing
 [ ] Maybe use a different config (ofproject.json) for keeping replay info such as fps, time offsets, mouse manipulation cfg, pre-made files??
