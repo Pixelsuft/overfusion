@@ -9,15 +9,15 @@
 #include "opt.hpp"
 #include "state.hpp"
 #include "uconv.hpp"
-#include <SimpleIni.h>
 #include <Windows.h>
+#undef min
+#undef max
+#include <SimpleIni.h>
 #include <algorithm>
 #include <fcntl.h>
 #include <imgui.h>
 #include <map>
 #include <spdlog/spdlog.h>
-#undef min
-#undef max
 
 // TODO: implement other filesystem functions
 
