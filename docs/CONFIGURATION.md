@@ -3,9 +3,10 @@
 Create config file `overfusion.json` inside the game folder. <br />
 You can use [default config](../overfusion.json) as well.
 
-## Settings
+## Settings (overfusion.json)
 
 `force_resolution` - can be used to force game thinking that window resolution is this one (useful for direct video capturing) <br />
+`speed` - default game speed in range [0.05, 2.0] <br />
 `force_custom_window` - force custom window for UI (for Direct3D 9 games) <br />
 `disable_fullscreen` - Prevent game from entering into fullscreen mode <br />
 `wait_for_debugger` - Wait till the debugger attached before running a game <br />
@@ -36,6 +37,8 @@ You can use [default config](../overfusion.json) as well.
 `cmdline_append` - extra command line arguments passed to the game <br />
 `ffmpeg_cmdline` - FFmpeg command line for video capturing <br />
 `binds` - keyboard bindings <br />
+
+## Settings (ofproject.json)
 
 `fps` - game FPS <br />
 `system_time_offset`, `local_time_offset`, `startup_time_offset` - emulated virtual time (in ms, relative to when starting a game) <br />

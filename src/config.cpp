@@ -22,14 +22,14 @@ static Config* _conf_ptr;
 
 static nlohmann::json read_config_file(ost::string_view path) {
     // Try to read and parse config file from disk
-    spdlog::info("Config path: {}", path);
+    spdlog::info("Reading config: {}", path);
     ofs::File file(path, 0);
     if (!file.is_open()) {
         spdlog::warn("Config file not found");
         return {};
     }
     auto size = file.size();
-    if (size < 2 || size > (1024 * 1024 * 25)) {
+    if (size < 2 || size > (1024 * 1024 * 16)) {
         spdlog::error("Invalid config file size");
         return {};
     }
@@ -166,12 +166,11 @@ Config::Config() {
 void Config::read() {
     auto temp_ret = ofs::make_dir(project_name);
     ENSURE(temp_ret);
-    // auto data =
-    //     read_config_file(string(files::get_cwd()) + '\\' + project_name +
-    //     "\\overfusion.json");
     auto data = read_config_file(string(files::get_cwd()) + "\\overfusion.json");
-    if (data["fps"].is_number_unsigned())
-        fps = data["fps"];
+    auto proj_data =
+        read_config_file(string(files::get_cwd()) + '\\' + project_name + "\\ofproject.json");
+    if (proj_data["fps"].is_number_unsigned())
+        fps = proj_data["fps"];
     auto& fr = data["force_resolution"];
     if (fr.is_array() && fr.size() > 1) {
         if (fr[0].is_number_unsigned())
@@ -200,7 +199,6 @@ void Config::read() {
     READ_BOOL(disable_audio);
     READ_BOOL(record_audio);
     READ_BOOL(support_audio_panning);
-    READ_BOOL(no_mouse_manipulation);
     READ_BOOL(draw_cursor);
     READ_BOOL(pixel_filter);
     READ_BOOL(ui_pixel_filter);
@@ -212,12 +210,15 @@ void Config::read() {
     READ_BOOL(disable_perspective);
     READ_BOOL(disable_viewport);
     READ_BOOL(pause_on_scene_switch);
-    if (data["system_time_offset"].is_number_unsigned())
-        system_offset = data["system_time_offset"];
-    if (data["local_time_offset"].is_number_unsigned())
-        local_offset = data["local_time_offset"];
-    if (data["startup_time_offset"].is_number_unsigned())
-        startup_offset = data["startup_time_offset"];
+    if (proj_data["system_time_offset"].is_number_unsigned())
+        system_offset = proj_data["system_time_offset"];
+    if (proj_data["local_time_offset"].is_number_unsigned())
+        local_offset = proj_data["local_time_offset"];
+    if (proj_data["startup_time_offset"].is_number_unsigned())
+        startup_offset = proj_data["startup_time_offset"];
+    if (proj_data["no_mouse_manipulation"].is_boolean() ||
+        proj_data["no_mouse_manipulation"].is_number_integer())
+        no_mouse_manipulation = proj_data["no_mouse_manipulation"];
     if (data["cmdline_append"].is_string())
         cmdline_append = data["cmdline_append"];
     if (data["ffmpeg_cmdline"].is_string())
