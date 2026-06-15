@@ -2,6 +2,7 @@
 [ ] Fix that ugly audio recording implementation
 [ ] Allow to start audio recording during first frame?
 [ ] Add more binds (import/export replay by name or current name in ui???)
+[ ] UI scale setting
 [ ] Support random manipulation (+rand() and srand() stable reimpl)
 [ ] Add skip drawing
 [ ] Optimize jumbo builds via Python (devirtualize calls, etc)

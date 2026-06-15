@@ -2,6 +2,7 @@
 #include "input.hpp"
 #include "ass.hpp"
 #include "config.hpp"
+#include "customwindow.hpp"
 #include "mem.hpp"
 #include "state.hpp"
 #include "sv.hpp"
@@ -628,8 +629,11 @@ void input::handle_input_real(int vk, bool pressed) {
                 state::reset_game();
             break;
         case conf::Task::Menu:
-            if (pressed)
+            if (pressed) {
                 cfg.show_menu = !cfg.show_menu;
+                if (cfg.custom_window)
+                    customwindow::update_menu_show();
+            }
             break;
 #ifndef _DEBUG
         default: {

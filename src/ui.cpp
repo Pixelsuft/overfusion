@@ -27,15 +27,15 @@ void ui::set_processing(bool enabled) { processing = enabled; }
 
 bool ui::is_processing() { return processing; }
 
-bool ui::init_imgui_context() {
+void* ui::init_imgui_context() {
     processing = true;
     IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
+    auto ret = ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.IniFilename = nullptr;
     processing = false;
-    return true;
+    return ret;
 }
 
 bool ui::init_imgui_platform(void* hwnd, void* device) {
@@ -74,13 +74,23 @@ static void draw_info(bool custom_window) {
     ImGui::End();
 }
 
-static void draw_menu() {
+static void draw_menu(bool custom_window) {
     auto& cfg = conf::get();
     ImGui::SetNextWindowFocus();
-    if (!ImGui::Begin("OverFusion", nullptr,
-                      (ui_save_sets ? 0 : ImGuiWindowFlags_NoSavedSettings))) {
+    ImGuiWindowFlags flags =
+        (ui_save_sets ? 0 : ImGuiWindowFlags_NoSavedSettings) |
+        (custom_window
+             ? (ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize)
+             : 0);
+    if (!ImGui::Begin("OverFusion", nullptr, flags)) {
         ImGui::End();
         return;
+    }
+    if (custom_window) {
+        ImGui::SetWindowPos(ImVec2(0, 0));
+        auto& io = ImGui::GetIO();
+        ImGui::SetWindowSize(io.DisplaySize);
     }
     if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::Checkbox("Replay mode", &cfg.is_replay))
@@ -128,7 +138,8 @@ static void draw_menu() {
         ImGui::Checkbox("Pause on scene switch", &cfg.pause_on_scene_switch);
         ImGui::Checkbox("Save game state", &cfg.save_game_state);
         ImGui::Checkbox("Save VFS in state", &cfg.save_vfs);
-        ImGui::Checkbox("Show info window", &cfg.show_info);
+        if (!cfg.custom_window)
+            ImGui::Checkbox("Show info window", &cfg.show_info);
     }
 #ifdef _DEBUG
     if (ImGui::CollapsingHeader("Debug")) {
@@ -152,15 +163,20 @@ static void draw_menu() {
     ImGui::End();
 }
 
-void ui::draw() {
+void ui::draw(bool force_custom_menu) {
     auto& cfg = conf::get();
-    if (cfg.show_info) {
+    if (cfg.show_info && !force_custom_menu) {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
         draw_info(cfg.custom_window);
         ImGui::PopStyleVar();
     }
-    if (cfg.show_menu)
-        draw_menu();
+    if (cfg.show_menu && !cfg.custom_window)
+        draw_menu(false);
+    if (force_custom_menu) {
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        draw_menu(true);
+        ImGui::PopStyleVar();
+    }
     if (!cfg.custom_window && cfg.draw_cursor) {
         auto m_pos = state::get_tas_mouse_pos();
         auto m_down = state::get_tas_mouse_down(VK_LBUTTON);

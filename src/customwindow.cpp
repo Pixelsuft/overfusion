@@ -16,35 +16,54 @@
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam,
                                                              LPARAM lParam);
 extern IDirect3D9*(WINAPI* Direct3DCreate9O)(UINT SDKVersion);
+// TODO: extern ShowWindowO, etc
 extern HWND hwnd;
 
 namespace customwindow {
 class Window {
-public:
-    bool init();
-    void cleanup();
-    void render();
-
-private:
-    static LRESULT WINAPI CustomWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-    static HICON GetWindowIcon(HWND targetHwnd);
+    WNDCLASSEXW m_wc;
+    LPDIRECT3D9 m_pD3D;
+    LPDIRECT3DDEVICE9 m_pd3dDevice;
+    D3DPRESENT_PARAMETERS m_d3dpp;
+    HWND m_hwnd;
+    const wchar_t* class_name;
+    ImGuiContext* ctx;
 
     bool RegisterCustomWindowClass(HINSTANCE hInstance);
     bool CreateCustomWindow(HINSTANCE hInstance);
     bool InitD3D9();
     bool InitImGui();
+    static LRESULT WINAPI CustomWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+    static HICON GetWindowIcon(HWND targetHwnd);
 
-    HWND m_hwnd = nullptr;
-    WNDCLASSEXW m_wc = {};
-    LPDIRECT3D9 m_pD3D = nullptr;
-    LPDIRECT3DDEVICE9 m_pd3dDevice = nullptr;
-    D3DPRESENT_PARAMETERS m_d3dpp = {};
+public:
+    Window(const wchar_t* cls_name);
+    ~Window();
+    bool init();
+    void set_shown(bool show);
+    void cleanup();
+    void render();
+    HWND get_handle();
 };
 
-static Window* g_window;
+static Window* g_info;
+static Window* g_menu;
 } // namespace customwindow
 
 using customwindow::Window;
+
+Window::Window(const wchar_t* cls_name) {
+    class_name = cls_name;
+    m_hwnd = nullptr;
+    m_wc = {};
+    m_pD3D = nullptr;
+    m_pd3dDevice = nullptr;
+    m_d3dpp = {};
+}
+
+Window::~Window() {}
+
+HWND Window::get_handle() { return m_hwnd; }
 
 HICON Window::GetWindowIcon(HWND targetHwnd) {
     HICON hIcon = nullptr;
@@ -57,10 +76,13 @@ HICON Window::GetWindowIcon(HWND targetHwnd) {
 }
 
 LRESULT WINAPI Window::CustomWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    Window* self = g_window;
+    Window* self = g_info->get_handle() == hWnd
+                       ? g_info
+                       : ((g_menu && g_menu->get_handle() == hWnd) ? g_menu : nullptr);
     if (!self)
         return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 
+    ImGui::SetCurrentContext(self->ctx);
     if ((msg != WM_KEYDOWN && msg != WM_KEYUP) || conf::get().show_menu)
         ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
 
@@ -99,17 +121,19 @@ bool Window::RegisterCustomWindowClass(HINSTANCE hInstance) {
     m_wc.style = CS_CLASSDC;
     m_wc.lpfnWndProc = CustomWndProc;
     m_wc.hInstance = hInstance;
-    m_wc.lpszClassName = L"OverFusionWindow";
+    m_wc.lpszClassName = class_name;
     m_wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     return RegisterClassExW(&m_wc) != 0;
 }
 
 bool Window::CreateCustomWindow(HINSTANCE hInstance) {
     RECT rect = {0, 0, 320, 200};
+    if (this == g_menu)
+        rect = {0, 0, 400, 600};
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
-    m_hwnd = CreateWindowExW(0, L"OverFusionWindow", L"OverFusion", WS_OVERLAPPEDWINDOW,
-                             CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left,
-                             rect.bottom - rect.top, nullptr, nullptr, hInstance, nullptr);
+    m_hwnd = CreateWindowExW(0, class_name, L"OverFusion", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
+                             CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top, nullptr,
+                             nullptr, hInstance, nullptr);
     return m_hwnd != nullptr;
 }
 
@@ -143,10 +167,12 @@ bool Window::InitD3D9() {
 }
 
 bool Window::InitImGui() {
-    if (!ui::init_imgui_context()) {
+    ctx = reinterpret_cast<ImGuiContext*>(ui::init_imgui_context());
+    if (!ctx) {
         spdlog::error("Failed to initialize ImGui context");
         return false;
     }
+    ImGui::SetCurrentContext(ctx);
     ImGui::StyleColorsDark();
     if (!ui::init_imgui_platform(m_hwnd, m_pd3dDevice)) {
         spdlog::error("Failed to initialize ImGui platform/renderer");
@@ -156,11 +182,6 @@ bool Window::InitImGui() {
 }
 
 bool Window::init() {
-    m_hwnd = nullptr;
-    m_pD3D = nullptr;
-    m_pd3dDevice = nullptr;
-    m_d3dpp = {};
-
     HINSTANCE hInstance = GetModuleHandleW(nullptr);
 
     if (!RegisterCustomWindowClass(hInstance)) {
@@ -177,10 +198,6 @@ bool Window::init() {
     SendMessageW(m_hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIcon));
     SendMessageW(m_hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIcon));
 
-#ifdef _DEBUG
-    ShowWindow(m_hwnd, SW_SHOWDEFAULT);
-#endif
-
     if (!InitD3D9()) {
         spdlog::error("Failed to initialize D3D9");
         return false;
@@ -190,11 +207,9 @@ bool Window::init() {
         return false;
     }
 
-    ShowWindow(m_hwnd, SW_SHOWDEFAULT);
     UpdateWindow(m_hwnd);
     SetWindowPos(m_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
-    spdlog::info("Custom window initialized successfully");
     return true;
 }
 
@@ -202,7 +217,6 @@ void Window::cleanup() {
     ImGui_ImplDX9_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
-
     if (m_pd3dDevice) {
         m_pd3dDevice->Release();
         m_pd3dDevice = nullptr;
@@ -211,22 +225,20 @@ void Window::cleanup() {
         m_pD3D->Release();
         m_pD3D = nullptr;
     }
-
     if (m_hwnd) {
         DestroyWindow(m_hwnd);
         m_hwnd = nullptr;
     }
-
-    UnregisterClassW(L"OverFusionWindow", GetModuleHandleW(nullptr));
-    spdlog::debug("Custom window cleaned up");
+    UnregisterClassW(class_name, GetModuleHandleW(nullptr));
 }
 
 void Window::render() {
+    ImGui::SetCurrentContext(ctx);
     ui::set_processing(true);
     ImGui_ImplDX9_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
-    ui::draw();
+    ui::draw(this == g_menu);
     ImGui::EndFrame();
 
     m_pd3dDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
@@ -251,21 +263,45 @@ void Window::render() {
     ui::set_processing(false);
 }
 
+void Window::set_shown(bool show) { ShowWindow(m_hwnd, show ? SW_SHOW : SW_HIDE); }
+
 bool customwindow::init() {
-    ASS(g_window == nullptr);
-    g_window = new Window();
-    return g_window->init();
+    auto& cfg = conf::get();
+    ASS(g_info == nullptr);
+    ASS(g_menu == nullptr);
+    g_menu = nullptr;
+    g_info = new Window(L"OverFusionInfo");
+    auto ret = g_info->init();
+    ENSURE(ret);
+    g_menu = new Window(L"OverFusionMenu");
+    ret = g_menu->init();
+    ENSURE(ret);
+    update_info_show();
+    update_menu_show();
+    return true;
 }
 
 void customwindow::cleanup() {
-    if (g_window) {
-        g_window->cleanup();
-        delete g_window;
-        g_window = nullptr;
+    if (g_menu) {
+        g_menu->cleanup();
+        delete g_menu;
+    }
+    if (g_info) {
+        g_info->cleanup();
+        delete g_info;
     }
 }
 
 void customwindow::render() {
-    if (g_window)
-        g_window->render();
+    auto& cfg = conf::get();
+    if (g_info && cfg.show_info)
+        g_info->render();
+    if (g_menu && cfg.show_menu)
+        g_menu->render();
+}
+
+void customwindow::update_info_show() { g_info->set_shown(conf::get().show_info); }
+
+void customwindow::update_menu_show() {
+    g_menu->set_shown(conf::get().show_menu); // FIXME: how to disable animation
 }
