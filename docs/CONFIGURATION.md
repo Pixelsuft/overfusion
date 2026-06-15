@@ -48,6 +48,7 @@ You can use [default config](../overfusion.json) as well.
 `mouse_move` - virtual cursor mouse to the real mouse position <br />
 `fast` - fast forward (use `toggle` to toggle this mode instead of holding the `key`) <br />
 `play` - play (unpause) the game (use `toggle` to toggle this mode instead of holding the `key`) <br />
+`replay_mode` - switch between record/replay modes (`value`: 0 to toggle, 1 to replay, -1 to record) <br />
 `advance` - frame advance <br />
 `menu` - toggle OF menu <br />
 `save` - save game state to slot `slot` <br />
