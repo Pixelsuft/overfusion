@@ -1,15 +1,15 @@
 ## Config file
 
-Create config file `overfusion.json` inside the game folder. <br />
-You can use [default config](../overfusion.json) as well.
+Create config file `overfusion.json` inside the game folder and `ofproject.json` project config inside the project folder (located in the game folder). <br />
+You can use [default config](../overfusion.json) and [default project config](../ofproject.json) as well.
 
 ## Settings (overfusion.json)
 
 `force_resolution` - can be used to force game thinking that window resolution is this one (useful for direct video capturing) <br />
 `speed` - default game speed in range [0.05, 2.0] <br />
 `force_custom_window` - force custom window for UI (for Direct3D 9 games) <br />
-`disable_fullscreen` - Prevent game from entering into fullscreen mode <br />
-`wait_for_debugger` - Wait till the debugger attached before running a game <br />
+`disable_fullscreen` - prevent game from entering into fullscreen mode <br />
+`wait_for_debugger` - wait till the debugger attached before running a game <br />
 `show_menu` - show OF menu by fault <br />
 `show_info` - show OF info window by default <br />
 `emulate_user_timers` - manually emulate `SetTimer` timers <br />
@@ -61,7 +61,7 @@ You can use [default config](../overfusion.json) as well.
 
 ## Default bindings
 
-In-game key maps: `Left`, `Right`, `Up`, `Down`, `Enter`, `R`, `S`, `Z`, `X`, `DEL` <br />
+In-game key maps: `Left`, `Right`, `Up`, `Down`, `Enter`, `R`, `S`, `Z`, `X`, `Del` <br />
 `I` - maps to `F2` <br />
 `O` - maps to `F3` <br />
 `P` - maps to `Esc` <br />
