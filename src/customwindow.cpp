@@ -82,18 +82,21 @@ LRESULT WINAPI Window::CustomWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
     if (!self)
         return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 
-    ImGui::SetCurrentContext(self->ctx);
-    if ((msg != WM_KEYDOWN && msg != WM_KEYUP) || conf::get().show_menu)
+    if ((msg != WM_KEYDOWN && msg != WM_KEYUP) || conf::get().show_menu) {
+        ImGui::SetCurrentContext(self->ctx);
         ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+    }
 
     switch (msg) {
     case WM_KEYDOWN:
     case WM_KEYUP: {
+        ImGui::SetCurrentContext(self->ctx);
         input::handle_input(wParam, msg == WM_KEYDOWN);
         break;
     }
     case WM_SIZE:
         if (self->m_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED) {
+            ImGui::SetCurrentContext(self->ctx);
             self->m_d3dpp.BackBufferWidth = LOWORD(lParam);
             self->m_d3dpp.BackBufferHeight = HIWORD(lParam);
             ImGui_ImplDX9_InvalidateDeviceObjects();
@@ -130,10 +133,13 @@ bool Window::CreateCustomWindow(HINSTANCE hInstance) {
     RECT rect = {0, 0, 320, 200};
     if (this == g_menu)
         rect = {0, 0, 400, 600};
-    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
-    m_hwnd = CreateWindowExW(0, class_name, L"OverFusion", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
-                             CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top, nullptr,
-                             nullptr, hInstance, nullptr);
+    DWORD style = WS_OVERLAPPED | WS_CAPTION |
+                  (this == g_menu ? 0 : (WS_MINIMIZEBOX | WS_SYSMENU)) | WS_THICKFRAME;
+    AdjustWindowRect(&rect, style, FALSE);
+    m_hwnd =
+        CreateWindowExW(0, class_name, this == g_menu ? L"OverFusion Menu" : L"OverFusion Info",
+                        style, CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left,
+                        rect.bottom - rect.top, nullptr, nullptr, hInstance, nullptr);
     return m_hwnd != nullptr;
 }
 
@@ -276,8 +282,10 @@ bool customwindow::init() {
     g_menu = new Window(L"OverFusionMenu");
     ret = g_menu->init();
     ENSURE(ret);
-    update_info_show();
-    update_menu_show();
+    if (cfg.show_info)
+        g_info->set_shown(true);
+    if (cfg.show_menu)
+        g_menu->set_shown(true);
     return true;
 }
 
@@ -300,8 +308,8 @@ void customwindow::render() {
         g_menu->render();
 }
 
-void customwindow::update_info_show() { g_info->set_shown(conf::get().show_info); }
-
 void customwindow::update_menu_show() {
-    g_menu->set_shown(conf::get().show_menu); // FIXME: how to disable animation
+    // TODO: DwmSetWindowAttribute(hWnd, DWMWA_TRANSITIONS_FORCEDISABLED, &bDisableAnim,
+    // sizeof(bDisableAnim));
+    g_menu->set_shown(conf::get().show_menu);
 }
