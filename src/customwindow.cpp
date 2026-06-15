@@ -14,7 +14,6 @@
 #pragma comment(lib, "d3d9.lib")
 
 // TODO: separale class for windows
-// TODO: draw directly without hooks
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam,
                                                              LPARAM lParam);
@@ -23,7 +22,6 @@ extern HWND hwnd;
 
 static HWND g_hwnd;
 static WNDCLASSEXW g_wc;
-static const wchar_t* g_windowClassName = L"OverFusionWindow";
 
 LRESULT WINAPI CustomWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -82,7 +80,7 @@ static bool RegisterCustomWindowClass(HINSTANCE hInstance) {
     g_wc.style = CS_CLASSDC;
     g_wc.lpfnWndProc = CustomWndProc;
     g_wc.hInstance = hInstance;
-    g_wc.lpszClassName = g_windowClassName;
+    g_wc.lpszClassName = L"OverFusionWindow";
     g_wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     return RegisterClassExW(&g_wc) != 0;
 }
@@ -90,7 +88,7 @@ static bool RegisterCustomWindowClass(HINSTANCE hInstance) {
 static bool CreateCustomWindow(HINSTANCE hInstance) {
     RECT rect = {0, 0, 320, 200};
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
-    g_hwnd = CreateWindowExW(0, g_windowClassName, L"OverFusion Custom Window", WS_OVERLAPPEDWINDOW,
+    g_hwnd = CreateWindowExW(0, L"OverFusionWindow", L"OverFusion", WS_OVERLAPPEDWINDOW,
                              CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left,
                              rect.bottom - rect.top, nullptr, nullptr, hInstance, nullptr);
     return g_hwnd != nullptr;
@@ -195,7 +193,7 @@ void customwindow::cleanup() {
         g_hwnd = nullptr;
     }
 
-    UnregisterClassW(g_windowClassName, GetModuleHandle(nullptr));
+    UnregisterClassW(L"OverFusionWindow", GetModuleHandleW(nullptr));
 
     spdlog::debug("Custom window cleaned up");
 }
