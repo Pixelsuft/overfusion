@@ -13,7 +13,8 @@ enum class Task {
     MouseDown,
     MouseMove,
     Menu,
-    ReplayMode
+    ReplayMode,
+    ResetGame
 };
 
 struct Bind {

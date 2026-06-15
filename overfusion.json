@@ -136,6 +136,10 @@
       "value": 0
     },
     {
+      "key": "F12",
+      "task": "reset_game"
+    },
+    {
       "key": "V",
       "task": "advance"
     },

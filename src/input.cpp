@@ -623,6 +623,10 @@ void input::handle_input_real(int vk, bool pressed) {
             if (pressed && !prev && !cfg.show_menu)
                 state::add_mouse_move();
             break;
+        case conf::Task::ResetGame:
+            if (pressed && !prev && !cfg.show_menu)
+                state::reset_game();
+            break;
         case conf::Task::Menu:
             if (pressed)
                 cfg.show_menu = !cfg.show_menu;

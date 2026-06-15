@@ -74,7 +74,8 @@ static ost::optional<conf::Task> task_from_string(string_view sv) {
         {"mouse_down", conf::Task::MouseDown},
         {"mouse_move", conf::Task::MouseMove},
         {"menu", conf::Task::Menu},
-        {"replay_mode", conf::Task::ReplayMode}};
+        {"replay_mode", conf::Task::ReplayMode},
+        {"reset_game", conf::Task::ResetGame}};
     auto it = task_map.find(sv);
     if (it == task_map.end()) {
         // TODO: maybe move warns/errors from this funcs to top level funcs??
@@ -295,6 +296,7 @@ void Config::read() {
                 }
                 break;
             }
+            case Task::ResetGame:
             case Task::MouseMove:
             case Task::Menu:
             case Task::Advance:
