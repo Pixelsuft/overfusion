@@ -4,6 +4,6 @@
 [ ] Improve the codebase (ex.: custom window, darkmode api)
 [ ] Support random manipulation (+rand() and srand() stable reimpl)
 [ ] Add skip drawing
-[ ] Optimize jumbo builds via Python (devirtualize calls, etc)
+[ ] Optimize jumbo builds via Python (auto gen include file names, devirtualize calls, plugin init without reg system, etc)
 [ ] Switch to https://github.com/ozone10/win32-darkmodelib? check XP compat first!
 [ ] Fix TODO/FIXME in code
