@@ -30,6 +30,15 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
                                                              LPARAM lParam);
 extern bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* lr);
 
+static std::pair<int, int> get_needed_win_size(HWND hWnd, int w, int h) {
+    DWORD style = GetWindowLongPtr(hWnd, GWL_STYLE);
+    DWORD exStyle = GetWindowLongPtr(hWnd, GWL_EXSTYLE);
+    BOOL hasMenu = (GetMenu(hWnd) != nullptr);
+    RECT rect = {0, 0, w, h};
+    AdjustWindowRectEx(&rect, style, hasMenu, exStyle);
+    return {rect.right - rect.left, rect.bottom - rect.top};
+}
+
 static int(WINAPI* GetSystemMetricsO)(int nIndex);
 static int WINAPI GetSystemMetricsH(int nIndex) {
     // TODO
@@ -79,13 +88,10 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
         auto& cfg = conf::get();
         if (winhooks::inited && cfg.forced_res.first > 0 && cfg.forced_res.second > 0) {
             auto mmi = reinterpret_cast<MINMAXINFO*>(lParam);
-            DWORD style = GetWindowLongPtr(hWnd, GWL_STYLE);
-            DWORD exStyle = GetWindowLongPtr(hWnd, GWL_EXSTYLE);
-            BOOL hasMenu = (GetMenu(hWnd) != nullptr);
-            RECT rect = {0, 0, cfg.forced_res.first, cfg.forced_res.second};
-            AdjustWindowRectEx(&rect, style, hasMenu, exStyle);
-            mmi->ptMaxTrackSize.x = rect.right - rect.left;
-            mmi->ptMaxTrackSize.y = rect.bottom - rect.top;
+            auto needed_size =
+                get_needed_win_size(hWnd, cfg.forced_res.first, cfg.forced_res.second);
+            mmi->ptMaxTrackSize.x = needed_size.first;
+            mmi->ptMaxTrackSize.y = needed_size.second;
         }
         return FALSE;
     }
@@ -422,7 +428,23 @@ static BOOL(WINAPI* SetWindowPosO)(HWND hWnd, HWND hWndInsertAfter, int X, int Y
 static BOOL WINAPI SetWindowPosH(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy,
                                  UINT uFlags) {
     if (hWnd == ::hwnd || hWnd == ::mhwnd) {
-        spdlog::debug("SetWindowPos: {} {} {} {} {}", X, Y, cx, cy, uFlags);
+        auto& cfg = conf::get();
+        if (cfg.forced_res.first > 0 && cfg.forced_res.second > 0) {
+            if (hWnd == ::hwnd) {
+                // Okay, it looks bad if window if bigger than screen
+                /*
+                auto size = get_needed_win_size(hWnd, cfg.forced_res.first, cfg.forced_res.second);
+                cx = size.first;
+                cy = size.second;
+                */
+            }
+            if (hWnd == ::mhwnd) {
+                cx = cfg.forced_res.first;
+                cy = cfg.forced_res.second;
+            }
+        }
+        spdlog::debug("SetWindowPos {}: {} {} {} {} {}", hWnd == ::hwnd ? "hwnd" : "mhwnd", X, Y,
+                      cx, cy, uFlags);
         // return FALSE;
     }
     return SetWindowPosO(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
