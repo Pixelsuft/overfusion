@@ -5,10 +5,10 @@
 #include "sv.hpp"
 #include <string>
 
-#define PLUG_REG(plug_class, check_cb)                                                             \
+#define PLUG_REG(plug_class)                                                                       \
     class Startup_##plug_class {                                                                   \
     public:                                                                                        \
-        Startup_##plug_class() { plug::reg(check_cb); }                                            \
+        Startup_##plug_class() { plug::reg(plug_class::on_plugin_check); }                         \
     };                                                                                             \
     static Startup_##plug_class startup_##plug_class
 

@@ -134,14 +134,14 @@ public:
             LoadGameState(file.get_handle(), &outframe);
         return {};
     }
+
+    static void on_plugin_check(plug::PlugBase** buf, bool& check) {
+        if (buf) {
+            *buf = new PlugFnaf;
+        } else {
+            check = mem::exe_name == "FiveNightsatFreddys.exe";
+        }
+    }
 };
 
-static void on_plugin_check_fnaf(plug::PlugBase** buf, bool& check) {
-    if (buf) {
-        *buf = new PlugFnaf;
-    } else {
-        check = mem::exe_name == "FiveNightsatFreddys.exe";
-    }
-}
-
-PLUG_REG(PlugFnaf, on_plugin_check_fnaf);
+PLUG_REG(PlugFnaf);

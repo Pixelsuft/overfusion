@@ -190,14 +190,14 @@ public:
         }
         return {};
     }
+
+    static void on_plugin_check(plug::PlugBase** buf, bool& check) {
+        if (buf) {
+            *buf = new PlugIwbtbAdmin;
+        } else {
+            check = mem::exe_name == "I Wanna Be The Boshy [admin].exe";
+        }
+    }
 };
 
-static void on_plugin_check_iwbtb_admin(plug::PlugBase** buf, bool& check) {
-    if (buf) {
-        *buf = new PlugIwbtbAdmin;
-    } else {
-        check = mem::exe_name == "I Wanna Be The Boshy [admin].exe";
-    }
-}
-
-PLUG_REG(PlugIwbtbAdmin, on_plugin_check_iwbtb_admin);
+PLUG_REG(PlugIwbtbAdmin);

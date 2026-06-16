@@ -148,14 +148,14 @@ public:
         }
         return {};
     }
+
+    static void on_plugin_check(plug::PlugBase** buf, bool& check) {
+        if (buf) {
+            *buf = new PlugFnaf3;
+        } else {
+            check = mem::exe_name == "FiveNightsatFreddys3.exe";
+        }
+    }
 };
 
-static void on_plugin_check_fnaf3(plug::PlugBase** buf, bool& check) {
-    if (buf) {
-        *buf = new PlugFnaf3;
-    } else {
-        check = mem::exe_name == "FiveNightsatFreddys3.exe";
-    }
-}
-
-PLUG_REG(PlugFnaf3, on_plugin_check_fnaf3);
+PLUG_REG(PlugFnaf3);

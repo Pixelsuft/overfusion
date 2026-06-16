@@ -108,15 +108,15 @@ public:
             state::invalidate_process("Unsupported");
         return {};
     }
+
+    static void on_plugin_check(plug::PlugBase** buf, bool& check) {
+        if (buf) {
+            *buf = new PlugIwbtg;
+        } else {
+            check = mem::exe_name == "stdrt.exe" &&
+                    ofs::file_exists(string(files::get_cwd()) + "\\iwbtg.exe");
+        }
+    }
 };
 
-static void on_plugin_check_iwbtg(plug::PlugBase** buf, bool& check) {
-    if (buf) {
-        *buf = new PlugIwbtg;
-    } else {
-        check = mem::exe_name == "stdrt.exe" &&
-                ofs::file_exists(string(files::get_cwd()) + "\\iwbtg.exe");
-    }
-}
-
-PLUG_REG(PlugIwbtg, on_plugin_check_iwbtg);
+PLUG_REG(PlugIwbtg);

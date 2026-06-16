@@ -182,14 +182,14 @@ public:
         }
         return {};
     }
+
+    static void on_plugin_check(plug::PlugBase** buf, bool& check) {
+        if (buf) {
+            *buf = new PlugIwtDemo;
+        } else {
+            check = mem::exe_name == "I WANNA TRY - A New Adventure Demo.exe";
+        }
+    }
 };
 
-static void on_plugin_check_iwtdemo(plug::PlugBase** buf, bool& check) {
-    if (buf) {
-        *buf = new PlugIwtDemo;
-    } else {
-        check = mem::exe_name == "I WANNA TRY - A New Adventure Demo.exe";
-    }
-}
-
-PLUG_REG(PlugIwtDemo, on_plugin_check_iwtdemo);
+PLUG_REG(PlugIwtDemo);

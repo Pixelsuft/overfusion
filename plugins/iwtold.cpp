@@ -153,14 +153,14 @@ public:
         }
         return {};
     }
+
+    static void on_plugin_check(plug::PlugBase** buf, bool& check) {
+        if (buf) {
+            *buf = new PlugIwtOld;
+        } else {
+            check = mem::exe_name == "I WANNA TRY 1.9.8.3.exe";
+        }
+    }
 };
 
-static void on_plugin_check_iwtold(plug::PlugBase** buf, bool& check) {
-    if (buf) {
-        *buf = new PlugIwtOld;
-    } else {
-        check = mem::exe_name == "I WANNA TRY 1.9.8.3.exe";
-    }
-}
-
-PLUG_REG(PlugIwtOld, on_plugin_check_iwtold);
+PLUG_REG(PlugIwtOld);

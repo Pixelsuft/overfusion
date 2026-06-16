@@ -186,14 +186,14 @@ public:
         }
         return {};
     }
+
+    static void on_plugin_check(plug::PlugBase** buf, bool& check) {
+        if (buf) {
+            *buf = new PlugIwbtb;
+        } else {
+            check = mem::exe_name == "I Wanna Be The Boshy.exe";
+        }
+    }
 };
 
-static void on_plugin_check_iwbtb(plug::PlugBase** buf, bool& check) {
-    if (buf) {
-        *buf = new PlugIwbtb;
-    } else {
-        check = mem::exe_name == "I Wanna Be The Boshy.exe";
-    }
-}
-
-PLUG_REG(PlugIwbtb, on_plugin_check_iwbtb);
+PLUG_REG(PlugIwbtb);
