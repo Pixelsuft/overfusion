@@ -36,28 +36,24 @@ static std::vector<plug::PlugCheckCallback>& get_registry() {
     return registry;
 }
 
-void plug::reg(plug::PlugCheckCallback callback) { get_registry().push_back(callback); }
+void plug::_reg_internal(plug::PlugCheckCallback callback) { get_registry().push_back(callback); }
 
 bool plug::search_and_run() {
     _cur_plug = nullptr;
-    PlugCheckCallback cb = nullptr;
     auto& reg = get_registry();
-    bool check_bool = false;
     for (const auto& temp_cb : reg) {
-        temp_cb(nullptr, check_bool);
-        if (check_bool) {
-            cb = temp_cb;
+        auto val = temp_cb();
+        if (val.has_value()) {
+            _cur_plug = val.value();
+            if (_cur_plug == nullptr) {
+                spdlog::error("Failed to spawn plugin for the game");
+                return false;
+            }
             break;
         }
     }
-    reg.clear();
-    if (!cb) {
-        spdlog::error("Failed to find plugin for the game");
-        return false;
-    }
-    cb(&_cur_plug, check_bool);
     if (!_cur_plug) {
-        spdlog::error("Failed to init plugin for the game");
+        spdlog::error("Failed to find plugin for the game");
         return false;
     }
     spdlog::info("Plugin initialized: {}", _cur_plug->name);

@@ -4,6 +4,7 @@
 #include "opt.hpp"
 #include "sv.hpp"
 #include <string>
+#include <type_traits>
 
 #define PLUG_REG(plug_class)                                                                       \
     class Startup_##plug_class {                                                                   \
@@ -58,9 +59,15 @@ public:
     virtual ~PlugBase();
 };
 
-using PlugCheckCallback = void (*)(PlugBase** buf, bool& check);
+using PlugCheckCallback = ost::optional<PlugBase*> (*)();
 
+void _reg_internal(plug::PlugCheckCallback callback);
 bool search_and_run();
-void reg(plug::PlugCheckCallback callback);
 PlugBase& get();
+
+template <typename T, typename = typename std::enable_if<std::is_base_of<PlugBase, T>::value &&
+                                                         !std::is_same<PlugBase, T>::value>::type>
+inline void reg(ost::optional<T*> (*callback)()) {
+    _reg_internal(reinterpret_cast<PlugCheckCallback>(callback));
+}
 } // namespace plug

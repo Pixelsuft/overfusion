@@ -154,12 +154,10 @@ public:
         return {};
     }
 
-    static void on_plugin_check(plug::PlugBase** buf, bool& check) {
-        if (buf) {
-            *buf = new PlugIwtOld;
-        } else {
-            check = mem::exe_name == "I WANNA TRY 1.9.8.3.exe";
-        }
+    static ost::optional<PlugIwtOld*> on_plugin_check() {
+        if (mem::exe_name == "I WANNA TRY 1.9.8.3.exe")
+            return new PlugIwtOld;
+        return {};
     }
 };
 

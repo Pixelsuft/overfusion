@@ -149,12 +149,10 @@ public:
         return {};
     }
 
-    static void on_plugin_check(plug::PlugBase** buf, bool& check) {
-        if (buf) {
-            *buf = new PlugFnaf3;
-        } else {
-            check = mem::exe_name == "FiveNightsatFreddys3.exe";
-        }
+    static ost::optional<PlugFnaf3*> on_plugin_check() {
+        if (mem::exe_name == "FiveNightsatFreddys3.exe")
+            return new PlugFnaf3;
+        return {};
     }
 };
 

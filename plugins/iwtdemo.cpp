@@ -183,12 +183,10 @@ public:
         return {};
     }
 
-    static void on_plugin_check(plug::PlugBase** buf, bool& check) {
-        if (buf) {
-            *buf = new PlugIwtDemo;
-        } else {
-            check = mem::exe_name == "I WANNA TRY - A New Adventure Demo.exe";
-        }
+    static ost::optional<PlugIwtDemo*> on_plugin_check() {
+        if (mem::exe_name == "I WANNA TRY - A New Adventure Demo.exe")
+            return new PlugIwtDemo;
+        return {};
     }
 };
 

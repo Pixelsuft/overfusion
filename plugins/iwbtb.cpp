@@ -187,12 +187,10 @@ public:
         return {};
     }
 
-    static void on_plugin_check(plug::PlugBase** buf, bool& check) {
-        if (buf) {
-            *buf = new PlugIwbtb;
-        } else {
-            check = mem::exe_name == "I Wanna Be The Boshy.exe";
-        }
+    static ost::optional<PlugIwbtb*> on_plugin_check() {
+        if (mem::exe_name == "I Wanna Be The Boshy.exe")
+            return new PlugIwbtb;
+        return {};
     }
 };
 

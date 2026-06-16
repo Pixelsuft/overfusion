@@ -109,13 +109,11 @@ public:
         return {};
     }
 
-    static void on_plugin_check(plug::PlugBase** buf, bool& check) {
-        if (buf) {
-            *buf = new PlugIwbtg;
-        } else {
-            check = mem::exe_name == "stdrt.exe" &&
-                    ofs::file_exists(string(files::get_cwd()) + "\\iwbtg.exe");
-        }
+    static ost::optional<PlugIwbtg*> on_plugin_check() {
+        if (mem::exe_name == "stdrt.exe" &&
+            ofs::file_exists(string(files::get_cwd()) + "\\iwbtg.exe"))
+            return new PlugIwbtg;
+        return {};
     }
 };
 

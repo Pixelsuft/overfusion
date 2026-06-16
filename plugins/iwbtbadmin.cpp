@@ -191,12 +191,10 @@ public:
         return {};
     }
 
-    static void on_plugin_check(plug::PlugBase** buf, bool& check) {
-        if (buf) {
-            *buf = new PlugIwbtbAdmin;
-        } else {
-            check = mem::exe_name == "I Wanna Be The Boshy [admin].exe";
-        }
+    static ost::optional<PlugIwbtbAdmin*> on_plugin_check() {
+        if (mem::exe_name == "I Wanna Be The Boshy [admin].exe")
+            return new PlugIwbtbAdmin;
+        return {};
     }
 };
 

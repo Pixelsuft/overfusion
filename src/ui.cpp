@@ -170,8 +170,9 @@ static void draw_menu(bool custom_window) {
         }
     }
 #endif
-    if (ImGui::CollapsingHeader("About")) {
+    if (ImGui::CollapsingHeader("About and Help")) {
         ImGui::Text("Created by Pixelsuft");
+        ImGui::Text("Plugin: %s", plug::get().name.c_str());
     }
     ImGui::End();
 }
