@@ -144,4 +144,4 @@ static void on_plugin_check_fnaf(plug::PlugBase** buf, bool& check) {
     }
 }
 
-PLUG_REG(PlugFnaf, on_plugin_check_fnaf)
+PLUG_REG(PlugFnaf, on_plugin_check_fnaf);

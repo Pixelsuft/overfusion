@@ -196,4 +196,4 @@ static void on_plugin_check_iwbtb(plug::PlugBase** buf, bool& check) {
     }
 }
 
-PLUG_REG(PlugIwbtb, on_plugin_check_iwbtb)
+PLUG_REG(PlugIwbtb, on_plugin_check_iwbtb);

@@ -192,4 +192,4 @@ static void on_plugin_check_iwtdemo(plug::PlugBase** buf, bool& check) {
     }
 }
 
-PLUG_REG(PlugIwtDemo, on_plugin_check_iwtdemo)
+PLUG_REG(PlugIwtDemo, on_plugin_check_iwtdemo);

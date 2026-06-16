@@ -163,4 +163,4 @@ static void on_plugin_check_iwtold(plug::PlugBase** buf, bool& check) {
     }
 }
 
-PLUG_REG(PlugIwtOld, on_plugin_check_iwtold)
+PLUG_REG(PlugIwtOld, on_plugin_check_iwtold);

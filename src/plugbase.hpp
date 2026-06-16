@@ -10,7 +10,7 @@
     public:                                                                                        \
         Startup_##plug_class() { plug::reg(check_cb); }                                            \
     };                                                                                             \
-    static Startup_##plug_class startup_##plug_class;
+    static Startup_##plug_class startup_##plug_class
 
 namespace plug {
 enum class PtrProp {

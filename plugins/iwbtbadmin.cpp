@@ -200,4 +200,4 @@ static void on_plugin_check_iwbtb_admin(plug::PlugBase** buf, bool& check) {
     }
 }
 
-PLUG_REG(PlugIwbtbAdmin, on_plugin_check_iwbtb_admin)
+PLUG_REG(PlugIwbtbAdmin, on_plugin_check_iwbtb_admin);

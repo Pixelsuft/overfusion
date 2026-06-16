@@ -158,4 +158,4 @@ static void on_plugin_check_fnaf3(plug::PlugBase** buf, bool& check) {
     }
 }
 
-PLUG_REG(PlugFnaf3, on_plugin_check_fnaf3)
+PLUG_REG(PlugFnaf3, on_plugin_check_fnaf3);
