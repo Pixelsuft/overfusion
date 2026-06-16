@@ -1,12 +1,8 @@
 {
-  "fps": 0,
   "speed": 1.0,
   "font_scale": 1.0,
   "force_resolution": [0, 0],
   "force_custom_window": false,
-  "system_time_offset": 0,
-  "local_time_offset": 0,
-  "startup_time_offset": 0,
   "disable_fullscreen": true,
   "wait_for_debugger": false,
   "show_menu": false,
