@@ -18,7 +18,6 @@ file_list = (
     + list_files('tools', ('cpp', 'hpp'))
     + list_files('plugins', ('cpp',))
     + list_files('scripts', ('c', 'py', 'bat'))
-    + list_files('.', ('json',))
 )
 
 out = open('joined.txt', 'w', encoding='utf-8')
