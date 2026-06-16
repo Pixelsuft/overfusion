@@ -4,6 +4,7 @@
 [ ] Improve the codebase (ex.: custom window, darkmode api)
 [ ] Support random manipulation (+rand() and srand() stable reimpl)
 [ ] Restart game event?
+[ ] Allow to specify VFS rules if ofproject.json (map specific file to...)
 [ ] Add skip drawing
 [ ] Optimize jumbo builds via Python (auto gen include file names, devirtualize calls, plugin init without reg system, etc)
 [ ] Jumbo build: maybe use static C/C++ runtime? (need to fix win7 compat)
