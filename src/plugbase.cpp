@@ -5,6 +5,15 @@
 
 using plug::PlugBase;
 
+#ifndef JUMBO_BUILD
+static std::vector<plug::PlugCheckCallback>& get_registry() {
+    static std::vector<plug::PlugCheckCallback> registry;
+    return registry;
+}
+
+void plug::_reg_internal(plug::PlugCheckCallback callback) { get_registry().push_back(callback); }
+#endif
+
 PlugBase::PlugBase() : name("Abstract plugin") {}
 
 bool PlugBase::pre_init() { return true; }
@@ -31,27 +40,27 @@ PlugBase::~PlugBase() {}
 
 static PlugBase* _cur_plug;
 
-static std::vector<plug::PlugCheckCallback>& get_registry() {
-    static std::vector<plug::PlugCheckCallback> registry;
-    return registry;
+static bool show_plugin_spawn_error() {
+    spdlog::error("Failed to spawn plugin for the game");
+    return false;
 }
-
-void plug::_reg_internal(plug::PlugCheckCallback callback) { get_registry().push_back(callback); }
 
 bool plug::search_and_run() {
     _cur_plug = nullptr;
+#ifdef JUMBO_BUILD
+    if (false) {}
+    JUMBO_PLUGIN_DETECTION()
+#else
     auto& reg = get_registry();
     for (const auto& temp_cb : reg) {
-        auto val = temp_cb();
-        if (val.has_value()) {
+        if (auto val = temp_cb()) {
             _cur_plug = val.value();
-            if (_cur_plug == nullptr) {
-                spdlog::error("Failed to spawn plugin for the game");
-                return false;
-            }
+            if (!_cur_plug)
+                return show_plugin_spawn_error();
             break;
         }
     }
+#endif
     if (!_cur_plug) {
         spdlog::error("Failed to find plugin for the game");
         return false;

@@ -29,10 +29,22 @@ f.write("""#define JUMBO_BUILD
 #include "../spdlog/src/stdout_sinks.cpp"
 """)
 
+plug_list = []
 for fn in os.listdir(os.path.join(cwd, 'plugins')):
     if not fn.endswith('.cpp'):
         continue
+    pf = open(os.path.join(cwd, 'plugins', fn)).read().split('PLUG_REG(')
+    assert len(pf) == 2
+    plug_list.append(pf[1].split(')')[0].strip())
     f.write(f'#include "../plugins/{fn}"\n')
+
+f.write('#define JUMBO_PLUGIN_DETECTION() ')
+for i in plug_list:
+    f.write(f'else if (auto val = {i}::on_plugin_check())')
+    f.write(
+        '{_cur_plug = val.value();if (!_cur_plug)return show_plugin_spawn_error();}'
+    )
+f.write('\n')
 
 for fn in os.listdir(os.path.join(cwd, 'src')):
     if not fn.endswith('.cpp'):

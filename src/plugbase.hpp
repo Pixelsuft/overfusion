@@ -6,12 +6,16 @@
 #include <string>
 #include <type_traits>
 
+#ifdef JUMBO_BUILD
+#define PLUG_REG(plug_class)
+#else
 #define PLUG_REG(plug_class)                                                                       \
     class Startup_##plug_class {                                                                   \
     public:                                                                                        \
         Startup_##plug_class() { plug::reg(plug_class::on_plugin_check); }                         \
     };                                                                                             \
     static Startup_##plug_class startup_##plug_class
+#endif
 
 namespace plug {
 enum class PtrProp {
@@ -61,13 +65,15 @@ public:
 
 using PlugCheckCallback = ost::optional<PlugBase*> (*)();
 
-void _reg_internal(plug::PlugCheckCallback callback);
 bool search_and_run();
 PlugBase& get();
 
+#ifndef JUMBO_BUILD
+void _reg_internal(plug::PlugCheckCallback callback);
 template <typename T, typename = typename std::enable_if<std::is_base_of<PlugBase, T>::value &&
                                                          !std::is_same<PlugBase, T>::value>::type>
 inline void reg(ost::optional<T*> (*callback)()) {
     _reg_internal(reinterpret_cast<PlugCheckCallback>(callback));
 }
+#endif
 } // namespace plug
