@@ -827,9 +827,8 @@ int64_t state::get_utc_offset() {
 
 uint64_t state::get_time(TimeOffset offset) {
     auto& cfg = conf::get();
-    auto fps = static_cast<int64_t>(cfg.fps);
-    uint64_t ret =
-        static_cast<uint64_t>(static_cast<int64_t>(st.frames) * 1000 / fps + time_offset);
+    uint64_t ret = static_cast<uint64_t>(
+        static_cast<int64_t>(st.frames) * 1000 * cfg.delta_multiplier / cfg.fps + time_offset);
     switch (offset) {
     case TimeOffset::None:
         return ret;
@@ -840,7 +839,7 @@ uint64_t state::get_time(TimeOffset offset) {
     case TimeOffset::Startup:
         return ret + cfg.startup_offset;
     case TimeOffset::Reminder:
-        return static_cast<uint64_t>(st.frames) * 1000 % fps;
+        return (static_cast<uint64_t>(st.frames) * 1000) % cfg.fps;
     default:
         ASS(false);
         return 0;
@@ -958,7 +957,7 @@ void state::draw_info() {
     ImGui::Text("Frames: %i / %i", st.frames, st.total);
     if (!cfg.fast_forward) {
         ImGui::Text("Time: %llums / %llums", get_time(TimeOffset::None),
-                    static_cast<int64_t>(st.total) * 1000 / cfg.fps);
+                    static_cast<int64_t>(st.total) * 1000 * cfg.delta_multiplier / cfg.fps);
         ImGui::Text("Scene: %i", st.scene);
         ImGui::Text("Re-records: %llu", st.rerec_count);
     }

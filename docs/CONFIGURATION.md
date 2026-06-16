@@ -42,6 +42,7 @@ You can use [default config](../overfusion.json) and [default project config](..
 ## Settings (ofproject.json)
 
 `fps` - game FPS <br />
+`delta_multiplier` - delta time multiplier (reverse of FPS) <br />
 `system_time_offset`, `local_time_offset`, `startup_time_offset` - emulated virtual time (in ms, relative to when starting a game) <br />
 `no_mouse_manipulation` - disallow the game to manipulate the mouse
 

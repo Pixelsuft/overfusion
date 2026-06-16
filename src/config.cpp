@@ -120,6 +120,7 @@ Config::Config() {
     speed = 1.f;
     font_scale = 1.f;
     fps = 0;
+    delta_multiplier = 1;
     render_type = RenderType::None;
     show_menu = show_info = true;
     is_replay = false;
@@ -172,6 +173,8 @@ void Config::read() {
         read_config_file(string(files::get_cwd()) + '\\' + project_name + "\\ofproject.json");
     if (proj_data["fps"].is_number_unsigned())
         fps = proj_data["fps"];
+    if (proj_data["delta_multiplier"].is_number_unsigned())
+        delta_multiplier = proj_data["delta_multiplier"];
     auto& fr = data["force_resolution"];
     if (fr.is_array() && fr.size() > 1) {
         if (fr[0].is_number_unsigned())

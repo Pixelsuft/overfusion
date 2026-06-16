@@ -45,6 +45,7 @@ public:
     float speed;
     float font_scale;
     int fps;
+    int delta_multiplier;
     RenderType render_type;
     bool show_info;
     bool show_menu;
