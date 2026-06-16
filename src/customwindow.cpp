@@ -88,11 +88,10 @@ LRESULT WINAPI Window::CustomWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 
     switch (msg) {
     case WM_KEYDOWN:
-    case WM_KEYUP: {
-        ImGui::SetCurrentContext(self->ctx);
+    case WM_KEYUP:
+        // ImGui::SetCurrentContext(self->ctx);
         input::handle_input(wParam, msg == WM_KEYDOWN);
         break;
-    }
     case WM_SIZE:
         if (self->m_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED) {
             ImGui::SetCurrentContext(self->ctx);

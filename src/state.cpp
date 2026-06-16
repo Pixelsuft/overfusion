@@ -957,6 +957,8 @@ void state::draw_info() {
                 video::is_recording() ? " [VIDEO]" : "", audio::is_recording() ? " [AUDIO]" : "");
     ImGui::Text("Frames: %i / %i", st.frames, st.total);
     if (!cfg.fast_forward) {
+        ImGui::Text("Time: %llums / %llums", get_time(TimeOffset::None),
+                    static_cast<int64_t>(st.total) * 1000 / cfg.fps);
         ImGui::Text("Scene: %i", st.scene);
         ImGui::Text("Re-records: %llu", st.rerec_count);
     }
