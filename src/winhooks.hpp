@@ -1,5 +1,4 @@
 #pragma once
-#include "sv.hpp"
 #include <utility>
 
 namespace winhooks {
@@ -14,5 +13,5 @@ void pre_init_win32_theme();
 void init();
 void after_ui_init();
 std::pair<int, int> get_client_size();
-void display_ensure_fail(ost::string_view text);
+void display_ensure_fail(const void* text);
 } // namespace winhooks

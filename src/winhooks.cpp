@@ -543,9 +543,8 @@ std::pair<int, int> winhooks::get_client_size() {
     return {static_cast<int>(rect.right - rect.left), static_cast<int>(rect.bottom - rect.top)};
 }
 
-void winhooks::display_ensure_fail(ost::string_view text) {
-    auto buf = uconv::to_utf16(text);
-    ENSURE(buf != nullptr);
+void winhooks::display_ensure_fail(const void* text) {
+    auto real_text = reinterpret_cast<const wchar_t*>(text);
     if (::hwnd != nullptr) {
         // Dark mode
         auto prev_proc = ui::is_processing();
@@ -553,11 +552,10 @@ void winhooks::display_ensure_fail(ost::string_view text) {
         auto prev_repl = cfg.is_replay;
         ui::set_processing(true);
         cfg.is_replay = true;
-        MessageBoxWH(::hwnd, buf, L"Assertion failed!", MB_ICONERROR);
+        MessageBoxWH(::hwnd, real_text, L"Assertion failed!", MB_ICONERROR);
         cfg.is_replay = prev_repl;
         ui::set_processing(prev_proc);
     } else {
-        MessageBoxWO(nullptr, buf, L"Assertion failed!", MB_ICONERROR);
+        MessageBoxWO(nullptr, real_text, L"Assertion failed!", MB_ICONERROR);
     }
-    std::free(buf);
 }

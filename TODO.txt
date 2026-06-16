@@ -6,5 +6,6 @@
 [ ] Restart game event?
 [ ] Add skip drawing
 [ ] Optimize jumbo builds via Python (auto gen include file names, devirtualize calls, plugin init without reg system, etc)
+[ ] Jumbo build: maybe use static C/C++ runtime? (need to fix win7 compat)
 [ ] Switch to https://github.com/ozone10/win32-darkmodelib? check XP compat first!
 [ ] Fix TODO/FIXME in code
