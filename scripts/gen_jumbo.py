@@ -41,9 +41,7 @@ for fn in os.listdir(os.path.join(cwd, 'plugins')):
 f.write('#define JUMBO_PLUGIN_DETECTION() ')
 for i in plug_list:
     f.write(f'else if (auto val = {i}::on_plugin_check())')
-    f.write(
-        '{_cur_plug = val.value();if (!_cur_plug)return show_plugin_spawn_error();}'
-    )
+    f.write(' { _cur_plug = val.value(); } ')
 f.write('\n')
 
 for fn in os.listdir(os.path.join(cwd, 'src')):

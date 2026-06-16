@@ -40,23 +40,29 @@ PlugBase::~PlugBase() {}
 
 static PlugBase* _cur_plug;
 
-static bool show_plugin_spawn_error() {
-    spdlog::error("Failed to spawn plugin for the game");
-    return false;
-}
-
 bool plug::search_and_run() {
     _cur_plug = nullptr;
 #ifdef JUMBO_BUILD
-    if (false) {}
+    if (false) {
+    }
     JUMBO_PLUGIN_DETECTION()
+    else {
+        spdlog::error("Failed to find plugin for the game");
+        return false;
+    }
+    if (!_cur_plug) {
+        spdlog::error("Failed to spawn plugin for the game");
+        return false;
+    }
 #else
     auto& reg = get_registry();
     for (const auto& temp_cb : reg) {
         if (auto val = temp_cb()) {
             _cur_plug = val.value();
-            if (!_cur_plug)
-                return show_plugin_spawn_error();
+            if (!_cur_plug) {
+                spdlog::error("Failed to spawn plugin for the game");
+                return false;
+            }
             break;
         }
     }
