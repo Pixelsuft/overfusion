@@ -39,6 +39,7 @@ static std::vector<plug::PlugCheckCallback>& get_registry() {
 void plug::reg(plug::PlugCheckCallback callback) { get_registry().push_back(callback); }
 
 bool plug::search_and_run() {
+    _cur_plug = nullptr;
     PlugCheckCallback cb = nullptr;
     auto& reg = get_registry();
     bool check_bool = false;
@@ -50,14 +51,12 @@ bool plug::search_and_run() {
         }
     }
     reg.clear();
-    if (cb == nullptr) {
-        ENSURE(false);
+    if (!cb) {
         spdlog::error("Failed to find plugin for the game");
         return false;
     }
     cb(&_cur_plug, check_bool);
     if (!_cur_plug) {
-        ENSURE(false);
         spdlog::error("Failed to init plugin for the game");
         return false;
     }
