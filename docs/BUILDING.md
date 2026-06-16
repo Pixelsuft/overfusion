@@ -2,6 +2,7 @@
 
 - Git
 - Microsoft Visual Studio (with at least C++14 support)
+- Python
 
 ## Clonning the repository
 
@@ -20,11 +21,12 @@ Now you have `overfusion` folder
 
 ## Building the OverFusion DLL (Release)
 
-1. Navigate to the `jumbo` folder
-2. Open `overfusion.sln` with Visual Studio
-3. Choose `ReleaseFast` `x86` mode
-4. Build the solution: `Build`->`Build Solution` (`Ctrl`+`Shift`+`B`)
-5. Now you have `overfusion.dll` in the `ReleaseFast` folder
+1. Run `gen_jumbo.py` script (located in the `scripts` folder)
+2. Navigate to the `jumbo` folder
+3. Open `overfusion.sln` with Visual Studio
+4. Choose `ReleaseFast` `x86` mode
+5. Build the solution: `Build`->`Build Solution` (`Ctrl`+`Shift`+`B`)
+6. Now you have `overfusion.dll` in the `ReleaseFast` folder
 
 ## Building the OverFusion injector
 

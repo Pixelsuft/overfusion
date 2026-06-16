@@ -9,6 +9,7 @@ x64
 joined.txt
 nul
 scripts/*.manifest
+jumbo/main.cpp
 *.aps
 *.zip
 *.rar
