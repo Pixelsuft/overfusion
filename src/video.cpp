@@ -2,6 +2,7 @@
 #include "video.hpp"
 #include "ass.hpp"
 #include "config.hpp"
+#include "files.hpp"
 #include "process.hpp"
 #include <d3d9.h>
 #include <spdlog/spdlog.h>
@@ -10,11 +11,11 @@
 
 using std::string;
 
-extern HWND hwnd;
 extern HWND mhwnd;
 extern BOOL(WINAPI* BitBltO)(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int x1, int y1,
                              DWORD rop);
-extern LRESULT(__stdcall* EditWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+extern LRESULT(WINAPI* EditWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+extern BOOL(WINAPI* GetClientRectO)(HWND hWnd, LPRECT lpRect);
 
 namespace video {
 enum class CheckResult { Ok, Started, Failed };
@@ -122,6 +123,8 @@ static video::CheckResult check_record(std::pair<int, int> new_size) {
         while ((pos = cmd.find("$SIZE")) != std::string::npos)
             cmd.replace(pos, 5,
                         std::to_string(new_size.first) + "x" + std::to_string(new_size.second));
+        while ((pos = cmd.find("$CWD")) != std::string::npos)
+            cmd.replace(pos, 4, string(files::get_cwd()));
         while ((pos = cmd.find("$PROJ")) != std::string::npos)
             cmd.replace(pos, 5, cfg.project_name);
         video::file_index++;
@@ -150,7 +153,7 @@ void video::after_draw() {
     if (!recording || is_d3d9_cap())
         return;
     RECT win_rect;
-    auto ret = GetClientRect(::mhwnd, &win_rect);
+    auto ret = GetClientRectO(::mhwnd, &win_rect);
     ENSURE(ret);
     if (win_rect.right == 0 || win_rect.bottom == 0)
         return;

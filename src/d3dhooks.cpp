@@ -11,9 +11,6 @@
 #include <d3d9.h>
 #include <spdlog/spdlog.h>
 
-static HRESULT(WINAPI* CreateDeviceO)(IDirect3D9*, UINT, D3DDEVTYPE, HWND, DWORD,
-                                      D3DPRESENT_PARAMETERS*, IDirect3DDevice9**) = nullptr;
-
 extern HWND hwnd;
 
 static bool d3d9_need_pixelated() {

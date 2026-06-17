@@ -63,8 +63,8 @@ static int WINAPI GetSystemMetricsH(int nIndex) {
     }
 }
 
-LRESULT(__stdcall* MainWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT(WINAPI* MainWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static LRESULT WINAPI MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DROPFILES)
         return 0;
     if (winhooks::inited && !winhooks::is_custom_window || uMsg < WM_MOUSEFIRST ||
@@ -92,8 +92,8 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
                 get_needed_win_size(hWnd, cfg.forced_res.first, cfg.forced_res.second);
             mmi->ptMaxTrackSize.x = needed_size.first;
             mmi->ptMaxTrackSize.y = needed_size.second;
+            return FALSE;
         }
-        return FALSE;
     }
     case WM_PAINT:
         winhooks::fix_win32_window_bg(hWnd);
@@ -110,8 +110,8 @@ static LRESULT __stdcall MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     return ret;
 }
 
-LRESULT(__stdcall* EditWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-static LRESULT __stdcall EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT(WINAPI* EditWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static LRESULT WINAPI EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DROPFILES)
         return FALSE;
     if (winhooks::inited && !winhooks::is_custom_window || uMsg < WM_MOUSEFIRST ||
@@ -398,7 +398,7 @@ static int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UIN
     return ret;
 }
 
-static BOOL(WINAPI* GetClientRectO)(HWND hWnd, LPRECT lpRect);
+BOOL(WINAPI* GetClientRectO)(HWND hWnd, LPRECT lpRect);
 static BOOL WINAPI GetClientRectH(HWND hWnd, LPRECT lpRect) {
     if (hWnd == ::hwnd) {
         auto& cfg = conf::get();
