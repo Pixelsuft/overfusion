@@ -22,6 +22,7 @@ static void of_main() {
 #ifdef _DEBUG
     spdlog::set_level(spdlog::level::debug);
 #endif
+    spdlog::set_pattern("[%H:%M:%S.%e] [%^%l%$] %v");
     spdlog::info("OverFusion injected!");
     SetEnvironmentVariableW(L"GALLIUM_DRIVER", L"llvmpipe");
     SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", L"true");

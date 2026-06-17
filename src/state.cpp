@@ -952,7 +952,7 @@ void state::on_mode_switch() {
 
 void state::draw_info() {
     auto& cfg = conf::get();
-    ImGui::Text("[RE%s]%s%s", cfg.is_replay ? "PLAY" : "CORD",
+    ImGui::Text("[RE%s]%s%s%s", cfg.is_replay ? "PLAY" : "CORD", cfg.fast_forward ? " [FF]" : "",
                 video::is_recording() ? " [VIDEO]" : "", audio::is_recording() ? " [AUDIO]" : "");
     ImGui::Text("Frames: %i / %i", st.frames, st.total);
     if (!cfg.fast_forward) {
