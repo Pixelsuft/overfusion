@@ -7,7 +7,6 @@
 #include "uconv.hpp"
 #include <WinSock2.h>
 #include <Windows.h>
-#include <joystickapi.h>
 #include <shellapi.h>
 #include <spdlog/spdlog.h>
 
@@ -98,19 +97,19 @@ static BOOL WINAPI GetVersionExWH(LPOSVERSIONINFOW lpVersionInformation) {
     return TRUE;
 }
 
-static MMRESULT WINAPI joyGetDevCapsAH(UINT_PTR uJoyID, LPJOYCAPSA pjc, UINT cbjc) {
+static UINT WINAPI joyGetDevCapsAH(UINT_PTR uJoyID, const void* pjc, UINT cbjc) {
     spdlog::warn("Failing joyGetDevCapsA");
-    return MMSYSERR_NODRIVER;
+    return 6;
 }
 
-static MMRESULT WINAPI joyGetDevCapsWH(UINT_PTR uJoyID, LPJOYCAPSW pjc, UINT cbjc) {
+static UINT WINAPI joyGetDevCapsWH(UINT_PTR uJoyID, const void* pjc, UINT cbjc) {
     spdlog::warn("Failing joyGetDevCapsW");
-    return MMSYSERR_NODRIVER;
+    return 6;
 }
 
-static MMRESULT WINAPI joyGetPosExH(UINT uJoyID, LPJOYINFOEX pji) {
+static UINT WINAPI joyGetPosExH(UINT uJoyID, const void* pji) {
     spdlog::warn("Failing joyGetPosEx");
-    return MMSYSERR_NODRIVER;
+    return 6;
 }
 
 static HRESULT SHGetSpecialFolderLocationH(HWND hwnd, int csidl, void* ppidl) {

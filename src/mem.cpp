@@ -12,6 +12,7 @@
 #include <tlhelp32.h>
 #include <unordered_map>
 #include <winternl.h>
+#pragma comment(lib, "psapi.lib")
 #ifdef _DEBUG
 #define IAT_SUPPORT_DYNAMIC
 #endif

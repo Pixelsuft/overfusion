@@ -49,9 +49,7 @@ bool write(size_t addr, const T& value) {
     return result;
 }
 #else
-template <bool Flush = false, typename T,
-          typename = std::enable_if_t<std::is_trivially_copyable_v<T>>>
-bool write(size_t addr, const T& value) {
+template <bool Flush = false, typename T> bool write(size_t addr, const T& value) {
     bool result = _write_memory(addr, std::addressof(value), sizeof(T));
     if (result && Flush)
         result = result && _flush_instructions(addr, sizeof(T));
