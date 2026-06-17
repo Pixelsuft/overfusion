@@ -3,10 +3,11 @@
 It's a CSV compatible format. <br />
 
 First lines (order may be different): <br />
-1st line starts with: `negative number (-8)`,pixelsuft_overfusion,`replay version` <br />
-2nd line starts with: `negative number (-7)`,total,`total frames` <br />
-3rd line starts with: `negative number (-6)`,rerecords,`rerecord count` <br />
-4th line starts with: `negative number (-5)`,fps,`FPS (info)` <br />
+1st line starts with: `negative number (-9)`,pixelsuft_overfusion,`replay version` <br />
+2nd line starts with: `negative number (-8)`,total,`total frames` <br />
+3rd line starts with: `negative number (-7)`,rerecords,`rerecord count` <br />
+4th line starts with: `negative number (-6)`,fps,`FPS (info)` <br />
+4th line starts with: `negative number (-5)`,delta_multiplier,`Delta multiplier (info)` <br />
 5th line starts with: `negative number (-4)`,system_offset,`system time offset in ms (info)` <br />
 6th line starts with: `negative number (-3)`,local_offset,`local time offset in ms (info)` <br />
 7th line starts with: `negative number (-2)`,startup_offset,`startup time offset in ms (info)` <br />

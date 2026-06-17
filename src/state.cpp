@@ -217,13 +217,15 @@ void state::export_replay(string_view fn) {
         return;
     }
     auto& cfg = conf::get();
-    auto fret = file.writeln("-8,pixelsuft_overfusion," + std::to_string(replay_version));
+    auto fret = file.writeln("-9,pixelsuft_overfusion," + std::to_string(replay_version));
     ENSURE(fret);
-    fret = file.writeln("-7,total," + std::to_string(st.total));
+    fret = file.writeln("-8,total," + std::to_string(st.total));
     ENSURE(fret);
-    fret = file.writeln("-6,rerecords," + std::to_string(st.rerec_count));
+    fret = file.writeln("-7,rerecords," + std::to_string(st.rerec_count));
     ENSURE(fret);
-    fret = file.writeln("-5,fps," + std::to_string(cfg.fps));
+    fret = file.writeln("-6,fps," + std::to_string(cfg.fps));
+    ENSURE(fret);
+    fret = file.writeln("-5,delta_multiplier," + std::to_string(cfg.delta_multiplier));
     ENSURE(fret);
     fret = file.writeln("-4,system_offset," + std::to_string(cfg.system_offset));
     ENSURE(fret);
@@ -313,6 +315,12 @@ void state::import_replay(string_view fn) {
             int need_fps = str_to_int(sub2).value_or(0);
             if (need_fps != cfg.fps) {
                 spdlog::warn("Mismatch between config FPS ({}) and replay ({})", cfg.fps, need_fps);
+            }
+        } else if (sub == "delta_multiplier") {
+            int need_mul = str_to_int(sub2).value_or(0);
+            if (need_mul != cfg.delta_multiplier) {
+                spdlog::warn("Mismatch between config delta multiplier ({}) and replay ({})",
+                             cfg.delta_multiplier, need_mul);
             }
         } else if (sub == "system_offset") {
             auto offset = static_cast<uint64_t>(str_to_int(sub2).value_or(0));
