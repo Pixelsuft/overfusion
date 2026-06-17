@@ -17,7 +17,7 @@
   "disable_dark_mode_support": false,
   "disable_app_menu": true,
   "allow_timers_fix": true,
-  "allow_direct_capture": false,
+  "allow_direct_capture": true,
   "allow_audio_hook": false,
   "disable_audio": true,
   "record_audio": false,
@@ -30,7 +30,7 @@
   "disable_viewport": false,
   "disable_perspective": false,
   "cmdline_append": " /DEBUG /NOVSYNC /MIS0 /NOC",
-  "ffmpeg_cmdline": "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an -vf scale=2880:2160:flags=neighbor -vcodec h264_nvenc -b:v 10000k $PROJ/video_$ID.mp4",
+  "ffmpeg_cmdline": "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an -vcodec h264_nvenc -b:v 10000k $PROJ/video_$ID.mp4",
   "binds": [
     {
       "key": "m",
