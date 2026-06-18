@@ -185,8 +185,9 @@ void video::after_draw() {
                 ENSURE(ret);
                 // Force window to redraw so we can capture the first frame
                 EditWindowProcO(::mhwnd, WM_ERASEBKGND, reinterpret_cast<WPARAM>(srcdc), 0);
-            }
-            spdlog::info("Window capture started ({}x{})", size.first, size.second);
+                spdlog::info("GDI capture started ({}x{})", size.first, size.second);
+            } else
+                spdlog::info("Window capture started ({}x{})", size.first, size.second);
             break;
         default:
             ASS(false);
@@ -211,7 +212,7 @@ void video::after_draw() {
     }
     if (last_dev && false)
         d3d9_draw(last_dev);
-    if (!ffmpeg.write(data_buffer.data(), data_buffer.size())) {
+    if (ffmpeg.is_open() && !ffmpeg.write(data_buffer.data(), data_buffer.size())) {
         spdlog::error("Failed to write data to ffmpeg");
         stop();
     }
@@ -219,10 +220,10 @@ void video::after_draw() {
 
 void video::d3d9_draw(void* dev_ptr) {
     auto& cfg = conf::get();
-    if (!recording || !is_d3d9_cap() /* || !allow_frame*/)
+    if (!recording || !is_d3d9_cap() || !allow_frame)
         return;
     last_dev = dev_ptr;
-    allow_frame = false;
+    // allow_frame = false;
     LPDIRECT3DDEVICE9 pDevice = reinterpret_cast<LPDIRECT3DDEVICE9>(dev_ptr);
     LPDIRECT3DSURFACE9 pBackBuffer;
     auto d3d_ret = pDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer);
