@@ -44,8 +44,8 @@ static int __stdcall ProcessTransitionH() {
         video::after_draw();
         if (cfg.custom_window)
             customwindow::render();
+        cfg.delayed_d3d9_present_hook = false;
     }
-    cfg.delayed_d3d9_present_hook = false;
     state::after_update();
     // spdlog::debug("Transition {}", ret);
     return ret;
@@ -110,12 +110,12 @@ static int __stdcall UpdateGameFrameH() {
         video::after_draw();
         if (cfg.custom_window)
             customwindow::render();
+        cfg.delayed_d3d9_present_hook = false;
         if (*pStep != 0) {
             spdlog::warn("Subtick step check failed: got {} instead of 0", *pStep);
             *pStep = 0;
         }
     }
-    cfg.delayed_d3d9_present_hook = false;
     if (ret != 0) {
         spdlog::debug("UpdateGameFrame got ret {} on frame {}", ret, state::get_frame_counter());
         if (cfg.pause_on_scene_switch && state::get_frame_counter() != 0)
