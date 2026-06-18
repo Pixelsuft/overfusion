@@ -30,6 +30,8 @@ public:
         auto& cfg = conf::get();
         if (cfg.fps <= 0)
             cfg.fps = 50;
+        // Let's enable this one, otherwise the game won't draw it's first frame
+        cfg.delayed_d3d9_present_hook = true;
         SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x37dc0);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x39780);
         cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x365a0);

@@ -12,6 +12,7 @@
 #include <spdlog/spdlog.h>
 
 extern HWND hwnd;
+static bool imgui_d3d9_inited;
 
 static bool d3d9_need_pixelated() {
     auto& cfg = conf::get();
@@ -33,6 +34,26 @@ class ID3D9Proxy : public IDirect3DDevice9 {
 public:
     ID3D9Proxy(IDirect3DDevice9* pReal) : pDev(pReal) {}
     virtual ~ID3D9Proxy() {}
+    void our_frame_hook_code() {
+        // Main hook code for ImGui (and calling video capture)
+        if (!imgui_d3d9_inited)
+            return;
+        auto& cfg = conf::get();
+        ui::set_processing(true);
+        video::d3d9_draw(pDev);
+        if (cfg.custom_window) {
+            ui::set_processing(false);
+            return;
+        }
+        ImGui_ImplDX9_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
+        ui::draw(false);
+        ImGui::EndFrame();
+        ImGui::Render();
+        ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+        ui::set_processing(false);
+    }
     STDMETHOD(QueryInterface)(REFIID riid, void** ppvObj) override {
         return pDev->QueryInterface(riid, ppvObj);
     }
@@ -85,6 +106,9 @@ public:
     }
     STDMETHOD(Present)(const RECT* pSourceRect, const RECT* pDestRect, HWND hDestWindowOverride,
                        const RGNDATA* pDirtyRegion) override {
+        // Do not call it if we called it in EndScene
+        if (!conf::get().delayed_d3d9_present_hook)
+            our_frame_hook_code();
         return pDev->Present(pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
     }
     STDMETHOD(GetBackBuffer)(UINT iSwapChain, UINT iBackBuffer, D3DBACKBUFFER_TYPE Type,
@@ -195,12 +219,11 @@ public:
     STDMETHOD(BeginScene)() override { return pDev->BeginScene(); }
 
     STDMETHOD(EndScene)() override {
-        // Main D3D9 hook here
+        // D3D9 init
         auto& cfg = conf::get();
-        ui::set_processing(true);
-        static bool inited = false;
-        if (!inited && !cfg.custom_window) {
-            inited = true;
+        if (!imgui_d3d9_inited && !cfg.custom_window) {
+            imgui_d3d9_inited = true;
+            ui::set_processing(true);
             D3DDEVICE_CREATION_PARAMETERS params;
             pDev->GetCreationParameters(&params);
             ENSURE(::hwnd == params.hFocusWindow);
@@ -211,20 +234,12 @@ public:
             io.IniFilename = nullptr;
             ImGui_ImplWin32_Init(hwnd);
             ImGui_ImplDX9_Init(pDev);
-        }
-        video::d3d9_draw(pDev);
-        if (cfg.custom_window) {
             ui::set_processing(false);
-            return pDev->EndScene();
         }
-        ImGui_ImplDX9_NewFrame();
-        ImGui_ImplWin32_NewFrame();
-        ImGui::NewFrame();
-        ui::draw(false);
-        ImGui::EndFrame();
-        ImGui::Render();
-        ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
-        ui::set_processing(false);
+        // Some old games don't render their first frame if we only use Present hook FSR
+        // Let's fix it in a bad way!
+        if (cfg.delayed_d3d9_present_hook)
+            our_frame_hook_code();
         return pDev->EndScene();
     }
 
@@ -590,4 +605,7 @@ static IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {
 
 void d3dhooks::pre_init() { IAT_AUTO("ddraw.dll", DirectDrawCreate); }
 
-void d3dhooks::init() { IAT_AUTO("d3d9.dll", Direct3DCreate9); }
+void d3dhooks::init() {
+    imgui_d3d9_inited = false;
+    IAT_AUTO("d3d9.dll", Direct3DCreate9);
+}

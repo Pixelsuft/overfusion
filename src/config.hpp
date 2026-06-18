@@ -85,6 +85,7 @@ public:
     bool disable_viewport;
     bool pause_on_scene_switch;
     bool forced_window_resize;
+    bool delayed_d3d9_present_hook;
 
     Config();
     void read();

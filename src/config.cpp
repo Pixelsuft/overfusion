@@ -159,6 +159,7 @@ Config::Config() {
     disable_viewport = false;
     pause_on_scene_switch = false;
     forced_window_resize = false;
+    delayed_d3d9_present_hook = false;
 }
 
 // Read boolean variable
