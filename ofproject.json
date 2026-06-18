@@ -4,5 +4,6 @@
   "system_time_offset": 0,
   "local_time_offset": 0,
   "startup_time_offset": 0,
-  "no_mouse_manipulation": true
+  "no_mouse_manipulation": true,
+  "cmdline_append": " /DEBUG /NOVSYNC /MIS0 /NOC"
 }

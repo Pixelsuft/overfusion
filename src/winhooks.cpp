@@ -12,8 +12,6 @@
 #include <backends/imgui_impl_win32.h>
 #include <spdlog/spdlog.h>
 
-// FIXME: forced resolution, make it working not only for recording
-
 using ost::string_view;
 using std::string;
 

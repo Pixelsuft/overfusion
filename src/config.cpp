@@ -230,8 +230,8 @@ void Config::read() {
     if (proj_data["no_mouse_manipulation"].is_boolean() ||
         proj_data["no_mouse_manipulation"].is_number_integer())
         no_mouse_manipulation = proj_data["no_mouse_manipulation"];
-    if (data["cmdline_append"].is_string())
-        cmdline_append = data["cmdline_append"];
+    if (proj_data["cmdline_append"].is_string())
+        cmdline_append = proj_data["cmdline_append"];
     if (data["ffmpeg_cmdline"].is_string())
         ffmpeg_cmdline = data["ffmpeg_cmdline"];
     if (data["binds"].is_array()) {

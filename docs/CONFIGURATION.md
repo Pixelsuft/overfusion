@@ -36,7 +36,6 @@ You can use [default config](../overfusion.json) and [default project config](..
 `pause_on_scene_switch` - pause the game when scene switches (or gets reset) <br />
 `disable_viewport` - disable `Viewport.mfx` Fusion plugin display <br />
 `disable_perspective` - disable `Perspective.mfx` Fusion plugin display <br />
-`cmdline_append` - extra command line arguments passed to the game <br />
 `ffmpeg_cmdline` - FFmpeg command line for video capturing <br />
 `binds` - keyboard bindings <br />
 
@@ -45,7 +44,8 @@ You can use [default config](../overfusion.json) and [default project config](..
 `fps` - game FPS <br />
 `delta_multiplier` - delta time multiplier (reverse of FPS) <br />
 `system_time_offset`, `local_time_offset`, `startup_time_offset` - emulated virtual time (in ms, relative to when starting a game) <br />
-`no_mouse_manipulation` - disallow the game to manipulate the mouse
+`no_mouse_manipulation` - disallow the game to manipulate the mouse <br />
+`cmdline_append` - extra command line arguments passed to the game
 
 ## Bindings
 

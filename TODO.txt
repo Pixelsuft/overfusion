@@ -5,7 +5,7 @@
 [ ] Support random manipulation (+rand() and srand() stable reimpl)
 [ ] Fix that transtions (restarting, loading state)
 [ ] Restart game event?
-[ ] Allow to specify VFS rules if ofproject.json (map specific file to...)
+[ ] Allow to specify VFS rules in ofproject.json (map specific file to...)
 [ ] Add skip drawing
 [ ] Optimize jumbo builds via Python (devirtualize calls, etc)
 [ ] Reimplement spdlog to support VS2015???
