@@ -72,8 +72,11 @@ public:
     }
     STDMETHOD_(UINT, GetNumberOfSwapChains)() override { return pDev->GetNumberOfSwapChains(); }
     STDMETHOD(Reset)(D3DPRESENT_PARAMETERS* pPresentationParameters) {
+        auto& cfg = conf::get();
         spdlog::debug("IDirect3DDevice9->Reset");
         // Invalidate ImGui
+        if (cfg.custom_window)
+            return pDev->Reset(pPresentationParameters);
         ImGui_ImplDX9_InvalidateDeviceObjects();
         HRESULT hr = pDev->Reset(pPresentationParameters);
         if (SUCCEEDED(hr))
