@@ -81,12 +81,12 @@ void video::start() {
 }
 
 void video::stop() {
-    if (!recording)
+    recording = false;
+    if (!recording || !ffmpeg.is_open())
         return;
     auto& cfg = conf::get();
     spdlog::info("Stopping video recording");
     ffmpeg.close();
-    recording = false;
     if (is_d3d9_cap()) {
         if (pSysSurface) {
             pSysSurface->Release();
