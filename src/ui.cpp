@@ -149,7 +149,7 @@ static void draw_menu(bool custom_window) {
         ImGui::Checkbox("Pause on scene switch", &cfg.pause_on_scene_switch);
         ImGui::Checkbox("Save game state", &cfg.save_game_state);
         ImGui::Checkbox("Save VFS in state", &cfg.save_vfs);
-        if (!cfg.custom_window) {
+        if (cfg.render_type == conf::RenderType::D3D9) {
             ImGui::Checkbox("Show info window", &cfg.show_info);
             ImGui::Checkbox("Pixel filter", &cfg.pixel_filter);
         }

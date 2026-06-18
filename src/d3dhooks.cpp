@@ -193,19 +193,11 @@ public:
 
     STDMETHOD(EndScene)() override {
         // Main D3D9 hook here
+        auto& cfg = conf::get();
         ui::set_processing(true);
         static bool inited = false;
-        if (!inited) {
+        if (!inited && !cfg.custom_window) {
             inited = true;
-            // Check if we're using custom window
-            if (conf::get().custom_window) {
-                // Custom window is handled separately, don't initialize here
-                // ImGui for the game's D3D9 device
-                ui::set_processing(false);
-                auto ret = pDev->EndScene();
-                return ret;
-            }
-
             D3DDEVICE_CREATION_PARAMETERS params;
             pDev->GetCreationParameters(&params);
             ENSURE(::hwnd == params.hFocusWindow);
@@ -218,6 +210,10 @@ public:
             ImGui_ImplDX9_Init(pDev);
         }
         video::d3d9_draw(pDev);
+        if (cfg.custom_window) {
+            ui::set_processing(false);
+            return pDev->EndScene();
+        }
         ImGui_ImplDX9_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
@@ -226,8 +222,7 @@ public:
         ImGui::Render();
         ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
         ui::set_processing(false);
-        auto ret = pDev->EndScene();
-        return ret;
+        return pDev->EndScene();
     }
 
     STDMETHOD(Clear)(DWORD Count, const D3DRECT* pRects, DWORD Flags, D3DCOLOR Color, float Z,
