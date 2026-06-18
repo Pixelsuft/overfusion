@@ -3,12 +3,13 @@
 [ ] Add more binds (import/export replay by name or current name in ui???)
 [ ] Improve the codebase (ex.: custom window, darkmode api)
 [ ] Support random manipulation (+rand() and srand() stable reimpl)
-[ ] Fix FNAF direct capturing blinking (start/end of the magazine scene)
+[ ] Fix FNAF direct capturing blinking (start/end of the magazine scene) (transition problem)
+[ ] Fix that transtions
 [ ] Restart game event?
 [ ] Allow to specify VFS rules if ofproject.json (map specific file to...)
 [ ] Add skip drawing
 [ ] Optimize jumbo builds via Python (devirtualize calls, etc)
 [ ] Reimplement spdlog to support VS2015???
-[ ] Jumbo build: maybe use static C/C++ runtime? (need to fix win7 compat)
+[ ] Jumbo build: maybe use static C/C++ runtime? (need to fix win7 compat with it)
 [ ] Switch to https://github.com/ozone10/win32-darkmodelib? check XP compat first!
 [ ] Fix TODO/FIXME in code

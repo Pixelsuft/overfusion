@@ -84,6 +84,7 @@ public:
     bool disable_perspective;
     bool disable_viewport;
     bool pause_on_scene_switch;
+    bool forced_window_resize;
 
     Config();
     void read();

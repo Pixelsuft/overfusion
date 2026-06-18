@@ -6,6 +6,7 @@ You can use [default config](../overfusion.json) and [default project config](..
 ## Settings (overfusion.json)
 
 `force_resolution` - can be used to force game thinking that window resolution is this one (useful for direct video capturing) <br />
+`forced_window_resize` - resize window to `force_resolution` when set <br />
 `speed` - game speed in range [0.05, 2.0] <br />
 `font_scale` - UI scale in range [0.05, 3.0] <br />
 `force_custom_window` - force custom window for UI (for Direct3D 9 games) <br />

@@ -2,6 +2,7 @@
   "speed": 1.0,
   "font_scale": 1.0,
   "force_resolution": [0, 0],
+  "forced_window_resize": false,
   "force_custom_window": false,
   "disable_fullscreen": true,
   "wait_for_debugger": false,

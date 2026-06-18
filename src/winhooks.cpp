@@ -431,9 +431,7 @@ static BOOL WINAPI SetWindowPosH(HWND hWnd, HWND hWndInsertAfter, int X, int Y, 
     if (hWnd == ::hwnd || hWnd == ::mhwnd) {
         auto& cfg = conf::get();
         if (cfg.forced_res.first > 0 && cfg.forced_res.second > 0) {
-            if (hWnd == ::hwnd && false) {
-                // Okay, it looks bad if window if bigger than screen
-                // TODO: allow to configure this
+            if (hWnd == ::hwnd && cfg.forced_window_resize) {
                 auto size = get_needed_win_size(hWnd, cfg.forced_res.first, cfg.forced_res.second);
                 cx = size.first;
                 cy = size.second;
