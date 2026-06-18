@@ -29,6 +29,7 @@ static void of_main() {
     conf::init();
     mem::init();
     ui::init();
+    ofs::pre_init();
     files::pre_init();
     conf::get().read();
     spdlog::debug("Base address: {}", reinterpret_cast<void*>(mem::get_base()));

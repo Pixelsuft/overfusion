@@ -178,7 +178,7 @@ static void set_rerecords(uint64_t count) {
 }
 
 void state::init() {
-    base_path = string(files::get_cwd()) + '\\' + conf::get().project_name;
+    base_path = string(ofs::get_cwd()) + '\\' + conf::get().project_name;
     last_msg = "None";
     processing_save = false;
     updating = false;

@@ -16,6 +16,8 @@ extern HANDLE WINAPI CreateFileWH(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, 
                                   HANDLE);
 extern BOOL(WINAPI* CloseHandleO)(HANDLE);
 
+static string real_cwd;
+
 File::File() noexcept { handle = INVALID_HANDLE_VALUE; }
 
 File::File(string_view path, int mode) noexcept {
@@ -152,3 +154,13 @@ bool ofs::file_exists(ost::string_view path) {
     std::free(converted);
     return dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
+
+void ofs::pre_init() {
+    wchar_t buffer[MAX_PATH];
+    auto len_ret = GetCurrentDirectoryW(MAX_PATH, buffer);
+    ENSURE(len_ret > 2 && len_ret < MAX_PATH);
+    buffer[len_ret] = L'\0';
+    real_cwd = uconv::from_utf16(buffer);
+}
+
+string_view ofs::get_cwd() { return real_cwd; }

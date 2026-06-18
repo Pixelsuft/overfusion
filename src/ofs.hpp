@@ -33,6 +33,8 @@ public:
     File& operator=(File&& other) noexcept;
 };
 
+void pre_init();
+ost::string_view get_cwd();
 bool remove_file(ost::string_view path);
 bool make_dir(ost::string_view path);
 bool file_exists(ost::string_view path);

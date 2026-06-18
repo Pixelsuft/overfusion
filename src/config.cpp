@@ -1,7 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "config.hpp"
 #include "ass.hpp"
-#include "files.hpp"
 #include "input.hpp"
 #include "ofs.hpp"
 #include "process.hpp"
@@ -170,9 +169,9 @@ Config::Config() {
 void Config::read() {
     auto temp_ret = ofs::make_dir(project_name);
     ENSURE(temp_ret);
-    auto data = read_config_file(string(files::get_cwd()) + "\\overfusion.json");
+    auto data = read_config_file(string(ofs::get_cwd()) + "\\overfusion.json");
     auto proj_data =
-        read_config_file(string(files::get_cwd()) + '\\' + project_name + "\\ofproject.json");
+        read_config_file(string(ofs::get_cwd()) + '\\' + project_name + "\\ofproject.json");
     if (proj_data["fps"].is_number_unsigned())
         fps = proj_data["fps"];
     if (proj_data["delta_multiplier"].is_number_unsigned())

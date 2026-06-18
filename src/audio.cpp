@@ -1,7 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "audio.hpp"
 #include "config.hpp"
-#include "files.hpp"
 #include "lock.hpp"
 #include "mem.hpp"
 #include "state.hpp"
@@ -442,7 +441,7 @@ void audio::init() {
         spdlog::warn("Audio recording is still in BETA");
     reinit_capture();
     if (capturing) {
-        base_path = string(files::get_cwd()) + '\\' + cfg.project_name + "\\temp_audio";
+        base_path = string(ofs::get_cwd()) + '\\' + cfg.project_name + "\\temp_audio";
         auto dir_ret = ofs::make_dir(base_path);
         ENSURE(dir_ret);
     }

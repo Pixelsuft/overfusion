@@ -56,7 +56,6 @@ struct FileHandle {
 };
 
 static lock::CriticalSection fcs;
-static string real_cwd;
 static string temp_path;
 static std::map<std::string, FileData> file_map;
 static std::vector<FileHandle*> our_handles;
@@ -79,22 +78,11 @@ static std::string normalize_path(string_view path_view) {
                    [](unsigned char c) { return c != '/' ? std::tolower(c) : '\\'; });
     // std::replace(ret.begin(), ret.end(), '/', '\\');
     if (ret[0] == '\\')
-        ret.insert(0, string() + static_cast<char>(std::tolower(real_cwd[0])) + ':');
+        ret.insert(0, string() + static_cast<char>(std::tolower(ofs::get_cwd()[0])) + ':');
     return ret;
 }
 
-string_view files::get_cwd() { return real_cwd; }
-
-void files::pre_init() {
-    [] {
-        wchar_t buffer[MAX_PATH];
-        auto len_ret = GetCurrentDirectoryW(MAX_PATH, buffer);
-        ENSURE(len_ret > 0 && len_ret < MAX_PATH);
-        buffer[len_ret] = L'\0';
-        real_cwd = uconv::from_utf16(buffer);
-        temp_path = real_cwd + "\\temp";
-    }();
-}
+void files::pre_init() { temp_path = string(ofs::get_cwd()) + "\\temp"; }
 
 BOOL(WINAPI* SetCurrentDirectoryWO)(LPCWSTR lpPathName);
 BOOL WINAPI SetCurrentDirectoryWH(LPCWSTR lpPathName) {

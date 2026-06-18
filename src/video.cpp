@@ -2,7 +2,7 @@
 #include "video.hpp"
 #include "ass.hpp"
 #include "config.hpp"
-#include "files.hpp"
+#include "ofs.hpp"
 #include "process.hpp"
 #include <d3d9.h>
 #include <spdlog/spdlog.h>
@@ -124,7 +124,7 @@ static video::CheckResult check_record(std::pair<int, int> new_size) {
             cmd.replace(pos, 5,
                         std::to_string(new_size.first) + "x" + std::to_string(new_size.second));
         while ((pos = cmd.find("$CWD")) != std::string::npos)
-            cmd.replace(pos, 4, string(files::get_cwd()));
+            cmd.replace(pos, 4, string(ofs::get_cwd()));
         while ((pos = cmd.find("$PROJ")) != std::string::npos)
             cmd.replace(pos, 5, cfg.project_name);
         video::file_index++;

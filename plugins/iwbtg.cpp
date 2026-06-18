@@ -1,6 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/config.hpp"
-#include "../src/files.hpp"
 #include "../src/mem.hpp"
 #include "../src/ofs.hpp"
 #include "../src/plugbase.hpp"
@@ -16,7 +15,7 @@ class PlugIwbtg final : public plug::PlugBase {
 public:
     PlugIwbtg() {
         name = "I Wanna Be The Guy";
-        cmdline_append = string(" /SF \"") + string(files::get_cwd()) + "\\iwbtg.exe\" /SO94208";
+        cmdline_append = string(" /SF \"") + string(ofs::get_cwd()) + "\\iwbtg.exe\" /SO94208";
     }
 
     bool pre_init() override {
@@ -111,7 +110,7 @@ public:
 
     static ost::optional<PlugIwbtg*> on_plugin_check() {
         if (mem::exe_name == "stdrt.exe" &&
-            ofs::file_exists(string(files::get_cwd()) + "\\iwbtg.exe"))
+            ofs::file_exists(string(ofs::get_cwd()) + "\\iwbtg.exe"))
             return new PlugIwbtg;
         return {};
     }
