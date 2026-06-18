@@ -86,7 +86,7 @@ static LRESULT WINAPI MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
         return FALSE;
     case WM_GETMINMAXINFO: {
         auto& cfg = conf::get();
-        if (winhooks::inited && cfg.forced_res.first > 0 && cfg.forced_res.second > 0) {
+        if (cfg.forced_res.first > 0 && cfg.forced_res.second > 0) {
             auto mmi = reinterpret_cast<MINMAXINFO*>(lParam);
             auto needed_size =
                 get_needed_win_size(hWnd, cfg.forced_res.first, cfg.forced_res.second);
@@ -345,7 +345,7 @@ static BOOL WINAPI SetMenuH(HWND hWnd, HMENU hMenu) {
 }
 
 static LRESULT CALLBACK CbtDarkHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
-    if (nCode == HCBT_CREATEWND) {
+    if (nCode == HCBT_CREATEWND && !conf::get().disable_dark_mode_support) {
         auto hwnd = reinterpret_cast<HWND>(wParam);
         // winhooks::fix_win32_theme_instant(hwnd);
 
@@ -431,14 +431,12 @@ static BOOL WINAPI SetWindowPosH(HWND hWnd, HWND hWndInsertAfter, int X, int Y, 
     if (hWnd == ::hwnd || hWnd == ::mhwnd) {
         auto& cfg = conf::get();
         if (cfg.forced_res.first > 0 && cfg.forced_res.second > 0) {
-            if (hWnd == ::hwnd) {
+            if (hWnd == ::hwnd && false) {
                 // Okay, it looks bad if window if bigger than screen
                 // TODO: allow to configure this
-                /*
                 auto size = get_needed_win_size(hWnd, cfg.forced_res.first, cfg.forced_res.second);
                 cx = size.first;
                 cy = size.second;
-                */
             }
             if (hWnd == ::mhwnd) {
                 cx = cfg.forced_res.first;

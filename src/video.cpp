@@ -148,6 +148,7 @@ void* video::get_mem_dc() {
     return memdc;
 }
 
+static void* last_dev = nullptr; // TODO: remove that
 void video::after_draw() {
     auto& cfg = conf::get();
     if (!recording)
@@ -208,6 +209,8 @@ void video::after_draw() {
         int bits = GetDIBits(memdc, bmp, 0, size.second, data_buffer.data(), &bmi, DIB_RGB_COLORS);
         ENSURE(bits == size.second);
     }
+    if (last_dev && false)
+        d3d9_draw(last_dev);
     if (!ffmpeg.write(data_buffer.data(), data_buffer.size())) {
         spdlog::error("Failed to write data to ffmpeg");
         stop();
@@ -218,7 +221,8 @@ void video::d3d9_draw(void* dev_ptr) {
     auto& cfg = conf::get();
     if (!recording || !is_d3d9_cap() /* || !allow_frame*/)
         return;
-    // allow_frame = false;
+    last_dev = dev_ptr;
+    allow_frame = false;
     LPDIRECT3DDEVICE9 pDevice = reinterpret_cast<LPDIRECT3DDEVICE9>(dev_ptr);
     LPDIRECT3DSURFACE9 pBackBuffer;
     auto d3d_ret = pDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer);
