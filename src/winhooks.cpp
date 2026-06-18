@@ -96,10 +96,11 @@ static LRESULT WINAPI MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
         }
     }
     case WM_PAINT:
-        winhooks::fix_win32_window_bg(hWnd);
+        if (!conf::get().disable_dark_mode_support)
+            winhooks::fix_win32_window_bg(hWnd);
         break;
     case WM_ERASEBKGND:
-        if (winhooks::fix_win32_window_bg(hWnd))
+        if (!conf::get().disable_dark_mode_support && winhooks::fix_win32_window_bg(hWnd))
             return TRUE;
         break;
     }

@@ -150,62 +150,64 @@ void* video::get_mem_dc() {
 
 void video::after_draw() {
     auto& cfg = conf::get();
-    if (!recording || is_d3d9_cap())
+    if (!recording)
         return;
-    RECT win_rect;
-    auto ret = GetClientRectO(::mhwnd, &win_rect);
-    ENSURE(ret);
-    if (win_rect.right == 0 || win_rect.bottom == 0)
-        return;
-    switch (check_record({win_rect.right, win_rect.bottom})) {
-    case video::CheckResult::Ok:
-        break;
-    case video::CheckResult::Failed:
-        return;
-    case video::CheckResult::Started:
-        srcdc = GetDC(::mhwnd);
-        ENSURE(srcdc != nullptr);
-        memdc = CreateCompatibleDC(srcdc);
-        ENSURE(memdc != nullptr);
-        bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        bmi.bmiHeader.biPlanes = 1;
-        bmi.bmiHeader.biBitCount = 32;
-        bmi.bmiHeader.biCompression = BI_RGB;
-        bmi.bmiHeader.biClrUsed = 0;
-        bmi.bmiHeader.biClrImportant = 0;
-        bmi.bmiHeader.biWidth = size.first;
-        bmi.bmiHeader.biHeight = -size.second;
-        bmp = CreateCompatibleBitmap(srcdc, size.first, size.second);
-        ENSURE(bmp != nullptr);
-        old_bmp = SelectObject(memdc, bmp);
-        if (is_gdi_cap()) {
-            ret = PatBlt(memdc, 0, 0, size.first, size.second, BLACKNESS);
-            ENSURE(ret);
-            // Force window to redraw so we can capture the first frame
-            EditWindowProcO(::mhwnd, WM_ERASEBKGND, reinterpret_cast<WPARAM>(srcdc), 0);
-        }
-        spdlog::info("Window capture started ({}x{})", size.first, size.second);
-        break;
-    default:
-        ASS(false);
-    }
-    if (!is_gdi_cap()) {
-        BOOL success;
-        // TODO: configure this in config?
-        if (1) {
-            success =
-                BitBltO(memdc, 0, 0, size.first, size.second, srcdc, 0, 0, SRCCOPY | CAPTUREBLT);
-        } else {
-            success = PrintWindow(::mhwnd, memdc, PW_CLIENTONLY);
-        }
-        if (!success) {
-            spdlog::error("Failed to capture window");
-            stop();
+    if (!is_d3d9_cap()) {
+        RECT win_rect;
+        auto ret = GetClientRectO(::mhwnd, &win_rect);
+        ENSURE(ret);
+        if (win_rect.right == 0 || win_rect.bottom == 0)
             return;
+        switch (check_record({win_rect.right, win_rect.bottom})) {
+        case video::CheckResult::Ok:
+            break;
+        case video::CheckResult::Failed:
+            return;
+        case video::CheckResult::Started:
+            srcdc = GetDC(::mhwnd);
+            ENSURE(srcdc != nullptr);
+            memdc = CreateCompatibleDC(srcdc);
+            ENSURE(memdc != nullptr);
+            bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+            bmi.bmiHeader.biPlanes = 1;
+            bmi.bmiHeader.biBitCount = 32;
+            bmi.bmiHeader.biCompression = BI_RGB;
+            bmi.bmiHeader.biClrUsed = 0;
+            bmi.bmiHeader.biClrImportant = 0;
+            bmi.bmiHeader.biWidth = size.first;
+            bmi.bmiHeader.biHeight = -size.second;
+            bmp = CreateCompatibleBitmap(srcdc, size.first, size.second);
+            ENSURE(bmp != nullptr);
+            old_bmp = SelectObject(memdc, bmp);
+            if (is_gdi_cap()) {
+                ret = PatBlt(memdc, 0, 0, size.first, size.second, BLACKNESS);
+                ENSURE(ret);
+                // Force window to redraw so we can capture the first frame
+                EditWindowProcO(::mhwnd, WM_ERASEBKGND, reinterpret_cast<WPARAM>(srcdc), 0);
+            }
+            spdlog::info("Window capture started ({}x{})", size.first, size.second);
+            break;
+        default:
+            ASS(false);
         }
+        if (!is_gdi_cap()) {
+            BOOL success;
+            // TODO: configure this in config?
+            if (1) {
+                success = BitBltO(memdc, 0, 0, size.first, size.second, srcdc, 0, 0,
+                                  SRCCOPY | CAPTUREBLT);
+            } else {
+                success = PrintWindow(::mhwnd, memdc, PW_CLIENTONLY);
+            }
+            if (!success) {
+                spdlog::error("Failed to capture window");
+                stop();
+                return;
+            }
+        }
+        int bits = GetDIBits(memdc, bmp, 0, size.second, data_buffer.data(), &bmi, DIB_RGB_COLORS);
+        ENSURE(bits == size.second);
     }
-    int bits = GetDIBits(memdc, bmp, 0, size.second, data_buffer.data(), &bmi, DIB_RGB_COLORS);
-    ENSURE(bits == size.second);
     if (!ffmpeg.write(data_buffer.data(), data_buffer.size())) {
         spdlog::error("Failed to write data to ffmpeg");
         stop();
@@ -214,9 +216,9 @@ void video::after_draw() {
 
 void video::d3d9_draw(void* dev_ptr) {
     auto& cfg = conf::get();
-    if (!recording || !is_d3d9_cap() || !allow_frame)
+    if (!recording || !is_d3d9_cap() /* || !allow_frame*/)
         return;
-    allow_frame = false;
+    // allow_frame = false;
     LPDIRECT3DDEVICE9 pDevice = reinterpret_cast<LPDIRECT3DDEVICE9>(dev_ptr);
     LPDIRECT3DSURFACE9 pBackBuffer;
     auto d3d_ret = pDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer);
@@ -258,11 +260,8 @@ void video::d3d9_draw(void* dev_ptr) {
         pSysSurface->UnlockRect();
     }
     pBackBuffer->Release();
-    if (d3d_ret != D3D_OK || !ffmpeg.write(data_buffer.data(), data_buffer.size())) {
-        if (d3d_ret == D3D_OK)
-            spdlog::error("Failed to write data to FFmpeg");
-        else
-            spdlog::error("Failed to lock D3D9 surface");
+    if (d3d_ret != D3D_OK) {
+        spdlog::error("Failed to lock D3D9 surface");
         stop();
     }
 }
