@@ -4,7 +4,7 @@
 [ ] Improve the codebase (ex.: custom window, darkmode api)
 [ ] Support random manipulation (+rand() and srand() stable reimpl)
 [ ] Fix FNAF direct capturing blinking (start/end of the magazine scene) (transition problem)
-[ ] Fix that transtions
+[ ] Fix that transtions (restarting, loading state, recording ^^^)
 [ ] Restart game event?
 [ ] Allow to specify VFS rules if ofproject.json (map specific file to...)
 [ ] Add skip drawing
