@@ -222,7 +222,6 @@ public:
         // D3D9 init
         auto& cfg = conf::get();
         if (!imgui_d3d9_inited && !cfg.custom_window) {
-            imgui_d3d9_inited = true;
             ui::set_processing(true);
             D3DDEVICE_CREATION_PARAMETERS params;
             pDev->GetCreationParameters(&params);
@@ -236,6 +235,7 @@ public:
             ImGui_ImplDX9_Init(pDev);
             ui::set_processing(false);
         }
+        imgui_d3d9_inited = true;
         // Some old games don't render their first frame if we only use Present hook FSR
         // Let's fix it in a bad way!
         if (cfg.delayed_d3d9_present_hook)
