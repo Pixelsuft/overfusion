@@ -189,7 +189,6 @@ static bool has_no_uppercase(ost::string_view sv) {
 bool hook::_reg_iat(ost::string_view dll, ost::string_view func_name, void* pNewFunc,
                     void** ppOriginal) {
     string str_dll(dll);
-    // TODO: assert for no doubling
     ASS(has_no_uppercase(dll));
     HookTarget target;
     target.funcName = std::string(func_name);
@@ -308,7 +307,6 @@ bool hook::patch_iat() {
         do {
             auto mod_fn = uconv::from_utf16(me.szModule);
             std::transform(mod_fn.begin(), mod_fn.end(), mod_fn.begin(), ::tolower);
-            // TODO: do not touch system modules???
             if (!is_iat_dll_blocked(mod_fn) && module_iat_apply(me.hModule)) {
                 // spdlog::debug("IATed {}", mod_fn);
             }
