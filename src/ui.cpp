@@ -114,9 +114,6 @@ static void draw_menu(bool custom_window) {
         if (ImGui::Button("Clear temp events queue"))
             state::clear_temp_events();
     }
-    if (cfg.virtual_fs && ImGui::CollapsingHeader("Virtual Filesystem")) {
-        files::draw_ui();
-    }
     if (ImGui::CollapsingHeader("Recording")) {
         if (!video::is_recording()) {
             if (ImGui::Button("Start video recording"))
@@ -139,6 +136,9 @@ static void draw_menu(bool custom_window) {
     }
     if (ImGui::CollapsingHeader("Plugin")) {
         plug::get().draw_menu();
+    }
+    if (cfg.virtual_fs && ImGui::CollapsingHeader("Virtual Filesystem")) {
+        files::draw_ui();
     }
     if (ImGui::CollapsingHeader("Settings")) {
         if (ImGui::SliderFloat("Font scale", &cfg.font_scale, 0.05f, 3.f))
