@@ -9,6 +9,5 @@
 [ ] Add skip drawing
 [ ] Optimize jumbo builds via Python (devirtualize calls, etc)
 [ ] Reimplement spdlog to support VS2015???
-[ ] Jumbo build: maybe use static C/C++ runtime? (need to fix win7 compat with it)
 [ ] Switch to https://github.com/ozone10/win32-darkmodelib? check XP compat first!
 [ ] Fix TODO/FIXME in code
