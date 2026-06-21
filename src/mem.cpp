@@ -14,7 +14,7 @@
 #include <winternl.h>
 #pragma comment(lib, "psapi.lib")
 #ifdef _DEBUG
-#define IAT_SUPPORT_DYNAMIC
+// #define IAT_SUPPORT_DYNAMIC
 #endif
 
 using std::string;

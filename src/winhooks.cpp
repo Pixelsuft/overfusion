@@ -360,7 +360,7 @@ static LRESULT CALLBACK CbtDarkHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 static int(WINAPI* MessageBoxAO)(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption,
                                  UINT uType) = MessageBoxA;
-static int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
+int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
     ASS(lpText && lpCaption);
     int ret = 0;
     if (!ui::is_processing() && std::strcmp(lpCaption, "Microsoft Visual C++ Runtime Library") != 0)
@@ -379,7 +379,7 @@ static int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT 
 
 static int(WINAPI* MessageBoxWO)(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption,
                                  UINT uType) = MessageBoxW;
-static int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) {
+int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) {
     ASS(lpText && lpCaption);
     int ret = 0;
     if (!ui::is_processing() &&

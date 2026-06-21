@@ -17,6 +17,13 @@ using ost::optional;
 using ost::string_view;
 using std::string;
 
+extern int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType);
+extern int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
+
+namespace loadhooks {
+static HMODULE user32_handle;
+}
+
 #if (defined(_MSC_VER) ? _MSVC_LANG : __cplusplus) >= 201703L
 static constexpr
 #else
@@ -151,6 +158,11 @@ static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
             string path = get_module_path(hModule);
             spdlog::warn("This object does support state save but doesn't support load (WHAT?): {}",
                          get_filename(path));
+        } else if (hModule == loadhooks::user32_handle) {
+            if (proc == "MessageBoxA")
+                temp_ret = reinterpret_cast<void*>(MessageBoxAH);
+            else if (proc == "MessageBoxW")
+                temp_ret = reinterpret_cast<void*>(MessageBoxWH);
         }
         // spdlog::debug("GetProcAddress: {}", lpProcName);
     }
@@ -158,6 +170,7 @@ static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
 }
 
 void loadhooks::init() {
+    user32_handle = GetModuleHandleW(L"user32.dll");
     IAT_STR_AUTO("kernel32.dll", LoadLibrary);
     IAT_AUTO("kernel32.dll", GetProcAddress);
     // For really old MMF2 versions
