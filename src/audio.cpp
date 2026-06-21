@@ -128,7 +128,7 @@ class IDSBProxy : public IDirectSoundBuffer {
         pBuf->GetVolume(&vol);
         pBuf->GetPan(&pan);
 
-        uint64_t now = state::get_time(state::TimeOffset::None);
+        uint64_t now = audio_get_time();
 
         if (cap.events.empty()) {
             cap.startTime = now;
