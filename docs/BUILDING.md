@@ -27,7 +27,7 @@ Now you have `overfusion` folder
 4. Choose `ReleaseFast` `x86` mode
 5. Build the solution: `Build`->`Build Solution` (`Ctrl`+`Shift`+`B`)
 6. Now you have `overfusion.dll` in the `ReleaseFast` folder
-7. Optionally run `patch_win7.py` script and pass `overfusion.dll` as the first argument to it to fix Windows 7 compatibility
+7. Optionally run `patch_win7.py` script and pass path to the `overfusion.dll` as the first argument to it to fix Windows 7 compatibility
 
 ## Building the OverFusion injector
 
