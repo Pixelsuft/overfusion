@@ -102,12 +102,17 @@ static ost::optional<int> key_from_json(nlohmann::json& val) {
 
 Config::Config() {
     auto env_name = process::get_env("OVERFUSION_PROJECT_NAME");
-    if (env_name.has_value()) {
+    if (env_name.has_value() && !env_name.value().empty()) {
         project_name = std::move(env_name.value());
         spdlog::info("Project name: {}", project_name);
     } else {
+#ifdef _DEBUG
         spdlog::warn("No project name was specified, defaulting to 'test_proj'");
         project_name = "test_proj";
+#else
+        spdlog::error("No project name was specified, aborting!");
+        project_name.clear();
+#endif
     }
     // TODO: validate project_name
     ffmpeg_cmdline =

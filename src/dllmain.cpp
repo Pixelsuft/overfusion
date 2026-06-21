@@ -27,6 +27,8 @@ static void of_main() {
     SetEnvironmentVariableW(L"GALLIUM_DRIVER", L"llvmpipe");
     SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", L"true");
     conf::init();
+    if (conf::get().project_name.empty())
+        return;
     mem::init();
     ui::init();
     ofs::pre_init();
