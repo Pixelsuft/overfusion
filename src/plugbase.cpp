@@ -14,7 +14,7 @@ static std::vector<plug::PlugCheckCallback>& get_registry() {
 void plug::_reg_internal(plug::PlugCheckCallback callback) { get_registry().push_back(callback); }
 #endif
 
-PlugBase::PlugBase() : name("Abstract plugin") {}
+PlugBase::PlugBase() {}
 
 bool PlugBase::pre_init() { return true; }
 

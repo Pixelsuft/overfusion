@@ -21,8 +21,10 @@ static void of_main() {
     freopen_s(reinterpret_cast<FILE**>(stdout), "CONOUT$", "w", stdout);
 #ifdef _DEBUG
     spdlog::set_level(spdlog::level::debug);
-#endif
     spdlog::set_pattern("[%H:%M:%S.%e] [%^%l%$] %v");
+#else
+    spdlog::set_pattern("[%^%l%$] %v");
+#endif
     spdlog::info("OverFusion injected!");
     SetEnvironmentVariableW(L"GALLIUM_DRIVER", L"llvmpipe");
     SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", L"true");
@@ -40,7 +42,7 @@ static void of_main() {
             Sleep(500);
     }
     if (!plug::search_and_run())
-        mem::terminate();
+        return;
     if (!plug::get().pre_init()) {
         spdlog::error("Failed to init plugin: {}", plug::get().name);
         return;
