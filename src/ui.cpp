@@ -114,6 +114,9 @@ static void draw_menu(bool custom_window) {
         if (ImGui::Button("Clear temp events queue"))
             state::clear_temp_events();
     }
+    if (ImGui::CollapsingHeader("Plugin")) {
+        plug::get().draw_menu();
+    }
     if (ImGui::CollapsingHeader("Recording")) {
         if (!video::is_recording()) {
             if (ImGui::Button("Start video recording"))
@@ -133,9 +136,6 @@ static void draw_menu(bool custom_window) {
             if (ImGui::Button("Stop audio capture"))
                 audio::flush();
         }
-    }
-    if (ImGui::CollapsingHeader("Plugin")) {
-        plug::get().draw_menu();
     }
     if (cfg.virtual_fs && ImGui::CollapsingHeader("Virtual Filesystem")) {
         files::draw_ui();

@@ -53,7 +53,7 @@ static int __stdcall ProcessTransitionH() {
         cfg.processing_frame = true;
         cfg.already_processed_frame = false;
         ret = ProcessTransitionO();
-        if (check_already_processed() && RenderTransition && false)
+        if (check_already_processed() && RenderTransition && cfg.redraw_on_skip)
             RenderTransition();
         cfg.processing_frame = false;
         video::after_draw();
@@ -124,7 +124,7 @@ static int __stdcall UpdateGameFrameH() {
         cfg.already_processed_frame = false;
         ret = UpdateGameFrameO();
         // Breaks FNAF magazine transition
-        if (check_already_processed() && RenderFrame && false)
+        if (check_already_processed() && RenderFrame && cfg.redraw_on_skip)
             RenderFrame();
         cfg.processing_frame = false;
         video::after_draw();

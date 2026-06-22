@@ -88,6 +88,7 @@ public:
     bool delayed_d3d9_present_hook;
     bool processing_frame;
     bool already_processed_frame;
+    bool redraw_on_skip;
 
     Config();
     void read();

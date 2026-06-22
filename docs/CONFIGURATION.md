@@ -34,6 +34,7 @@ You can use [default config](../overfusion.json) and [default project config](..
 `ui_pixel_filter` - do the same but for OF UI <br />
 `save_vfs` - save/load VFS state into state file <br />
 `pause_on_scene_switch` - pause the game when scene switches (or gets reset) <br />
+`redraw_on_skip` - draw the frame manually when the game didn't draw (when playing a game unpaused), breaks FNAF magazine transition <br />
 `disable_viewport` - disable `Viewport.mfx` Fusion plugin display <br />
 `disable_perspective` - disable `Perspective.mfx` Fusion plugin display <br />
 `ffmpeg_cmdline` - FFmpeg command line for video capturing <br />
