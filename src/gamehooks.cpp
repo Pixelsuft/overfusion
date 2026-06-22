@@ -30,25 +30,39 @@ static bool check_already_processed() {
     return false;
 }
 
+static std::pair<int*, int*> prepare_and_get_pointers() {
+    auto pState = plug::get().get_prop(plug::PtrProp::PState);
+    ASS(pState != nullptr);
+    auto pStep = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));
+    auto pIsPaused = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PIsPaused, pState));
+    ASS(pStep != nullptr);
+    ASS(pIsPaused != nullptr);
+    *pIsPaused = false;
+    *pStep = 1;
+    return {pIsPaused, pStep};
+}
+
 static int(__stdcall* ProcessTransitionO)();
 static int __stdcall ProcessTransitionH() {
     // Oh fuck another code dup
     auto& cfg = conf::get();
-    auto pState = plug::get().get_prop(plug::PtrProp::PState);
-    ASS(pState != nullptr);
-    input::process_update();
     state::early_update();
+    if (!state::is_processing_save())
+        input::process_update();
     state::before_update(true);
+    auto pIsPaused = prepare_and_get_pointers().first;
     int ret;
     if (cfg.boxed_mode)
         cfg.is_paused = false;
     if (cfg.is_paused && !cfg.need_advance) {
+        *pIsPaused = true;
         ret = ProcessTransitionO();
         if (cfg.custom_window)
             customwindow::render();
         if (RenderTransition)
             RenderTransition();
     } else {
+        *pIsPaused = false;
         cfg.need_advance = false;
         cfg.processing_frame = true;
         cfg.already_processed_frame = false;
@@ -97,29 +111,21 @@ static int __stdcall UpdateGameFrameH() {
         hook::enable();
         hook::patch_iat();
     }
-    auto pState = plug::get().get_prop(plug::PtrProp::PState);
-    ASS(pState != nullptr);
     state::early_update();
-    auto pStep = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSubTickStep, pState));
-    auto pIsPaused = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PIsPaused, pState));
-    ASS(pStep != nullptr);
-    ASS(pIsPaused != nullptr);
-    *pIsPaused = false;
-    *pStep = 1;
     if (!state::is_processing_save())
         input::process_update();
+    auto ptrs = prepare_and_get_pointers();
     int ret;
     if (!state::before_update(false) && !cfg.boxed_mode) {
-        *pIsPaused = true;
+        *ptrs.first = true; // pIsPaused
         ret = UpdateGameFrameO();
         if (cfg.custom_window)
             customwindow::render();
         if (RenderFrame)
             RenderFrame();
     } else {
-        // spdlog::warn("Begin");
+        *ptrs.first = false; // pIsPaused
         cfg.need_advance = false;
-        *pIsPaused = false;
         cfg.processing_frame = true;
         cfg.already_processed_frame = false;
         ret = UpdateGameFrameO();
@@ -131,9 +137,10 @@ static int __stdcall UpdateGameFrameH() {
         if (cfg.custom_window)
             customwindow::render();
         cfg.delayed_d3d9_present_hook = false;
-        if (*pStep != 0) {
-            spdlog::warn("Subtick step check failed: got {} instead of 0", *pStep);
-            *pStep = 0;
+        // pStep check
+        if (*ptrs.second != 0) {
+            spdlog::warn("Subtick step check failed: got {} instead of 0", *ptrs.second);
+            *ptrs.second = 0;
         }
     }
     if (ret != 0) {
