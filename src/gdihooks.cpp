@@ -53,7 +53,7 @@ static BOOL WINAPI StretchBltH(HDC hdcDest, int xDest, int yDest, int wDest, int
 
 static BOOL(WINAPI* GdiFlushO)();
 static BOOL WINAPI GdiFlushH() {
-    conf::get().already_processed_frame = false;
+    conf::get().already_processed_frame = true;
     return GdiFlushO();
 }
 
