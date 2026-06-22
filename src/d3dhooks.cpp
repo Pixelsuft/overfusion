@@ -37,11 +37,11 @@ public:
     virtual ~ID3D9Proxy() {}
     void our_frame_hook_code() {
         // Main hook code for ImGui (and some other stuff)
+        auto& cfg = conf::get();
         if (!imgui_d3d9_inited) {
-            gamehooks::set_already_processed(true);
+            cfg.already_processed_frame = true;
             return;
         }
-        auto& cfg = conf::get();
         ui::set_processing(true);
         video::d3d9_draw(pDev);
         if (cfg.custom_window) {
@@ -56,7 +56,7 @@ public:
         ImGui::Render();
         ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
         ui::set_processing(false);
-        gamehooks::set_already_processed(true);
+        cfg.already_processed_frame = true;
     }
     STDMETHOD(QueryInterface)(REFIID riid, void** ppvObj) override {
         return pDev->QueryInterface(riid, ppvObj);

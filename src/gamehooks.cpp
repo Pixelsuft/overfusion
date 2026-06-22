@@ -15,19 +15,14 @@
 #include <Windows.h>
 #include <spdlog/spdlog.h>
 
-namespace gamehooks {
-static bool processing_frame;
-static bool already_processed;
-} // namespace gamehooks
-
 static void(__stdcall* RenderFrame)();
 static void(__stdcall* RenderTransition)();
 
 static bool check_already_processed() {
     auto& cfg = conf::get();
     if (cfg.render_type == conf::RenderType::GDI || cfg.render_type == conf::RenderType::D3D9) {
-        if (!gamehooks::already_processed) {
-            gamehooks::already_processed = true;
+        if (!cfg.already_processed_frame) {
+            cfg.already_processed_frame = true;
             spdlog::warn("Frame drawing was skipped on frame {}", state::get_frame_counter());
             return true;
         }
@@ -55,12 +50,12 @@ static int __stdcall ProcessTransitionH() {
             RenderTransition();
     } else {
         cfg.need_advance = false;
-        gamehooks::processing_frame = true;
-        gamehooks::already_processed = false;
+        cfg.processing_frame = true;
+        cfg.already_processed_frame = false;
         ret = ProcessTransitionO();
         if (check_already_processed() && RenderTransition && false)
             RenderTransition();
-        gamehooks::processing_frame = false;
+        cfg.processing_frame = false;
         video::after_draw();
         if (cfg.custom_window)
             customwindow::render();
@@ -125,13 +120,13 @@ static int __stdcall UpdateGameFrameH() {
         // spdlog::warn("Begin");
         cfg.need_advance = false;
         *pIsPaused = false;
-        gamehooks::processing_frame = true;
-        gamehooks::already_processed = false;
+        cfg.processing_frame = true;
+        cfg.already_processed_frame = false;
         ret = UpdateGameFrameO();
         // Breaks FNAF magazine transition
         if (check_already_processed() && RenderFrame && false)
             RenderFrame();
-        gamehooks::processing_frame = false;
+        cfg.processing_frame = false;
         video::after_draw();
         if (cfg.custom_window)
             customwindow::render();
@@ -152,8 +147,8 @@ static int __stdcall UpdateGameFrameH() {
 
 void gamehooks::init() {
     auto& cfg = conf::get();
-    processing_frame = false;
-    already_processed = false;
+    cfg.processing_frame = false;
+    cfg.already_processed_frame = false;
     RenderFrame = reinterpret_cast<decltype(RenderFrame)>(cfg.pRenderFrame);
     RenderTransition = reinterpret_cast<decltype(RenderTransition)>(cfg.pRenderTransition);
     if (cfg.pUpdateGameFrame == nullptr)
@@ -169,7 +164,3 @@ void gamehooks::init() {
     if (RenderTransition == nullptr)
         spdlog::error("RenderTransition was not loaded");
 }
-
-bool gamehooks::allow_frame_capture() { return processing_frame && !already_processed; }
-
-void gamehooks::set_already_processed(bool processed) { already_processed = processed; }

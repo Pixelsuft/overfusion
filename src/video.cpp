@@ -2,7 +2,6 @@
 #include "video.hpp"
 #include "ass.hpp"
 #include "config.hpp"
-#include "gamehooks.hpp"
 #include "ofs.hpp"
 #include "process.hpp"
 #include <d3d9.h>
@@ -208,7 +207,7 @@ void video::after_draw() {
 
 void video::d3d9_draw(void* dev_ptr) {
     auto& cfg = conf::get();
-    if (!recording || !is_d3d9_cap() || !gamehooks::allow_frame_capture())
+    if (!recording || !is_d3d9_cap() || !cfg.processing_frame || cfg.already_processed_frame)
         return;
     LPDIRECT3DDEVICE9 pDevice = reinterpret_cast<LPDIRECT3DDEVICE9>(dev_ptr);
     LPDIRECT3DSURFACE9 pBackBuffer;

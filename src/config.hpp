@@ -86,6 +86,8 @@ public:
     bool pause_on_scene_switch;
     bool forced_window_resize;
     bool delayed_d3d9_present_hook;
+    bool processing_frame;
+    bool already_processed_frame;
 
     Config();
     void read();
