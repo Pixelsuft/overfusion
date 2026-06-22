@@ -65,10 +65,11 @@ struct AudioEvent {
 struct AudioCapture {
     uint64_t startTime;
     uint64_t endTime;
+    uint64_t hash;
     std::vector<AudioEvent> events;
     int idx;
 
-    AudioCapture() : startTime(0), endTime(0), idx(0) {}
+    AudioCapture() : startTime(0), endTime(0), hash(0), idx(0) {}
 };
 
 class IDSBProxy;
@@ -104,8 +105,74 @@ inline uint64_t audio_get_time() {
 }
 
 // Generate unique filename via 'time' and 'idx'
-inline string audio_get_fn(uint64_t a, int b) {
-    return "a_" + std::to_string(a) + "_" + std::to_string(b) + ".wav";
+inline string audio_get_fn(uint64_t hash, uint64_t a, int b) {
+    if (hash == 0)
+        return "a" + std::to_string(a) + "_" + std::to_string(b) + ".wav";
+    else
+        return "ah" + std::to_string(hash) + ".wav";
+}
+
+// Hash func to avoid some 1-to-1 duplicates
+static uint64_t murmurhash3(const std::vector<uint8_t>& vec, uint64_t seed = 0xadc83b19ULL) {
+    if (vec.size() > 1024 * 1024) // TODO: configure this
+        return 0;
+    const uint8_t* data = vec.data();
+    const size_t len = vec.size();
+    const size_t nblocks = len / 8;
+
+    uint64_t h1 = seed;
+    uint64_t h2 = seed;
+
+    const uint64_t c1 = 0x87c37b91114253d5ULL;
+    const uint64_t c2 = 0x4cf5b8ed44174149ULL;
+
+    const uint64_t* blocks = reinterpret_cast<const uint64_t*>(data);
+
+    for (size_t i = 0; i < nblocks; ++i) {
+        uint64_t k1 = blocks[i];
+
+        k1 *= c1;
+        k1 = (k1 << 31) | (k1 >> 33);
+        k1 *= c2;
+        h1 ^= k1;
+
+        h1 = (h1 << 27) | (h1 >> 37);
+        h1 += h2;
+        h1 = h1 * 5 + 0x52dce729;
+    }
+
+    const uint8_t* tail = data + nblocks * 8;
+    uint64_t k2 = 0;
+
+    switch (len & 7) {
+    case 7:
+        k2 ^= static_cast<uint64_t>(tail[6]) << 48;
+    case 6:
+        k2 ^= static_cast<uint64_t>(tail[5]) << 40;
+    case 5:
+        k2 ^= static_cast<uint64_t>(tail[4]) << 32;
+    case 4:
+        k2 ^= static_cast<uint64_t>(tail[3]) << 24;
+    case 3:
+        k2 ^= static_cast<uint64_t>(tail[2]) << 16;
+    case 2:
+        k2 ^= static_cast<uint64_t>(tail[1]) << 8;
+    case 1:
+        k2 ^= static_cast<uint64_t>(tail[0]);
+        k2 *= c1;
+        k2 = (k2 << 31) | (k2 >> 33);
+        k2 *= c2;
+        h1 ^= k2;
+    };
+
+    h1 ^= len;
+    h1 ^= h1 >> 33;
+    h1 *= 0xff51afd7ed558ccdULL;
+    h1 ^= h1 >> 33;
+    h1 *= 0xc4ceb9fe1a85ec53ULL;
+    h1 ^= h1 >> 33;
+
+    return h1;
 }
 
 // IDirectSoundBuffer proxy hook
@@ -188,15 +255,19 @@ public:
             }
             cap.endTime = cap.startTime + static_cast<uint64_t>(virtualTimeAcc);
             if (cap.endTime > cap.startTime && !data.empty()) {
-                auto file = ofs::File(base_path + '\\' + audio_get_fn(cap.startTime, cap.idx), 1);
-                ENSURE(file.is_open());
-                if (!file.is_open())
-                    return;
-                header.fileSize = data.size() + 36;
-                header.dataLen = data.size();
-                file.write(&header, sizeof(WavHeader));
-                file.write(data.data(), data.size());
-                file.close();
+                cap.hash = murmurhash3(data);
+                auto path = base_path + '\\' + audio_get_fn(cap.hash, cap.startTime, cap.idx);
+                if (!ofs::file_exists(path)) {
+                    auto file = ofs::File(path, 1);
+                    ENSURE(file.is_open());
+                    if (!file.is_open())
+                        return;
+                    header.fileSize = data.size() + 36;
+                    header.dataLen = data.size();
+                    file.write(&header, sizeof(WavHeader));
+                    file.write(data.data(), data.size());
+                } else
+                    spdlog::debug("Audio duplicate skipped");
                 history.push_back(cap);
                 return;
             }
@@ -470,7 +541,7 @@ void audio::flush() {
         double totalDuration = static_cast<double>(c.endTime - c.startTime) / 1000.0;
         ASS(!c.events.empty());
         size_t numSegs = c.events.size();
-        filters.write("amovie=" + audio_get_fn(c.startTime, c.idx) +
+        filters.write("amovie=" + audio_get_fn(c.hash, c.startTime, c.idx) +
                       ",asplit=" + std::to_string(numSegs));
         for (size_t e = 0; e < numSegs; e++) {
             filters.write("[b" + std::to_string(count) + "s" + std::to_string(e) + "]");
@@ -518,8 +589,8 @@ void audio::flush() {
             "ffmpeg -y -/filter_complex audio_filters.txt -map \"[out]\" -ar 48000 ../audio.wav");
         bat.writeln("echo Waiting to delete wav cache...");
         bat.writeln("pause");
-        bat.writeln("del a_*.wav");
         bat.writeln("del audio_filters.txt");
+        bat.writeln("del a*.wav");
         bat.writeln("cd ..");
     }
     history.clear();

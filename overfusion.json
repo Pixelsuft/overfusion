@@ -21,7 +21,7 @@
   "allow_direct_capture": true,
   "allow_audio_hook": false,
   "disable_audio": true,
-  "record_audio": false,
+  "record_audio": true,
   "support_audio_panning": false,
   "draw_cursor": true,
   "pixel_filter": true,
