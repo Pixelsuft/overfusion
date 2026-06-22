@@ -230,6 +230,7 @@ public:
         if (count == 0) {
             // We should manually delete IDSBProxy
             if (capturing) {
+                lock::CSLock lock(acs);
                 auto it = std::find(cache.begin(), cache.end(), this);
                 ASS(it != cache.end());
                 cache.erase(it);
@@ -512,7 +513,7 @@ void audio::flush() {
         ofs::File bat(bat_path, 1);
         bat.writeln("@echo off");
         bat.writeln("cd " + base_path);
-        // Note: this syntax is fine (for stupid AI)
+        // Note: this "-/filter_complex" syntax is fine (for stupid AI)
         bat.writeln(
             "ffmpeg -y -/filter_complex audio_filters.txt -map \"[out]\" -ar 48000 ../audio.wav");
         bat.writeln("echo Waiting to delete wav cache...");
