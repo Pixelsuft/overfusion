@@ -51,7 +51,15 @@ static BOOL WINAPI StretchBltH(HDC hdcDest, int xDest, int yDest, int wDest, int
     return ret;
 }
 
+static BOOL(WINAPI* GdiFlushO)();
+static BOOL WINAPI GdiFlushH() {
+    // Same as render
+    // spdlog::error("FLUSH!!!!!");
+    return GdiFlushO();
+}
+
 void gdihooks::init() {
+    IAT_AUTO("gdi32.dll", GdiFlush);
     IAT_AUTO("gdi32.dll", BitBlt);
     IAT_AUTO("gdi32.dll", StretchBlt);
 }

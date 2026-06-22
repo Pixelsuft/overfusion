@@ -110,15 +110,15 @@ inline string audio_get_fn(uint64_t a, int b) {
 
 // IDirectSoundBuffer proxy hook
 class IDSBProxy : public IDirectSoundBuffer {
-    AudioCapture cap;
     WavHeader header;
+    AudioCapture cap;
+    std::vector<uint8_t> data;
     uint64_t lastRealTime;
     double virtualTimeAcc;
-    ofs::File file;
     IDirectSoundBuffer* pBuf;
-    uint32_t bytesWritten;
     DWORD currentFreq;
     DWORD originalFreq;
+    bool inited;
 
     void push_event() {
         // Remember current params in case something has changed
@@ -166,9 +166,8 @@ class IDSBProxy : public IDirectSoundBuffer {
         // Open audio file, write default WAV header
         auto cur_time = audio_get_time();
         auto idx = gen_uid(cur_time);
-        file = ofs::File(base_path + '\\' + audio_get_fn(cur_time, idx), 1);
-        file.write(&header, sizeof(WavHeader));
-        bytesWritten = 0;
+        data.clear();
+        inited = true;
         cap.startTime = cap.endTime = cur_time;
         cap.idx = idx;
         cap.events.clear();
@@ -178,37 +177,30 @@ class IDSBProxy : public IDirectSoundBuffer {
 public:
     void finalize_wav() {
         // Update header, close file, remove if empty
-        if (file.is_open()) {
+        if (inited) {
+            inited = false;
             uint64_t now = audio_get_time();
             double scale = static_cast<double>(currentFreq) / static_cast<double>(originalFreq);
             virtualTimeAcc += static_cast<double>(now - lastRealTime) * scale;
             if (virtualTimeAcc <= 0.0) {
-                spdlog::debug("Sound: got virtualTimeAcc <= 0");
-                file.close();
-                auto rem_ret =
-                    ofs::remove_file(base_path + '\\' + audio_get_fn(cap.startTime, cap.idx));
-                ENSURE(rem_ret);
+                spdlog::debug("Audio got virtualTimeAcc <= 0");
                 return;
             }
             cap.endTime = cap.startTime + static_cast<uint64_t>(virtualTimeAcc);
-            uint32_t finalFileSize = bytesWritten + 36;
-            file.seek(4, ofs::SeekBegin);
-            file.write(&finalFileSize, 4);
-            file.seek(24, ofs::SeekBegin);
-            file.write(&header.sampleRate, 4);
-            file.seek(28, ofs::SeekBegin);
-            file.write(&header.byteRate, 4);
-            file.seek(40, ofs::SeekBegin);
-            file.write(&bytesWritten, 4);
-            file.close();
-            if (cap.endTime > cap.startTime) {
+            if (cap.endTime > cap.startTime && !data.empty()) {
+                auto file = ofs::File(base_path + '\\' + audio_get_fn(cap.startTime, cap.idx), 1);
+                ENSURE(file.is_open());
+                if (!file.is_open())
+                    return;
+                header.fileSize = data.size() + 36;
+                header.dataLen = data.size();
+                file.write(&header, sizeof(WavHeader));
+                file.write(data.data(), data.size());
+                file.close();
                 history.push_back(cap);
                 return;
             }
-            spdlog::debug("Sound: got endTime <= startTime");
-            auto rem_ret =
-                ofs::remove_file(base_path + '\\' + audio_get_fn(cap.startTime, cap.idx));
-            ENSURE(rem_ret);
+            spdlog::debug("Audio got endTime <= startTime");
         }
     }
 
@@ -221,9 +213,9 @@ public:
         header.byteRate = desc->lpwfxFormat->nAvgBytesPerSec;
         originalFreq = desc->lpwfxFormat->nSamplesPerSec;
         currentFreq = originalFreq;
-        bytesWritten = 0;
         lastRealTime = 0;
         virtualTimeAcc = 0.0;
+        inited = false;
         reinit_wav();
         lock::CSLock lock(acs);
         if (capturing)
@@ -317,18 +309,16 @@ public:
     STDMETHOD(Unlock)(LPVOID pv1, DWORD db1, LPVOID pv2, DWORD db2) override {
         if (capturing) {
             lock::CSLock lock(acs);
-            if (!file.is_open()) {
+            if (!inited) {
                 reinit_wav();
                 return pBuf->Unlock(pv1, db1, pv2, db2);
             }
-            if (pv1 && db1 > 0) {
-                file.write(pv1, db1);
-                bytesWritten += db1;
-            }
-            if (pv2 && db2 > 0) {
-                file.write(pv2, db2);
-                bytesWritten += db2;
-            }
+            if (pv1 && db1 > 0)
+                data.insert(data.end(), reinterpret_cast<uint8_t*>(pv1),
+                            reinterpret_cast<uint8_t*>(pv1) + db1);
+            if (pv2 && db2 > 0)
+                data.insert(data.end(), reinterpret_cast<uint8_t*>(pv2),
+                            reinterpret_cast<uint8_t*>(pv2) + db2);
         }
         return pBuf->Unlock(pv1, db1, pv2, db2);
     }
@@ -522,12 +512,14 @@ void audio::flush() {
         ofs::File bat(bat_path, 1);
         bat.writeln("@echo off");
         bat.writeln("cd " + base_path);
+        // Note: this syntax is fine (for stupid AI)
         bat.writeln(
             "ffmpeg -y -/filter_complex audio_filters.txt -map \"[out]\" -ar 48000 ../audio.wav");
         bat.writeln("echo Waiting to delete wav cache...");
         bat.writeln("pause");
         bat.writeln("del a_*.wav");
         bat.writeln("del audio_filters.txt");
+        bat.writeln("cd ..");
     }
     history.clear();
     state::set_last_msg("Audio flushed, run audio_merge.bat script!");

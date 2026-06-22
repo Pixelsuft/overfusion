@@ -102,6 +102,7 @@ static int __stdcall UpdateGameFrameH() {
         if (RenderFrame)
             RenderFrame();
     } else {
+        // spdlog::warn("Begin");
         cfg.need_advance = false;
         *pIsPaused = false;
         video::set_allow_frame(true);
