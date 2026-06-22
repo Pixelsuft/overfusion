@@ -2,6 +2,7 @@
 #include "d3dhooks.hpp"
 #include "ass.hpp"
 #include "config.hpp"
+#include "gamehooks.hpp"
 #include "mem.hpp"
 #include "ui.hpp"
 #include "video.hpp"
@@ -35,9 +36,11 @@ public:
     ID3D9Proxy(IDirect3DDevice9* pReal) : pDev(pReal) {}
     virtual ~ID3D9Proxy() {}
     void our_frame_hook_code() {
-        // Main hook code for ImGui (and calling video capture)
-        if (!imgui_d3d9_inited)
+        // Main hook code for ImGui (and some other stuff)
+        if (!imgui_d3d9_inited) {
+            gamehooks::set_already_processed(true);
             return;
+        }
         auto& cfg = conf::get();
         ui::set_processing(true);
         video::d3d9_draw(pDev);
@@ -53,6 +56,7 @@ public:
         ImGui::Render();
         ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
         ui::set_processing(false);
+        gamehooks::set_already_processed(true);
     }
     STDMETHOD(QueryInterface)(REFIID riid, void** ppvObj) override {
         return pDev->QueryInterface(riid, ppvObj);

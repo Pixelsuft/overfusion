@@ -2,6 +2,7 @@
 #include "video.hpp"
 #include "ass.hpp"
 #include "config.hpp"
+#include "gamehooks.hpp"
 #include "ofs.hpp"
 #include "process.hpp"
 #include <d3d9.h>
@@ -26,7 +27,6 @@ static std::vector<BYTE> data_buffer;
 static std::pair<int, int> size;
 static int file_index;
 static bool recording;
-static bool allow_frame;
 
 // Win32 recording
 static BITMAPINFO bmi;
@@ -52,18 +52,9 @@ inline bool is_gdi_cap() {
 void video::init() {
     srcdc = nullptr;
     pSysSurface = nullptr;
-    allow_frame = false;
     recording = false;
     size.first = size.second = 0;
     file_index = 0;
-}
-
-void video::set_allow_frame(bool allow) {
-    allow_frame = allow;
-    if (allow && memdc && is_gdi_cap()) {
-        // Can be useful to see differences
-        // PatBlt(memdc, 0, 0, size.first, size.second, BLACKNESS);
-    }
 }
 
 bool video::is_recording() { return recording; }
@@ -75,14 +66,15 @@ void video::start() {
     srcdc = nullptr;
     pSysSurface = nullptr;
     data_buffer.clear();
-    allow_frame = false;
     auto& cfg = conf::get();
     recording = true;
 }
 
 void video::stop() {
+    if (!recording)
+        return;
     recording = false;
-    if (!recording || !ffmpeg.is_open())
+    if (!ffmpeg.is_open())
         return;
     auto& cfg = conf::get();
     spdlog::info("Stopping video recording");
@@ -92,7 +84,6 @@ void video::stop() {
             pSysSurface->Release();
             pSysSurface = nullptr;
         }
-        allow_frame = false;
     } else {
         if (!srcdc)
             return;
@@ -217,9 +208,8 @@ void video::after_draw() {
 
 void video::d3d9_draw(void* dev_ptr) {
     auto& cfg = conf::get();
-    if (!recording || !is_d3d9_cap() || !allow_frame)
+    if (!recording || !is_d3d9_cap() || !gamehooks::allow_frame_capture())
         return;
-    // allow_frame = false;
     LPDIRECT3DDEVICE9 pDevice = reinterpret_cast<LPDIRECT3DDEVICE9>(dev_ptr);
     LPDIRECT3DSURFACE9 pBackBuffer;
     auto d3d_ret = pDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer);

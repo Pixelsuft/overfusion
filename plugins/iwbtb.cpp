@@ -38,10 +38,11 @@ public:
         cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x1ebf0);
         cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x1aac0);
         cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x1cd40);
+        // From boshyst
         mem::write(mem::get_base() + 0x4b74, {0x90, 0x90, 0x90, 0x90, 0x90});
         mem::write(mem::get_base() + 0x4b6d, {0x90, 0x90, 0x90, 0x90, 0x90});
         mem::write(mem::get_base() + 0x4c29, {0xeb});
-        mem::write(mem::get_base() + 0x4659f, {0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x1ec59, {0x90, 0x90});
         mem::write(mem::get_base() + 0x2a74, {0x90, 0x90});
         mem::write(mem::get_base() + 0x2994, {0x90, 0x90});
         mem::write(mem::get_base() + 0x299f, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});

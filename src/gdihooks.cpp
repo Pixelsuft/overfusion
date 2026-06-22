@@ -2,6 +2,7 @@
 #include "gdihooks.hpp"
 #include "ass.hpp"
 #include "config.hpp"
+#include "gamehooks.hpp"
 #include "mem.hpp"
 #include "video.hpp"
 #include <Windows.h>
@@ -53,8 +54,7 @@ static BOOL WINAPI StretchBltH(HDC hdcDest, int xDest, int yDest, int wDest, int
 
 static BOOL(WINAPI* GdiFlushO)();
 static BOOL WINAPI GdiFlushH() {
-    // Same as render
-    // spdlog::error("FLUSH!!!!!");
+    gamehooks::set_already_processed(true);
     return GdiFlushO();
 }
 
