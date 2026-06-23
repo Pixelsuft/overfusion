@@ -217,7 +217,9 @@ bool set_trans_enabled(bool enabled) override {
 
 Now let's add support for manual saving event timers (which are getting reset after loading a state FSR). Use `Search`->`Decompiled text...` tool to find all uses of `-0xa0001`, wait for scan, then find a function which contains this piece of code: <br />
 ![porting22](../screenshots/porting22.png) <br />
-Let's patch the code (blue is `tm_fix_event_entry_offset` and green is `tm_fix_event_entry_type_offset`):
+Sligtly prettify the code (auto create structs): <br />
+![porting23](../screenshots/porting23.png) <br />
+Let's patch the code (blues offset is `tm_fix_event_entry_offset` and greens is `tm_fix_event_entry_type_offset`):
 
 ```cpp
 #include "../tools/timer_fix.hpp"
@@ -226,8 +228,8 @@ Let's patch the code (blue is `tm_fix_event_entry_offset` and green is `tm_fix_e
 ```cpp
 bool update_init() override {
     auto& cfg = conf::get();
-    cfg.tm_fix_event_entry_offset = 0x8;
-    cfg.tm_fix_event_entry_type_offset = 0x9;
+    cfg.tm_fix_event_entry_offset = 0x10;
+    cfg.tm_fix_event_entry_type_offset = 0x12;
     return true;
 }
 
@@ -262,7 +264,7 @@ ost::expected<void, string> load_state(ofs::File& file) override {
 }
 ```
 
-You can see a message while saving a state (on a specific scene) (in debug mode): `timers fix size: 16`. This means that the game actually uses that timers. <br />
+You can see a message while saving a state (on every scene) (in debug mode): `timers fix size: 0`. This means that the game doesn't use that timers, and our work was pointless and we can remove it. <br />
 
 Other patching: I strongly recommend you to walk through `.mfx` plugins (and their all imports) to attempt to make them create less threads without breaking, be more stable when using states, etc.
 
