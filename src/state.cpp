@@ -975,6 +975,11 @@ void state::draw_info() {
         ImGui::Text("Temp event count: %i", static_cast<int>(st.temp_ev.size()));
     ImGui::Text("Message: %s", last_msg.c_str());
     if (!cfg.fast_forward) {
+        void* pState = plug::get().get_prop(plug::PtrProp::PState);
+        ASS(pState != nullptr);
+        auto pRandomSeed = reinterpret_cast<unsigned short*>(
+            plug::get().get_prop(plug::PtrProp::PRandomSeed, pState));
+        ImGui::Text("Random seed: %i", pRandomSeed ? static_cast<int>(*pRandomSeed) : 0);
         auto m_pos = get_tas_mouse_pos();
         auto win_pos = plug::get().mouse_to_window(m_pos.first, m_pos.second);
         ImGui::Text("Window mouse%s: %i, %i", get_tas_mouse_down(VK_LBUTTON) ? " [DOWN]" : "",
@@ -1002,10 +1007,11 @@ void state::reset_game() {
     conf::get().is_paused = true;
     updating = false;
     void* pState = plug::get().get_prop(plug::PtrProp::PState);
+    ASS(pState != nullptr);
     short* ptr =
         reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
     // Skip if reset is already in progress
-    if (*ptr)
+    if (!ptr || *ptr)
         return;
     st.prev_input.clear();
     st.ev.clear();

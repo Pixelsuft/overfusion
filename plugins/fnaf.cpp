@@ -114,6 +114,9 @@ public:
         case plug::PtrProp::PIsPaused:
             // From pState
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x178);
+        case plug::PtrProp::PRandomSeed:
+            // From pState
+            return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x18c);
         case plug::PtrProp::PSceneID:
             // From pGlobalApp
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x1f0);

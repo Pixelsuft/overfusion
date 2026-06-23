@@ -131,6 +131,17 @@ case plug::PtrProp::PStats:
     return *reinterpret_cast<void**>(mem::get_base() + 0xb39d0);
 ```
 
+Now go to `ExecuteEvents`, right click on `pState`->`References`->`Find References to pState`. Among refs with `WRITE` context, find a function which allocates memory for `pState`: <br />
+![porting15.1](../screenshots/porting15.1.png) <br />
+Rename it into `InitState` (also use `Auto Fill in Structure` tool on `pState` and `gStats`). Now scroll this function and find this part: <br />
+![porting15.2](../screenshots/porting15.2.png) <br />
+Rename this variable to `randomSeed` and remember offset:
+
+```cpp
+case plug::PtrProp::PRandomSeed:
+    return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x18c);
+```
+
 At this point, the game should at least start under OF (don't forget about configuring OF)!
 
 Let's patch some memory. Find a func which refs `USER32.DLL`->`MsgWaitForMultipleObjects` and looks like this (rename it into `SyncFrameRate`): <br />

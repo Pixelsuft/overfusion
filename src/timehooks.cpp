@@ -50,7 +50,7 @@ static MMRESULT mm_timer_counter;
 } // namespace timehooks
 
 static MMRESULT WINAPI timeGetSystemTimeH(LPMMTIME pmmt, UINT cbmmt) {
-    if (pmmt == NULL || cbmmt < sizeof(MMTIME))
+    if (pmmt == nullptr || cbmmt < sizeof(MMTIME))
         return TIMERR_NOCANDO;
     DWORD currentTime = static_cast<DWORD>(state::get_time(state::TimeOffset::Startup));
     pmmt->wType = TIME_MS;
@@ -124,7 +124,7 @@ static BOOL WINAPI QueryPerformanceCounterH(LARGE_INTEGER* lpFrequency) {
 }
 
 static VOID WINAPI GetSystemTimeAsFileTimeH(LPFILETIME lpSystemTimeAsFileTime) {
-    if (lpSystemTimeAsFileTime == NULL)
+    if (lpSystemTimeAsFileTime == nullptr)
         return;
     // TODO: is this right?
     long long timeMs = state::get_time(state::TimeOffset::System);

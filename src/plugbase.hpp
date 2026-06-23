@@ -27,6 +27,7 @@ enum class PtrProp {
     PSceneID,
     PNextFrameTask,
     PNextFrameData,
+    PRandomSeed,
     PSceneName
 };
 
