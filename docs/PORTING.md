@@ -164,9 +164,9 @@ Now we need to patch `ExecuteEvents` to skip this block (to avoid frame skipping
 mem::write(mem::get_base() + 0x2aa40, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
 ```
 
-Now let's patch setting window title (optional but cool). Search for `USER32.DLL`->`SetWindowText` imports and find a function which looks like this (it may use `SetWindowText` indirectly): <br />
+Now let's patch setting window title (optional but cool). Search for `USER32.DLL`->`SetWindowText` imports and find a function which looks like this (it may use `SetWindowText` indirectly) (alternatively, you can search for `"%s - %s"` decompiled text): <br />
 ![porting20](../screenshots/porting20.png) <br />
-Now we need to patch the code to make it following `%s - %s` part path:
+Now we need to patch the code to make it following `%s - %s` code path:
 
 ```cpp
 mem::write(mem::get_base() + 0x272ad, {0xeb});
