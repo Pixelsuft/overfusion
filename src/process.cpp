@@ -69,14 +69,14 @@ bool Subprocess::open(ost::string_view cmdline) {
 }
 
 bool Subprocess::write(const void* data, size_t size) {
-    ASS(is_open());
+    ENSURE(is_open());
     DWORD dwWritten;
     BOOL ret = WriteFile(hChildStdinWrite, data, size, &dwWritten, nullptr);
     return ret && static_cast<size_t>(dwWritten) == size;
 }
 
 bool Subprocess::close() {
-    ASS(is_open());
+    ENSURE(is_open());
     if (hChildStdinWrite) {
         CloseHandle(hChildStdinWrite);
         hChildStdinWrite = nullptr;
