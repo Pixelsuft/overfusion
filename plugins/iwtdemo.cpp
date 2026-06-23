@@ -176,7 +176,7 @@ public:
             size_t ptr = *(size_t*)(mem::get_base() + 0xb49d4);
             *(short*)(ptr + 0x30) = 0;
             LoadGameState(file.get_handle(), &outframe);
-            if (!state::is_processing_save())
+            if (!conf::get().processing_save)
                 return {};
             return timer_fix::load(timer_data);
         }

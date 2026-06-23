@@ -247,7 +247,7 @@ void timehooks::update(int dt) {
             timer.second.counter -= timer.second.elapse;
             state::set_temp_time_offset(-static_cast<int>(timer.second.counter));
             // FIXME
-            if (timer.second.cb && 0)
+            if (timer.second.cb && false)
                 timer.second.cb(timer.first.first, WM_TIMER, timer.second.event, GetTickCountH());
             else
                 SendMessageW(timer.first.first, WM_TIMER, timer.first.second, 0);

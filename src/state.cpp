@@ -135,8 +135,6 @@ static void* temp_handle;
 static size_t repl_index;
 // Remember needed scene before switching if needed
 static int need_scene_slot;
-// Are we saving/loading?
-static bool processing_save;
 // Are we processing game frame?
 static bool updating;
 } // namespace state
@@ -180,7 +178,6 @@ static void set_rerecords(uint64_t count) {
 void state::init() {
     base_path = string(ofs::get_cwd()) + '\\' + conf::get().project_name;
     last_msg = "None";
-    processing_save = false;
     updating = false;
     const_dt = 1.0 / static_cast<double>(conf::get().fps);
     to_wait = 0.0;
@@ -198,10 +195,8 @@ void state::set_last_msg(string_view msg) { last_msg = string(msg); }
 
 bool state::is_save_handle(void* handle) {
     // For fast checking file hooks to skip our handle
-    return processing_save && handle == temp_handle;
+    return conf::get().processing_save && handle == temp_handle;
 }
-
-bool state::is_processing_save() { return processing_save; }
 
 void state::export_replay(string_view fn) {
     last_msg.clear();
@@ -462,18 +457,18 @@ void state::save_state(int slot) {
     write_bin(file, st.prev_input);
     write_bin(file, st.temp_ev);
     write_bin(file, st.ev);
-    processing_save = true;
+    cfg.processing_save = true;
     auto ret = plug::get().save_state(file);
     if (!ret.has_value()) {
         // Plugin failed to save it's data
-        processing_save = false;
+        cfg.processing_save = false;
         spdlog::error("Failed to save state data: {}", ret.error());
         last_msg = "Failed to save state data: " + ret.error();
         file.close();
         ofs::remove_file(fp);
         return;
     }
-    if (cfg.save_game_state && !processing_save) {
+    if (cfg.save_game_state && !cfg.processing_save) {
         // Game failed to save it's data
         spdlog::error("Failed to save game state: {}", state_error_text);
         last_msg = "Failed to save game state: " + state_error_text;
@@ -482,7 +477,7 @@ void state::save_state(int slot) {
     // Ok, let's do this here
     bool_ret = files::save_fs(file);
     ENSURE(bool_ret);
-    processing_save = false;
+    cfg.processing_save = false;
     if (last_msg.empty())
         last_msg = string("State ") + std::to_string(slot) + " saved!";
     else
@@ -553,18 +548,18 @@ void state::load_state(int slot) {
     int prev_frames = st.frames;
     if (!cfg.is_replay) {
         st.frames = temp_state.frames; // Need to set before load_state
-        processing_save = true;
+        cfg.processing_save = true;
     }
     auto ret = plug::get().load_state(file);
     if (!ret.has_value()) {
         // State failed to load it's data
-        processing_save = false;
+        cfg.processing_save = false;
         st.frames = prev_frames;
         spdlog::error("Failed to load state data: {}", ret.error());
         last_msg = "Failed to load state data: " + ret.error();
         return;
     }
-    if (!cfg.is_replay && !processing_save) {
+    if (!cfg.is_replay && !cfg.processing_save) {
         // Game failed to load it's data
         st.frames = prev_frames;
         spdlog::error("Failed to restore game state: {}", state_error_text);
@@ -593,7 +588,7 @@ void state::load_state(int slot) {
     }
     st.rerec_count = std::max(st.rerec_count, get_rerecords()) + 1;
     set_rerecords(st.rerec_count);
-    processing_save = false;
+    cfg.processing_save = false;
     if (last_msg.empty())
         last_msg = string("State ") + std::to_string(slot) + " loaded!";
     else
@@ -602,10 +597,11 @@ void state::load_state(int slot) {
 }
 
 bool state::invalidate_process(string_view text) {
-    if (!processing_save)
+    auto& cfg = conf::get();
+    if (!cfg.processing_save)
         return false;
     state_error_text = string(text);
-    processing_save = false;
+    cfg.processing_save = false;
     return true;
 }
 

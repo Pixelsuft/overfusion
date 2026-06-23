@@ -2,7 +2,6 @@
 #include "d3dhooks.hpp"
 #include "ass.hpp"
 #include "config.hpp"
-#include "gamehooks.hpp"
 #include "mem.hpp"
 #include "ui.hpp"
 #include "video.hpp"

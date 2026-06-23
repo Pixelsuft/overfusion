@@ -183,7 +183,7 @@ public:
             state::load_bin(file, timer_data);
             LoadGameState(file.get_handle(), &outframe);
             // Check if LoadGameState already failed
-            if (!state::is_processing_save())
+            if (!conf::get().processing_save)
                 return {};
             return timer_fix::load(timer_data);
         }

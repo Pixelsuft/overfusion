@@ -242,7 +242,7 @@ ost::expected<void, string> load_state(ofs::File& file) override {
         // Load game state
         LoadGameState(file.get_handle(), &outframe);
         // Check if game state failed to load
-        if (!state::is_processing_save())
+        if (!conf::get().processing_save)
             return {};
         // If timer loading fails, we fail too
         return timer_fix::load(timer_data);

@@ -167,6 +167,7 @@ Config::Config() {
     processing_frame = false;
     already_processed_frame = false;
     redraw_on_skip = false;
+    processing_save = false;
 }
 
 // Read boolean variable

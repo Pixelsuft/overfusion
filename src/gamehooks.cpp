@@ -47,7 +47,7 @@ static int __stdcall ProcessTransitionH() {
     // Oh fuck another code dup
     auto& cfg = conf::get();
     state::early_update();
-    if (!state::is_processing_save())
+    if (!cfg.processing_save)
         input::process_update();
     state::before_update(true);
     auto pIsPaused = prepare_and_get_pointers().first;
@@ -112,7 +112,7 @@ static int __stdcall UpdateGameFrameH() {
         hook::patch_iat();
     }
     state::early_update();
-    if (!state::is_processing_save())
+    if (!cfg.processing_save)
         input::process_update();
     auto ptrs = prepare_and_get_pointers();
     int ret;

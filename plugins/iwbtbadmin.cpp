@@ -184,7 +184,7 @@ public:
             std::vector<int> timer_data;
             state::load_bin(file, timer_data);
             LoadGameState(file.get_handle(), &outframe);
-            if (!state::is_processing_save())
+            if (!conf::get().processing_save)
                 return {};
             return timer_fix::load(timer_data);
         }

@@ -89,6 +89,7 @@ public:
     bool processing_frame;
     bool already_processed_frame;
     bool redraw_on_skip;
+    bool processing_save;
 
     Config();
     void read();
