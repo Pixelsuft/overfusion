@@ -70,7 +70,7 @@ ost::expected<void, std::string> timer_fix::load(std::vector<IntPair> data) {
     size_t eventGroup = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(gStats) + 0x80);
     if (eventGroup == 0) {
         spdlog::error("eventGroup is nullptr WTF");
-        return ost::unexpected<std::string>("Failed to save timers - eventGroup was nullptr");
+        return ost::unexpected<std::string>("Failed to load timers - eventGroup was nullptr");
     }
     while (*reinterpret_cast<short*>(eventGroup) != 0) {
         uint8_t nEvents = *reinterpret_cast<uint8_t*>(eventGroup + 2);
