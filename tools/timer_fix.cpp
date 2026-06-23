@@ -22,33 +22,35 @@ ost::expected<void, std::string> timer_fix::save(std::vector<IntPair>& data) {
         return ost::unexpected<std::string>("failed to save timers - eventGroup was nullptr");
     }
     while (*reinterpret_cast<short*>(eventGroup) != 0) {
-        uint8_t nEvents = *reinterpret_cast<uint8_t*>(eventGroup + 2);
-        uint8_t nConds = *reinterpret_cast<uint8_t*>(eventGroup + 3);
-        int totalEntries = static_cast<int>(nConds) + static_cast<int>(nEvents);
         uint8_t* cond = reinterpret_cast<uint8_t*>(eventGroup) + cfg.tm_fix_event_entry_offset;
         int type = *reinterpret_cast<int*>(eventGroup + cfg.tm_fix_event_entry_type_offset);
         if (type != -0xa0001 && type != -0x90001) {
+            uint8_t nEvents = *reinterpret_cast<uint8_t*>(eventGroup + 2);
+            uint8_t nConds = *reinterpret_cast<uint8_t*>(eventGroup + 3);
+            int totalEntries = static_cast<int>(nConds) + static_cast<int>(nEvents);
             for (int i = 0; i < totalEntries; i++) {
-                uint16_t entrySize = *reinterpret_cast<uint16_t*>(cond);
-                int32_t objectID = *reinterpret_cast<int32_t*>(cond + 2);
-                uint8_t paramCount = *reinterpret_cast<uint8_t*>(cond + 0xC);
-                if (paramCount > 0) {
-                    uint8_t* paramPtr = cond + (objectID < 0 ? 0x10 : 0x0E);
+                // Is it really uint8_t or uint16_t??????????
+                auto paramCount = *reinterpret_cast<uint8_t*>(cond + 0xC);
+                if (paramCount != 0) {
+                    int32_t objectID = *reinterpret_cast<int32_t*>(cond + 2);
+                    uint8_t* cond2 = cond + ((-1 < objectID) ? 0x0E : 0x10);
                     for (int p = 0; p < static_cast<int>(paramCount); p++) {
-                        uint16_t pSize = *reinterpret_cast<uint16_t*>(paramPtr);
-                        uint16_t pType = *reinterpret_cast<uint16_t*>(paramPtr + 2);
-                        if (pType == 0x0D) {
-                            int intervalValue = *reinterpret_cast<int*>(paramPtr + 4);
-                            int timerValue = *reinterpret_cast<int*>(paramPtr + 8);
+                        // Type should be 0xD
+                        if (*reinterpret_cast<uint16_t*>(cond2 + 2) == 0xD) {
+                            int intervalValue = *reinterpret_cast<int*>(cond2 + 4);
+                            int timerValue = *reinterpret_cast<int*>(cond2 + 8);
                             data.push_back(IntPair(intervalValue, timerValue));
                             // spdlog::debug("saved {} / {}", timerValue, intervalValue);
                         }
-                        paramPtr += pSize;
+                        // Add it's size (first value of the struct)
+                        cond2 += *reinterpret_cast<uint16_t*>(cond2);
                     }
                 }
-                cond += entrySize;
+                // Add it's size (first value of the struct)
+                cond += *reinterpret_cast<uint16_t*>(cond);
             }
         }
+        // Substract it's size (first value of the struct)
         eventGroup -= static_cast<size_t>(*reinterpret_cast<short*>(eventGroup));
     }
     spdlog::debug("timers fix size: {}", data.size());
@@ -73,24 +75,22 @@ ost::expected<void, std::string> timer_fix::load(std::vector<IntPair> data) {
         return ost::unexpected<std::string>("Failed to load timers - eventGroup was nullptr");
     }
     while (*reinterpret_cast<short*>(eventGroup) != 0) {
-        uint8_t nEvents = *reinterpret_cast<uint8_t*>(eventGroup + 2);
-        uint8_t nConds = *reinterpret_cast<uint8_t*>(eventGroup + 3);
-        int totalEntries = static_cast<int>(nConds) + static_cast<int>(nEvents);
         uint8_t* cond = reinterpret_cast<uint8_t*>(eventGroup) + cfg.tm_fix_event_entry_offset;
         int type = *reinterpret_cast<int*>(eventGroup + cfg.tm_fix_event_entry_type_offset);
         if (type != -0xa0001 && type != -0x90001) {
+            uint8_t nEvents = *reinterpret_cast<uint8_t*>(eventGroup + 2);
+            uint8_t nConds = *reinterpret_cast<uint8_t*>(eventGroup + 3);
+            int totalEntries = static_cast<int>(nConds) + static_cast<int>(nEvents);
             for (int i = 0; i < totalEntries; i++) {
-                uint16_t entrySize = *reinterpret_cast<uint16_t*>(cond);
-                int32_t objectID = *reinterpret_cast<int32_t*>(cond + 2);
-                uint8_t paramCount = *reinterpret_cast<uint8_t*>(cond + 0xC);
-                if (paramCount > 0) {
-                    uint8_t* paramPtr = cond + (objectID < 0 ? 0x10 : 0x0E);
+                auto paramCount = *reinterpret_cast<uint8_t*>(cond + 0xC);
+                if (paramCount != 0) {
+                    int32_t objectID = *reinterpret_cast<int32_t*>(cond + 2);
+                    uint8_t* cond2 = cond + ((-1 < objectID) ? 0x0E : 0x10);
                     for (int p = 0; p < static_cast<int>(paramCount); p++) {
-                        uint16_t pSize = *reinterpret_cast<uint16_t*>(paramPtr);
-                        uint16_t pType = *reinterpret_cast<uint16_t*>(paramPtr + 2);
-                        if (pType == 0x0D) {
-                            int intervalValue = *reinterpret_cast<int*>(paramPtr + 4);
-                            int* timerValue = reinterpret_cast<int*>(paramPtr + 8);
+                        // Type should be 0xD
+                        if (*reinterpret_cast<uint16_t*>(cond2 + 2) == 0xD) {
+                            int intervalValue = *reinterpret_cast<int*>(cond2 + 4);
+                            int* timerValue = reinterpret_cast<int*>(cond2 + 8);
                             if (it == data.end())
                                 return ost::unexpected<std::string>(
                                     "WTF not enough data to fix timers");
@@ -99,12 +99,15 @@ ost::expected<void, std::string> timer_fix::load(std::vector<IntPair> data) {
                             *timerValue = it->second;
                             it++;
                         }
-                        paramPtr += pSize;
+                        // Add it's size (first value of the struct)
+                        cond2 += *reinterpret_cast<uint16_t*>(cond2);
                     }
                 }
-                cond += entrySize;
+                // Add it's size (first value of the struct)
+                cond += *reinterpret_cast<uint16_t*>(cond);
             }
         }
+        // Substract it's size (first value of the struct)
         eventGroup -= static_cast<size_t>(*reinterpret_cast<short*>(eventGroup));
     }
     ASS(it == data.end());
