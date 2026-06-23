@@ -744,8 +744,7 @@ bool state::before_update(bool is_transitioning) {
     auto pRandomSeed =
         reinterpret_cast<unsigned short*>(plug::get().get_prop(plug::PtrProp::PRandomSeed, pState));
     if (pRandomSeed) {
-        ASS(st.frames != 0 || *pRandomSeed == 0);
-        *pRandomSeed = st.seed;
+        ASS(*pRandomSeed == st.seed);
     }
     if (cfg.is_replay) {
         for (; repl_index < st.ev.size(); repl_index++) {
@@ -974,6 +973,14 @@ void state::on_mode_switch() {
 
 void state::draw_info() {
     auto& cfg = conf::get();
+    if (updating) {
+        // Hacky way to sync stats without sleeping
+        // TODO: maybe make a RAII class for wrapping temp vars?
+        auto prev_fast = cfg.fast_forward;
+        cfg.fast_forward = true;
+        after_update();
+        cfg.fast_forward = prev_fast;
+    }
     ImGui::Text("[RE%s]%s%s%s", cfg.is_replay ? "PLAY" : "CORD", cfg.fast_forward ? " [FF]" : "",
                 video::is_recording() ? " [VIDEO]" : "", audio::is_recording() ? " [AUDIO]" : "");
     ImGui::Text("Frames: %i / %i", st.frames, st.total);

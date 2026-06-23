@@ -548,7 +548,12 @@ void winhooks::after_ui_init() {
     ENSURE(hwnd != nullptr);
     ENSURE(mhwnd != nullptr);
     // Let's do it here if the game wants to show an error during startup
+#ifdef _DEBUG
+    // Default hook for MSVC message boxes
+    HOOK_STR_AUTO("user32.dll", MessageBox);
+#else
     IAT_STR_AUTO("user32.dll", MessageBox);
+#endif
 }
 
 std::pair<int, int> winhooks::get_client_size() {
