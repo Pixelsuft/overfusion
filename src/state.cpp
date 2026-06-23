@@ -834,7 +834,7 @@ void state::after_update() {
         // ASS(*pRandomSeed == st.seed);
         if (*pRandomSeed != st.seed)
             last_msg = "Paused seed check failed (got " + std::to_string(*pRandomSeed) +
-                       " instead of " + std::to_string(st.seed) + ")";
+                       " instead of " + std::to_string(st.seed) + ", please reload save)";
     }
     if (cfg.fast_forward)
         return;
