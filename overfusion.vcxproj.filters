@@ -280,5 +280,8 @@
     <ClInclude Include="tools\viewport.hpp">
       <Filter>Tools</Filter>
     </ClInclude>
+    <ClInclude Include="src\mypair.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

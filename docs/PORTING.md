@@ -233,7 +233,7 @@ bool update_init() override {
 
 ost::expected<void, string> save_state(ofs::File& file) override {
     if (conf::get().save_game_state) {
-        std::vector<int> timer_data;
+        std::vector<IntPair> timer_data;
         auto timer_ret = timer_fix::save(timer_data);
         // If timers saving failed
         if (!timer_ret.has_value())
@@ -247,7 +247,7 @@ ost::expected<void, string> save_state(ofs::File& file) override {
 ost::expected<void, string> load_state(ofs::File& file) override {
     unsigned int outframe = 0;
     if (!conf::get().is_replay) {
-        std::vector<int> timer_data;
+        std::vector<IntPair> timer_data;
         // Load timer data
         state::load_bin(file, timer_data);
         // Load game state
@@ -256,7 +256,7 @@ ost::expected<void, string> load_state(ofs::File& file) override {
         if (!conf::get().processing_save)
             return {};
         // If timer loading fails, we fail too
-        return timer_fix::load(timer_data);
+        return timer_fix::load(std::move(timer_data));
     }
     return {};
 }

@@ -158,7 +158,7 @@ public:
 
     ost::expected<void, string> save_state(ofs::File& file) override {
         if (conf::get().save_game_state) {
-            std::vector<int> timer_data;
+            std::vector<IntPair> timer_data;
             auto timer_ret = timer_fix::save(timer_data);
             if (!timer_ret.has_value())
                 return timer_ret;
@@ -173,7 +173,7 @@ public:
 
     ost::expected<void, string> load_state(ofs::File& file) override {
         if (!conf::get().is_replay) {
-            std::vector<int> timer_data;
+            std::vector<IntPair> timer_data;
             state::load_bin(file, timer_data);
             unsigned int outframe = 0;
             size_t ptr = *(size_t*)(mem::get_base() + 0xb49d4);
@@ -181,7 +181,7 @@ public:
             LoadGameState(file.get_handle(), &outframe);
             if (!conf::get().processing_save)
                 return {};
-            return timer_fix::load(timer_data);
+            return timer_fix::load(std::move(timer_data));
         }
         return {};
     }

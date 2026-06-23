@@ -6,7 +6,7 @@
 
 // For some reason these timers get reset when game loads state, so let's manually remember them
 
-ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
+ost::expected<void, std::string> timer_fix::save(std::vector<IntPair>& data) {
     auto& cfg = conf::get();
     if (!cfg.allow_timers_fix)
         return {};
@@ -38,10 +38,9 @@ ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
                         uint16_t pSize = *reinterpret_cast<uint16_t*>(paramPtr);
                         uint16_t pType = *reinterpret_cast<uint16_t*>(paramPtr + 2);
                         if (pType == 0x0D) {
-                            int32_t intervalValue = *reinterpret_cast<int32_t*>(paramPtr + 4);
-                            int32_t timerValue = *reinterpret_cast<int32_t*>(paramPtr + 8);
-                            data.push_back(intervalValue);
-                            data.push_back(timerValue);
+                            int intervalValue = *reinterpret_cast<int*>(paramPtr + 4);
+                            int timerValue = *reinterpret_cast<int*>(paramPtr + 8);
+                            data.push_back(IntPair(intervalValue, timerValue));
                             // spdlog::debug("saved {} / {}", timerValue, intervalValue);
                         }
                         paramPtr += pSize;
@@ -56,7 +55,7 @@ ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
     return {};
 }
 
-ost::expected<void, std::string> timer_fix::load(std::vector<int> data) {
+ost::expected<void, std::string> timer_fix::load(std::vector<IntPair> data) {
     auto& cfg = conf::get();
     if (!cfg.allow_timers_fix) {
         if (!data.empty())
@@ -65,7 +64,6 @@ ost::expected<void, std::string> timer_fix::load(std::vector<int> data) {
     }
     if (data.empty())
         return {};
-    ASS(data.size() % 2 == 0);
     auto it = data.begin();
     void* gStats = plug::get().get_prop(plug::PtrProp::PStats);
     ASS(gStats != nullptr);
@@ -93,15 +91,14 @@ ost::expected<void, std::string> timer_fix::load(std::vector<int> data) {
                         uint16_t pSize = *reinterpret_cast<uint16_t*>(paramPtr);
                         uint16_t pType = *reinterpret_cast<uint16_t*>(paramPtr + 2);
                         if (pType == 0x0D) {
-                            int32_t intervalValue = *reinterpret_cast<int32_t*>(paramPtr + 4);
-                            int32_t* timerValue = reinterpret_cast<int32_t*>(paramPtr + 8);
+                            int intervalValue = *reinterpret_cast<int*>(paramPtr + 4);
+                            int* timerValue = reinterpret_cast<int*>(paramPtr + 8);
                             if (it == data.end())
                                 return ost::unexpected<std::string>(
                                     "WTF not enough data to fix timers");
-                            if (intervalValue != *it)
+                            if (intervalValue != it->first)
                                 return ost::unexpected<std::string>("Fixing timers gone wrong");
-                            it++;
-                            *timerValue = *it;
+                            *timerValue = it->second;
                             it++;
                         }
                         paramPtr += pSize;
@@ -112,5 +109,6 @@ ost::expected<void, std::string> timer_fix::load(std::vector<int> data) {
         }
         eventPtr -= static_cast<size_t>(*reinterpret_cast<short*>(eventPtr));
     }
+    ASS(it == data.end());
     return {};
 }

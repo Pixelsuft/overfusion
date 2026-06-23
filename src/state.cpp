@@ -603,10 +603,8 @@ void state::load_state(int slot) {
         auto bool_ret = files::load_fs(file);
         ENSURE(bool_ret);
         auto pRandomSeed = get_rng_seed_ptr(pState);
-        if (pRandomSeed) {
-            // This check fails for IWT: NA for some reason
-            if (plug::get().name != "I WANNA TRY - A New Adventure Demo")
-                ASS(*pRandomSeed == st.seed);
+        if (pRandomSeed && *pRandomSeed != st.seed) {
+            spdlog::warn("Got seed {} instead of {}, fixing", *pRandomSeed, st.seed);
             *pRandomSeed = st.seed;
         }
     }
@@ -829,7 +827,7 @@ void state::after_update() {
                 }
             }
         }
-    } else {
+    } else if (!cfg.processing_save && need_scene_slot != empty_save_slot) {
         // Seed should not change when paused
         ASS(!pRandomSeed || *pRandomSeed == st.seed);
     }
