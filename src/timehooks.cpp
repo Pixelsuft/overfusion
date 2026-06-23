@@ -70,7 +70,7 @@ static DWORD WINAPI GetTickCountH() {
 }
 
 static VOID WINAPI GetLocalTimeH(LPSYSTEMTIME lpSystemTime) {
-    ASS(lpSystemTime);
+    ASS(lpSystemTime != nullptr);
     auto ms = state::get_time(state::TimeOffset::Local);
     ULARGE_INTEGER ull;
     ull.QuadPart = (ms + 11644473600000ULL) * 10000ULL;
@@ -81,7 +81,11 @@ static VOID WINAPI GetLocalTimeH(LPSYSTEMTIME lpSystemTime) {
     ENSURE(ret);
 }
 
-static BOOL WINAPI SetLocalTimeH(const SYSTEMTIME* lpSystemTime) { return FALSE; }
+static BOOL WINAPI SetLocalTimeH(const SYSTEMTIME* lpSystemTime) {
+    ASS(lpSystemTime != nullptr);
+    spdlog::debug("SetLocalTime");
+    return FALSE;
+}
 
 BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency) = QueryPerformanceFrequency;
 static BOOL WINAPI QueryPerformanceFrequencyH(LARGE_INTEGER* lpFrequency) {
@@ -101,7 +105,7 @@ static BOOL WINAPI QueryPerformanceCounterH(LARGE_INTEGER* lpFrequency) {
     return TRUE;
 }
 
-static VOID GetSystemTimeAsFileTimeH(LPFILETIME lpSystemTimeAsFileTime) {
+static VOID WINAPI GetSystemTimeAsFileTimeH(LPFILETIME lpSystemTimeAsFileTime) {
     if (lpSystemTimeAsFileTime == NULL)
         return;
     // TODO: is this right?
@@ -195,6 +199,7 @@ void timehooks::init() {
     IAT_ONLY("kernel32.dll", GetTickCount);
     IAT_ONLY("kernel32.dll", SetLocalTime);
     IAT_ONLY("kernel32.dll", GetLocalTime);
+    IAT_ONLY("kernel32.dll", GetSystemTimeAsFileTime);
     IAT_ONLY("msvcrt.dll", _ftime);
     IAT_ONLY("msvcrt.dll", time);
     if (cfg.emulate_user_timers) {
@@ -213,8 +218,6 @@ void timehooks::update_init() {
         return;
     // FIXME: breaks IWBTB admin mod FSR
     IAT_AUTO("kernel32.dll", QueryPerformanceCounter);
-    // This breaks fontembed.mfx if hooked earlier
-    IAT_ONLY("kernel32.dll", GetSystemTimeAsFileTime);
     // TODO: GetSystemTime?
 }
 
