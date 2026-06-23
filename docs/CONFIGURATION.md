@@ -7,12 +7,12 @@ You can use [default config](../overfusion.json) and [default project config](..
 
 `force_resolution` - can be used to force game thinking that window resolution is this one (useful for direct video capturing) <br />
 `forced_window_resize` - resize window to `force_resolution` when set <br />
-`speed` - game speed in range [0.05, 2.0] <br />
-`font_scale` - UI scale in range [0.05, 3.0] <br />
+`speed` - default game speed in range [0.05, 2.0] <br />
+`font_scale` - default UI scale in range [0.05, 3.0] <br />
 `force_custom_window` - force custom window for UI (for Direct3D 9 games) <br />
 `disable_fullscreen` - prevent game from entering into fullscreen mode <br />
 `wait_for_debugger` - wait till the debugger attached before running a game <br />
-`show_menu` - show OF menu by fault <br />
+`show_menu` - show OF menu by default <br />
 `show_info` - show OF info window by default <br />
 `emulate_user_timers` - manually emulate `SetTimer` timers <br />
 `emulate_mm_timers` - manually emulate `timeSetEvent` timers <br />
@@ -29,12 +29,12 @@ You can use [default config](../overfusion.json) and [default project config](..
 `disable_audio` - disable audio playback completely <br />
 `record_audio` - record in-game audio <br />
 `support_audio_panning` - support panning for recording audio <br />
-`draw_cursor` - draw dot in the virtual mouse position (currently works only without the custom window) <br />
+`draw_cursor` - draw dot in the virtual mouse position (currently works only without the custom window for Direct3D 9 games) <br />
 `pixel_filter` - make the game look pixelated instead of blurry (only for Direct3D 9 games) <br />
 `ui_pixel_filter` - do the same but for OF UI <br />
-`save_vfs` - save/load VFS state into state file <br />
+`save_vfs` - save/load virtual FS state into state file <br />
 `pause_on_scene_switch` - pause the game when scene switches (or gets reset) <br />
-`redraw_on_skip` - draw the frame manually when the game didn't draw (when playing a game unpaused), breaks FNAF magazine transition <br />
+`redraw_on_skip` - draw the frame manually when the game didn't draw (when game is unpaused), breaks FNAF magazine transition <br />
 `disable_viewport` - disable `Viewport.mfx` Fusion plugin display <br />
 `disable_perspective` - disable `Perspective.mfx` Fusion plugin display <br />
 `ffmpeg_cmdline` - FFmpeg command line for video capturing <br />
