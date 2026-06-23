@@ -542,9 +542,11 @@ void state::load_state(int slot) {
     void* pState = plug::get().get_prop(plug::PtrProp::PState);
     if (!cfg.is_replay && temp_state.scene != st.scene) {
         // Need to switch scene before loading state
-        need_scene_slot = slot;
         short* ptr =
             reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
+        if (!ptr)
+            return;
+        need_scene_slot = slot;
         // Skip if change is already in progress
         if (*ptr)
             return;
@@ -553,6 +555,7 @@ void state::load_state(int slot) {
                    std::to_string(temp_state.scene);
         *ptr = 3;
         ptr = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
+        ASS(ptr != nullptr);
         *ptr = static_cast<short>(temp_state.scene) | 0x8000;
         if (!plug::get().set_trans_enabled(false))
             spdlog::debug("Failed to set transitions disabled");
@@ -1059,8 +1062,12 @@ void state::reset_game() {
     void* pState = plug::get().get_prop(plug::PtrProp::PState);
     short* ptr =
         reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
+    if (!ptr) {
+        need_scene_slot = empty_save_slot;
+        return;
+    }
     // Skip if reset is already in progress
-    if (!ptr || *ptr)
+    if (*ptr)
         return;
     st.prev_input.clear();
     st.ev.clear();
@@ -1074,6 +1081,7 @@ void state::reset_game() {
         st.frames = 0;
         *ptr = 4;
         ptr = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
+        ASS(ptr != nullptr);
         *ptr = 0;
     }
     files::clear_fs();

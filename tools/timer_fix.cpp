@@ -5,6 +5,7 @@
 #include <spdlog/spdlog.h>
 
 // For some reason these timers get reset when game loads state, so let's manually remember them
+// FIXME: seems to be it's unstable during loading a state from a different scene and may crash
 
 ost::expected<void, std::string> timer_fix::save(std::vector<IntPair>& data) {
     auto& cfg = conf::get();

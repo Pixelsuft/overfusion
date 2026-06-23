@@ -144,6 +144,7 @@ static void draw_menu(bool custom_window) {
             cfg.font_scale = std::min(std::max(cfg.font_scale, 0.05f), 3.f);
         if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
             cfg.font_scale = 1.f;
+        ImGui::Checkbox("Allow timer fix", &cfg.allow_timers_fix);
         ImGui::Checkbox("Draw cursor", &cfg.draw_cursor);
         ImGui::Checkbox("Pause on scene switch", &cfg.pause_on_scene_switch);
         ImGui::Checkbox("Redraw on frame drawing skip", &cfg.redraw_on_skip);
