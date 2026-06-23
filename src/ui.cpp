@@ -15,11 +15,10 @@
 #undef min
 #undef max
 
-constexpr bool ui_save_sets = true;
-
 namespace ui {
+constexpr bool save_sets = true;
 static bool processing;
-}
+} // namespace ui
 
 void ui::init() { processing = false; }
 
@@ -55,7 +54,7 @@ bool ui::init_imgui_platform(void* hwnd, void* device) {
 }
 
 static void draw_info(bool custom_window) {
-    ImGuiWindowFlags flags = (ui_save_sets ? 0 : ImGuiWindowFlags_NoSavedSettings) |
+    ImGuiWindowFlags flags = (ui::save_sets ? 0 : ImGuiWindowFlags_NoSavedSettings) |
                              ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
                              ImGuiWindowFlags_NoScrollbar;
     if (custom_window) {
@@ -78,7 +77,7 @@ static void draw_menu(bool custom_window) {
     auto& cfg = conf::get();
     ImGui::SetNextWindowFocus();
     ImGuiWindowFlags flags =
-        (ui_save_sets ? 0 : ImGuiWindowFlags_NoSavedSettings) |
+        (ui::save_sets ? 0 : ImGuiWindowFlags_NoSavedSettings) |
         (custom_window
              ? (ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize)

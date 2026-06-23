@@ -65,7 +65,6 @@ void video::start() {
     srcdc = nullptr;
     pSysSurface = nullptr;
     data_buffer.clear();
-    auto& cfg = conf::get();
     recording = true;
 }
 

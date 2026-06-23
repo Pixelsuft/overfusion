@@ -16,7 +16,6 @@ using ost::string_view;
 using std::string;
 
 namespace winhooks {
-static bool is_custom_window;
 static HHOOK hCbtHook;
 static bool inited;
 } // namespace winhooks
@@ -65,7 +64,7 @@ LRESULT(WINAPI* MainWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 static LRESULT WINAPI MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DROPFILES)
         return 0;
-    if (winhooks::inited && !winhooks::is_custom_window || uMsg < WM_MOUSEFIRST ||
+    if (winhooks::inited && !conf::get().custom_window || uMsg < WM_MOUSEFIRST ||
         uMsg > WM_MOUSELAST) {
         ui::set_processing(true);
         ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
@@ -113,7 +112,7 @@ LRESULT(WINAPI* EditWindowProcO)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 static LRESULT WINAPI EditWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DROPFILES)
         return FALSE;
-    if (winhooks::inited && !winhooks::is_custom_window || uMsg < WM_MOUSEFIRST ||
+    if (winhooks::inited && !conf::get().custom_window || uMsg < WM_MOUSEFIRST ||
         uMsg > WM_MOUSELAST) {
         ui::set_processing(true);
         ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
@@ -517,7 +516,6 @@ static BOOL WINAPI ShowWindowH(HWND hWnd, int nCmdShow) {
 void winhooks::init() {
     hwnd = mhwnd = nullptr;
     MainWindowProcO = EditWindowProcO = nullptr;
-    is_custom_window = false;
     inited = false;
     winhooks::pre_init_win32_theme();
     // IAT_STR_ONLY("user32.dll", GetMonitorInfo);
@@ -547,7 +545,6 @@ void winhooks::init() {
 
 void winhooks::after_ui_init() {
     inited = true;
-    is_custom_window = conf::get().custom_window;
     ENSURE(hwnd != nullptr);
     ENSURE(mhwnd != nullptr);
     // Let's do it here if the game wants to show an error during startup

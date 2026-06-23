@@ -69,17 +69,19 @@ static DWORD WINAPI GetTickCountH() {
     return static_cast<DWORD>(state::get_time(state::TimeOffset::Startup));
 }
 
-static VOID GetLocalTimeH(LPSYSTEMTIME lpSystemTime) {
+static VOID WINAPI GetLocalTimeH(LPSYSTEMTIME lpSystemTime) {
+    ASS(lpSystemTime);
     auto ms = state::get_time(state::TimeOffset::Local);
     ULARGE_INTEGER ull;
     ull.QuadPart = (ms + 11644473600000ULL) * 10000ULL;
     FILETIME ft;
     ft.dwLowDateTime = ull.LowPart;
     ft.dwHighDateTime = ull.HighPart;
-    ENSURE(FileTimeToSystemTime(&ft, lpSystemTime));
+    auto ret = FileTimeToSystemTime(&ft, lpSystemTime);
+    ENSURE(ret);
 }
 
-static BOOL SetLocalTimeH(const SYSTEMTIME* lpSystemTime) { return FALSE; }
+static BOOL WINAPI SetLocalTimeH(const SYSTEMTIME* lpSystemTime) { return FALSE; }
 
 BOOL(WINAPI* QueryPerformanceFrequencyO)(LARGE_INTEGER* lpFrequency) = QueryPerformanceFrequency;
 static BOOL WINAPI QueryPerformanceFrequencyH(LARGE_INTEGER* lpFrequency) {
@@ -192,6 +194,7 @@ void timehooks::init() {
     IAT_AUTO("kernel32.dll", QueryPerformanceFrequency);
     IAT_ONLY("kernel32.dll", GetTickCount);
     IAT_ONLY("kernel32.dll", SetLocalTime);
+    IAT_ONLY("kernel32.dll", GetLocalTime);
     IAT_ONLY("msvcrt.dll", _ftime);
     IAT_ONLY("msvcrt.dll", time);
     if (cfg.emulate_user_timers) {
@@ -208,13 +211,10 @@ void timehooks::update_init() {
     auto& cfg = conf::get();
     if (cfg.boxed_mode)
         return;
-    // FIXME: breaks IWBTB admin mod for some reason
+    // FIXME: breaks IWBTB admin mod FSR
     IAT_AUTO("kernel32.dll", QueryPerformanceCounter);
     // This breaks fontembed.mfx if hooked earlier
     IAT_ONLY("kernel32.dll", GetSystemTimeAsFileTime);
-    // This breaks Nvidia driver if hooked earlier
-    // FIXME: This also crashes FNAF (WTF?)
-    // IAT_ONLY("kernel32.dll", GetLocalTime);
     // TODO: GetSystemTime?
 }
 
