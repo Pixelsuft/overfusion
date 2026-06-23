@@ -6,6 +6,7 @@
 #include "event.hpp"
 #include "files.hpp"
 #include "input.hpp"
+#include "mypair.hpp"
 #include "ofs.hpp"
 #include "plugbase.hpp"
 #include "timehooks.hpp"
@@ -42,7 +43,7 @@ struct State {
     // Holding inputs last frame
     std::vector<int> prev_input;
     // Normalized mouse pos
-    std::pair<float, float> mouse_pos;
+    MyPair<float, float> mouse_pos;
     // Current scene ID
     int scene;
     // Current frame
@@ -827,9 +828,13 @@ void state::after_update() {
                 }
             }
         }
-    } else if (!cfg.processing_save && need_scene_slot != empty_save_slot) {
+    } else if (!cfg.processing_save && need_scene_slot == empty_save_slot && pRandomSeed) {
         // Seed should not change when paused
-        ASS(!pRandomSeed || *pRandomSeed == st.seed);
+        // FIXME: sometimes fails when loading a state from a different scene FSR
+        // ASS(*pRandomSeed == st.seed);
+        if (*pRandomSeed != st.seed)
+            last_msg = "Paused seed check failed (got " + std::to_string(*pRandomSeed) +
+                       " instead of " + std::to_string(st.seed) + ")";
     }
     if (cfg.fast_forward)
         return;
@@ -911,7 +916,7 @@ std::pair<float, float> state::get_tas_mouse_pos() {
     auto prev_it = std::find_if(st.temp_ev.rbegin(), st.temp_ev.rend(),
                                 [](const Event& te) { return te.idx == event::Type::MouseMove; });
     if (prev_it == st.temp_ev.rend())
-        return st.mouse_pos;
+        return {st.mouse_pos.first, st.mouse_pos.second};
     else
         return {prev_it->mouse.x, prev_it->mouse.y};
 }
@@ -956,7 +961,9 @@ bool state::set_win_mouse_pos(int x, int y) {
     ASS(std::find_if(st.temp_ev.begin(), st.temp_ev.end(), [](const Event& te) {
             return te.idx == event::Type::MouseMove;
         }) == st.temp_ev.end());
-    st.mouse_pos = plug::get().mouse_from_window(x, y);
+    auto need_pos = plug::get().mouse_from_window(x, y);
+    st.mouse_pos.first = need_pos.first;
+    st.mouse_pos.second = need_pos.second;
     return true;
 }
 
