@@ -81,9 +81,27 @@ static VOID WINAPI GetLocalTimeH(LPSYSTEMTIME lpSystemTime) {
     ENSURE(ret);
 }
 
+static VOID WINAPI GetSystemTimeH(LPSYSTEMTIME lpSystemTime) {
+    ASS(lpSystemTime != nullptr);
+    auto ms = state::get_time(state::TimeOffset::System);
+    ULARGE_INTEGER ull;
+    ull.QuadPart = (ms + 11644473600000ULL) * 10000ULL;
+    FILETIME ft;
+    ft.dwLowDateTime = ull.LowPart;
+    ft.dwHighDateTime = ull.HighPart;
+    auto ret = FileTimeToSystemTime(&ft, lpSystemTime);
+    ENSURE(ret);
+}
+
 static BOOL WINAPI SetLocalTimeH(const SYSTEMTIME* lpSystemTime) {
     ASS(lpSystemTime != nullptr);
     spdlog::debug("SetLocalTime");
+    return FALSE;
+}
+
+static BOOL WINAPI SetSystemTimeH(const SYSTEMTIME* lpSystemTime) {
+    ASS(lpSystemTime != nullptr);
+    spdlog::debug("SetSystemTime");
     return FALSE;
 }
 
@@ -199,6 +217,8 @@ void timehooks::init() {
     IAT_ONLY("kernel32.dll", GetTickCount);
     IAT_ONLY("kernel32.dll", SetLocalTime);
     IAT_ONLY("kernel32.dll", GetLocalTime);
+    IAT_ONLY("kernel32.dll", GetSystemTime);
+    IAT_ONLY("kernel32.dll", SetSystemTime);
     IAT_ONLY("kernel32.dll", GetSystemTimeAsFileTime);
     IAT_ONLY("msvcrt.dll", _ftime);
     IAT_ONLY("msvcrt.dll", time);
@@ -218,7 +238,6 @@ void timehooks::update_init() {
         return;
     // FIXME: breaks IWBTB admin mod FSR
     IAT_AUTO("kernel32.dll", QueryPerformanceCounter);
-    // TODO: GetSystemTime?
 }
 
 void timehooks::update(int dt) {
