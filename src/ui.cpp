@@ -146,6 +146,7 @@ static void draw_menu(bool custom_window) {
             cfg.font_scale = 1.f;
         ImGui::Checkbox("Draw cursor", &cfg.draw_cursor);
         ImGui::Checkbox("Pause on scene switch", &cfg.pause_on_scene_switch);
+        ImGui::Checkbox("Redraw on frame drawing skip", &cfg.redraw_on_skip);
         ImGui::Checkbox("Save game state", &cfg.save_game_state);
         ImGui::Checkbox("Save VFS in state", &cfg.save_vfs);
         if (cfg.render_type == conf::RenderType::D3D9) {
