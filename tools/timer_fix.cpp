@@ -16,25 +16,24 @@ ost::expected<void, std::string> timer_fix::save(std::vector<IntPair>& data) {
     void* gStats = plug::get().get_prop(plug::PtrProp::PStats);
     ASS(gStats != nullptr);
     // spdlog::debug("gStats before: {}", gStats);
-    size_t eventPtr = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(gStats) + 0x80);
-    if (eventPtr == 0) {
-        spdlog::error("eventPtr is nullptr WTF");
-        return ost::unexpected<std::string>("failed to save timers - eventPtr was nullptr");
+    size_t eventGroup = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(gStats) + 0x80);
+    if (eventGroup == 0) {
+        spdlog::error("eventGroup is nullptr WTF");
+        return ost::unexpected<std::string>("failed to save timers - eventGroup was nullptr");
     }
-    while (*reinterpret_cast<short*>(eventPtr) != 0) {
-        uint8_t nEvents = *reinterpret_cast<uint8_t*>(eventPtr + 2);
-        uint8_t nConds = *reinterpret_cast<uint8_t*>(eventPtr + 3);
+    while (*reinterpret_cast<short*>(eventGroup) != 0) {
+        uint8_t nEvents = *reinterpret_cast<uint8_t*>(eventGroup + 2);
+        uint8_t nConds = *reinterpret_cast<uint8_t*>(eventGroup + 3);
         int totalEntries = static_cast<int>(nConds) + static_cast<int>(nEvents);
-        uint8_t* currentEntry =
-            reinterpret_cast<uint8_t*>(eventPtr) + cfg.tm_fix_event_entry_offset;
-        int type = *reinterpret_cast<int*>(currentEntry + cfg.tm_fix_event_entry_type_offset);
+        uint8_t* cond = reinterpret_cast<uint8_t*>(eventGroup) + cfg.tm_fix_event_entry_offset;
+        int type = *reinterpret_cast<int*>(eventGroup + cfg.tm_fix_event_entry_type_offset);
         if (type != -0xa0001 && type != -0x90001) {
             for (int i = 0; i < totalEntries; i++) {
-                uint16_t entrySize = *reinterpret_cast<uint16_t*>(currentEntry);
-                int32_t objectID = *reinterpret_cast<int32_t*>(currentEntry + 2);
-                uint8_t paramCount = *reinterpret_cast<uint8_t*>(currentEntry + 0xC);
+                uint16_t entrySize = *reinterpret_cast<uint16_t*>(cond);
+                int32_t objectID = *reinterpret_cast<int32_t*>(cond + 2);
+                uint8_t paramCount = *reinterpret_cast<uint8_t*>(cond + 0xC);
                 if (paramCount > 0) {
-                    uint8_t* paramPtr = currentEntry + (objectID < 0 ? 0x10 : 0x0E);
+                    uint8_t* paramPtr = cond + (objectID < 0 ? 0x10 : 0x0E);
                     for (int p = 0; p < static_cast<int>(paramCount); p++) {
                         uint16_t pSize = *reinterpret_cast<uint16_t*>(paramPtr);
                         uint16_t pType = *reinterpret_cast<uint16_t*>(paramPtr + 2);
@@ -47,10 +46,10 @@ ost::expected<void, std::string> timer_fix::save(std::vector<IntPair>& data) {
                         paramPtr += pSize;
                     }
                 }
-                currentEntry += entrySize;
+                cond += entrySize;
             }
         }
-        eventPtr -= static_cast<size_t>(*reinterpret_cast<short*>(eventPtr));
+        eventGroup -= static_cast<size_t>(*reinterpret_cast<short*>(eventGroup));
     }
     spdlog::debug("timers fix size: {}", data.size());
     return {};
@@ -67,27 +66,25 @@ ost::expected<void, std::string> timer_fix::load(std::vector<IntPair> data) {
         return {};
     auto it = data.begin();
     void* gStats = plug::get().get_prop(plug::PtrProp::PStats);
-    ASS(gStats != nullptr);
     // spdlog::debug("gStats before: {}", gStats);
-    size_t eventPtr = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(gStats) + 0x80);
-    if (eventPtr == 0) {
-        spdlog::error("eventPtr is nullptr WTF");
-        return ost::unexpected<std::string>("Failed to save timers - eventPtr was nullptr");
+    size_t eventGroup = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(gStats) + 0x80);
+    if (eventGroup == 0) {
+        spdlog::error("eventGroup is nullptr WTF");
+        return ost::unexpected<std::string>("Failed to save timers - eventGroup was nullptr");
     }
-    while (*reinterpret_cast<short*>(eventPtr) != 0) {
-        uint8_t nEvents = *reinterpret_cast<uint8_t*>(eventPtr + 2);
-        uint8_t nConds = *reinterpret_cast<uint8_t*>(eventPtr + 3);
+    while (*reinterpret_cast<short*>(eventGroup) != 0) {
+        uint8_t nEvents = *reinterpret_cast<uint8_t*>(eventGroup + 2);
+        uint8_t nConds = *reinterpret_cast<uint8_t*>(eventGroup + 3);
         int totalEntries = static_cast<int>(nConds) + static_cast<int>(nEvents);
-        uint8_t* currentEntry =
-            reinterpret_cast<uint8_t*>(eventPtr) + cfg.tm_fix_event_entry_offset;
-        int type = *reinterpret_cast<int*>(currentEntry + cfg.tm_fix_event_entry_type_offset);
+        uint8_t* cond = reinterpret_cast<uint8_t*>(eventGroup) + cfg.tm_fix_event_entry_offset;
+        int type = *reinterpret_cast<int*>(eventGroup + cfg.tm_fix_event_entry_type_offset);
         if (type != -0xa0001 && type != -0x90001) {
             for (int i = 0; i < totalEntries; i++) {
-                uint16_t entrySize = *reinterpret_cast<uint16_t*>(currentEntry);
-                int32_t objectID = *reinterpret_cast<int32_t*>(currentEntry + 2);
-                uint8_t paramCount = *reinterpret_cast<uint8_t*>(currentEntry + 0xC);
+                uint16_t entrySize = *reinterpret_cast<uint16_t*>(cond);
+                int32_t objectID = *reinterpret_cast<int32_t*>(cond + 2);
+                uint8_t paramCount = *reinterpret_cast<uint8_t*>(cond + 0xC);
                 if (paramCount > 0) {
-                    uint8_t* paramPtr = currentEntry + (objectID < 0 ? 0x10 : 0x0E);
+                    uint8_t* paramPtr = cond + (objectID < 0 ? 0x10 : 0x0E);
                     for (int p = 0; p < static_cast<int>(paramCount); p++) {
                         uint16_t pSize = *reinterpret_cast<uint16_t*>(paramPtr);
                         uint16_t pType = *reinterpret_cast<uint16_t*>(paramPtr + 2);
@@ -105,10 +102,10 @@ ost::expected<void, std::string> timer_fix::load(std::vector<IntPair> data) {
                         paramPtr += pSize;
                     }
                 }
-                currentEntry += entrySize;
+                cond += entrySize;
             }
         }
-        eventPtr -= static_cast<size_t>(*reinterpret_cast<short*>(eventPtr));
+        eventGroup -= static_cast<size_t>(*reinterpret_cast<short*>(eventGroup));
     }
     ASS(it == data.end());
     return {};
