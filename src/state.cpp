@@ -40,6 +40,8 @@ struct State {
     // or just duplicate them here? (this one might be the best)
     // Temp event list
     std::vector<Event> temp_ev;
+    // RNG queue
+    std::vector<IntPair> rng_buf;
     // Holding inputs last frame
     std::vector<int> prev_input;
     // Normalized mouse pos
@@ -473,6 +475,7 @@ void state::save_state(int slot) {
     write_bin(file, st.seed);
     write_bin(file, st.prev_input);
     write_bin(file, st.temp_ev);
+    write_bin(file, st.rng_buf);
     write_bin(file, st.ev);
     cfg.processing_save = true;
     auto ret = plug::get().save_state(file);
@@ -562,6 +565,7 @@ void state::load_state(int slot) {
     load_bin(file, temp_state.seed);
     load_bin(file, temp_state.prev_input);
     load_bin(file, temp_state.temp_ev);
+    load_bin(file, temp_state.rng_buf);
     load_bin(file, temp_state.ev);
     int prev_frames = st.frames;
     if (!cfg.is_replay) {
@@ -970,6 +974,16 @@ bool state::set_win_mouse_pos(int x, int y) {
 void state::fill_kbd_state(unsigned char* data) {
     for (auto& val : st.prev_input)
         data[val] = 1;
+}
+
+ost::optional<int> state::fetch_random_number(int range) {
+    auto it = std::lower_bound(st.rng_buf.begin(), st.rng_buf.end(), range,
+                               [](const IntPair& pair, int value) { return pair.first < value; });
+    if (it == st.rng_buf.end() || it->first != range)
+        return {};
+    auto ret = it->second;
+    st.rng_buf.erase(it);
+    return ret;
 }
 
 void state::on_mode_switch() {
