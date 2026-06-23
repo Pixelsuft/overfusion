@@ -51,13 +51,16 @@ struct State {
     int frames;
     // Total frames
     int total;
+    // Random seed
+    unsigned short seed;
 
-    State() : scene(0), frames(0), total(0), rerec_count(0), mouse_pos({-1.f, -1.f}) {}
+    State() : scene(0), frames(0), total(0), rerec_count(0), seed(0), mouse_pos({-1.f, -1.f}) {}
 
     void clear_values() {
         scene = 0;
         frames = total = 0;
         mouse_pos.first = mouse_pos.second = -1.f;
+        seed = 0;
     }
 
     void clear_lists() {
@@ -173,6 +176,13 @@ static void set_rerecords(uint64_t count) {
     ofs::File file;
     if (file.open(state::base_path + "\\rerecords.ofbin", 1))
         file.writeln(std::to_string(count));
+}
+
+static int get_scene_id() {
+    void* pGlobalApp = plug::get().get_prop(plug::PtrProp::PGlobalApp);
+    ASS(pGlobalApp != nullptr);
+    int* pScene = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSceneID, pGlobalApp));
+    return pScene ? *pScene : -1;
 }
 
 void state::init() {
@@ -454,6 +464,7 @@ void state::save_state(int slot) {
     write_bin(file, st.total);
     write_bin(file, st.rerec_count);
     write_bin(file, st.mouse_pos);
+    write_bin(file, st.seed);
     write_bin(file, st.prev_input);
     write_bin(file, st.temp_ev);
     write_bin(file, st.ev);
@@ -542,6 +553,7 @@ void state::load_state(int slot) {
     load_bin(file, temp_state.total);
     load_bin(file, temp_state.rerec_count);
     load_bin(file, temp_state.mouse_pos);
+    load_bin(file, temp_state.seed);
     load_bin(file, temp_state.prev_input);
     load_bin(file, temp_state.temp_ev);
     load_bin(file, temp_state.ev);
@@ -719,11 +731,7 @@ bool state::before_update(bool is_transitioning) {
                 spdlog::debug("Failed to set transitions back enabled");
         }
     }
-    void* pGlobalApp = plug::get().get_prop(plug::PtrProp::PGlobalApp);
-    ASS(pGlobalApp != nullptr);
-    int* pScene = reinterpret_cast<int*>(plug::get().get_prop(plug::PtrProp::PSceneID, pGlobalApp));
-    ASS(pScene != nullptr);
-    st.scene = *pScene;
+    st.scene = get_scene_id();
     // Do not update when the game is minimized
     if (!cfg.is_paused && IsIconic(::hwnd))
         cfg.is_paused = true;
@@ -732,6 +740,13 @@ bool state::before_update(bool is_transitioning) {
     updating = true;
     cur_holding = st.prev_input;
     msgbox_buf.clear();
+    void* pState = plug::get().get_prop(plug::PtrProp::PState);
+    auto pRandomSeed =
+        reinterpret_cast<unsigned short*>(plug::get().get_prop(plug::PtrProp::PRandomSeed, pState));
+    if (pRandomSeed) {
+        ASS(st.frames != 0 || *pRandomSeed == 0);
+        *pRandomSeed = st.seed;
+    }
     if (cfg.is_replay) {
         for (; repl_index < st.ev.size(); repl_index++) {
             Event& ev = st.ev[repl_index];
@@ -781,6 +796,10 @@ void state::after_update() {
     auto& cfg = conf::get();
     if (updating) {
         updating = false;
+        auto pState = plug::get().get_prop(plug::PtrProp::PState);
+        auto pRandomSeed = reinterpret_cast<unsigned short*>(
+            plug::get().get_prop(plug::PtrProp::PRandomSeed, pState));
+        st.seed = pRandomSeed ? *pRandomSeed : 0;
         auto prev_time = get_time(TimeOffset::None);
         st.frames++;
         // Update timers with "real" delta time
@@ -794,7 +813,6 @@ void state::after_update() {
         }
         // Attempting to sync with hourglass
         if (false) {
-            auto pState = plug::get().get_prop(plug::PtrProp::PState);
             short* pTask = reinterpret_cast<short*>(
                 plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
             if (*pTask) {
@@ -975,11 +993,7 @@ void state::draw_info() {
         ImGui::Text("Temp event count: %i", static_cast<int>(st.temp_ev.size()));
     ImGui::Text("Message: %s", last_msg.c_str());
     if (!cfg.fast_forward) {
-        void* pState = plug::get().get_prop(plug::PtrProp::PState);
-        ASS(pState != nullptr);
-        auto pRandomSeed = reinterpret_cast<unsigned short*>(
-            plug::get().get_prop(plug::PtrProp::PRandomSeed, pState));
-        ImGui::Text("Random seed: %i", pRandomSeed ? static_cast<int>(*pRandomSeed) : 0);
+        ImGui::Text("Random seed: %i", static_cast<int>(st.seed));
         auto m_pos = get_tas_mouse_pos();
         auto win_pos = plug::get().mouse_to_window(m_pos.first, m_pos.second);
         ImGui::Text("Window mouse%s: %i, %i", get_tas_mouse_down(VK_LBUTTON) ? " [DOWN]" : "",
@@ -1007,7 +1021,6 @@ void state::reset_game() {
     conf::get().is_paused = true;
     updating = false;
     void* pState = plug::get().get_prop(plug::PtrProp::PState);
-    ASS(pState != nullptr);
     short* ptr =
         reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
     // Skip if reset is already in progress
