@@ -965,8 +965,32 @@ static BOOL WINAPI WritePrivateProfileStringWH(LPCWSTR lpAppName, LPCWSTR lpKeyN
     return ok ? TRUE : FALSE;
 }
 
+static UINT(WINAPI* GetTempFileNameAO)(LPCSTR lpPathName, LPCSTR lpPrefixString, UINT uUnique,
+                                       LPSTR lpTempFileName);
+static UINT WINAPI GetTempFileNameAH(LPCSTR lpPathName, LPCSTR lpPrefixString, UINT uUnique,
+                                     LPSTR lpTempFileName) {
+    lpPrefixString = "OF";
+    auto ret = GetTempFileNameAO(lpPathName, lpPrefixString, uUnique, lpTempFileName);
+    ENSURE(ret != 0);
+    spdlog::debug("GetTempFileNameA: {}", uconv::from_ansi(lpTempFileName));
+    return ret;
+}
+
+static UINT(WINAPI* GetTempFileNameWO)(LPCWSTR lpPathName, LPCWSTR lpPrefixString, UINT uUnique,
+                                       LPWSTR lpTempFileName);
+static UINT WINAPI GetTempFileNameWH(LPCWSTR lpPathName, LPCWSTR lpPrefixString, UINT uUnique,
+                                     LPWSTR lpTempFileName) {
+    // TODO: maybe make our function implementation?
+    lpPrefixString = L"OF";
+    auto ret = GetTempFileNameWO(lpPathName, lpPrefixString, uUnique, lpTempFileName);
+    ENSURE(ret != 0);
+    spdlog::debug("GetTempFileNameW: {}", uconv::from_utf16(lpTempFileName));
+    return ret;
+}
+
 void files::init() {
     // IAT_AUTO("kernel32.dll", SetCurrentDirectoryW);
+    IAT_STR_AUTO("kernel32.dll", GetTempFileName);
     IAT_STR_ONLY("kernel32.dll", GetTempPath);
 }
 
