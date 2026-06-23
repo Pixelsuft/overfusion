@@ -185,6 +185,11 @@ static int get_scene_id() {
     return pScene ? *pScene : -1;
 }
 
+static unsigned short* get_rng_seed_ptr(void* pState) {
+    return reinterpret_cast<unsigned short*>(
+        plug::get().get_prop(plug::PtrProp::PRandomSeed, pState));
+}
+
 void state::init() {
     base_path = string(ofs::get_cwd()) + '\\' + conf::get().project_name;
     last_msg = "None";
@@ -530,10 +535,10 @@ void state::load_state(int slot) {
     State temp_state;
     // State& temp_state = st;
     load_bin(file, temp_state.scene);
+    void* pState = plug::get().get_prop(plug::PtrProp::PState);
     if (!cfg.is_replay && temp_state.scene != st.scene) {
         // Need to switch scene before loading state
         need_scene_slot = slot;
-        void* pState = plug::get().get_prop(plug::PtrProp::PState);
         short* ptr =
             reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
         // Skip if change is already in progress
@@ -594,9 +599,16 @@ void state::load_state(int slot) {
         // TODO: maybe trim on the first frame, not directly when loading?
         st.trim();
         repl_index = st.calc_current_index();
-        // FIXME, files get resored even if load state fails
+        // FIXME: files get restored even if load state fails
         auto bool_ret = files::load_fs(file);
         ENSURE(bool_ret);
+        auto pRandomSeed = get_rng_seed_ptr(pState);
+        if (pRandomSeed) {
+            // This check fails for IWT: NA for some reason
+            if (plug::get().name != "I WANNA TRY - A New Adventure Demo")
+                ASS(*pRandomSeed == st.seed);
+            *pRandomSeed = st.seed;
+        }
     }
     st.rerec_count = std::max(st.rerec_count, get_rerecords()) + 1;
     set_rerecords(st.rerec_count);
@@ -741,11 +753,7 @@ bool state::before_update(bool is_transitioning) {
     cur_holding = st.prev_input;
     msgbox_buf.clear();
     void* pState = plug::get().get_prop(plug::PtrProp::PState);
-    auto pRandomSeed =
-        reinterpret_cast<unsigned short*>(plug::get().get_prop(plug::PtrProp::PRandomSeed, pState));
-    if (pRandomSeed) {
-        ASS(*pRandomSeed == st.seed);
-    }
+    auto pRandomSeed = get_rng_seed_ptr(pState);
     if (cfg.is_replay) {
         for (; repl_index < st.ev.size(); repl_index++) {
             Event& ev = st.ev[repl_index];
@@ -793,11 +801,10 @@ bool state::before_update(bool is_transitioning) {
 
 void state::after_update() {
     auto& cfg = conf::get();
+    auto pState = plug::get().get_prop(plug::PtrProp::PState);
+    auto pRandomSeed = get_rng_seed_ptr(pState);
     if (updating) {
         updating = false;
-        auto pState = plug::get().get_prop(plug::PtrProp::PState);
-        auto pRandomSeed = reinterpret_cast<unsigned short*>(
-            plug::get().get_prop(plug::PtrProp::PRandomSeed, pState));
         st.seed = pRandomSeed ? *pRandomSeed : 0;
         auto prev_time = get_time(TimeOffset::None);
         st.frames++;
@@ -822,6 +829,9 @@ void state::after_update() {
                 }
             }
         }
+    } else {
+        // Seed should not change when paused
+        ASS(!pRandomSeed || *pRandomSeed == st.seed);
     }
     if (cfg.fast_forward)
         return;

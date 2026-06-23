@@ -58,12 +58,13 @@ ost::expected<void, std::string> timer_fix::save(std::vector<int>& data) {
 
 ost::expected<void, std::string> timer_fix::load(std::vector<int> data) {
     auto& cfg = conf::get();
-    if (!cfg.allow_timers_fix)
-        return {};
-    if (data.empty()) {
-        spdlog::warn("Not fixing timers");
+    if (!cfg.allow_timers_fix) {
+        if (!data.empty())
+            spdlog::warn("Not fixing timers");
         return {};
     }
+    if (data.empty())
+        return {};
     ASS(data.size() % 2 == 0);
     auto it = data.begin();
     void* gStats = plug::get().get_prop(plug::PtrProp::PStats);
