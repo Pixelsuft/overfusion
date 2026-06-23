@@ -41,8 +41,6 @@ struct State {
     std::vector<Event> temp_ev;
     // Holding inputs last frame
     std::vector<int> prev_input;
-    // Re-record count
-    uint64_t rerec_count;
     // Normalized mouse pos
     std::pair<float, float> mouse_pos;
     // Current scene ID
@@ -51,6 +49,8 @@ struct State {
     int frames;
     // Total frames
     int total;
+    // Re-record count
+    int rerec_count;
     // Random seed
     unsigned short seed;
 
@@ -160,19 +160,19 @@ inline ost::optional<float> str_to_float(const std::string& str) noexcept {
     return {};
 }
 
-static uint64_t get_rerecords() {
+static int get_rerecords() {
     ofs::File file;
-    uint64_t ret = 0;
+    int ret = 0;
     if (file.open(state::base_path + "\\rerecords.ofbin", 0)) {
         string line;
         if (file.readln(line))
-            ret = static_cast<uint64_t>(str_to_int(line).value_or(0));
+            ret = str_to_int(line).value_or(0);
         file.close();
     }
     return ret;
 }
 
-static void set_rerecords(uint64_t count) {
+static void set_rerecords(int count) {
     ofs::File file;
     if (file.open(state::base_path + "\\rerecords.ofbin", 1))
         file.writeln(std::to_string(count));
@@ -988,7 +988,7 @@ void state::draw_info() {
         ImGui::Text("Time: %llums / %llums", get_time(TimeOffset::None),
                     static_cast<int64_t>(st.total) * 1000 * cfg.delta_multiplier / cfg.fps);
         ImGui::Text("Scene: %i", st.scene);
-        ImGui::Text("Re-records: %llu", st.rerec_count);
+        ImGui::Text("Re-records: %i", st.rerec_count);
     }
 #ifdef _DEBUG
     if (!cfg.fast_forward) {
