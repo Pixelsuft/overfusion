@@ -29,6 +29,10 @@ Now you have `overfusion` folder
 6. Now you have `overfusion.dll` in the `ReleaseFast` folder
 7. Optionally run `patch_win7.py` script and pass path to the `overfusion.dll` as the first argument to it to fix Windows 7 compatibility
 
+## Building the OverFusion DLL (Release) for Windows XP
+
+Just do the same, but use Visual Studio 2015 and open `overfusion.sln` project from the `jumbo\xp` folder. Make sure you have `v140_xp` toolset installed.
+
 ## Building the OverFusion injector
 
 1. Open `x86 Native Tools Command Prompt for VS` inside `Visual Studio Tools`
