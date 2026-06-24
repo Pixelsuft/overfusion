@@ -4,7 +4,7 @@
 #include "sv.hpp"
 #include "uconv.hpp"
 #include <Windows.h>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 
 using ofs::File;
 using ost::string_view;
@@ -134,7 +134,7 @@ bool ofs::remove_file(string_view path) {
     ENSURE(w_path != nullptr);
     bool ret = (DeleteFileW(w_path) != FALSE);
     if (!ret && GetLastError() != ERROR_FILE_NOT_FOUND)
-        spdlog::error("Failed to remove file: {}", path);
+        of::error("Failed to remove file: {}", path);
     std::free(w_path);
     return ret;
 }

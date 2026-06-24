@@ -2,7 +2,7 @@
 #include "../src/ass.hpp"
 #include "../src/config.hpp"
 #include "../src/plugbase.hpp"
-#include <spdlog/spdlog.h>
+#include "../src/log.hpp"
 
 // For some reason these timers get reset when game loads state, so let's manually remember them
 // FIXME: seems to be it's unstable during loading a state from a different scene and may crash
@@ -15,10 +15,10 @@ ost::expected<void, std::string> timer_fix::save(std::vector<IntPair>& data) {
     ASS(cfg.tm_fix_event_entry_type_offset != 0);
     void* gStats = plug::get().get_prop(plug::PtrProp::PStats);
     ASS(gStats != nullptr);
-    // spdlog::debug("gStats before: {}", gStats);
+    // of::debug("gStats before: {}", gStats);
     size_t eventGroup = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(gStats) + 0x80);
     if (eventGroup == 0) {
-        spdlog::error("eventGroup is nullptr WTF");
+        of::error("eventGroup is nullptr WTF");
         return ost::unexpected<std::string>("failed to save timers - eventGroup was nullptr");
     }
     while (*reinterpret_cast<short*>(eventGroup) != 0) {
@@ -40,7 +40,7 @@ ost::expected<void, std::string> timer_fix::save(std::vector<IntPair>& data) {
                             int intervalValue = *reinterpret_cast<int*>(cond2 + 4);
                             int timerValue = *reinterpret_cast<int*>(cond2 + 8);
                             data.push_back(IntPair(intervalValue, timerValue));
-                            // spdlog::debug("saved {} / {}", timerValue, intervalValue);
+                            // of::debug("saved {} / {}", timerValue, intervalValue);
                         }
                         // Add it's size (first value of the struct)
                         cond2 += *reinterpret_cast<uint16_t*>(cond2);
@@ -53,7 +53,7 @@ ost::expected<void, std::string> timer_fix::save(std::vector<IntPair>& data) {
         // Substract it's size (first value of the struct)
         eventGroup -= static_cast<size_t>(*reinterpret_cast<short*>(eventGroup));
     }
-    spdlog::debug("timers fix size: {}", data.size());
+    of::debug("timers fix size: {}", data.size());
     return {};
 }
 
@@ -61,17 +61,17 @@ ost::expected<void, std::string> timer_fix::load(std::vector<IntPair> data) {
     auto& cfg = conf::get();
     if (!cfg.allow_timers_fix) {
         if (!data.empty())
-            spdlog::warn("Not fixing timers");
+            of::warn("Not fixing timers");
         return {};
     }
     if (data.empty())
         return {};
     auto it = data.begin();
     void* gStats = plug::get().get_prop(plug::PtrProp::PStats);
-    // spdlog::debug("gStats before: {}", gStats);
+    // of::debug("gStats before: {}", gStats);
     size_t eventGroup = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(gStats) + 0x80);
     if (eventGroup == 0) {
-        spdlog::error("eventGroup is nullptr WTF");
+        of::error("eventGroup is nullptr WTF");
         return ost::unexpected<std::string>("Failed to load timers - eventGroup was nullptr");
     }
     while (*reinterpret_cast<short*>(eventGroup) != 0) {

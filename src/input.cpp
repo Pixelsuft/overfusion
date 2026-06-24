@@ -10,7 +10,7 @@
 #include <Windows.h>
 #include <algorithm>
 #include <map>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 #include <vector>
 
 namespace input {
@@ -155,7 +155,7 @@ extern LRESULT(__stdcall* EditWindowProcO)(HWND, UINT, WPARAM, LPARAM);
 static SHORT(WINAPI* GetAsyncKeyStateO)(int nVirtKey);
 static SHORT WINAPI GetAsyncKeyStateH(int nVirtKey) {
     if (nVirtKey < 0 || nVirtKey >= 256) {
-        spdlog::warn("Invalid nVirtKey for GetAsyncKeyState");
+        of::warn("Invalid nVirtKey for GetAsyncKeyState");
         return 0;
     }
     // not used by imgui (for now)
@@ -167,7 +167,7 @@ static SHORT WINAPI GetAsyncKeyStateH(int nVirtKey) {
 static SHORT(WINAPI* GetKeyStateO)(int nVirtKey);
 static SHORT WINAPI GetKeyStateH(int nVirtKey) {
     if (nVirtKey < 0 || nVirtKey >= 256) {
-        spdlog::warn("Invalid nVirtKey for GetKeyState");
+        of::warn("Invalid nVirtKey for GetKeyState");
         return 0;
     }
     if (ui::is_processing())
@@ -189,7 +189,7 @@ static BOOL WINAPI GetCursorPosH(LPPOINT lpPoint) {
 static BOOL WINAPI SetCursorPosH(int X, int Y) {
     if (conf::get().no_mouse_manipulation)
         return FALSE;
-    spdlog::debug("SetCursorPos({}, {})", X, Y);
+    of::debug("SetCursorPos({}, {})", X, Y);
     POINT pos;
     pos.x = X;
     pos.y = Y;
@@ -211,19 +211,19 @@ static HKL WINAPI GetKeyboardLayoutH(DWORD idThread) {
 }
 
 static BOOL WINAPI GetKeyboardStateH(PBYTE lpKeyState) {
-    // spdlog::info("GetKeyboardState");
+    // of::info("GetKeyboardState");
     memset(lpKeyState, 0, sizeof(BYTE) * 256);
     state::fill_kbd_state(lpKeyState);
     return TRUE;
 }
 
 static BOOL WINAPI SetKeyboardStateH(LPBYTE lpKeyState) {
-    spdlog::info("SetKeyboardState");
+    of::info("SetKeyboardState");
     return FALSE;
 }
 
 static BOOL WINAPI OpenClipboardH(HWND hWndNewOwner) {
-    spdlog::warn("failing OpenClipboard");
+    of::warn("failing OpenClipboard");
     // TODO: emulation for iwbtg support
     return FALSE;
 }
@@ -231,16 +231,16 @@ static BOOL WINAPI OpenClipboardH(HWND hWndNewOwner) {
 static BOOL WINAPI IsClipboardFormatAvailableH(UINT format) { return FALSE; }
 
 static VOID WINAPI keybd_eventH(BYTE bVk, BYTE bScan, DWORD dwFlags, ULONG_PTR dwExtraInfo) {
-    spdlog::info("keybd_event (vk={}, scan={}, flags={})", bVk, bScan, dwFlags);
+    of::info("keybd_event (vk={}, scan={}, flags={})", bVk, bScan, dwFlags);
 }
 
 static VOID WINAPI mouse_eventH(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData,
                                 ULONG_PTR dwExtraInfo) {
-    spdlog::info("mouse_event (delta=({}, {}), flags={})", dx, dy, dwFlags);
+    of::info("mouse_event (delta=({}, {}), flags={})", dx, dy, dwFlags);
 }
 
 static UINT WINAPI SendInputH(UINT cInputs, LPINPUT pInputs, int cbSize) {
-    spdlog::info("SendInput");
+    of::info("SendInput");
     return 0;
 }
 
@@ -266,7 +266,7 @@ ost::optional<int> input::vk_from_string(ost::string_view s) {
     std::transform(lowered.begin(), lowered.end(), lowered.begin(), ::tolower);
     auto it = vk_map.find(lowered);
     if (it == vk_map.end()) {
-        spdlog::error("Unknown keycode string: {}", s);
+        of::error("Unknown keycode string: {}", s);
         return {};
     }
     ASS(it->second != 0);
@@ -523,7 +523,7 @@ ost::optional<ost::string_view> input::vk_to_string(int vk) {
         return "Quote";
 
     default:
-        // spdlog::error("Unknown keycode value: {}", vk);
+        // of::error("Unknown keycode value: {}", vk);
         return {};
     }
 }
@@ -692,6 +692,6 @@ std::pair<int, int> input::get_real_mouse_pos() {
     POINT pt;
     if (GetCursorPosO(&pt) && ScreenToClient(::mhwnd, &pt))
         return {pt.x, pt.y};
-    spdlog::error("Failed to get mouse pos");
+    of::error("Failed to get mouse pos");
     return {-100, -100};
 }

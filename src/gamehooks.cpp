@@ -13,7 +13,7 @@
 #include "video.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 
 static void(__stdcall* RenderFrame)();
 static void(__stdcall* RenderTransition)();
@@ -23,7 +23,7 @@ static bool check_already_processed() {
     if (cfg.render_type == conf::RenderType::GDI || cfg.render_type == conf::RenderType::D3D9) {
         if (!cfg.already_processed_frame) {
             cfg.already_processed_frame = true;
-            spdlog::warn("Frame drawing was skipped on frame {}", state::get_frame_counter());
+            of::warn("Frame drawing was skipped on frame {}", state::get_frame_counter());
             return true;
         }
     }
@@ -76,7 +76,7 @@ static int __stdcall ProcessTransitionH() {
         cfg.delayed_d3d9_present_hook = false;
     }
     state::after_update();
-    // spdlog::debug("Transition {}", ret);
+    // of::debug("Transition {}", ret);
     return ret;
 }
 
@@ -85,13 +85,13 @@ static int __stdcall UpdateGameFrameH() {
     static bool inited = false;
     auto& cfg = conf::get();
     if (!inited) {
-        spdlog::info("UpdateGameFrame first call");
+        of::info("UpdateGameFrame first call");
         if (cfg.custom_window) {
-            spdlog::info("Initializing custom window for software renderer");
+            of::info("Initializing custom window for software renderer");
             auto prev_thread_disable = cfg.disable_threads;
             cfg.disable_threads = false;
             if (!customwindow::init()) {
-                spdlog::error("Failed to initialize custom window");
+                of::error("Failed to initialize custom window");
                 cfg.custom_window = false; // NO-OP
             }
             cfg.disable_threads = prev_thread_disable;
@@ -105,7 +105,7 @@ static int __stdcall UpdateGameFrameH() {
         if (conf::get().virtual_fs)
             files::hook_fs();
         if (!plug::get().update_init()) {
-            spdlog::error("Failed to init plugin first-frame");
+            of::error("Failed to init plugin first-frame");
             // Exit???
         }
         hook::enable();
@@ -139,12 +139,12 @@ static int __stdcall UpdateGameFrameH() {
         cfg.delayed_d3d9_present_hook = false;
         // pStep check
         if (*ptrs.second != 0) {
-            spdlog::warn("Subtick step check failed: got {} instead of 0", *ptrs.second);
+            of::warn("Subtick step check failed: got {} instead of 0", *ptrs.second);
             *ptrs.second = 0;
         }
     }
     if (ret != 0) {
-        spdlog::debug("UpdateGameFrame got ret {} on frame {}", ret, state::get_frame_counter());
+        of::debug("UpdateGameFrame got ret {} on frame {}", ret, state::get_frame_counter());
         if (cfg.pause_on_scene_switch && state::get_frame_counter() != 0)
             cfg.is_paused = true;
     }
@@ -159,15 +159,15 @@ void gamehooks::init() {
     RenderFrame = reinterpret_cast<decltype(RenderFrame)>(cfg.pRenderFrame);
     RenderTransition = reinterpret_cast<decltype(RenderTransition)>(cfg.pRenderTransition);
     if (cfg.pUpdateGameFrame == nullptr)
-        spdlog::error("UpdateGameFrame was not hooked");
+        of::error("UpdateGameFrame was not hooked");
     else
         hook::hook(cfg.pUpdateGameFrame, UpdateGameFrameH, &UpdateGameFrameO);
     if (cfg.pProcessTransition == nullptr)
-        spdlog::error("ProcessTransition was not hooked");
+        of::error("ProcessTransition was not hooked");
     else
         hook::hook(cfg.pProcessTransition, ProcessTransitionH, &ProcessTransitionO);
     if (RenderFrame == nullptr)
-        spdlog::error("RenderFrame was not loaded");
+        of::error("RenderFrame was not loaded");
     if (RenderTransition == nullptr)
-        spdlog::error("RenderTransition was not loaded");
+        of::error("RenderTransition was not loaded");
 }

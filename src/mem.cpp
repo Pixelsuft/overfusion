@@ -8,7 +8,7 @@
 #include <Windows.h>
 #include <algorithm>
 #include <processthreadsapi.h>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 #include <tlhelp32.h>
 #include <unordered_map>
 #include <winternl.h>
@@ -65,19 +65,19 @@ size_t mem::get_base(const char* obj_name) {
     // Hopefully nobody will use unicode
     auto ret = reinterpret_cast<size_t>(GetModuleHandleA(obj_name));
     if (ret == 0)
-        spdlog::error("Failed to get base address of the module \"{}\"", obj_name);
+        of::error("Failed to get base address of the module \"{}\"", obj_name);
     return ret;
 }
 
 void* mem::get_addr(const char* obj_name, const char* func_name) {
     auto obj = GetModuleHandleA(obj_name);
     if (obj == nullptr) {
-        spdlog::error("Failed to get module \"{}\"", obj_name);
+        of::error("Failed to get module \"{}\"", obj_name);
         return nullptr;
     }
     auto ret = loadhooks::get_func_address(obj, func_name);
     if (ret == nullptr)
-        spdlog::error("Failed to get \"{}\" address of the module \"{}\"", func_name, obj_name);
+        of::error("Failed to get \"{}\" address of the module \"{}\"", func_name, obj_name);
     return ret;
 }
 
@@ -110,12 +110,12 @@ bool hook::_hook_target(void* pTarget, void* pDetour, void** ppOriginal) {
 void hook::_patch_vtable(void** vtable, int index, void* new_func, void** old_func) {
     DWORD old_protect;
     if (!VirtualProtect(&vtable[index], sizeof(void*), PAGE_EXECUTE_READWRITE, &old_protect))
-        spdlog::error("VirtualProtect failed while patching vtable");
+        of::error("VirtualProtect failed while patching vtable");
     if (old_func)
         *old_func = vtable[index];
     vtable[index] = new_func;
     if (!VirtualProtect(&vtable[index], sizeof(void*), old_protect, &old_protect))
-        spdlog::warn("VirtualProtect failed while patching vtable");
+        of::warn("VirtualProtect failed while patching vtable");
 }
 
 bool hook::_hook_iat_by_addr(void* hModule, const char* dll, const void* addr, void* pNewFunc,
@@ -162,7 +162,7 @@ bool hook::_hook_iat_by_addr(void* hModule, const char* dll, const void* addr, v
                     DWORD dwOldProtect;
                     if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), PAGE_READWRITE,
                                         &dwOldProtect)) {
-                        spdlog::error("VirtualProtect failed to IAT hook");
+                        of::error("VirtualProtect failed to IAT hook");
                         return false;
                     }
 
@@ -173,7 +173,7 @@ bool hook::_hook_iat_by_addr(void* hModule, const char* dll, const void* addr, v
 
                     if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), dwOldProtect,
                                         &dwOldProtect))
-                        spdlog::warn("VirtualProtect failed to IAT hook");
+                        of::warn("VirtualProtect failed to IAT hook");
 
                     return true;
                 }
@@ -263,7 +263,7 @@ static bool module_iat_apply(void* hModule) {
                 DWORD dwOldProtect;
                 if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), PAGE_READWRITE,
                                     &dwOldProtect)) {
-                    spdlog::error("VirtualProtect failed to IAT hook");
+                    of::error("VirtualProtect failed to IAT hook");
                     return false;
                 }
 
@@ -274,8 +274,8 @@ static bool module_iat_apply(void* hModule) {
 
                 if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), dwOldProtect,
                                     &dwOldProtect))
-                    spdlog::warn("VirtualProtect failed to IAT hook");
-                // spdlog::debug("{}->{} iated", dllKey, target->funcName);
+                    of::warn("VirtualProtect failed to IAT hook");
+                // of::debug("{}->{} iated", dllKey, target->funcName);
             }
         }
     }
@@ -296,7 +296,7 @@ static bool is_iat_dll_blocked(ost::string_view dll) {
 bool hook::patch_iat() {
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, 0);
     if (hSnapshot == INVALID_HANDLE_VALUE) {
-        spdlog::error("Failed to create snapshot (code: {})", GetLastError());
+        of::error("Failed to create snapshot (code: {})", GetLastError());
         return 1;
     }
 
@@ -308,13 +308,13 @@ bool hook::patch_iat() {
             auto mod_fn = uconv::from_utf16(me.szModule);
             std::transform(mod_fn.begin(), mod_fn.end(), mod_fn.begin(), ::tolower);
             if (!is_iat_dll_blocked(mod_fn) && module_iat_apply(me.hModule)) {
-                // spdlog::debug("IATed {}", mod_fn);
+                // of::debug("IATed {}", mod_fn);
             }
         } while (Module32NextW(hSnapshot, &me));
         CloseHandle(hSnapshot);
         return true;
     } else {
-        spdlog::error("Failed to retrieve module information (code: {})", GetLastError());
+        of::error("Failed to retrieve module information (code: {})", GetLastError());
         CloseHandle(hSnapshot);
         return false;
     }

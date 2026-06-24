@@ -2,7 +2,6 @@
 #include "../src/config.hpp"
 #include <cstring>
 #include <imgui.h>
-#include <spdlog/spdlog.h>
 
 namespace viewport {
 static void* mod_handle = nullptr;

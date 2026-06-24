@@ -9,7 +9,7 @@
 #include <map>
 #include <nlohmann/json.hpp>
 #include <spdlog/fmt/ranges.h>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 #undef max
 #undef min
 
@@ -21,20 +21,20 @@ static Config* _conf_ptr;
 
 static nlohmann::json read_config_file(ost::string_view path) {
     // Try to read and parse config file from disk
-    spdlog::info("Reading config: {}", path);
+    of::info("Reading config: {}", path);
     ofs::File file(path, 0);
     if (!file.is_open()) {
-        spdlog::warn("Config file not found");
+        of::warn("Config file not found");
         return {};
     }
     auto size = file.size();
     if (size < 2 || size > (1024 * 1024 * 16)) {
-        spdlog::error("Invalid config file size");
+        of::error("Invalid config file size");
         return {};
     }
     char* buf = new char[static_cast<size_t>(size)];
     if (!file.read(buf, static_cast<size_t>(size))) {
-        spdlog::error("Failed to read config file");
+        of::error("Failed to read config file");
         delete[] buf;
         return {};
     }
@@ -46,14 +46,14 @@ static nlohmann::json read_config_file(ost::string_view path) {
         return data;
     } catch (const nlohmann::json::parse_error& e) {
         delete[] buf;
-        spdlog::error("Failed to parse config: {}", e.what());
+        of::error("Failed to parse config: {}", e.what());
         return {};
     }
 #else
     nlohmann::json data = nlohmann::json::parse(buf, buf + size, nullptr, false);
     delete[] buf;
     if (data.is_discarded()) {
-        spdlog::error("Failed to parse config: invalid JSON syntax");
+        of::error("Failed to parse config: invalid JSON syntax");
         return {};
     }
     return data;
@@ -78,7 +78,7 @@ static ost::optional<conf::Task> task_from_string(string_view sv) {
     auto it = task_map.find(sv);
     if (it == task_map.end()) {
         // TODO: maybe move warns/errors from this funcs to top level funcs??
-        spdlog::warn("Unknown task: {}", sv);
+        of::warn("Unknown task: {}", sv);
         return {};
     }
     return it->second;
@@ -90,12 +90,12 @@ static ost::optional<int> key_from_json(nlohmann::json& val) {
     } else if (val.is_number_integer()) {
         int ret = val;
         if (!is_valid_vk(ret)) {
-            spdlog::warn("Invalid key value: {}", ret);
+            of::warn("Invalid key value: {}", ret);
             return {};
         }
         return ret;
     } else {
-        spdlog::warn("Invalid key value type: {}", val.type_name());
+        of::warn("Invalid key value type: {}", val.type_name());
         return {};
     }
 }
@@ -104,13 +104,13 @@ Config::Config() {
     auto env_name = process::get_env("OVERFUSION_PROJECT_NAME");
     if (env_name.has_value() && !env_name.value().empty()) {
         project_name = std::move(env_name.value());
-        spdlog::info("Project name: {}", project_name);
+        of::info("Project name: {}", project_name);
     } else {
 #ifdef _DEBUG
-        spdlog::warn("No project name was specified, defaulting to 'test_proj'");
+        of::warn("No project name was specified, defaulting to 'test_proj'");
         project_name = "test_proj";
 #else
-        spdlog::error("No project name was specified, aborting!");
+        of::error("No project name was specified, aborting!");
         project_name.clear();
 #endif
     }
@@ -248,13 +248,13 @@ void Config::read() {
             if (!val.is_object())
                 continue;
             if (!val["task"].is_string()) {
-                spdlog::warn("Invalid bind task setting");
+                of::warn("Invalid bind task setting");
                 continue;
             }
             Bind bind;
             auto key_v = key_from_json(val["key"]);
             if (!key_v.has_value()) {
-                spdlog::warn("Skipping bind (invalid key)");
+                of::warn("Skipping bind (invalid key)");
                 continue;
             }
             bind.key = key_v.value();
@@ -268,7 +268,7 @@ void Config::read() {
                     if (mod_v.has_value())
                         bind.mods.push_back(mod_v.value());
                     else
-                        spdlog::warn("Skipping mod key for bind");
+                        of::warn("Skipping mod key for bind");
                 }
             }
             bind.extra = 0;
@@ -294,13 +294,13 @@ void Config::read() {
             case Task::Map: {
                 auto target_v = key_from_json(val["target"]);
                 if (!target_v.has_value()) {
-                    spdlog::warn("Skipping 'map' bind with invalid target");
+                    of::warn("Skipping 'map' bind with invalid target");
                     continue;
                 }
                 bind.extra = target_v.value();
                 if (bind.extra == VK_LBUTTON || bind.extra == VK_MBUTTON ||
                     bind.extra == VK_RBUTTON) {
-                    spdlog::warn("Cannot use create bind 'map' for mouse buttons");
+                    of::warn("Cannot use create bind 'map' for mouse buttons");
                     continue;
                 }
                 break;
@@ -308,13 +308,13 @@ void Config::read() {
             case Task::MouseDown: {
                 auto target_v = key_from_json(val["target"]);
                 if (!target_v.has_value()) {
-                    spdlog::warn("Skipping 'mouse_down' bind with invalid target");
+                    of::warn("Skipping 'mouse_down' bind with invalid target");
                     continue;
                 }
                 bind.extra = target_v.value();
                 if (bind.extra != VK_LBUTTON && bind.extra != VK_MBUTTON &&
                     bind.extra != VK_RBUTTON) {
-                    spdlog::warn("Cannot use create bind 'mouse_down' for keyboard keys");
+                    of::warn("Cannot use create bind 'mouse_down' for keyboard keys");
                     continue;
                 }
                 break;
@@ -339,7 +339,7 @@ void Config::read() {
                 ASS(v.has_value());
                 mods_str.push_back(string(v.value()));
             }
-            spdlog::info("Bind (task={}, extra={}, key='{}', mods={})", static_cast<int>(bind.task),
+            of::info("Bind (task={}, extra={}, key='{}', mods={})", static_cast<int>(bind.task),
                          bind.extra, key_str.value(), mods_str);
             binds.push_back(bind);
         }

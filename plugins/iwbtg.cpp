@@ -5,7 +5,7 @@
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
 #include <Windows.h>
-#include <spdlog/spdlog.h>
+#include "../src/log.hpp"
 
 using ost::optional;
 using ost::string_view;
@@ -47,7 +47,7 @@ public:
     bool update_init() override { return true; }
 
     optional<std::string> before_dll_load(string_view path, string_view fn) override {
-        // spdlog::info("Before load {}", fn);
+        // of::info("Before load {}", fn);
         return {};
     }
 

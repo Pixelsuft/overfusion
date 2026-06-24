@@ -10,7 +10,7 @@
 #include "ui.hpp"
 #include <Windows.h>
 #include <backends/imgui_impl_win32.h>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 
 using ost::string_view;
 using std::string;
@@ -138,11 +138,11 @@ static void on_win_create(HWND hwnd, string_view class_name, bool unicode) {
         winhooks::fix_win32_theme(hwnd);
         LRESULT lr;
         UAHWndProc(::hwnd, WM_THEMECHANGED, 0, 0, &lr); // Hacky update for dark mode menu
-        spdlog::info("Mf2MainClassTh window created");
+        of::info("Mf2MainClassTh window created");
     } else if (class_name == "Mf2EditClassTh") {
         ENSURE(EditWindowProcO != nullptr);
         ::mhwnd = hwnd;
-        spdlog::info("Mf2EditClassTh window created");
+        of::info("Mf2EditClassTh window created");
     } else if (class_name == "SysListView32" || class_name == "SysHeader32")
         winhooks::fix_win32_set_dark_style(hwnd, L"DarkMode_ItemsView");
     else if (class_name == "COMBOBOX")
@@ -252,7 +252,7 @@ static HWND WINAPI GetForegroundWindowH() {
 }
 
 static BOOL WINAPI SetForegroundWindowH(HWND hWnd) {
-    spdlog::info("Failing SetForegroundWindow");
+    of::info("Failing SetForegroundWindow");
     return FALSE;
 }
 
@@ -290,7 +290,7 @@ static HHOOK(WINAPI* SetWindowsHookExAO)(int idHook, HOOKPROC lpfn, HINSTANCE hm
 static HHOOK WINAPI SetWindowsHookExAH(int idHook, HOOKPROC lpfn, HINSTANCE hmod,
                                        DWORD dwThreadId) {
     // No size/move hooks which cause desyncs
-    spdlog::debug("Failing SetWindowsHookExA");
+    of::debug("Failing SetWindowsHookExA");
     return nullptr;
 }
 
@@ -298,18 +298,18 @@ static HHOOK(WINAPI* SetWindowsHookExWO)(int idHook, HOOKPROC lpfn, HINSTANCE hm
                                          DWORD dwThreadId);
 static HHOOK WINAPI SetWindowsHookExWH(int idHook, HOOKPROC lpfn, HINSTANCE hmod,
                                        DWORD dwThreadId) {
-    spdlog::debug("Failing SetWindowsHookExW");
+    of::debug("Failing SetWindowsHookExW");
     return nullptr;
 }
 
 static HWND WINAPI SetFocusH(HWND hWnd) {
     // Note: it's breaks win32 controls, we don't support them anyway
-    spdlog::info("Failing SetFocus");
+    of::info("Failing SetFocus");
     return nullptr;
 }
 
 static HWND WINAPI SetActiveWindowH(HWND hWnd) {
-    spdlog::info("Failing SetActiveWindow");
+    of::info("Failing SetActiveWindow");
     return nullptr;
 }
 
@@ -322,20 +322,20 @@ static BOOL WINAPI GetMonitorInfoWH(HMONITOR hMonitor, LPMONITORINFO lpmi) {
 
 static INT_PTR WINAPI DialogBoxParamAH(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent,
                                        DLGPROC lpDialogFunc, LPARAM dwInitParam) {
-    spdlog::warn("Failing DialogBoxParamA");
+    of::warn("Failing DialogBoxParamA");
     return static_cast<INT_PTR>(-1);
 }
 
 static INT_PTR WINAPI DialogBoxParamWH(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent,
                                        DLGPROC lpDialogFunc, LPARAM dwInitParam) {
-    spdlog::warn("Failing DialogBoxParamW");
+    of::warn("Failing DialogBoxParamW");
     return static_cast<INT_PTR>(-1);
 }
 
 static BOOL(WINAPI* SetMenuO)(HWND hWnd, HMENU hMenu);
 static BOOL WINAPI SetMenuH(HWND hWnd, HMENU hMenu) {
     if (conf::get().disable_app_menu && hWnd == ::hwnd) {
-        spdlog::info("Failing to set menu");
+        of::info("Failing to set menu");
         return FALSE;
     }
     return SetMenuO(hWnd, hMenu);
@@ -416,7 +416,7 @@ static DWORD(WINAPI* MsgWaitForMultipleObjectsO)(DWORD nCount, const HANDLE* pHa
                                                  DWORD dwWakeMask);
 static DWORD WINAPI MsgWaitForMultipleObjectsH(DWORD nCount, const HANDLE* pHandles, BOOL fWaitAll,
                                                DWORD dwMilliseconds, DWORD dwWakeMask) {
-    spdlog::warn("MsgWaitForMultipleObjects was not patched: {} {} {} {}", nCount, fWaitAll,
+    of::warn("MsgWaitForMultipleObjects was not patched: {} {} {} {}", nCount, fWaitAll,
                  dwMilliseconds, dwWakeMask);
     return MsgWaitForMultipleObjectsO(nCount, pHandles, fWaitAll, dwMilliseconds, dwWakeMask);
 }
@@ -438,7 +438,7 @@ static BOOL WINAPI SetWindowPosH(HWND hWnd, HWND hWndInsertAfter, int X, int Y, 
                 cy = cfg.forced_res.second;
             }
         }
-        spdlog::debug("SetWindowPos {}: {} {} {} {} {}", hWnd == ::hwnd ? "hwnd" : "mhwnd", X, Y,
+        of::debug("SetWindowPos {}: {} {} {} {} {}", hWnd == ::hwnd ? "hwnd" : "mhwnd", X, Y,
                       cx, cy, uFlags);
         // return FALSE;
     }
@@ -448,7 +448,7 @@ static BOOL WINAPI SetWindowPosH(HWND hWnd, HWND hWndInsertAfter, int X, int Y, 
 static BOOL(WINAPI* MoveWindowO)(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint);
 static BOOL WINAPI MoveWindowH(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint) {
     if (hWnd == ::hwnd || hWnd == ::mhwnd) {
-        spdlog::debug("MoveWindow: {} {} {} {} {}", X, Y, nWidth, nHeight, bRepaint);
+        of::debug("MoveWindow: {} {} {} {} {}", X, Y, nWidth, nHeight, bRepaint);
         return FALSE;
     }
     return MoveWindowO(hWnd, X, Y, nWidth, nHeight, bRepaint);
@@ -460,7 +460,7 @@ static HDWP WINAPI DeferWindowPosH(HDWP hWinPosInfo, HWND hWnd, HWND hWndInsertA
                                    int cx, int cy, UINT uFlags) {
     return FALSE;
     if (hWnd == ::hwnd || hWnd == ::mhwnd) {
-        spdlog::debug("DeferWindowPos: {} {} {} {} {}", x, y, cx, cy, uFlags);
+        of::debug("DeferWindowPos: {} {} {} {} {}", x, y, cx, cy, uFlags);
         return FALSE;
     }
     return DeferWindowPosO(hWinPosInfo, hWnd, hWndInsertAfter, x, y, cx, cy, uFlags);
@@ -469,7 +469,7 @@ static HDWP WINAPI DeferWindowPosH(HDWP hWinPosInfo, HWND hWnd, HWND hWndInsertA
 static BOOL(WINAPI* SetWindowPlacementO)(HWND hWnd, const WINDOWPLACEMENT* lpwndpl);
 static BOOL WINAPI SetWindowPlacementH(HWND hWnd, const WINDOWPLACEMENT* lpwndpl) {
     if (hWnd == ::hwnd || hWnd == ::mhwnd) {
-        spdlog::debug("SetWindowPlacement");
+        of::debug("SetWindowPlacement");
         return FALSE;
     }
     return SetWindowPlacementO(hWnd, lpwndpl);
@@ -478,7 +478,7 @@ static BOOL WINAPI SetWindowPlacementH(HWND hWnd, const WINDOWPLACEMENT* lpwndpl
 static LONG(WINAPI* SetWindowLongAO)(HWND hWnd, int nIndex, LONG dwNewLong);
 static LONG WINAPI SetWindowLongAH(HWND hWnd, int nIndex, LONG dwNewLong) {
     if (hWnd == ::hwnd && nIndex == GWL_STYLE) {
-        spdlog::debug("SetWindowLongA: {} {}", nIndex, dwNewLong);
+        of::debug("SetWindowLongA: {} {}", nIndex, dwNewLong);
         if (conf::get().disable_fullscreen) {
             dwNewLong |= WS_CAPTION | WS_BORDER | WS_SYSMENU | WS_POPUP | WS_MAXIMIZEBOX |
                          WS_MINIMIZEBOX | WS_THICKFRAME;
@@ -491,7 +491,7 @@ static LONG WINAPI SetWindowLongAH(HWND hWnd, int nIndex, LONG dwNewLong) {
 static LONG(WINAPI* SetWindowLongWO)(HWND hWnd, int nIndex, LONG dwNewLong);
 static LONG WINAPI SetWindowLongWH(HWND hWnd, int nIndex, LONG dwNewLong) {
     if (hWnd == ::hwnd && nIndex == GWL_STYLE) {
-        spdlog::debug("SetWindowLongW: {} {}", nIndex, dwNewLong);
+        of::debug("SetWindowLongW: {} {}", nIndex, dwNewLong);
         if (conf::get().disable_fullscreen) {
             dwNewLong |= WS_CAPTION | WS_BORDER | WS_SYSMENU | WS_POPUP | WS_MAXIMIZEBOX |
                          WS_MINIMIZEBOX | WS_THICKFRAME;
@@ -504,7 +504,7 @@ static LONG WINAPI SetWindowLongWH(HWND hWnd, int nIndex, LONG dwNewLong) {
 static BOOL(WINAPI* ShowWindowO)(HWND hWnd, int nCmdShow);
 static BOOL WINAPI ShowWindowH(HWND hWnd, int nCmdShow) {
     if (hWnd == ::hwnd) {
-        spdlog::debug("ShowWindow {}", nCmdShow);
+        of::debug("ShowWindow {}", nCmdShow);
         if (conf::get().disable_fullscreen) {
             nCmdShow &= ~SW_SHOWMAXIMIZED;
             nCmdShow |= SW_SHOWDEFAULT;

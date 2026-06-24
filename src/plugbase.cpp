@@ -1,6 +1,6 @@
 #include "plugbase.hpp"
 #include "ass.hpp"
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 #include <vector>
 
 using plug::PlugBase;
@@ -47,11 +47,11 @@ bool plug::search_and_run() {
     }
     JUMBO_PLUGIN_DETECTION()
     else {
-        spdlog::error("Failed to find plugin for the game");
+        of::error("Failed to find plugin for the game");
         return false;
     }
     if (!_cur_plug) {
-        spdlog::error("Failed to spawn plugin for the game");
+        of::error("Failed to spawn plugin for the game");
         return false;
     }
 #else
@@ -60,7 +60,7 @@ bool plug::search_and_run() {
         if (auto val = temp_cb()) {
             _cur_plug = val.value();
             if (!_cur_plug) {
-                spdlog::error("Failed to spawn plugin for the game");
+                of::error("Failed to spawn plugin for the game");
                 return false;
             }
             break;
@@ -68,10 +68,10 @@ bool plug::search_and_run() {
     }
 #endif
     if (!_cur_plug) {
-        spdlog::error("Failed to find plugin for the game");
+        of::error("Failed to find plugin for the game");
         return false;
     }
-    spdlog::info("Plugin initialized: {}", _cur_plug->name);
+    of::info("Plugin initialized: {}", _cur_plug->name);
     return true;
 }
 

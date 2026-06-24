@@ -7,7 +7,7 @@
 #include "../tools/timer_fix.hpp"
 #include "../tools/viewport.hpp"
 #include <Windows.h>
-#include <spdlog/spdlog.h>
+#include "../src/log.hpp"
 
 using ost::optional;
 using ost::string_view;
@@ -34,7 +34,7 @@ struct ConditionHeader {
 
 static int(__cdecl* TimerProcO)(ConditionHeader* cond);
 static int __cdecl TimerProcH(ConditionHeader* cond) {
-    spdlog::debug("Timer Proc {} {} {} ({} / {})", (void*)&cond->interval, cond->condID,
+    of::debug("Timer Proc {} {} {} ({} / {})", (void*)&cond->interval, cond->condID,
                   cond->conditionType, cond->currentTimer, cond->interval);
     // cond->currentTimer = 0;
     return TimerProcO(cond);
@@ -91,7 +91,7 @@ public:
     optional<std::string> before_dll_load(string_view path, string_view fn) override {
         if (fn == "wininet.dll")
             return "";
-        // spdlog::info("Before load {}", fn);
+        // of::info("Before load {}", fn);
         return {};
     }
 

@@ -9,7 +9,7 @@
 #include <backends/imgui_impl_dx9.h>
 #include <backends/imgui_impl_win32.h>
 #include <d3d9.h>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 
 extern HWND hwnd;
 static bool imgui_d3d9_inited;
@@ -21,7 +21,7 @@ static bool d3d9_need_pixelated() {
 
 static HRESULT(WINAPI* DirectDrawCreateO)(void* lpGUID, void** lplpDD, void* pUnkOuter);
 static HRESULT WINAPI DirectDrawCreateH(void* lpGUID, void** lplpDD, void* pUnkOuter) {
-    spdlog::warn("The game is using DirectDraw, forcing custom window");
+    of::warn("The game is using DirectDraw, forcing custom window");
     ASS(conf::get().render_type == conf::RenderType::None);
     conf::get().render_type = conf::RenderType::DDRAW;
     return DirectDrawCreateO(lpGUID, lplpDD, pUnkOuter);
@@ -97,7 +97,7 @@ public:
     STDMETHOD_(UINT, GetNumberOfSwapChains)() override { return pDev->GetNumberOfSwapChains(); }
     STDMETHOD(Reset)(D3DPRESENT_PARAMETERS* pPresentationParameters) {
         auto& cfg = conf::get();
-        spdlog::debug("IDirect3DDevice9->Reset");
+        of::debug("IDirect3DDevice9->Reset");
         // Invalidate ImGui
         if (cfg.custom_window)
             return pDev->Reset(pPresentationParameters);
@@ -576,18 +576,18 @@ public:
     STDMETHOD(CreateDevice)(UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
                             DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,
                             IDirect3DDevice9** ppReturnedDeviceInterface) override {
-        spdlog::debug("IDirect3D9Proxy -> CreateDevice called");
+        of::debug("IDirect3D9Proxy -> CreateDevice called");
 
         HRESULT hr = pD3D->CreateDevice(Adapter, DeviceType, hFocusWindow, BehaviorFlags,
                                         pPresentationParameters, ppReturnedDeviceInterface);
         auto& cfg = conf::get();
         if (cfg.render_type != conf::RenderType::None &&
             cfg.render_type != conf::RenderType::D3D9) {
-            spdlog::debug("Skipping D3D9 CreateDevice hook");
+            of::debug("Skipping D3D9 CreateDevice hook");
             return hr;
         }
         if (SUCCEEDED(hr) && ppReturnedDeviceInterface && *ppReturnedDeviceInterface) {
-            spdlog::debug("Wrapping IDirect3DDevice9 into ID3D9Proxy");
+            of::debug("Wrapping IDirect3DDevice9 into ID3D9Proxy");
             *ppReturnedDeviceInterface = new ID3D9Proxy(*ppReturnedDeviceInterface);
             cfg.render_type = conf::RenderType::D3D9;
         }
@@ -597,10 +597,10 @@ public:
 
 IDirect3D9*(WINAPI* Direct3DCreate9O)(UINT SDKVersion) = Direct3DCreate9;
 static IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {
-    spdlog::debug("Direct3DCreate9");
+    of::debug("Direct3DCreate9");
     auto ret = Direct3DCreate9O(SDKVersion);
     if (ret) {
-        spdlog::debug("Wrapping IDirect3D9 into ID3D9Proxy");
+        of::debug("Wrapping IDirect3D9 into ID3D9Proxy");
         return new IDirect3D9Proxy(ret);
     }
     return ret;

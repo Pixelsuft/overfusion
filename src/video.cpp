@@ -5,7 +5,7 @@
 #include "ofs.hpp"
 #include "process.hpp"
 #include <d3d9.h>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 
 // Video recording implementation
 
@@ -75,7 +75,7 @@ void video::stop() {
     if (!ffmpeg.is_open())
         return;
     auto& cfg = conf::get();
-    spdlog::info("Stopping video recording");
+    of::info("Stopping video recording");
     ffmpeg.close();
     if (is_d3d9_cap()) {
         if (pSysSurface) {
@@ -98,7 +98,7 @@ static video::CheckResult check_record(std::pair<int, int> new_size) {
     auto& cfg = conf::get();
     auto rec_ret = video::CheckResult::Ok;
     if (video::recording && video::ffmpeg.is_open() && video::size != new_size) {
-        spdlog::warn("Window resized, writing to another video file");
+        of::warn("Window resized, writing to another video file");
         video::size = new_size;
         video::stop();
         video::recording = true;
@@ -119,10 +119,10 @@ static video::CheckResult check_record(std::pair<int, int> new_size) {
         video::file_index++;
         while ((pos = cmd.find("$ID")) != std::string::npos)
             cmd.replace(pos, 3, std::to_string(video::file_index));
-        spdlog::info("running: {}", cmd);
+        of::info("running: {}", cmd);
         if (!video::ffmpeg.open(cmd)) {
             video::recording = false;
-            spdlog::error("Failed to start ffmpeg, stopping recording");
+            of::error("Failed to start ffmpeg, stopping recording");
             return video::CheckResult::Failed;
         }
         video::data_buffer.resize(new_size.first * new_size.second * 4);
@@ -173,9 +173,9 @@ void video::after_draw() {
                 ENSURE(ret);
                 // Force window to redraw so we can capture the first frame
                 EditWindowProcO(::mhwnd, WM_ERASEBKGND, reinterpret_cast<WPARAM>(srcdc), 0);
-                spdlog::info("GDI capture started ({}x{})", size.first, size.second);
+                of::info("GDI capture started ({}x{})", size.first, size.second);
             } else
-                spdlog::info("Window capture started ({}x{})", size.first, size.second);
+                of::info("Window capture started ({}x{})", size.first, size.second);
             break;
         default:
             ASS(false);
@@ -190,7 +190,7 @@ void video::after_draw() {
                 success = PrintWindow(::mhwnd, memdc, PW_CLIENTONLY);
             }
             if (!success) {
-                spdlog::error("Failed to capture window");
+                of::error("Failed to capture window");
                 stop();
                 return;
             }
@@ -199,7 +199,7 @@ void video::after_draw() {
         ENSURE(bits == size.second);
     }
     if (ffmpeg.is_open() && !ffmpeg.write(data_buffer.data(), data_buffer.size())) {
-        spdlog::error("Failed to write data to ffmpeg");
+        of::error("Failed to write data to ffmpeg");
         stop();
     }
 }
@@ -225,14 +225,14 @@ void video::d3d9_draw(void* dev_ptr) {
         d3d_ret = pDevice->CreateOffscreenPlainSurface(desc.Width, desc.Height, desc.Format,
                                                        D3DPOOL_SYSTEMMEM, &pSysSurface, nullptr);
         ENSURE(d3d_ret == D3D_OK);
-        spdlog::info("Direct3D9 capture started ({}x{})", desc.Width, desc.Height);
+        of::info("Direct3D9 capture started ({}x{})", desc.Width, desc.Height);
         break;
     default:
         ASS(false);
     }
     d3d_ret = pDevice->GetRenderTargetData(pBackBuffer, pSysSurface);
     if (d3d_ret != D3D_OK) {
-        spdlog::error("Failed to capture D3D9 frame data");
+        of::error("Failed to capture D3D9 frame data");
         pBackBuffer->Release();
         return;
     }
@@ -250,7 +250,7 @@ void video::d3d9_draw(void* dev_ptr) {
     }
     pBackBuffer->Release();
     if (d3d_ret != D3D_OK) {
-        spdlog::error("Failed to lock D3D9 surface");
+        of::error("Failed to lock D3D9 surface");
         stop();
     }
 }

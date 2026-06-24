@@ -11,7 +11,7 @@
 #include <backends/imgui_impl_win32.h>
 #include <d3d9.h>
 #include <imgui.h>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 #undef min
 #undef max
 
@@ -40,12 +40,12 @@ void* ui::init_imgui_context() {
 bool ui::init_imgui_platform(void* hwnd, void* device) {
     processing = true;
     if (!ImGui_ImplWin32_Init(reinterpret_cast<HWND>(hwnd))) {
-        spdlog::error("Failed to initialize ImGui Win32 impl");
+        of::error("Failed to initialize ImGui Win32 impl");
         processing = false;
         return false;
     }
     if (!ImGui_ImplDX9_Init(reinterpret_cast<LPDIRECT3DDEVICE9>(device))) {
-        spdlog::error("Failed to initialize ImGui DX9 impl");
+        of::error("Failed to initialize ImGui DX9 impl");
         processing = false;
         return false;
     }
@@ -167,7 +167,7 @@ static void draw_menu(bool custom_window) {
             ptr = reinterpret_cast<short*>(
                 plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
             *ptr = static_cast<short>(frame_id) | 0x8000;
-            spdlog::info("doing...");
+            of::info("doing...");
         }
     }
 #endif

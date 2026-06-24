@@ -11,7 +11,7 @@
 #include "sv.hpp"
 #include "uconv.hpp"
 #include <Windows.h>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 
 using ost::optional;
 using ost::string_view;
@@ -40,11 +40,11 @@ static string get_module_path(HMODULE module) {
     wchar_t path[MAX_PATH];
     DWORD size = GetModuleFileNameW(module, path, MAX_PATH);
     if (size == 0) {
-        spdlog::error("Failed to get module path, error code: {}", GetLastError());
+        of::error("Failed to get module path, error code: {}", GetLastError());
         return "";
     }
     if (size >= MAX_PATH) {
-        spdlog::error("Module path is too long");
+        of::error("Module path is too long");
         return "";
     }
     path[size] = L'\0';
@@ -55,7 +55,8 @@ static optional<std::string> before_load(string_view path) {
     auto fn = get_filename(path);
     // Blocklist some unnecessary modules
     if (fn == "mmf2d3d8.dll") {
-        spdlog::warn("Direct3D8 is not supported, a custom window will be used");
+        of::warn("Direct3D8 is not supported, a custom window will be used");
+        conf::get().custom_window = true;
         // return "";
     } else if (fn == "Imm32.dll" || fn == "mscoree.dll" || fn == "uxtheme.dll") {
         return "";
@@ -63,7 +64,7 @@ static optional<std::string> before_load(string_view path) {
                fn == "xinput1_1.dll" || fn == "xinput9_1_0.dll") {
         return "";
     }
-    // spdlog::debug("Library loaded: {}", fn);
+    // of::debug("Library loaded: {}", fn);
     return plug::get().before_dll_load(path, fn);
 }
 
@@ -145,18 +146,18 @@ static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
     if (temp_ret == nullptr) {
         temp_ret = reinterpret_cast<void*>(GetProcAddressO(hModule, lpProcName));
     } else {
-        spdlog::warn("GetProcAddress was used to get a hooked function addr: {}", lpProcName);
+        of::warn("GetProcAddress was used to get a hooked function addr: {}", lpProcName);
     }
     temp_ret = plug::get().after_proc_get(hModule, lpProcName, temp_ret);
     if (reinterpret_cast<ULONG_PTR>(lpProcName) > 0xFFFF) {
         string_view proc(lpProcName);
         if (proc == "SaveRunObject" && !temp_ret) {
             string path = get_module_path(hModule);
-            spdlog::warn("This object does not support state save/load: {}", get_filename(path));
+            of::warn("This object does not support state save/load: {}", get_filename(path));
         } else if (proc == "SaveRunObject" &&
                    GetProcAddressO(hModule, "LoadRunObject") == nullptr) {
             string path = get_module_path(hModule);
-            spdlog::warn("This object does support state save but doesn't support load (WHAT?): {}",
+            of::warn("This object does support state save but doesn't support load (WHAT?): {}",
                          get_filename(path));
         } else if (hModule == loadhooks::user32_handle) {
             if (proc == "MessageBoxA")
@@ -164,7 +165,7 @@ static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
             else if (proc == "MessageBoxW")
                 temp_ret = reinterpret_cast<void*>(MessageBoxWH);
         }
-        // spdlog::debug("GetProcAddress: {}", lpProcName);
+        // of::debug("GetProcAddress: {}", lpProcName);
     }
     return reinterpret_cast<FARPROC>(temp_ret);
 }

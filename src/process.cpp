@@ -2,7 +2,7 @@
 #include "process.hpp"
 #include "ass.hpp"
 #include "uconv.hpp"
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 
 using process::Subprocess;
 
@@ -33,11 +33,11 @@ bool Subprocess::open(ost::string_view cmdline) {
     saAttr.lpSecurityDescriptor = nullptr;
     auto pipe_ret = CreatePipe(&hChildStdinRead, &hChildStdinWrite, &saAttr, 0);
     if (!pipe_ret) {
-        spdlog::error("Failed to create pipes for the process");
+        of::error("Failed to create pipes for the process");
         return false;
     }
     if (!SetHandleInformation(hChildStdinWrite, HANDLE_FLAG_INHERIT, 0)) {
-        spdlog::error("Failed to set stdout handle information");
+        of::error("Failed to set stdout handle information");
         CloseHandle(hChildStdinWrite);
         CloseHandle(hChildStdinRead);
         hChildStdinRead = hChildStdinWrite = nullptr;
@@ -55,7 +55,7 @@ bool Subprocess::open(ost::string_view cmdline) {
     ENSURE(w_buf != nullptr);
     auto ret = true;
     if (!CreateProcessWO(nullptr, w_buf, nullptr, nullptr, TRUE, 0, nullptr, nullptr, &si, &pi)) {
-        spdlog::error("Failed to create child process");
+        of::error("Failed to create child process");
         CloseHandle(hChildStdinWrite);
         pi.hProcess = pi.hThread = nullptr;
         pi.dwProcessId = pi.dwThreadId = 0;

@@ -10,7 +10,7 @@
 #include <backends/imgui_impl_win32.h>
 #include <d3d9.h>
 #include <imgui.h>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 #pragma comment(lib, "d3d9.lib")
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam,
@@ -144,7 +144,7 @@ bool Window::CreateCustomWindow(HINSTANCE hInstance) {
 bool Window::InitD3D9() {
     m_pD3D = Direct3DCreate9O(D3D_SDK_VERSION);
     if (m_pD3D == nullptr) {
-        spdlog::error("Failed to create D3D9 object");
+        of::error("Failed to create D3D9 object");
         return false;
     }
 
@@ -164,7 +164,7 @@ bool Window::InitD3D9() {
     HRESULT hr = m_pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, m_hwnd,
                                       D3DCREATE_HARDWARE_VERTEXPROCESSING, &m_d3dpp, &m_pd3dDevice);
     if (FAILED(hr)) {
-        spdlog::error("Failed to create D3D9 device");
+        of::error("Failed to create D3D9 device");
         return false;
     }
     return true;
@@ -173,13 +173,13 @@ bool Window::InitD3D9() {
 bool Window::InitImGui() {
     ctx = reinterpret_cast<ImGuiContext*>(ui::init_imgui_context());
     if (!ctx) {
-        spdlog::error("Failed to initialize ImGui context");
+        of::error("Failed to initialize ImGui context");
         return false;
     }
     ImGui::SetCurrentContext(ctx);
     ImGui::StyleColorsDark();
     if (!ui::init_imgui_platform(m_hwnd, m_pd3dDevice)) {
-        spdlog::error("Failed to initialize ImGui platform/renderer");
+        of::error("Failed to initialize ImGui platform/renderer");
         return false;
     }
     return true;
@@ -189,11 +189,11 @@ bool Window::init() {
     HINSTANCE hInstance = GetModuleHandleW(nullptr);
 
     if (!RegisterCustomWindowClass(hInstance)) {
-        spdlog::error("Failed to register custom window class");
+        of::error("Failed to register custom window class");
         return false;
     }
     if (!CreateCustomWindow(hInstance)) {
-        spdlog::error("Failed to create custom window");
+        of::error("Failed to create custom window");
         return false;
     }
 
@@ -203,11 +203,11 @@ bool Window::init() {
     SendMessageW(m_hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIcon));
 
     if (!InitD3D9()) {
-        spdlog::error("Failed to initialize D3D9");
+        of::error("Failed to initialize D3D9");
         return false;
     }
     if (!InitImGui()) {
-        spdlog::error("Failed to initialize ImGui");
+        of::error("Failed to initialize ImGui");
         return false;
     }
 

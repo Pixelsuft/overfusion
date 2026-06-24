@@ -17,7 +17,7 @@
 #include <fcntl.h>
 #include <imgui.h>
 #include <map>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 
 // TODO: implement other filesystem functions
 
@@ -86,7 +86,7 @@ void files::pre_init() { temp_path = string(ofs::get_cwd()) + "\\temp"; }
 
 BOOL(WINAPI* SetCurrentDirectoryWO)(LPCWSTR lpPathName);
 BOOL WINAPI SetCurrentDirectoryWH(LPCWSTR lpPathName) {
-    spdlog::info("SetCurrentDirectoryW: {}", uconv::from_utf16(lpPathName));
+    of::info("SetCurrentDirectoryW: {}", uconv::from_utf16(lpPathName));
     return SetCurrentDirectoryWO(lpPathName);
 }
 
@@ -122,7 +122,7 @@ static bool try_read_file(FileData& ret, string_view path) {
         return false;
     auto temp_size = file.size();
     if (temp_size < 0) {
-        spdlog::error("Failed to get file size on disk: {}", path);
+        of::error("Failed to get file size on disk: {}", path);
         return false;
     }
     ret.size = static_cast<size_t>(temp_size);
@@ -130,7 +130,7 @@ static bool try_read_file(FileData& ret, string_view path) {
     ENSURE(ret.data != nullptr);
     if (file.read(ret.data, ret.size))
         return true;
-    spdlog::error("Failed to read file from disk: {}", path);
+    of::error("Failed to read file from disk: {}", path);
     std::free(ret.data);
     ret.data = nullptr;
     return false;
@@ -138,7 +138,7 @@ static bool try_read_file(FileData& ret, string_view path) {
 
 static bool create_file_data(FileData& ret, string_view path, DWORD dwCreationDisposition) {
     bool exists = ret.data != nullptr;
-    // spdlog::debug("create_file_data: {} {} {}", path, dwCreationDisposition, exists);
+    // of::debug("create_file_data: {} {} {}", path, dwCreationDisposition, exists);
     switch (dwCreationDisposition) {
     case CREATE_ALWAYS:
     case CREATE_NEW:
@@ -193,19 +193,19 @@ static bool is_allowed_file(string_view path) {
 
 static optional<void*> handle_file_open(string_view path, bool for_read, bool for_write,
                                         DWORD dwCreationDisposition) {
-    // spdlog::debug("open file {}", path);
+    // of::debug("open file {}", path);
     string norm_fp = normalize_path(path);
     if (!is_allowed_file(norm_fp))
         return {};
     if (!for_read && !for_write) {
-        spdlog::warn("Attempted to open a file without permissions (WTF?), failing: {}", path);
+        of::warn("Attempted to open a file without permissions (WTF?), failing: {}", path);
         SetLastError(ERROR_ACCESS_DENIED);
         return INVALID_HANDLE_VALUE;
     }
     lock::CSLock mylock(fcs);
     auto it = file_map.find(norm_fp);
     if (!for_write && it == file_map.end()) {
-        // spdlog::debug("Passing through file opened for reading: {}", path);
+        // of::debug("Passing through file opened for reading: {}", path);
         return {};
     }
     if (for_write && it == file_map.end()) {
@@ -216,7 +216,7 @@ static optional<void*> handle_file_open(string_view path, bool for_read, bool fo
         FileData& data = it->second;
         if (data.refcount != 0) {
             if ((for_read && !data.allow_read) || (for_write && !data.allow_write)) {
-                spdlog::warn("Access denied for file: {} (refcount: {})", path, data.refcount);
+                of::warn("Access denied for file: {} (refcount: {})", path, data.refcount);
                 SetLastError(ERROR_ACCESS_DENIED);
                 return INVALID_HANDLE_VALUE;
             }
@@ -229,7 +229,7 @@ static optional<void*> handle_file_open(string_view path, bool for_read, bool fo
     dp.allow_write = false;
     auto handle = new FileHandle(dp, for_read, for_write);
     our_handles.push_back(handle);
-    // spdlog::debug("Started file emulation: {}", norm_fp);
+    // of::debug("Started file emulation: {}", norm_fp);
     return handle;
 }
 
@@ -542,7 +542,7 @@ static HFILE WINAPI OpenFileH(LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT u
 static BOOL(WINAPI* DeleteFileAO)(LPCSTR lpFileName);
 static BOOL WINAPI DeleteFileAH(LPCSTR lpFileName) {
     string norm = normalize_path(uconv::from_ansi(lpFileName));
-    // spdlog::debug("DeleteFileA: {}", norm);
+    // of::debug("DeleteFileA: {}", norm);
     lock::CSLock mylock(fcs);
     auto it = file_map.find(norm);
     if (it != file_map.end() && it->second.data) {
@@ -560,7 +560,7 @@ static BOOL WINAPI DeleteFileAH(LPCSTR lpFileName) {
 static BOOL(WINAPI* DeleteFileWO)(LPCWSTR lpFileName);
 static BOOL WINAPI DeleteFileWH(LPCWSTR lpFileName) {
     string norm = normalize_path(uconv::from_utf16(lpFileName));
-    // spdlog::debug("DeleteFileW: {}", norm);
+    // of::debug("DeleteFileW: {}", norm);
     lock::CSLock mylock(fcs);
     auto it = file_map.find(norm);
     if (it != file_map.end() && it->second.data) {
@@ -680,7 +680,7 @@ static int CDECL _closeH(int fd) {
 
 static HFILE(WINAPI* _lopenO)(LPCSTR lpPathName, int iReadWrite);
 static HFILE WINAPI _lopenH(LPCSTR lpPathName, int iReadWrite) {
-    spdlog::error("TODO: _lopen");
+    of::error("TODO: _lopen");
     return HFILE_ERROR;
 }
 
@@ -748,7 +748,7 @@ static FILE* (*fopenO)(const char*, const char*);
 static FILE* fopenH(const char* filename, const char* mode) {
     bool r, w, plus;
     parse_stdio_mode(mode, r, w, plus);
-    // spdlog::debug("fopen {} {}", uconv::from_ansi(filename), mode);
+    // of::debug("fopen {} {}", uconv::from_ansi(filename), mode);
     auto temp_ret = handle_file_open(
         uconv::from_ansi(filename), r || plus, w || plus,
         crt_flags_to_disposition(strchr(mode, 'w') ? _O_CREAT | _O_TRUNC : _O_RDONLY));
@@ -895,7 +895,7 @@ static DWORD WINAPI GetPrivateProfileStringAH(LPCSTR lpAppName, LPCSTR lpKeyName
     size_t len = result.copy(lpReturnedString, nSize - 1);
     lpReturnedString[len] = '\0';
 
-    spdlog::debug("GetA: File={}, Sec=[{}], Key={}, Res={}", fn, lpAppName ? lpAppName : "",
+    of::debug("GetA: File={}, Sec=[{}], Key={}, Res={}", fn, lpAppName ? lpAppName : "",
                   lpKeyName ? lpKeyName : "", lpReturnedString);
     return static_cast<DWORD>(len);
 }
@@ -909,7 +909,7 @@ static BOOL WINAPI WritePrivateProfileStringAH(LPCSTR lpAppName, LPCSTR lpKeyNam
     bool ok = ProcessVirtualIni(
         fn, [&](CSimpleIniA& ini) { ini.SetValue(lpAppName, lpKeyName, lpString); }, true);
 
-    spdlog::debug("WriteA: File={}, Sec=[{}], Key={}, Ok={}", fn, lpAppName, lpKeyName, ok);
+    of::debug("WriteA: File={}, Sec=[{}], Key={}, Ok={}", fn, lpAppName, lpKeyName, ok);
     return ok ? TRUE : FALSE;
 }
 
@@ -940,7 +940,7 @@ static DWORD WINAPI GetPrivateProfileStringWH(LPCWSTR lpAppName, LPCWSTR lpKeyNa
     }
     lpReturnedString[len] = L'\0';
 
-    spdlog::debug("GetW: File={}, Sec=[{}], Key={}", fn, app, key);
+    of::debug("GetW: File={}, Sec=[{}], Key={}", fn, app, key);
     return static_cast<DWORD>(len);
 }
 
@@ -961,7 +961,7 @@ static BOOL WINAPI WritePrivateProfileStringWH(LPCWSTR lpAppName, LPCWSTR lpKeyN
         },
         true);
 
-    spdlog::debug("WriteW: File={}, Sec=[{}], Key={}, Ok={}", fn, app, key, ok);
+    of::debug("WriteW: File={}, Sec=[{}], Key={}, Ok={}", fn, app, key, ok);
     return ok ? TRUE : FALSE;
 }
 
@@ -972,7 +972,7 @@ static UINT WINAPI GetTempFileNameAH(LPCSTR lpPathName, LPCSTR lpPrefixString, U
     lpPrefixString = "OF";
     auto ret = GetTempFileNameAO(lpPathName, lpPrefixString, uUnique, lpTempFileName);
     ENSURE(ret != 0);
-    spdlog::debug("GetTempFileNameA: {}", uconv::from_ansi(lpTempFileName));
+    of::debug("GetTempFileNameA: {}", uconv::from_ansi(lpTempFileName));
     return ret;
 }
 
@@ -984,7 +984,7 @@ static UINT WINAPI GetTempFileNameWH(LPCWSTR lpPathName, LPCWSTR lpPrefixString,
     lpPrefixString = L"OF";
     auto ret = GetTempFileNameWO(lpPathName, lpPrefixString, uUnique, lpTempFileName);
     ENSURE(ret != 0);
-    spdlog::debug("GetTempFileNameW: {}", uconv::from_utf16(lpTempFileName));
+    of::debug("GetTempFileNameW: {}", uconv::from_utf16(lpTempFileName));
     return ret;
 }
 
@@ -1031,7 +1031,7 @@ void files::hook_fs() {
     IAT_AUTO("msvcrt.dll", fclose);
     IAT_AUTO("msvcrt.dll", fflush);
     IAT_AUTO("msvcrt.dll", fgetc);
-    spdlog::info("Virtual FS hooks installed");
+    of::info("Virtual FS hooks installed");
 }
 
 void files::draw_ui() {
@@ -1049,7 +1049,7 @@ void files::clear_fs() {
     auto it = file_map.begin();
     while (it != file_map.end()) {
         if (it->second.refcount > 0) {
-            spdlog::error("Cannot clear file '{}' because it is in use (refcount: {})", it->first,
+            of::error("Cannot clear file '{}' because it is in use (refcount: {})", it->first,
                           it->second.refcount);
             ++it;
         } else {

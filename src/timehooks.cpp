@@ -8,7 +8,7 @@
 #include <Windows.h>
 #include <map>
 #include <mmsystem.h>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 #include <timeapi.h>
 
 // I'm not sure whether all of the implementations are accurate
@@ -95,13 +95,13 @@ static VOID WINAPI GetSystemTimeH(LPSYSTEMTIME lpSystemTime) {
 
 static BOOL WINAPI SetLocalTimeH(const SYSTEMTIME* lpSystemTime) {
     ASS(lpSystemTime != nullptr);
-    spdlog::debug("SetLocalTime");
+    of::debug("SetLocalTime");
     return FALSE;
 }
 
 static BOOL WINAPI SetSystemTimeH(const SYSTEMTIME* lpSystemTime) {
     ASS(lpSystemTime != nullptr);
-    spdlog::debug("SetSystemTime");
+    of::debug("SetSystemTime");
     return FALSE;
 }
 
@@ -157,12 +157,12 @@ static void __cdecl _ftimeH(struct my_timeb* timeptr) {
 static UINT_PTR WINAPI SetTimerH(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse,
                                  TIMERPROC lpTimerFunc) {
     if (nIDEvent == 0xb)
-        spdlog::warn("Detected use of SetTimer for frame sync, expect problems");
+        of::warn("Detected use of SetTimer for frame sync, expect problems");
     if (uElapse < USER_TIMER_MINIMUM)
         uElapse = USER_TIMER_MINIMUM;
     else if (uElapse > USER_TIMER_MAXIMUM)
         uElapse = USER_TIMER_MAXIMUM;
-    // spdlog::debug("SetTimer: {} {} {}", nIDEvent, uElapse, reinterpret_cast<void*>(lpTimerFunc));
+    // of::debug("SetTimer: {} {} {}", nIDEvent, uElapse, reinterpret_cast<void*>(lpTimerFunc));
     // Who needs thread safety, lul
     for (auto& timer : timehooks::user_timers) {
         if ((hWnd == nullptr || timer.first.first == hWnd) && nIDEvent == timer.second.event) {
@@ -180,7 +180,7 @@ static BOOL WINAPI KillTimerH(HWND hWnd, UINT_PTR uIDEvent) {
     auto it = timehooks::user_timers.find({hWnd, uIDEvent});
     if (it == timehooks::user_timers.end())
         return FALSE;
-    // spdlog::debug("KillTimer: {}", uIDEvent);
+    // of::debug("KillTimer: {}", uIDEvent);
     timehooks::user_timers.erase(it);
     return TRUE;
 }
@@ -193,12 +193,12 @@ static MMRESULT WINAPI timeSetEventH(UINT uDelay, UINT uResolution, LPTIMECALLBA
         timehooks::mm_timer_counter++;
     timehooks::mm_timers[timehooks::mm_timer_counter] =
         MMTimer(lpTimeProc, dwUser, uDelay, fuEvent);
-    // spdlog::debug("timeSetEvent: {} {} -> {}", uDelay, uResolution, mm_timer_counter);
+    // of::debug("timeSetEvent: {} {} -> {}", uDelay, uResolution, mm_timer_counter);
     return timehooks::mm_timer_counter++;
 }
 
 static MMRESULT WINAPI timeKillEventH(UINT uTimerID) {
-    // spdlog::debug("timeKillEvent: {}", uTimerID);
+    // of::debug("timeKillEvent: {}", uTimerID);
     auto it = timehooks::mm_timers.find(uTimerID);
     if (it == timehooks::mm_timers.end())
         return MMSYSERR_INVALPARAM;

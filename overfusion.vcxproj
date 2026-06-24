@@ -234,6 +234,7 @@
     <ClInclude Include="src\input.hpp" />
     <ClInclude Include="src\loadhooks.hpp" />
     <ClInclude Include="src\lock.hpp" />
+    <ClInclude Include="src\log.hpp" />
     <ClInclude Include="src\mem.hpp" />
     <ClInclude Include="src\mypair.hpp" />
     <ClInclude Include="src\ofs.hpp" />

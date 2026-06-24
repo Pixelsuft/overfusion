@@ -6,7 +6,7 @@
 #include "../tools/perspective.hpp"
 #include "../tools/timer_fix.hpp"
 #include <Windows.h>
-#include <spdlog/spdlog.h>
+#include "../src/log.hpp"
 
 using ost::optional;
 using ost::string_view;
@@ -83,7 +83,7 @@ public:
     optional<std::string> before_dll_load(string_view path, string_view fn) override {
         if (fn == "wininet.dll")
             return "";
-        // spdlog::info("Before load {}", fn);
+        // of::info("Before load {}", fn);
         return {};
     }
 

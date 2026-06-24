@@ -7,7 +7,7 @@
 #include "../tools/perspective.hpp"
 #include "../tools/timer_fix.hpp"
 #include <Windows.h>
-#include <spdlog/spdlog.h>
+#include "../src/log.hpp"
 
 using ost::optional;
 using ost::string_view;

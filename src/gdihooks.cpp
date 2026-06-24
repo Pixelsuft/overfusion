@@ -5,7 +5,7 @@
 #include "mem.hpp"
 #include "video.hpp"
 #include <Windows.h>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 
 extern HWND mhwnd;
 
@@ -15,7 +15,7 @@ static BOOL WINAPI BitBltH(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, in
                            DWORD rop) {
     auto ret = BitBltO(hdc, x, y, cx, cy, hdcSrc, x1, y1, rop);
     if (rop == SRCCOPY && ::mhwnd && WindowFromDC(hdc) == ::mhwnd) {
-        // spdlog::debug("BitBlt {} {} {} {} {} {}", x, y, cx, cy, x1, y1);
+        // of::debug("BitBlt {} {} {} {} {} {}", x, y, cx, cy, x1, y1);
         // Late setting but should be OK
         auto& cfg = conf::get();
         ASS(cfg.render_type == conf::RenderType::None || cfg.render_type == conf::RenderType::GDI);
@@ -36,7 +36,7 @@ static BOOL WINAPI StretchBltH(HDC hdcDest, int xDest, int yDest, int wDest, int
     auto ret =
         StretchBltO(hdcDest, xDest, yDest, wDest, hDest, hdcSrc, xSrc, ySrc, wSrc, hSrc, rop);
     if (rop == SRCCOPY && ::mhwnd && WindowFromDC(hdcDest) == ::mhwnd) {
-        // spdlog::debug("StretchBlt {},{},{},{} <- {},{},{},{}", xDest, yDest, wDest, hDest, xSrc,
+        // of::debug("StretchBlt {},{},{},{} <- {},{},{},{}", xDest, yDest, wDest, hDest, xSrc,
         // ySrc, wSrc, hSrc);
         auto& cfg = conf::get();
         ASS(cfg.render_type == conf::RenderType::None || cfg.render_type == conf::RenderType::GDI);

@@ -14,7 +14,7 @@
 #include <Windows.h>
 #include <algorithm>
 #include <imgui.h>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 #include <string>
 #include <vector>
 #undef max
@@ -101,12 +101,12 @@ struct State {
                 if (it == ret.end())
                     ret.push_back(e.key.k);
                 else
-                    spdlog::error("Key {} is double-pressed at frame {}", e.key.k, e.frame);
+                    of::error("Key {} is double-pressed at frame {}", e.key.k, e.frame);
             } else {
                 if (it != ret.end())
                     ret.erase(it);
                 else
-                    spdlog::error("Key {} is double-released at frame {}", e.key.k, e.frame);
+                    of::error("Key {} is double-released at frame {}", e.key.k, e.frame);
             }
         }
         return ret;
@@ -223,12 +223,12 @@ void state::export_replay(string_view fn) {
     last_msg.clear();
     if (st.ev.empty()) {
         last_msg = "Skipping export of the empty replay";
-        spdlog::warn("Replay is empty, skipped");
+        of::warn("Replay is empty, skipped");
         return;
     }
     ofs::File file;
     if (!file.open(base_path + '\\' + string(fn) + ".ofr", 1, false)) {
-        spdlog::error("Failed to open replay file \"{}\" for writing", fn);
+        of::error("Failed to open replay file \"{}\" for writing", fn);
         last_msg = "Failed to save replay file";
         return;
     }
@@ -280,7 +280,7 @@ void state::export_replay(string_view fn) {
         }
     }
     last_msg = "Replay exported";
-    spdlog::info("Replay exported");
+    of::info("Replay exported");
 }
 
 void state::import_replay(string_view fn) {
@@ -288,7 +288,7 @@ void state::import_replay(string_view fn) {
     ofs::File file;
     last_msg.clear();
     if (!file.open(base_path + '\\' + string(fn) + ".ofr", 0, false)) {
-        spdlog::error("Failed to open replay file \"{}\" for reading", fn);
+        of::error("Failed to open replay file \"{}\" for reading", fn);
         last_msg = "Failed to open replay file";
         return;
     }
@@ -300,14 +300,14 @@ void state::import_replay(string_view fn) {
             continue;
         auto start = line.find(',');
         if (start == string::npos) {
-            spdlog::error("Failed to parse replay header (frame)");
+            of::error("Failed to parse replay header (frame)");
             is_of = false;
             break;
         }
         start++;
         auto end = line.find(',', start);
         if (end == string::npos) {
-            spdlog::error("Failed to parse replay header (name)");
+            of::error("Failed to parse replay header (name)");
             is_of = false;
             break;
         }
@@ -317,7 +317,7 @@ void state::import_replay(string_view fn) {
         if (sub == "pixelsuft_overfusion") {
             int st_ver = str_to_int(sub2).value_or(0);
             if (st_ver != replay_version) {
-                spdlog::error("Invalid replay version (expected {}, got {})", replay_version,
+                of::error("Invalid replay version (expected {}, got {})", replay_version,
                               st_ver);
                 is_of = false;
                 break;
@@ -330,37 +330,37 @@ void state::import_replay(string_view fn) {
         } else if (sub == "fps") {
             int need_fps = str_to_int(sub2).value_or(0);
             if (need_fps != cfg.fps) {
-                spdlog::warn("Mismatch between config FPS ({}) and replay ({})", cfg.fps, need_fps);
+                of::warn("Mismatch between config FPS ({}) and replay ({})", cfg.fps, need_fps);
             }
         } else if (sub == "delta_multiplier") {
             int need_mul = str_to_int(sub2).value_or(0);
             if (need_mul != cfg.delta_multiplier) {
-                spdlog::warn("Mismatch between config delta multiplier ({}) and replay ({})",
+                of::warn("Mismatch between config delta multiplier ({}) and replay ({})",
                              cfg.delta_multiplier, need_mul);
             }
         } else if (sub == "system_offset") {
             auto offset = static_cast<uint64_t>(str_to_int(sub2).value_or(0));
             if (offset != cfg.system_offset) {
-                spdlog::warn("Mismatch between config system time offset ({}) and replay ({})",
+                of::warn("Mismatch between config system time offset ({}) and replay ({})",
                              cfg.system_offset, offset);
             }
         } else if (sub == "local_offset") {
             auto offset = static_cast<uint64_t>(str_to_int(sub2).value_or(0));
             if (offset != cfg.local_offset) {
-                spdlog::warn("Mismatch between config local time offset ({}) and replay ({})",
+                of::warn("Mismatch between config local time offset ({}) and replay ({})",
                              cfg.local_offset, offset);
             }
         } else if (sub == "startup_offset") {
             auto offset = static_cast<uint64_t>(str_to_int(sub2).value_or(0));
             if (offset != cfg.startup_offset) {
-                spdlog::warn("Mismatch between config startup time offset ({}) and replay ({})",
+                of::warn("Mismatch between config startup time offset ({}) and replay ({})",
                              cfg.startup_offset, offset);
             }
         } else if (sub == "events_begin") {
             break;
         } else {
             is_of = false;
-            spdlog::error("Invalid replay header");
+            of::error("Invalid replay header");
             break;
         }
     }
@@ -368,7 +368,7 @@ void state::import_replay(string_view fn) {
         is_of = false;
     if (!is_of) {
         last_msg = "Invalid replay file";
-        spdlog::error("Invalid replay file");
+        of::error("Invalid replay file");
         return;
     }
     bool need_sort = false;
@@ -378,7 +378,7 @@ void state::import_replay(string_view fn) {
         Event event;
         auto end = line.find(',');
         if (end == string::npos || end == 0) {
-            spdlog::error("Invalid event line (frame)");
+            of::error("Invalid event line (frame)");
             continue;
         }
         event.frame = str_to_int(line.substr(0, end)).value_or(0);
@@ -386,7 +386,7 @@ void state::import_replay(string_view fn) {
         auto start = end;
         end = line.find(',', start);
         if (end == string::npos || end == start) {
-            spdlog::error("Invalid event line (event index)");
+            of::error("Invalid event line (event index)");
             continue;
         }
         event.idx = static_cast<event::Type>(str_to_int(line.substr(start, end)).value_or(0));
@@ -397,12 +397,12 @@ void state::import_replay(string_view fn) {
             start = end;
             end = line.find(',', start);
             if (end == string::npos) {
-                spdlog::error("Invalid keyboard/mouse event line (key)");
+                of::error("Invalid keyboard/mouse event line (key)");
                 continue;
             }
             event.key.k = str_to_int(line.substr(start, end)).value_or(0);
             if (event.key.k <= 0) {
-                spdlog::error("Invalid keyboard/mouse event (key)");
+                of::error("Invalid keyboard/mouse event (key)");
                 continue;
             }
             event.key.down = str_to_int(line.substr(++end)).value_or(0) != 0;
@@ -411,7 +411,7 @@ void state::import_replay(string_view fn) {
             start = end;
             end = line.find(',', start);
             if (end == string::npos) {
-                spdlog::error("Invalid mouse move event line (X)");
+                of::error("Invalid mouse move event line (X)");
                 continue;
             }
             event.mouse.x = str_to_float(line.substr(start, end)).value_or(-1000.f) / 1000.f;
@@ -420,17 +420,17 @@ void state::import_replay(string_view fn) {
         case event::Type::MsgBox:
             event.msgbox.choice = str_to_int(line.substr(end)).value_or(0);
             if (event.msgbox.choice <= 0) {
-                spdlog::error("Invalid message box event line (choice)");
+                of::error("Invalid message box event line (choice)");
                 continue;
             }
             break;
         case event::Type::None:
         default:
-            spdlog::warn("Invalid event index, skipping");
+            of::warn("Invalid event index, skipping");
             break;
         }
         if (!temp_state.ev.empty() && temp_state.ev.back().frame > event.frame) {
-            spdlog::warn("Invalid frame index order, fixing");
+            of::warn("Invalid frame index order, fixing");
             need_sort = true;
         }
         temp_state.ev.push_back(event);
@@ -439,7 +439,7 @@ void state::import_replay(string_view fn) {
         std::stable_sort(temp_state.ev.begin(), temp_state.ev.end(),
                          [](const Event& a, const Event& b) { return a.frame < b.frame; });
     if (!temp_state.ev.empty() && temp_state.ev.back().frame >= temp_state.total) {
-        spdlog::warn("Invalid total frames counter, fixing");
+        of::warn("Invalid total frames counter, fixing");
         temp_state.total = temp_state.ev.back().frame + 1;
     }
     st.ev = std::move(temp_state.ev);
@@ -448,12 +448,12 @@ void state::import_replay(string_view fn) {
     repl_index = st.calc_current_index();
     auto new_holding = st.calc_keys();
     if (new_holding != st.prev_input) {
-        spdlog::warn("Keyboard state mismatch during replay load, fixing");
+        of::warn("Keyboard state mismatch during replay load, fixing");
         st.prev_input = std::move(new_holding);
     }
     cfg.is_replay = true;
     last_msg = "Replay imported";
-    spdlog::info("Replay imported");
+    of::info("Replay imported");
 }
 
 void state::save_state(int slot) {
@@ -462,7 +462,7 @@ void state::save_state(int slot) {
     string fp = base_path + "\\state_" + std::to_string(slot) + ".ofstate";
     ofs::File file;
     if (!file.open(fp, 1, false)) {
-        spdlog::error("Failed to open state slot {} for writing", slot);
+        of::error("Failed to open state slot {} for writing", slot);
         last_msg = "Failed to save state from slot " + std::to_string(slot) + " to file";
         return;
     }
@@ -485,7 +485,7 @@ void state::save_state(int slot) {
     if (!ret.has_value()) {
         // Plugin failed to save it's data
         cfg.processing_save = false;
-        spdlog::error("Failed to save state data: {}", ret.error());
+        of::error("Failed to save state data: {}", ret.error());
         last_msg = "Failed to save state data: " + ret.error();
         file.close();
         ofs::remove_file(fp);
@@ -493,7 +493,7 @@ void state::save_state(int slot) {
     }
     if (cfg.save_game_state && !cfg.processing_save) {
         // Game failed to save it's data
-        spdlog::error("Failed to save game state: {}", state_error_text);
+        of::error("Failed to save game state: {}", state_error_text);
         last_msg = "Failed to save game state: " + state_error_text;
         return;
     }
@@ -505,7 +505,7 @@ void state::save_state(int slot) {
         last_msg = string("State ") + std::to_string(slot) + " saved!";
     else
         last_msg = string("State ") + std::to_string(slot) + " saved! (" + last_msg + ")";
-    spdlog::info("State saved");
+    of::info("State saved");
 }
 
 void state::load_state(int slot) {
@@ -516,26 +516,26 @@ void state::load_state(int slot) {
         // Need to restart game before replay
         need_scene_slot = slot;
         if (!plug::get().set_trans_enabled(false))
-            spdlog::debug("Failed to set transitions disabled");
+            of::debug("Failed to set transitions disabled");
         reset_game();
         return;
     }
     ofs::File file(base_path + "\\state_" + std::to_string(slot) + ".ofstate", 0);
     if (!file.is_open()) {
-        spdlog::warn("Failed to open state slot {} for reading", slot);
+        of::warn("Failed to open state slot {} for reading", slot);
         last_msg = "Failed to open state slot " + std::to_string(slot);
         return;
     }
     temp_handle = file.get_handle();
     static char test_buf[8];
     if (!file.read(test_buf, 8) || std::memcmp(test_buf, "ofstate!", 8) != 0) {
-        spdlog::error("Invalid state file");
+        of::error("Invalid state file");
         return;
     }
     int int_data;
     load_bin(file, int_data);
     if (int_data != save_version) {
-        spdlog::error("State version mismatch (expected {}, got {})", save_version, int_data);
+        of::error("State version mismatch (expected {}, got {})", save_version, int_data);
         return;
     }
     // Create temp_state and put it into st only without errors
@@ -553,7 +553,7 @@ void state::load_state(int slot) {
         // Skip if change is already in progress
         if (*ptr)
             return;
-        spdlog::debug("Preparing scene change: {} -> {}", st.scene, temp_state.scene);
+        of::debug("Preparing scene change: {} -> {}", st.scene, temp_state.scene);
         last_msg = "Changing scene: " + std::to_string(st.scene) + " -> " +
                    std::to_string(temp_state.scene);
         *ptr = 3;
@@ -561,7 +561,7 @@ void state::load_state(int slot) {
         ASS(ptr != nullptr);
         *ptr = static_cast<short>(temp_state.scene) | 0x8000;
         if (!plug::get().set_trans_enabled(false))
-            spdlog::debug("Failed to set transitions disabled");
+            of::debug("Failed to set transitions disabled");
         return;
     }
     load_bin(file, temp_state.frames);
@@ -583,14 +583,14 @@ void state::load_state(int slot) {
         // State failed to load it's data
         cfg.processing_save = false;
         st.frames = prev_frames;
-        spdlog::error("Failed to load state data: {}", ret.error());
+        of::error("Failed to load state data: {}", ret.error());
         last_msg = "Failed to load state data: " + ret.error();
         return;
     }
     if (!cfg.is_replay && !cfg.processing_save) {
         // Game failed to load it's data
         st.frames = prev_frames;
-        spdlog::error("Failed to restore game state: {}", state_error_text);
+        of::error("Failed to restore game state: {}", state_error_text);
         last_msg = "Failed to restore game state: " + state_error_text;
         return;
     }
@@ -601,7 +601,7 @@ void state::load_state(int slot) {
         repl_index = st.calc_current_index();
         auto new_holding = st.calc_keys();
         if (new_holding != st.prev_input) {
-            spdlog::warn("Keyboard state mismatch during replay load, fixing");
+            of::warn("Keyboard state mismatch during replay load, fixing");
             st.prev_input = std::move(new_holding);
             last_msg = "Keyboard mismatch fixed";
         }
@@ -615,7 +615,7 @@ void state::load_state(int slot) {
         ENSURE(bool_ret);
         auto pRandomSeed = get_rng_seed_ptr(pState);
         if (pRandomSeed && *pRandomSeed != st.seed) {
-            spdlog::warn("Got seed {} instead of {}, fixing", *pRandomSeed, st.seed);
+            of::warn("Got seed {} instead of {}, fixing", *pRandomSeed, st.seed);
             *pRandomSeed = st.seed;
         }
         just_loaded = true;
@@ -627,7 +627,7 @@ void state::load_state(int slot) {
         last_msg = string("State ") + std::to_string(slot) + " loaded!";
     else
         last_msg = string("State ") + std::to_string(slot) + " loaded! (" + last_msg + ")";
-    spdlog::info("State loaded");
+    of::info("State loaded");
 }
 
 bool state::invalidate_process(string_view text) {
@@ -644,7 +644,7 @@ int state::process_message_box(ost::string_view text, ost::string_view caption,
     if (uType == 0x30 && invalidate_process(text))
         return IDOK;
     auto& cfg = conf::get();
-    spdlog::info("MessageBox: {} - {}", caption, text);
+    of::info("MessageBox: {} - {}", caption, text);
     if (!cfg.is_replay)
         return 0;
     ENSURE(!msgbox_buf.empty());
@@ -677,7 +677,7 @@ static bool exec_event(Event ev) {
                 input::sim_key_event(ev.key.k, true);
                 return true;
             } else {
-                spdlog::warn("Failed to simulate key: key {} is already down", ev.key.k);
+                of::warn("Failed to simulate key: key {} is already down", ev.key.k);
                 return false;
             }
         } else {
@@ -686,7 +686,7 @@ static bool exec_event(Event ev) {
                 input::sim_key_event(ev.key.k, false);
                 return true;
             } else {
-                spdlog::warn("Failed to simulate key: key {} is already up", ev.key.k);
+                of::warn("Failed to simulate key: key {} is already up", ev.key.k);
                 return false;
             }
         }
@@ -700,7 +700,7 @@ static bool exec_event(Event ev) {
                 input::sim_mouse_event(ev.key.k, true);
                 return true;
             } else {
-                spdlog::warn("Failed to simulate mouse: button {} is already down", ev.key.k);
+                of::warn("Failed to simulate mouse: button {} is already down", ev.key.k);
                 return false;
             }
         } else {
@@ -709,7 +709,7 @@ static bool exec_event(Event ev) {
                 input::sim_mouse_event(ev.key.k, false);
                 return true;
             } else {
-                spdlog::warn("Failed to simulate mouse: button {} is already up", ev.key.k);
+                of::warn("Failed to simulate mouse: button {} is already up", ev.key.k);
                 return false;
             }
         }
@@ -750,7 +750,7 @@ bool state::before_update(bool is_transitioning) {
             cfg.is_paused = true;
             cfg.need_advance = false;
             if (need_scene_slot == empty_save_slot && !plug::get().set_trans_enabled(true))
-                spdlog::debug("Failed to set transitions back enabled");
+                of::debug("Failed to set transitions back enabled");
         }
     }
     st.scene = get_scene_id();
@@ -833,7 +833,7 @@ void state::after_update() {
             short* pTask = reinterpret_cast<short*>(
                 plug::get().get_prop(plug::PtrProp::PNextFrameTask, pState));
             if (*pTask) {
-                spdlog::debug("Scene changed on frame {}", st.frames);
+                of::debug("Scene changed on frame {}", st.frames);
                 for (auto& ev : st.ev) {
                     if (ev.frame >= st.frames)
                         ev.frame++;
@@ -844,7 +844,7 @@ void state::after_update() {
         if (just_loaded) {
             // FIXME: sometimes fails when loading a state from a different scene FSR
             if (*pRandomSeed != st.seed) {
-                spdlog::warn("Seed check failed (got {} instead of {}), fixed", *pRandomSeed,
+                of::warn("Seed check failed (got {} instead of {}), fixed", *pRandomSeed,
                              st.seed);
                 *pRandomSeed = st.seed;
             }
@@ -911,12 +911,12 @@ void state::set_key_down(int vk, bool down) {
         if (it == real_holding.end())
             real_holding.push_back(vk);
         else
-            spdlog::warn("Cannot double press key {}", vk);
+            of::warn("Cannot double press key {}", vk);
     } else if (!down) {
         if (it != real_holding.end())
             real_holding.erase(it);
         // else
-        //     spdlog::warn("Cannot double release key {}", vk);
+        //     of::warn("Cannot double release key {}", vk);
     }
 }
 

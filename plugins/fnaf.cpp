@@ -5,7 +5,7 @@
 #include "../src/winhooks.hpp"
 #include "../tools/perspective.hpp"
 #include <Windows.h>
-#include <spdlog/spdlog.h>
+#include "../src/log.hpp"
 
 using ost::optional;
 using ost::string_view;

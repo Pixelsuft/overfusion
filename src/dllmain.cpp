@@ -5,6 +5,7 @@
 #include "gamehooks.hpp"
 #include "input.hpp"
 #include "loadhooks.hpp"
+#include "log.hpp"
 #include "mem.hpp"
 #include "plugbase.hpp"
 #include "state.hpp"
@@ -13,7 +14,6 @@
 #include "ui.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
-#include <spdlog/spdlog.h>
 
 static void of_main() {
     // This function runs as early as possible
@@ -25,7 +25,7 @@ static void of_main() {
 #else
     spdlog::set_pattern("[%^%l%$] %v");
 #endif
-    spdlog::info("OverFusion injected!");
+    of::info("OverFusion injected!");
     SetEnvironmentVariableW(L"GALLIUM_DRIVER", L"llvmpipe");
     SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", L"true");
     conf::init();
@@ -36,7 +36,7 @@ static void of_main() {
     ofs::pre_init();
     files::pre_init();
     conf::get().read();
-    spdlog::debug("Base address: {}", reinterpret_cast<void*>(mem::get_base()));
+    of::debug("Base address: {}", reinterpret_cast<void*>(mem::get_base()));
     if (conf::get().wait_for_debugger) {
         while (!IsDebuggerPresent())
             Sleep(500);
@@ -44,7 +44,7 @@ static void of_main() {
     if (!plug::search_and_run())
         return;
     if (!plug::get().pre_init()) {
-        spdlog::error("Failed to init plugin: {}", plug::get().name);
+        of::error("Failed to init plugin: {}", plug::get().name);
         return;
     }
     timehooks::init();

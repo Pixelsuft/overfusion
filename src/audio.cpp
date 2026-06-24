@@ -9,7 +9,7 @@
 // after
 #include <algorithm>
 #include <dsound.h>
-#include <spdlog/spdlog.h>
+#include "log.hpp"
 #include <vector>
 #undef min
 #undef max
@@ -250,7 +250,7 @@ public:
             double scale = static_cast<double>(currentFreq) / static_cast<double>(originalFreq);
             virtualTimeAcc += static_cast<double>(now - lastRealTime) * scale;
             if (virtualTimeAcc <= 0.0) {
-                spdlog::debug("Audio got virtualTimeAcc <= 0");
+                of::debug("Audio got virtualTimeAcc <= 0");
                 return;
             }
             cap.endTime = cap.startTime + static_cast<uint64_t>(virtualTimeAcc);
@@ -267,11 +267,11 @@ public:
                     file.write(&header, sizeof(WavHeader));
                     file.write(data.data(), data.size());
                 } else
-                    spdlog::debug("Audio duplicate skipped");
+                    of::debug("Audio duplicate skipped");
                 history.push_back(cap);
                 return;
             }
-            spdlog::debug("Audio got endTime <= startTime");
+            of::debug("Audio got endTime <= startTime");
         }
     }
 
@@ -335,12 +335,12 @@ public:
                           pdwAudioBytes2, dwFlags);
     }
     STDMETHOD(Play)(DWORD dwReserved1, DWORD dwPriority, DWORD dwFlags) override {
-        spdlog::debug("DirectSoundBuffer::Play");
+        of::debug("DirectSoundBuffer::Play");
         return pBuf->Play(dwReserved1, dwPriority, dwFlags);
     }
     STDMETHOD(SetCurrentPosition)(DWORD dwNewPosition) override {
         auto ret = pBuf->SetCurrentPosition(dwNewPosition);
-        spdlog::debug("DirectSoundBuffer::SetCurrentPosition");
+        of::debug("DirectSoundBuffer::SetCurrentPosition");
         return ret;
     }
     STDMETHOD(SetFormat)(LPCWAVEFORMATEX pcfxFormat) override {
@@ -375,7 +375,7 @@ public:
             lock::CSLock lock(acs);
             finalize_wav();
         }
-        spdlog::debug("DirectSoundBuffer::Stop");
+        of::debug("DirectSoundBuffer::Stop");
         return pBuf->Stop();
     }
     STDMETHOD(Unlock)(LPVOID pv1, DWORD db1, LPVOID pv2, DWORD db2) override {
@@ -419,7 +419,7 @@ public:
                                  LPUNKNOWN pUnkOuter) override {
         HRESULT hr = pDev->CreateSoundBuffer(pcDSBufferDesc, ppDSBuffer, pUnkOuter);
         if (SUCCEEDED(hr) && ppDSBuffer && *ppDSBuffer && pcDSBufferDesc->lpwfxFormat) {
-            spdlog::debug("Wrapping IDirectSoundBuffer into IDSBProxy");
+            of::debug("Wrapping IDirectSoundBuffer into IDSBProxy");
             *ppDSBuffer = new IDSBProxy(*ppDSBuffer, pcDSBufferDesc);
         }
         return hr;
@@ -428,7 +428,7 @@ public:
     STDMETHOD(DuplicateSoundBuffer)(LPDIRECTSOUNDBUFFER pDSBufferOriginal,
                                     LPDIRECTSOUNDBUFFER* ppDSBufferDuplicate) override {
         // Seems to be unused anyway
-        spdlog::error("Not implemented: DuplicateSoundBuffer");
+        of::error("Not implemented: DuplicateSoundBuffer");
         ASS(false);
         return DSERR_OUTOFMEMORY;
     }
@@ -448,12 +448,12 @@ public:
 
 static HRESULT(WINAPI* DirectSoundCreateO)(LPCGUID guid, LPDIRECTSOUND* ds, LPUNKNOWN unk);
 static HRESULT WINAPI DirectSoundCreateH(LPCGUID guid, LPDIRECTSOUND* ds, LPUNKNOWN unk) {
-    // spdlog::debug("DirectSoundCreate");
+    // of::debug("DirectSoundCreate");
     if (conf::get().disable_audio)
         return DSERR_NODRIVER;
     HRESULT hr = DirectSoundCreateO(guid, ds, unk);
     if (SUCCEEDED(hr) && ds && *ds) {
-        spdlog::info("Wrapping IDirectSound into IDSProxy");
+        of::info("Wrapping IDirectSound into IDSProxy");
         *ds = new audio::IDSProxy(*ds);
     }
     return hr;
@@ -461,18 +461,18 @@ static HRESULT WINAPI DirectSoundCreateH(LPCGUID guid, LPDIRECTSOUND* ds, LPUNKN
 
 static MCIERROR mciSendCommandAH(MCIDEVICEID IDDevice, UINT uMsg, DWORD_PTR fdwCommand,
                                  DWORD_PTR dwParam) {
-    spdlog::error("mciSendCommandA: MCI audio playback is not supported");
+    of::error("mciSendCommandA: MCI audio playback is not supported");
     return MCIERR_DRIVER;
 }
 
 static MCIERROR mciSendCommandWH(MCIDEVICEID IDDevice, UINT uMsg, DWORD_PTR fdwCommand,
                                  DWORD_PTR dwParam) {
-    spdlog::error("mciSendCommandW: MCI audio playback is not supported");
+    of::error("mciSendCommandW: MCI audio playback is not supported");
     return MCIERR_DRIVER;
 }
 
 static BOOL WINAPI BeepH(DWORD dwFreq, DWORD dwDuration) {
-    spdlog::info("Beep (freq={}, duration={})", dwFreq, dwDuration);
+    of::info("Beep (freq={}, duration={})", dwFreq, dwDuration);
     return FALSE;
 }
 
@@ -488,19 +488,19 @@ void audio::reinit_capture() {
 void audio::init() {
     auto& cfg = conf::get();
     if (!cfg.allow_audio_hook && cfg.record_audio) {
-        spdlog::warn(
+        of::warn(
             "Audio hook was disabled, but audio recording is enabled; enabling audio hook");
         cfg.disable_audio = false;
         cfg.allow_audio_hook = true;
     } else if (cfg.disable_audio && cfg.record_audio) {
-        spdlog::warn("Audio is disabled, but recording is enabled; enabling audio");
+        of::warn("Audio is disabled, but recording is enabled; enabling audio");
         cfg.disable_audio = false;
         cfg.allow_audio_hook = true;
     }
     if (!cfg.allow_audio_hook && !cfg.disable_audio)
         return;
     if (cfg.record_audio)
-        spdlog::warn("Audio recording is still in BETA");
+        of::warn("Audio recording is still in BETA");
     reinit_capture();
     if (capturing) {
         base_path = string(ofs::get_cwd()) + '\\' + cfg.project_name + "\\temp_audio";
@@ -515,7 +515,7 @@ void audio::init() {
                                             mem::get_addr("dsound.dll", "DirectSoundCreate"),
                                             DirectSoundCreateH, &DirectSoundCreateO);
     ENSURE(hook_ret1);
-    spdlog::info("Audio hooked");
+    of::info("Audio hooked");
 }
 
 void audio::flush() {
@@ -526,7 +526,7 @@ void audio::flush() {
     for (IDSBProxy* c : cache)
         c->finalize_wav();
     capturing = false;
-    spdlog::debug("flush {}", history.size());
+    of::debug("flush {}", history.size());
     if (history.empty())
         return;
 
