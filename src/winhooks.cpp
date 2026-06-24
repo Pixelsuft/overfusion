@@ -191,10 +191,12 @@ static HWND WINAPI CreateWindowExWH(DWORD dwExStyle, LPCWSTR lpClassName, LPCWST
 static void on_class_create_ansi(const char* name, WNDPROC& proc) {
     ASS(name != nullptr);
     // We all know it's editable :)
-    if (!MainWindowProcO && strcmp(name, "Mf2MainClassTh") == 0) {
+    if (!MainWindowProcO && reinterpret_cast<size_t>(name) > 0xFFFF &&
+        strcmp(name, "Mf2MainClassTh") == 0) {
         MainWindowProcO = proc;
         proc = MainWindowProcH;
-    } else if (!EditWindowProcO && strcmp(name, "Mf2EditClassTh") == 0) {
+    } else if (!EditWindowProcO && reinterpret_cast<size_t>(name) > 0xFFFF &&
+               strcmp(name, "Mf2EditClassTh") == 0) {
         EditWindowProcO = proc;
         proc = EditWindowProcH;
     }
@@ -202,10 +204,12 @@ static void on_class_create_ansi(const char* name, WNDPROC& proc) {
 
 static void on_class_create_wide(const wchar_t* name, WNDPROC& proc) {
     ASS(name != nullptr);
-    if (!MainWindowProcO && wcscmp(name, L"Mf2MainClassTh") == 0) {
+    if (!MainWindowProcO && reinterpret_cast<size_t>(name) > 0xFFFF &&
+        wcscmp(name, L"Mf2MainClassTh") == 0) {
         MainWindowProcO = proc;
         proc = MainWindowProcH;
-    } else if (!EditWindowProcO && wcscmp(name, L"Mf2EditClassTh") == 0) {
+    } else if (!EditWindowProcO && reinterpret_cast<size_t>(name) > 0xFFFF &&
+               wcscmp(name, L"Mf2EditClassTh") == 0) {
         EditWindowProcO = proc;
         proc = EditWindowProcH;
     }
@@ -220,8 +224,6 @@ static ATOM WINAPI RegisterClassAH(WNDCLASSA* cls) {
 static ATOM(WINAPI* RegisterClassExAO)(WNDCLASSEXA* cls);
 static ATOM WINAPI RegisterClassExAH(WNDCLASSEXA* cls) {
     on_class_create_ansi(cls->lpszClassName, cls->lpfnWndProc);
-    if (strcmp(cls->lpszClassName, "Mf2MainClassTh") == 0)
-        cls->hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
     return RegisterClassExAO(cls);
 }
 
