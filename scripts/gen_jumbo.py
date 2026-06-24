@@ -20,6 +20,7 @@ f.write("""#define JUMBO_BUILD
 #include "../minhook/src/hde/hde32.c"
 #include "../minhook/src/hook.c"
 #include "../minhook/src/trampoline.c"
+#ifndef NO_SPDLOG
 #include "../spdlog/src/async.cpp"
 #include "../spdlog/src/bundled_fmtlib_format.cpp"
 #include "../spdlog/src/cfg.cpp"
@@ -27,6 +28,7 @@ f.write("""#define JUMBO_BUILD
 #include "../spdlog/src/file_sinks.cpp"
 #include "../spdlog/src/spdlog.cpp"
 #include "../spdlog/src/stdout_sinks.cpp"
+#endif
 """)
 
 plug_list = []

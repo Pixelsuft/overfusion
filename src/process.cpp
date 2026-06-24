@@ -1,8 +1,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include "process.hpp"
 #include "ass.hpp"
-#include "uconv.hpp"
 #include "log.hpp"
+#include "uconv.hpp"
 
 using process::Subprocess;
 

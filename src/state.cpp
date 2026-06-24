@@ -6,6 +6,7 @@
 #include "event.hpp"
 #include "files.hpp"
 #include "input.hpp"
+#include "log.hpp"
 #include "mypair.hpp"
 #include "ofs.hpp"
 #include "plugbase.hpp"
@@ -14,7 +15,6 @@
 #include <Windows.h>
 #include <algorithm>
 #include <imgui.h>
-#include "log.hpp"
 #include <string>
 #include <vector>
 #undef max
@@ -317,8 +317,7 @@ void state::import_replay(string_view fn) {
         if (sub == "pixelsuft_overfusion") {
             int st_ver = str_to_int(sub2).value_or(0);
             if (st_ver != replay_version) {
-                of::error("Invalid replay version (expected {}, got {})", replay_version,
-                              st_ver);
+                of::error("Invalid replay version (expected {}, got {})", replay_version, st_ver);
                 is_of = false;
                 break;
             }
@@ -336,25 +335,25 @@ void state::import_replay(string_view fn) {
             int need_mul = str_to_int(sub2).value_or(0);
             if (need_mul != cfg.delta_multiplier) {
                 of::warn("Mismatch between config delta multiplier ({}) and replay ({})",
-                             cfg.delta_multiplier, need_mul);
+                         cfg.delta_multiplier, need_mul);
             }
         } else if (sub == "system_offset") {
             auto offset = static_cast<uint64_t>(str_to_int(sub2).value_or(0));
             if (offset != cfg.system_offset) {
                 of::warn("Mismatch between config system time offset ({}) and replay ({})",
-                             cfg.system_offset, offset);
+                         cfg.system_offset, offset);
             }
         } else if (sub == "local_offset") {
             auto offset = static_cast<uint64_t>(str_to_int(sub2).value_or(0));
             if (offset != cfg.local_offset) {
                 of::warn("Mismatch between config local time offset ({}) and replay ({})",
-                             cfg.local_offset, offset);
+                         cfg.local_offset, offset);
             }
         } else if (sub == "startup_offset") {
             auto offset = static_cast<uint64_t>(str_to_int(sub2).value_or(0));
             if (offset != cfg.startup_offset) {
                 of::warn("Mismatch between config startup time offset ({}) and replay ({})",
-                             cfg.startup_offset, offset);
+                         cfg.startup_offset, offset);
             }
         } else if (sub == "events_begin") {
             break;
@@ -844,8 +843,7 @@ void state::after_update() {
         if (just_loaded) {
             // FIXME: sometimes fails when loading a state from a different scene FSR
             if (*pRandomSeed != st.seed) {
-                of::warn("Seed check failed (got {} instead of {}), fixed", *pRandomSeed,
-                             st.seed);
+                of::warn("Seed check failed (got {} instead of {}), fixed", *pRandomSeed, st.seed);
                 *pRandomSeed = st.seed;
             }
         } else {

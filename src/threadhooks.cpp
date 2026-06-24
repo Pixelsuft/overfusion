@@ -4,7 +4,6 @@
 #include "mem.hpp"
 #include "uconv.hpp"
 #include <Windows.h>
-#include <processthreadsapi.h>
 #include "log.hpp"
 
 static HANDLE(WINAPI* CreateThreadO)(LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID,

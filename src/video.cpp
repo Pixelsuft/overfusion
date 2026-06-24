@@ -2,10 +2,10 @@
 #include "video.hpp"
 #include "ass.hpp"
 #include "config.hpp"
+#include "log.hpp"
 #include "ofs.hpp"
 #include "process.hpp"
 #include <d3d9.h>
-#include "log.hpp"
 
 // Video recording implementation
 

@@ -1,10 +1,10 @@
 #define WIN32_LEAN_AND_MEAN
 #include "ofs.hpp"
 #include "ass.hpp"
+#include "log.hpp"
 #include "sv.hpp"
 #include "uconv.hpp"
 #include <Windows.h>
-#include "log.hpp"
 
 using ofs::File;
 using ost::string_view;

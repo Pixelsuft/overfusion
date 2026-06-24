@@ -2,10 +2,10 @@
 #include "gdihooks.hpp"
 #include "ass.hpp"
 #include "config.hpp"
+#include "log.hpp"
 #include "mem.hpp"
 #include "video.hpp"
 #include <Windows.h>
-#include "log.hpp"
 
 extern HWND mhwnd;
 

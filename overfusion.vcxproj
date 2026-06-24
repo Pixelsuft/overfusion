@@ -71,10 +71,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)simpleini;$(SolutionDir)string_view-standalone\include;$(SolutionDir)optional\include;$(SolutionDir)expected\include;$(SolutionDir)json\include;$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(VC_IncludePath)imgui;$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(SolutionDir)simpleini;$(SolutionDir)string_view-standalone\include;$(SolutionDir)optional\include;$(SolutionDir)expected\include;$(SolutionDir)json\include;$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(SolutionDir)imgui;$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)simpleini;$(SolutionDir)string_view-standalone\include;$(SolutionDir)optional\include;$(SolutionDir)expected\include;$(SolutionDir)json\include;$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(VC_IncludePath)imgui;$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(SolutionDir)simpleini;$(SolutionDir)string_view-standalone\include;$(SolutionDir)optional\include;$(SolutionDir)expected\include;$(SolutionDir)json\include;$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(SolutionDir)imgui;$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(SolutionDir)simpleini;$(SolutionDir)string_view-standalone\include;$(SolutionDir)optional\include;$(SolutionDir)expected\include;$(SolutionDir)json\include;$(SolutionDir)spdlog\include;$(SolutionDir)minhook\include;$(VC_IncludePath)imgui;$(WindowsSDK_IncludePath);</IncludePath>

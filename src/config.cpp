@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <map>
 #include <nlohmann/json.hpp>
-#include <spdlog/fmt/ranges.h>
 #undef max
 #undef min
 

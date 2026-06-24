@@ -3,6 +3,7 @@
 #include "audio.hpp"
 #include "config.hpp"
 #include "files.hpp"
+#include "log.hpp"
 #include "plugbase.hpp"
 #include "state.hpp"
 #include "video.hpp"
@@ -11,7 +12,6 @@
 #include <backends/imgui_impl_win32.h>
 #include <d3d9.h>
 #include <imgui.h>
-#include "log.hpp"
 #undef min
 #undef max
 

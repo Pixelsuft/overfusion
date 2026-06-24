@@ -7,7 +7,6 @@
 #include <Psapi.h>
 #include <Windows.h>
 #include <algorithm>
-#include <processthreadsapi.h>
 #include "log.hpp"
 #include <tlhelp32.h>
 #include <unordered_map>

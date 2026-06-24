@@ -5,6 +5,7 @@
 #include "extrahooks.hpp"
 #include "files.hpp"
 #include "input.hpp"
+#include "log.hpp"
 #include "mem.hpp"
 #include "plugbase.hpp"
 #include "state.hpp"
@@ -13,7 +14,6 @@
 #include "video.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
-#include "log.hpp"
 
 static void(__stdcall* RenderFrame)();
 static void(__stdcall* RenderTransition)();

@@ -4,13 +4,13 @@
 #include "ass.hpp"
 #include "config.hpp"
 #include "input.hpp"
+#include "log.hpp"
 #include "mem.hpp"
 #include "state.hpp"
 #include "uconv.hpp"
 #include "ui.hpp"
 #include <Windows.h>
 #include <backends/imgui_impl_win32.h>
-#include "log.hpp"
 
 using ost::string_view;
 using std::string;
@@ -417,7 +417,7 @@ static DWORD(WINAPI* MsgWaitForMultipleObjectsO)(DWORD nCount, const HANDLE* pHa
 static DWORD WINAPI MsgWaitForMultipleObjectsH(DWORD nCount, const HANDLE* pHandles, BOOL fWaitAll,
                                                DWORD dwMilliseconds, DWORD dwWakeMask) {
     of::warn("MsgWaitForMultipleObjects was not patched: {} {} {} {}", nCount, fWaitAll,
-                 dwMilliseconds, dwWakeMask);
+             dwMilliseconds, dwWakeMask);
     return MsgWaitForMultipleObjectsO(nCount, pHandles, fWaitAll, dwMilliseconds, dwWakeMask);
 }
 
@@ -438,8 +438,8 @@ static BOOL WINAPI SetWindowPosH(HWND hWnd, HWND hWndInsertAfter, int X, int Y, 
                 cy = cfg.forced_res.second;
             }
         }
-        of::debug("SetWindowPos {}: {} {} {} {} {}", hWnd == ::hwnd ? "hwnd" : "mhwnd", X, Y,
-                      cx, cy, uFlags);
+        of::debug("SetWindowPos {}: {} {} {} {} {}", hWnd == ::hwnd ? "hwnd" : "mhwnd", X, Y, cx,
+                  cy, uFlags);
         // return FALSE;
     }
     return SetWindowPosO(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);

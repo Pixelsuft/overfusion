@@ -5,13 +5,13 @@
 #include "d3dhooks.hpp"
 #include "extrahooks.hpp"
 #include "gdihooks.hpp"
+#include "log.hpp"
 #include "mem.hpp"
 #include "opt.hpp"
 #include "plugbase.hpp"
 #include "sv.hpp"
 #include "uconv.hpp"
 #include <Windows.h>
-#include "log.hpp"
 
 using ost::optional;
 using ost::string_view;
@@ -158,7 +158,7 @@ static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
                    GetProcAddressO(hModule, "LoadRunObject") == nullptr) {
             string path = get_module_path(hModule);
             of::warn("This object does support state save but doesn't support load (WHAT?): {}",
-                         get_filename(path));
+                     get_filename(path));
         } else if (hModule == loadhooks::user32_handle) {
             if (proc == "MessageBoxA")
                 temp_ret = reinterpret_cast<void*>(MessageBoxAH);

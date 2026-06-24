@@ -2,6 +2,7 @@
 #include "d3dhooks.hpp"
 #include "ass.hpp"
 #include "config.hpp"
+#include "log.hpp"
 #include "mem.hpp"
 #include "ui.hpp"
 #include "video.hpp"
@@ -9,7 +10,6 @@
 #include <backends/imgui_impl_dx9.h>
 #include <backends/imgui_impl_win32.h>
 #include <d3d9.h>
-#include "log.hpp"
 
 extern HWND hwnd;
 static bool imgui_d3d9_inited;

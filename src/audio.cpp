@@ -7,9 +7,9 @@
 #include <Windows.h>
 #include <mmsystem.h>
 // after
+#include "log.hpp"
 #include <algorithm>
 #include <dsound.h>
-#include "log.hpp"
 #include <vector>
 #undef min
 #undef max
@@ -488,8 +488,7 @@ void audio::reinit_capture() {
 void audio::init() {
     auto& cfg = conf::get();
     if (!cfg.allow_audio_hook && cfg.record_audio) {
-        of::warn(
-            "Audio hook was disabled, but audio recording is enabled; enabling audio hook");
+        of::warn("Audio hook was disabled, but audio recording is enabled; enabling audio hook");
         cfg.disable_audio = false;
         cfg.allow_audio_hook = true;
     } else if (cfg.disable_audio && cfg.record_audio) {

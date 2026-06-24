@@ -3,6 +3,7 @@
 #include "ass.hpp"
 #include "config.hpp"
 #include "customwindow.hpp"
+#include "log.hpp"
 #include "mem.hpp"
 #include "state.hpp"
 #include "sv.hpp"
@@ -10,7 +11,6 @@
 #include <Windows.h>
 #include <algorithm>
 #include <map>
-#include "log.hpp"
 #include <vector>
 
 namespace input {

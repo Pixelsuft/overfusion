@@ -2,14 +2,13 @@
 #include "timehooks.hpp"
 #include "ass.hpp"
 #include "config.hpp"
+#include "log.hpp"
 #include "mem.hpp"
 #include "state.hpp"
 #include "ui.hpp"
 #include <Windows.h>
 #include <map>
 #include <mmsystem.h>
-#include "log.hpp"
-#include <timeapi.h>
 
 // I'm not sure whether all of the implementations are accurate
 

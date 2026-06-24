@@ -3,6 +3,7 @@
 #include "ass.hpp"
 #include "config.hpp"
 #include "input.hpp"
+#include "log.hpp"
 #include "ui.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
@@ -10,7 +11,6 @@
 #include <backends/imgui_impl_win32.h>
 #include <d3d9.h>
 #include <imgui.h>
-#include "log.hpp"
 #pragma comment(lib, "d3d9.lib")
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam,
