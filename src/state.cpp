@@ -844,13 +844,13 @@ void state::after_update() {
         if (just_loaded) {
             // FIXME: sometimes fails when loading a state from a different scene FSR
             if (*pRandomSeed != st.seed) {
-                spdlog::warn("Seed check failed (got {} instead of {}, fixed)", *pRandomSeed,
+                spdlog::warn("Seed check failed (got {} instead of {}), fixed", *pRandomSeed,
                              st.seed);
                 *pRandomSeed = st.seed;
             }
         } else {
             // Seed should not change when paused
-            // FIXME: sometimes this one fails
+            // FIXME: sometimes this one fails (F2 restarting in boshy sometimes)
             // ASS(*pRandomSeed == st.seed);
         }
     }
