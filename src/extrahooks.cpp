@@ -112,7 +112,7 @@ static UINT WINAPI joyGetPosExH(UINT uJoyID, const void* pji) {
     return 6;
 }
 
-static HRESULT SHGetSpecialFolderLocationH(HWND hwnd, int csidl, void* ppidl) {
+static HRESULT WINAPI SHGetSpecialFolderLocationH(HWND hwnd, int csidl, void* ppidl) {
     return static_cast<HRESULT>(1);
 }
 
@@ -261,12 +261,12 @@ void extrahooks::init() {
         auto temp2 = uconv::to_utf16(str_cmd);
         wcscat(my_argv_w, temp2);
         std::free(temp2);
-        auto addr1 = mem::get_addr("msvcrt.dll", "_acmdln");
-        auto addr2 = mem::get_addr("msvcrt.dll", "_wcmdln");
-        if (addr1)
-            *reinterpret_cast<char**>(addr1) = my_argv_a;
-        if (addr2)
-            *reinterpret_cast<wchar_t**>(addr2) = my_argv_w;
+        auto addr = mem::get_addr("msvcrt.dll", "_acmdln");
+        if (addr)
+            *reinterpret_cast<char**>(addr) = my_argv_a;
+        addr = mem::get_addr("msvcrt.dll", "_wcmdln");
+        if (addr)
+            *reinterpret_cast<wchar_t**>(addr) = my_argv_w;
     }();
     // TODO: GetDateFormatEx, GetLocaleInfoEx, GetTimeFormatEx, GetUserDefaultLocaleName
     IAT_AUTO("shell32.dll", DragAcceptFiles);
@@ -276,8 +276,7 @@ void extrahooks::init() {
     IAT_STR_ONLY("kernel32.dll", GetCommandLine);
     IAT_STR_ONLY("kernel32.dll", GetVersionEx);
     IAT_STR_ONLY("kernel32.dll", EnumSystemLocales);
-    // FIXME: crashes FNAF (kcini.mfx)
-    // IAT_ONLY("shell32.dll", SHGetSpecialFolderLocation);
+    IAT_ONLY("shell32.dll", SHGetSpecialFolderLocation);
     IAT_ONLY("kernel32.dll", GetUserDefaultLCID);
     IAT_ONLY("kernel32.dll", GetVersion);
     IAT_STR_ONLY("winmm.dll", joyGetDevCaps);
