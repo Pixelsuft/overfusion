@@ -143,6 +143,8 @@ static size_t repl_index;
 static int need_scene_slot;
 // Are we processing game frame?
 static bool updating;
+// Are we just loaded a state and didn't process any frame?
+static bool just_loaded;
 } // namespace state
 
 inline ost::optional<int> str_to_int(const std::string& str) {
@@ -197,6 +199,7 @@ void state::init() {
     base_path = string(ofs::get_cwd()) + '\\' + conf::get().project_name;
     last_msg = "None";
     updating = false;
+    just_loaded = false;
     const_dt = 1.0 / static_cast<double>(conf::get().fps);
     to_wait = 0.0;
     time_offset = 0;
@@ -615,6 +618,7 @@ void state::load_state(int slot) {
             spdlog::warn("Got seed {} instead of {}, fixing", *pRandomSeed, st.seed);
             *pRandomSeed = st.seed;
         }
+        just_loaded = true;
     }
     st.rerec_count = std::max(st.rerec_count, get_rerecords()) + 1;
     set_rerecords(st.rerec_count);
@@ -802,6 +806,7 @@ bool state::before_update(bool is_transitioning) {
         st.temp_ev.clear();
     }
     st.prev_input = cur_holding;
+    just_loaded = false;
     return true;
 }
 
@@ -836,12 +841,18 @@ void state::after_update() {
             }
         }
     } else if (!cfg.processing_save && need_scene_slot == empty_save_slot && pRandomSeed) {
-        // Seed should not change when paused
-        // FIXME: sometimes fails when loading a state from a different scene FSR
-        // ASS(*pRandomSeed == st.seed);
-        if (*pRandomSeed != st.seed)
-            last_msg = "Paused seed check failed (got " + std::to_string(*pRandomSeed) +
-                       " instead of " + std::to_string(st.seed) + ", please reload save)";
+        if (just_loaded) {
+            // FIXME: sometimes fails when loading a state from a different scene FSR
+            if (*pRandomSeed != st.seed) {
+                spdlog::warn("Seed check failed (got {} instead of {}, fixed)", *pRandomSeed,
+                             st.seed);
+                *pRandomSeed = st.seed;
+            }
+        } else {
+            // Seed should not change when paused
+            // FIXME: sometimes this one fails
+            // ASS(*pRandomSeed == st.seed);
+        }
     }
     if (cfg.fast_forward)
         return;
@@ -980,6 +991,9 @@ void state::fill_kbd_state(unsigned char* data) {
 }
 
 ost::optional<int> state::fetch_random_number(int range) {
+    if (just_loaded)
+        return {};
+    ASS(updating);
     auto it = std::lower_bound(st.rng_buf.begin(), st.rng_buf.end(), range,
                                [](const IntPair& pair, int value) { return pair.first < value; });
     if (it == st.rng_buf.end() || it->first != range)
