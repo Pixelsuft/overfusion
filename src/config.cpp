@@ -62,22 +62,18 @@ static nlohmann::json read_config_file(ost::string_view path) {
 constexpr bool is_valid_vk(int vk) { return vk > 0 && vk < 256; }
 
 static ost::optional<conf::Task> task_from_string(string_view sv) {
-    // FIXME: crashes on XP without that
-#if !defined(_MSC_VER) || (_MSC_VER >= 1910)
-    static const
-#endif
-        std::map<string_view, conf::Task>
-            task_map = {{"save", conf::Task::SaveState},
-                        {"load", conf::Task::LoadState},
-                        {"advance", conf::Task::Advance},
-                        {"play", conf::Task::Play},
-                        {"fast", conf::Task::FastForward},
-                        {"map", conf::Task::Map},
-                        {"mouse_down", conf::Task::MouseDown},
-                        {"mouse_move", conf::Task::MouseMove},
-                        {"menu", conf::Task::Menu},
-                        {"replay_mode", conf::Task::ReplayMode},
-                        {"reset_game", conf::Task::ResetGame}};
+    static const std::map<string_view, conf::Task> task_map = {
+        {"save", conf::Task::SaveState},
+        {"load", conf::Task::LoadState},
+        {"advance", conf::Task::Advance},
+        {"play", conf::Task::Play},
+        {"fast", conf::Task::FastForward},
+        {"map", conf::Task::Map},
+        {"mouse_down", conf::Task::MouseDown},
+        {"mouse_move", conf::Task::MouseMove},
+        {"menu", conf::Task::Menu},
+        {"replay_mode", conf::Task::ReplayMode},
+        {"reset_game", conf::Task::ResetGame}};
     auto it = task_map.find(sv);
     if (it == task_map.end()) {
         // TODO: maybe move warns/errors from this funcs to top level funcs??
