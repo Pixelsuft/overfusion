@@ -12,12 +12,13 @@
 #include <Windows.h>
 #undef min
 #undef max
+#include "log.hpp"
 #include <SimpleIni.h>
 #include <algorithm>
 #include <fcntl.h>
+#include <functional>
 #include <imgui.h>
 #include <map>
-#include "log.hpp"
 
 // TODO: implement other filesystem functions
 
@@ -895,8 +896,8 @@ static DWORD WINAPI GetPrivateProfileStringAH(LPCSTR lpAppName, LPCSTR lpKeyName
     size_t len = result.copy(lpReturnedString, nSize - 1);
     lpReturnedString[len] = '\0';
 
-    of::debug("GetA: File={}, Sec=[{}], Key={}, Res={}", fn, lpAppName ? lpAppName : "",
-                  lpKeyName ? lpKeyName : "", lpReturnedString);
+    // of::debug("GetA: File={}, Sec=[{}], Key={}, Res={}", fn, lpAppName ? lpAppName : "",
+    //           lpKeyName ? lpKeyName : "", lpReturnedString);
     return static_cast<DWORD>(len);
 }
 
@@ -909,7 +910,7 @@ static BOOL WINAPI WritePrivateProfileStringAH(LPCSTR lpAppName, LPCSTR lpKeyNam
     bool ok = ProcessVirtualIni(
         fn, [&](CSimpleIniA& ini) { ini.SetValue(lpAppName, lpKeyName, lpString); }, true);
 
-    of::debug("WriteA: File={}, Sec=[{}], Key={}, Ok={}", fn, lpAppName, lpKeyName, ok);
+    // of::debug("WriteA: File={}, Sec=[{}], Key={}, Ok={}", fn, lpAppName, lpKeyName, ok);
     return ok ? TRUE : FALSE;
 }
 
@@ -940,7 +941,7 @@ static DWORD WINAPI GetPrivateProfileStringWH(LPCWSTR lpAppName, LPCWSTR lpKeyNa
     }
     lpReturnedString[len] = L'\0';
 
-    of::debug("GetW: File={}, Sec=[{}], Key={}", fn, app, key);
+    // of::debug("GetW: File={}, Sec=[{}], Key={}", fn, app, key);
     return static_cast<DWORD>(len);
 }
 
@@ -961,7 +962,7 @@ static BOOL WINAPI WritePrivateProfileStringWH(LPCWSTR lpAppName, LPCWSTR lpKeyN
         },
         true);
 
-    of::debug("WriteW: File={}, Sec=[{}], Key={}, Ok={}", fn, app, key, ok);
+    // of::debug("WriteW: File={}, Sec=[{}], Key={}, Ok={}", fn, app, key, ok);
     return ok ? TRUE : FALSE;
 }
 
@@ -1050,7 +1051,7 @@ void files::clear_fs() {
     while (it != file_map.end()) {
         if (it->second.refcount > 0) {
             of::error("Cannot clear file '{}' because it is in use (refcount: {})", it->first,
-                          it->second.refcount);
+                      it->second.refcount);
             ++it;
         } else {
             if (it->second.data) {

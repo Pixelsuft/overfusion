@@ -19,11 +19,13 @@ static void of_main() {
     // This function runs as early as possible
     AllocConsole();
     freopen_s(reinterpret_cast<FILE**>(stdout), "CONOUT$", "w", stdout);
+#ifndef NO_SPDLOG
 #ifdef _DEBUG
     spdlog::set_level(spdlog::level::debug);
     spdlog::set_pattern("[%H:%M:%S.%e] [%^%l%$] %v");
 #else
     spdlog::set_pattern("[%^%l%$] %v");
+#endif
 #endif
     of::info("OverFusion injected!");
     SetEnvironmentVariableW(L"GALLIUM_DRIVER", L"llvmpipe");

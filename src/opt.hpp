@@ -4,16 +4,16 @@
 #include <optional>
 
 namespace ost {
-template <typename T> using optional = std::optional<T>;
-using nullopt_t = std::nullopt_t;
-inline constexpr nullopt_t nullopt = std::nullopt;
+using std::nullopt;
+using std::nullopt_t;
+using std::optional;
 } // namespace ost
 #else
 #include <tl/optional.hpp>
 
 namespace ost {
-template <typename T> using optional = tl::optional<T>;
-using nullopt_t = tl::nullopt_t;
-static constexpr nullopt_t nullopt = tl::nullopt;
+using tl::nullopt;
+using tl::nullopt_t;
+using tl::optional;
 } // namespace ost
 #endif

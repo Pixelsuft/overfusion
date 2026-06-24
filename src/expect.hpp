@@ -4,18 +4,18 @@
 #include <expected>
 
 namespace ost {
-template <typename T, typename E> using expected = std::expected<T, E>;
-using unexpect_t = std::unexpect_t;
-inline constexpr unexpect_t unexpect{};
-template <typename E> using unexpected = std::unexpected<E>;
+using std::expected;
+using std::unexpect;
+using std::unexpect_t;
+using std::unexpected;
 } // namespace ost
 #else
 #include <tl/expected.hpp>
 
 namespace ost {
-template <typename T, typename E> using expected = tl::expected<T, E>;
-using unexpect_t = tl::unexpect_t;
-static constexpr unexpect_t unexpect = tl::unexpect;
-template <typename E> using unexpected = tl::unexpected<E>;
+using tl::expected;
+using tl::unexpect;
+using tl::unexpect_t;
+using tl::unexpected;
 } // namespace ost
 #endif

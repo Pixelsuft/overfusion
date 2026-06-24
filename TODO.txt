@@ -9,6 +9,5 @@
 [ ] Allow to specify VFS rules in ofproject.json (map specific file to...)
 [ ] Add skip drawing
 [ ] Optimize jumbo builds via Python (devirtualize calls, etc)
-[ ] Reimplement spdlog to support VS2015???
 [ ] Switch to https://github.com/ozone10/win32-darkmodelib? check XP compat first!
 [ ] Fix TODO/FIXME in code

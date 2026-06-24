@@ -2,6 +2,7 @@
 #include "config.hpp"
 #include "ass.hpp"
 #include "input.hpp"
+#include "log.hpp"
 #include "ofs.hpp"
 #include "process.hpp"
 #include <Windows.h>
@@ -9,7 +10,6 @@
 #include <map>
 #include <nlohmann/json.hpp>
 #include <spdlog/fmt/ranges.h>
-#include "log.hpp"
 #undef max
 #undef min
 
@@ -333,14 +333,8 @@ void Config::read() {
             // Get string keys from ints
             auto key_str = input::vk_to_string(bind.key);
             ASS(key_str.has_value());
-            std::vector<string> mods_str;
-            for (int mod : bind.mods) {
-                auto v = input::vk_to_string(mod);
-                ASS(v.has_value());
-                mods_str.push_back(string(v.value()));
-            }
-            of::info("Bind (task={}, extra={}, key='{}', mods={})", static_cast<int>(bind.task),
-                         bind.extra, key_str.value(), mods_str);
+            of::info("Bind (task={}, extra={}, key='{}')", static_cast<int>(bind.task), bind.extra,
+                     key_str.value());
             binds.push_back(bind);
         }
         std::sort(binds.begin(), binds.end(),
