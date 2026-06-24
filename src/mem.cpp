@@ -2,12 +2,12 @@
 #include "mem.hpp"
 #include "ass.hpp"
 #include "loadhooks.hpp"
+#include "log.hpp"
 #include "uconv.hpp"
 #include <MinHook.h>
 #include <Psapi.h>
 #include <Windows.h>
 #include <algorithm>
-#include "log.hpp"
 #include <tlhelp32.h>
 #include <unordered_map>
 #include <winternl.h>
@@ -300,7 +300,7 @@ bool hook::patch_iat() {
     }
 
     MODULEENTRY32W me = {0};
-    me.dwSize = sizeof(MODULEENTRY32);
+    me.dwSize = sizeof(MODULEENTRY32W);
 
     if (Module32FirstW(hSnapshot, &me)) {
         do {
