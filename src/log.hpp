@@ -53,7 +53,7 @@ template <typename... Args> void info(const std::string& fmt, Args&&... args) {
 }
 
 template <typename... Args> void warn(const std::string& fmt, Args&&... args) {
-    log_format("warn", fmt, std::forward<Args>(args)...);
+    log_format("warning", fmt, std::forward<Args>(args)...);
 }
 
 template <typename... Args> void error(const std::string& fmt, Args&&... args) {

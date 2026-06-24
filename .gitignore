@@ -10,6 +10,10 @@ joined.txt
 nul
 scripts/*.manifest
 jumbo/main.cpp
+*.VC.db
+*.VC.db-shm
+*.VC.db-wal
+*.VC.opendb
 *.aps
 *.zip
 *.rar
