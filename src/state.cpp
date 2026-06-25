@@ -457,6 +457,10 @@ void state::import_replay(string_view fn) {
             event.rng.value =
                 static_cast<uint16_t>(str_to_int(line.substr(start, end)).value_or(0));
             event.rng.repeat = static_cast<uint16_t>(str_to_int(line.substr(++end)).value_or(0));
+            if (event.rng.repeat == 0) {
+                of::error("Invalid RNG event (range)");
+                continue;
+            }
             break;
         case event::Type::PopRandom:
             event.rng.range = static_cast<uint16_t>(str_to_int(line.substr(end)).value_or(0));
