@@ -267,7 +267,7 @@ void extrahooks::init() {
         addr = mem::get_addr("msvcrt.dll", "_wcmdln");
         if (addr)
             *reinterpret_cast<wchar_t**>(addr) = my_argv_w;
-        spdlog::info("Command line: {}", str_cmd);
+        spdlog::info("Command line: {}", uconv::from_utf16(my_argv_w));
     }();
     // TODO: GetDateFormatEx, GetLocaleInfoEx, GetTimeFormatEx, GetUserDefaultLocaleName
     IAT_AUTO("shell32.dll", DragAcceptFiles);
