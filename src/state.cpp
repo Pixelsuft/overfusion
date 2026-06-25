@@ -15,6 +15,7 @@
 #include <Windows.h>
 #include <algorithm>
 #include <imgui.h>
+#include <map>
 #include <string>
 #include <vector>
 #undef max
@@ -122,6 +123,8 @@ static std::vector<int> real_holding;
 static std::vector<int> cur_holding;
 // Ugly needed buffer for message boxes
 static std::vector<int> msgbox_buf;
+// Prev frame RNG
+static std::map<int, std::vector<int>> prev_rng;
 // Manual waiting stuff
 static LARGE_INTEGER last_counter;
 static double const_dt;
@@ -759,6 +762,7 @@ bool state::before_update(bool is_transitioning) {
     if ((cfg.is_paused && !cfg.need_advance) || need_scene_slot != empty_save_slot)
         return false;
     updating = true;
+    prev_rng.clear();
     cur_holding = st.prev_input;
     msgbox_buf.clear();
     void* pState = plug::get().get_prop(plug::PtrProp::PState);
@@ -988,19 +992,24 @@ void state::fill_kbd_state(unsigned char* data) {
         data[val] = 1;
 }
 
-ost::optional<int> state::fetch_random_number(int range) {
+int state::fetch_random_number(int range, int value) {
     if (just_loaded)
-        return {};
+        return value;
     if (!updating) {
-        of::debug("Skipping random value fetch with range {}", range);
-        return {};
+        of::debug("Skipping random value fetch: {}/{}", value, range);
+        return value;
     }
     auto it = std::lower_bound(st.rng_buf.begin(), st.rng_buf.end(), range,
                                [](const IntPair& pair, int value) { return pair.first < value; });
-    if (it == st.rng_buf.end() || it->first != range)
-        return {};
+    if (it == st.rng_buf.end() || it->first != range) {
+        if (!conf::get().fast_forward)
+            prev_rng[range].push_back(value);
+        return value;
+    }
     auto ret = it->second;
     st.rng_buf.erase(it);
+    if (!conf::get().fast_forward)
+        prev_rng[range].push_back(ret);
     return ret;
 }
 
@@ -1062,6 +1071,19 @@ void state::draw_info() {
         }
         ImGui::Text("Keys: %s",
                     keys_str.empty() ? "" : keys_str.substr(0, keys_str.size() - 2).c_str());
+        ImGui::TextUnformatted("Prev frame RNG:");
+        std::string rng_str;
+        for (auto& pair : prev_rng) {
+            rng_str.clear();
+            auto it = pair.second.begin();
+            rng_str += std::to_string(*it);
+            it++;
+            for (; it != pair.second.end(); it++) {
+                rng_str += ", ";
+                rng_str += std::to_string(*it);
+            }
+            ImGui::Text("%i: %s", pair.first, rng_str.c_str());
+        }
     }
 }
 

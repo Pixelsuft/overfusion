@@ -78,10 +78,8 @@ public:
 
     static unsigned int __cdecl RandomH(unsigned int maxv) {
         auto ret = RandomO(maxv);
-        auto temp_ret = state::fetch_random_number(static_cast<int>(maxv));
-        if (temp_ret.has_value())
-            ret = static_cast<unsigned int>(temp_ret.value());
-        return ret;
+        return static_cast<unsigned int>(
+            state::fetch_random_number(static_cast<int>(maxv), static_cast<int>(ret)));
     }
 
     bool update_init() override {
