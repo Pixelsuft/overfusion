@@ -123,6 +123,7 @@ Config::Config() {
     speed = 1.f;
     font_scale = 1.f;
     fps = 0;
+    audio_size_hash_limit = 1024 * 1024;
     delta_multiplier = 1;
     render_type = RenderType::None;
     show_menu = show_info = true;
@@ -199,6 +200,8 @@ void Config::read() {
         font_scale = data["font_scale"];
         font_scale = std::min(std::max(font_scale, 0.05f), 3.f);
     }
+    if (data["audio_size_hash_limit"].is_number_unsigned())
+        audio_size_hash_limit = data["audio_size_hash_limit"];
     READ_BOOL(show_info);
     READ_BOOL(show_menu);
     READ_BOOL(emulate_user_timers);

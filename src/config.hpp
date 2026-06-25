@@ -42,6 +42,7 @@ public:
     void* pRenderTransition;
     size_t tm_fix_event_entry_offset;
     size_t tm_fix_event_entry_type_offset;
+    size_t audio_size_hash_limit;
     float speed;
     float font_scale;
     int fps;

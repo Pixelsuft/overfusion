@@ -31,6 +31,7 @@
   "redraw_on_skip": false,
   "disable_viewport": false,
   "disable_perspective": false,
+  "audio_size_hash_limit": 1048576,
   "ffmpeg_cmdline": "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an -vcodec h264_nvenc -b:v 10000k \"$CWD\\$PROJ\\video_$ID.mp4\"",
   "binds": [
     {

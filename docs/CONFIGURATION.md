@@ -37,6 +37,7 @@ You can use [default config](../overfusion.json) and [default project config](..
 `redraw_on_skip` - draw the frame manually when the game didn't draw (when game is unpaused), breaks FNAF magazine transition <br />
 `disable_viewport` - disable `Viewport.mfx` Fusion plugin display <br />
 `disable_perspective` - disable `Perspective.mfx` Fusion plugin display <br />
+`audio_size_hash_limit` - maximum audio file size (in bytes) to hash audio to avoid duplicates during audio capturing <br />
 `ffmpeg_cmdline` - FFmpeg command line for video capturing <br />
 `binds` - keyboard bindings <br />
 

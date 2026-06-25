@@ -114,7 +114,7 @@ inline string audio_get_fn(uint64_t hash, uint64_t a, int b) {
 
 // Hash func to avoid some 1-to-1 duplicates
 static uint64_t murmurhash3(const std::vector<uint8_t>& vec, uint64_t seed = 0xadc83b19ULL) {
-    if (vec.size() > 1024 * 1024) // TODO: configure this
+    if (vec.size() > conf::get().audio_size_hash_limit)
         return 0;
     const uint8_t* data = vec.data();
     const size_t len = vec.size();
