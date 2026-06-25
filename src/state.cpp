@@ -144,6 +144,8 @@ static void* temp_handle;
 static size_t repl_index;
 // Remember needed scene before switching if needed
 static int need_scene_slot;
+// Closest prev frame the game requested RNG
+static int prev_rng_frame;
 // Are we processing game frame?
 static bool updating;
 // Are we just loaded a state and didn't process any frame?
@@ -207,6 +209,7 @@ void state::init() {
     to_wait = 0.0;
     time_offset = 0;
     repl_index = 0;
+    prev_rng_frame = 0;
     need_scene_slot = empty_save_slot;
     st.temp_ev.reserve(1024);
     st.ev.reserve(4096);
@@ -762,7 +765,6 @@ bool state::before_update(bool is_transitioning) {
     if ((cfg.is_paused && !cfg.need_advance) || need_scene_slot != empty_save_slot)
         return false;
     updating = true;
-    prev_rng.clear();
     cur_holding = st.prev_input;
     msgbox_buf.clear();
     void* pState = plug::get().get_prop(plug::PtrProp::PState);
@@ -995,6 +997,10 @@ void state::fill_kbd_state(unsigned char* data) {
 static void state_reg_rng(int range, int value) {
     if (conf::get().fast_forward)
         return;
+    if (state::prev_rng_frame != state::st.frames) {
+        state::prev_rng.clear();
+        state::prev_rng_frame = state::st.frames;
+    }
     auto& str = state::prev_rng[range];
     if (!str.empty())
         str += ", ";
@@ -1078,7 +1084,7 @@ void state::draw_info() {
         }
         ImGui::Text("Keys: %s",
                     keys_str.empty() ? "" : keys_str.substr(0, keys_str.size() - 2).c_str());
-        ImGui::TextUnformatted("Prev frame RNG:");
+        ImGui::Text("Prev RNG (frame %i):", prev_rng_frame);
         for (auto& pair : prev_rng)
             ImGui::Text("%i: %s", pair.first, pair.second.c_str());
     }
