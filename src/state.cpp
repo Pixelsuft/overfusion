@@ -127,7 +127,7 @@ static std::vector<int> cur_holding;
 // Ugly needed buffer for message boxes
 static std::vector<int> msgbox_buf;
 // Prev frame RNG
-static std::map<int, string> prev_rng;
+static std::map<int, std::pair<string, int>> prev_rng;
 // Manual waiting stuff
 static LARGE_INTEGER last_counter;
 static double const_dt;
@@ -1061,7 +1061,9 @@ inline void state_reg_rng(int range, int value, bool our) {
         state::prev_rng.clear();
         state::prev_rng_frame = state::st.frames;
     }
-    auto& str = state::prev_rng[range];
+    auto& pair = state::prev_rng[range];
+    auto& str = pair.first;
+    pair.second++;
     if (str.length() > 128) {
         if (str.back() != '.')
             str += "...";
@@ -1153,7 +1155,7 @@ void state::draw_info() {
                     keys_str.empty() ? "" : keys_str.substr(0, keys_str.size() - 2).c_str());
         ImGui::Text("Prev RNG (frame %i):", prev_rng_frame);
         for (auto& pair : prev_rng)
-            ImGui::Text("%i: %s", pair.first, pair.second.c_str());
+            ImGui::Text("%i (x%i): %s", pair.first, pair.second.second, pair.second.first.c_str());
     }
 }
 
