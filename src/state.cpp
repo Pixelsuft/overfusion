@@ -124,7 +124,7 @@ static std::vector<int> cur_holding;
 // Ugly needed buffer for message boxes
 static std::vector<int> msgbox_buf;
 // Prev frame RNG
-static std::map<int, std::vector<int>> prev_rng;
+static std::map<int, string> prev_rng;
 // Manual waiting stuff
 static LARGE_INTEGER last_counter;
 static double const_dt;
@@ -150,7 +150,7 @@ static bool updating;
 static bool just_loaded;
 } // namespace state
 
-inline ost::optional<int> str_to_int(const std::string& str) {
+inline ost::optional<int> str_to_int(const string& str) {
     // No exceptions please
     char* endptr;
     long num = std::strtol(str.c_str(), &endptr, 10);
@@ -159,7 +159,7 @@ inline ost::optional<int> str_to_int(const std::string& str) {
     return {};
 }
 
-inline ost::optional<float> str_to_float(const std::string& str) noexcept {
+inline ost::optional<float> str_to_float(const string& str) noexcept {
     // No exceptions please
     char* endptr = nullptr;
     float num = std::strtof(str.c_str(), &endptr);
@@ -948,7 +948,7 @@ void state::add_mouse_toggle(int vk) {
     event.key.k = vk;
     event.key.down = !get_tas_mouse_down(vk);
     st.temp_ev.push_back(event);
-    last_msg = std::string("Queued mouse ") + (event.key.down ? "down" : "up");
+    last_msg = string("Queued mouse ") + (event.key.down ? "down" : "up");
 }
 
 void state::add_mouse_move() {
@@ -992,6 +992,15 @@ void state::fill_kbd_state(unsigned char* data) {
         data[val] = 1;
 }
 
+static void state_reg_rng(int range, int value) {
+    if (conf::get().fast_forward)
+        return;
+    auto& str = state::prev_rng[range];
+    if (!str.empty())
+        str += ", ";
+    str += std::to_string(value);
+}
+
 int state::fetch_random_number(int range, int value) {
     if (just_loaded)
         return value;
@@ -1002,14 +1011,12 @@ int state::fetch_random_number(int range, int value) {
     auto it = std::lower_bound(st.rng_buf.begin(), st.rng_buf.end(), range,
                                [](const IntPair& pair, int value) { return pair.first < value; });
     if (it == st.rng_buf.end() || it->first != range) {
-        if (!conf::get().fast_forward)
-            prev_rng[range].push_back(value);
+        state_reg_rng(range, value);
         return value;
     }
     auto ret = it->second;
     st.rng_buf.erase(it);
-    if (!conf::get().fast_forward)
-        prev_rng[range].push_back(ret);
+    state_reg_rng(range, ret);
     return ret;
 }
 
@@ -1061,29 +1068,19 @@ void state::draw_info() {
         auto win_pos = plug::get().mouse_to_window(m_pos.first, m_pos.second);
         ImGui::Text("Window mouse%s: %i, %i", get_tas_mouse_down(VK_LBUTTON) ? " [DOWN]" : "",
                     win_pos.first, win_pos.second);
-        std::string keys_str;
+        string keys_str;
         for (auto& vk : st.prev_input) {
             auto opt = input::vk_to_string(vk);
             if (opt.has_value()) {
-                keys_str += std::string(opt.value());
+                keys_str += string(opt.value());
                 keys_str += ", ";
             }
         }
         ImGui::Text("Keys: %s",
                     keys_str.empty() ? "" : keys_str.substr(0, keys_str.size() - 2).c_str());
         ImGui::TextUnformatted("Prev frame RNG:");
-        std::string rng_str;
-        for (auto& pair : prev_rng) {
-            rng_str.clear();
-            auto it = pair.second.begin();
-            rng_str += std::to_string(*it);
-            it++;
-            for (; it != pair.second.end(); it++) {
-                rng_str += ", ";
-                rng_str += std::to_string(*it);
-            }
-            ImGui::Text("%i: %s", pair.first, rng_str.c_str());
-        }
+        for (auto& pair : prev_rng)
+            ImGui::Text("%i: %s", pair.first, pair.second.c_str());
     }
 }
 
