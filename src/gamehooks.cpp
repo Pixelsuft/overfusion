@@ -87,7 +87,7 @@ static int __stdcall UpdateGameFrameH() {
     if (!inited) {
         of::info("UpdateGameFrame first call");
         if (cfg.custom_window) {
-            of::info("Initializing custom window for software renderer");
+            of::info("Initializing custom window");
             auto prev_thread_disable = cfg.disable_threads;
             cfg.disable_threads = false;
             if (!customwindow::init()) {
@@ -107,6 +107,7 @@ static int __stdcall UpdateGameFrameH() {
         if (!plug::get().update_init()) {
             of::error("Failed to init plugin first-frame");
             // Exit???
+            ENSURE(false);
         }
         hook::enable();
         hook::patch_iat();

@@ -991,7 +991,10 @@ void state::fill_kbd_state(unsigned char* data) {
 ost::optional<int> state::fetch_random_number(int range) {
     if (just_loaded)
         return {};
-    ASS(updating);
+    if (!updating) {
+        of::debug("Skipping random value fetch with range {}", range);
+        return {};
+    }
     auto it = std::lower_bound(st.rng_buf.begin(), st.rng_buf.end(), range,
                                [](const IntPair& pair, int value) { return pair.first < value; });
     if (it == st.rng_buf.end() || it->first != range)

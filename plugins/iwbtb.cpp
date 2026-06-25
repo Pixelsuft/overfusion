@@ -8,7 +8,6 @@
 #include "../tools/timer_fix.hpp"
 #include "../tools/viewport.hpp"
 #include <Windows.h>
-#include "../src/log.hpp"
 
 using ost::optional;
 using ost::string_view;
@@ -18,12 +17,14 @@ class PlugIwbtb final : public plug::PlugBase {
 private:
     void(__cdecl* SaveGameState)(void* hfile);
     void(__cdecl* LoadGameState)(void* hfile, unsigned int* outframe);
+    inline static unsigned int(__cdecl* RandomO)(unsigned int maxv);
 
 public:
     PlugIwbtb() {
         name = "I Wanna Be The Boshy";
         SaveGameState = nullptr;
         LoadGameState = nullptr;
+        RandomO = nullptr;
     }
 
     bool pre_init() override {
@@ -75,10 +76,19 @@ public:
         return true;
     }
 
+    static unsigned int __cdecl RandomH(unsigned int maxv) {
+        auto ret = RandomO(maxv);
+        auto temp_ret = state::fetch_random_number(static_cast<int>(maxv));
+        if (temp_ret.has_value())
+            ret = static_cast<unsigned int>(temp_ret.value());
+        return ret;
+    }
+
     bool update_init() override {
         auto& cfg = conf::get();
         cfg.tm_fix_event_entry_offset = 0xe;
         cfg.tm_fix_event_entry_type_offset = 0x10;
+        hook::hook(mem::get_base() + 0x1f890, RandomH, &RandomO);
         return true;
     }
 
