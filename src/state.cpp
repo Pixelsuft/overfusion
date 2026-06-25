@@ -1161,19 +1161,23 @@ void state::draw_info() {
 
 void state::draw_random_tab() {
     static int rval[3] = {0, 0, 0};
-    ImGui::InputInt("RNG value", &rval[0]);
-    if (ImGui::InputInt("RNG range", &rval[1]))
-        rval[1] = std::max(rval[1], 1);
+    if (ImGui::InputInt("RNG range", &rval[0]))
+        rval[0] = std::max(rval[0], 0);
+    if (ImGui::InputInt("RNG value", &rval[1]))
+        rval[1] = std::max(rval[1], 0);
     if (ImGui::InputInt("RNG repeat (0 - clear range)", &rval[2]))
         rval[2] = std::max(rval[2], 0);
     if (ImGui::Button("Push RNG temp event")) {
         Event event;
         event.frame = st.frames;
         event.idx = rval[2] != 0 ? event::Type::PushRandom : event::Type::PopRandom;
-        event.rng.range = static_cast<uint16_t>(rval[1]);
-        event.rng.value = static_cast<uint16_t>(rval[0]);
+        event.rng.range = static_cast<uint16_t>(rval[0]);
+        event.rng.value = static_cast<uint16_t>(rval[1]);
         event.rng.repeat = static_cast<uint16_t>(rval[2]);
-        st.temp_ev.push_back(event);
+        if (rval[2] != 0 && rval[0] == 0)
+            last_msg = "Incorrect range, temp event wasn't pushed";
+        else
+            st.temp_ev.push_back(event);
     }
     ImGui::TextUnformatted("RNG buffer: ");
     if (st.rng_buf.empty())
