@@ -21,6 +21,9 @@
 #undef max
 #undef min
 
+// TODO: RNG seed hash check event
+// TODO: event to repeat prev event
+
 constexpr int save_version = 1;
 constexpr int replay_version = 1;
 constexpr int empty_save_slot = -10000;
@@ -41,7 +44,7 @@ struct State {
     // or just duplicate them here? (this one might be the best)
     // Temp event list
     std::vector<Event> temp_ev;
-    // RNG queue
+    // RNG queue (range + value)
     std::vector<IntPair> rng_buf;
     // Holding inputs last frame
     std::vector<int> prev_input;
@@ -56,7 +59,7 @@ struct State {
     // Re-record count
     int rerec_count;
     // Random seed
-    unsigned short seed;
+    uint16_t seed;
 
     State() : scene(0), frames(0), total(0), rerec_count(0), seed(0), mouse_pos({-1.f, -1.f}) {}
 
@@ -195,9 +198,8 @@ static int get_scene_id() {
     return pScene ? *pScene : -1;
 }
 
-static unsigned short* get_rng_seed_ptr(void* pState) {
-    return reinterpret_cast<unsigned short*>(
-        plug::get().get_prop(plug::PtrProp::PRandomSeed, pState));
+static uint16_t* get_rng_seed_ptr(void* pState) {
+    return reinterpret_cast<uint16_t*>(plug::get().get_prop(plug::PtrProp::PRandomSeed, pState));
 }
 
 void state::init() {
@@ -270,6 +272,17 @@ void state::export_replay(string_view fn) {
             fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(int_idx) + ',' +
                                 std::to_string(e.mouse.x * 1000.f) + ',' +
                                 std::to_string(e.mouse.y * 1000.f));
+            ENSURE(fret);
+            break;
+        case event::Type::PushRandom:
+            fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(int_idx) + ',' +
+                                std::to_string(e.rng.range) + ',' + std::to_string(e.rng.value) +
+                                ',' + std::to_string(e.rng.repeat));
+            ENSURE(fret);
+            break;
+        case event::Type::PopRandom:
+            fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(int_idx) + ',' +
+                                std::to_string(e.rng.range));
             ENSURE(fret);
             break;
         case event::Type::MsgBox:
@@ -421,6 +434,28 @@ void state::import_replay(string_view fn) {
             }
             event.mouse.x = str_to_float(line.substr(start, end)).value_or(-1000.f) / 1000.f;
             event.mouse.y = str_to_float(line.substr(++end)).value_or(-1000.f) / 1000.f;
+            break;
+        case event::Type::PushRandom:
+            start = end;
+            end = line.find(',', start);
+            if (end == string::npos) {
+                of::error("Invalid RNG event line (range)");
+                continue;
+            }
+            event.rng.range =
+                static_cast<uint16_t>(str_to_int(line.substr(start, end)).value_or(0));
+            start = end + 1;
+            end = line.find(',', start);
+            if (end == string::npos) {
+                of::error("Invalid RNG event line (value)");
+                continue;
+            }
+            event.rng.value =
+                static_cast<uint16_t>(str_to_int(line.substr(start, end)).value_or(0));
+            event.rng.repeat = static_cast<uint16_t>(str_to_int(line.substr(++end)).value_or(0));
+            break;
+        case event::Type::PopRandom:
+            event.rng.range = static_cast<uint16_t>(str_to_int(line.substr(end)).value_or(0));
             break;
         case event::Type::MsgBox:
             event.msgbox.choice = str_to_int(line.substr(end)).value_or(0);
@@ -727,6 +762,27 @@ static bool exec_event(Event ev) {
         input::sim_mouse_move(real_p.first, real_p.second);
         return true;
     }
+    case event::Type::PushRandom: {
+        IntPair elem(static_cast<int>(ev.rng.range), static_cast<int>(ev.rng.value));
+        auto it =
+            std::upper_bound(state::st.rng_buf.begin(), state::st.rng_buf.end(), elem.first,
+                             [](int value, const IntPair& pair) { return value < pair.first; });
+        state::st.rng_buf.insert(it, ev.rng.repeat, elem);
+        return true;
+    }
+    case event::Type::PopRandom: {
+        int range = static_cast<int>(ev.rng.range);
+        auto it =
+            std::lower_bound(state::st.rng_buf.begin(), state::st.rng_buf.end(), range,
+                             [](const IntPair& pair, int value) { return pair.first < value; });
+        if (it == state::st.rng_buf.end())
+            return true;
+        auto end_it =
+            std::upper_bound(state::st.rng_buf.begin(), state::st.rng_buf.end(), range,
+                             [](int value, const IntPair& pair) { return value < pair.first; });
+        state::st.rng_buf.erase(it, end_it);
+        return true;
+    }
     case event::Type::MsgBox: {
         // Message box user choice
         state::msgbox_buf.push_back(ev.msgbox.choice);
@@ -994,7 +1050,7 @@ void state::fill_kbd_state(unsigned char* data) {
         data[val] = 1;
 }
 
-static void state_reg_rng(int range, int value) {
+inline void state_reg_rng(int range, int value, bool our) {
     if (conf::get().fast_forward)
         return;
     if (state::prev_rng_frame != state::st.frames) {
@@ -1002,9 +1058,16 @@ static void state_reg_rng(int range, int value) {
         state::prev_rng_frame = state::st.frames;
     }
     auto& str = state::prev_rng[range];
+    if (str.length() > 128) {
+        if (str.back() != '.')
+            str += "...";
+        return;
+    }
     if (!str.empty())
         str += ", ";
     str += std::to_string(value);
+    if (our)
+        str += '!';
 }
 
 int state::fetch_random_number(int range, int value) {
@@ -1017,12 +1080,12 @@ int state::fetch_random_number(int range, int value) {
     auto it = std::lower_bound(st.rng_buf.begin(), st.rng_buf.end(), range,
                                [](const IntPair& pair, int value) { return pair.first < value; });
     if (it == st.rng_buf.end() || it->first != range) {
-        state_reg_rng(range, value);
+        state_reg_rng(range, value, false);
         return value;
     }
     auto ret = it->second;
     st.rng_buf.erase(it);
-    state_reg_rng(range, ret);
+    state_reg_rng(range, ret, true);
     return ret;
 }
 
@@ -1088,6 +1151,10 @@ void state::draw_info() {
         for (auto& pair : prev_rng)
             ImGui::Text("%i: %s", pair.first, pair.second.c_str());
     }
+}
+
+void state::draw_random_tab() {
+    // TODO
 }
 
 void state::clear_temp_events() {

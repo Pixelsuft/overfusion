@@ -116,6 +116,9 @@ static void draw_menu(bool custom_window) {
     if (ImGui::CollapsingHeader("Plugin")) {
         plug::get().draw_menu();
     }
+    if (ImGui::CollapsingHeader("Random")) {
+        state::draw_random_tab();
+    }
     if (ImGui::CollapsingHeader("Recording")) {
         if (!video::is_recording()) {
             if (ImGui::Button("Start video recording"))

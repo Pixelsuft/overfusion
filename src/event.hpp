@@ -2,7 +2,15 @@
 #include <cstdint>
 
 namespace event {
-enum class Type : uint8_t { None = 0, KeyDown = 1, MouseDown = 2, MouseMove = 3, MsgBox = 20 };
+enum class Type : uint8_t {
+    None = 0,
+    KeyDown = 1,
+    MouseDown = 2,
+    MouseMove = 3,
+    PushRandom = 4,
+    PopRandom = 5,
+    MsgBox = 20
+};
 
 // Tagged union, in short
 struct Event {
@@ -22,6 +30,12 @@ struct Event {
         struct {
             int choice;
         } msgbox;
+        // RNG event
+        struct {
+            uint16_t range;
+            uint16_t value;
+            uint16_t repeat;
+        } rng;
         uint64_t dummy;
     };
     Type idx;
