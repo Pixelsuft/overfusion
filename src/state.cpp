@@ -772,6 +772,10 @@ static bool exec_event(Event ev) {
     }
     case event::Type::PopRandom: {
         int range = static_cast<int>(ev.rng.range);
+        if (range == 0) {
+            state::st.rng_buf.clear();
+            return true;
+        }
         auto it =
             std::lower_bound(state::st.rng_buf.begin(), state::st.rng_buf.end(), range,
                              [](const IntPair& pair, int value) { return pair.first < value; });
@@ -1154,7 +1158,21 @@ void state::draw_info() {
 }
 
 void state::draw_random_tab() {
-    // TODO
+    static int rval[3] = {0, 0, 0};
+    ImGui::InputInt("RNG value", &rval[0]);
+    if (ImGui::InputInt("RNG range", &rval[1]))
+        rval[1] = std::max(rval[1], 1);
+    if (ImGui::InputInt("RNG repeat (0 - clear range)", &rval[2]))
+        rval[2] = std::max(rval[2], 0);
+    if (ImGui::Button("Push RNG temp event")) {
+        Event event;
+        event.frame = st.frames;
+        event.idx = rval[2] != 0 ? event::Type::PushRandom : event::Type::PopRandom;
+        event.rng.range = static_cast<uint16_t>(rval[1]);
+        event.rng.value = static_cast<uint16_t>(rval[0]);
+        event.rng.repeat = static_cast<uint16_t>(rval[2]);
+        st.temp_ev.push_back(event);
+    }
 }
 
 void state::clear_temp_events() {
