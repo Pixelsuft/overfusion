@@ -444,6 +444,10 @@ void state::import_replay(string_view fn) {
             }
             event.rng.range =
                 static_cast<uint16_t>(str_to_int(line.substr(start, end)).value_or(0));
+            if (event.rng.range == 0) {
+                of::error("Invalid RNG event (range)");
+                continue;
+            }
             start = end + 1;
             end = line.find(',', start);
             if (end == string::npos) {
