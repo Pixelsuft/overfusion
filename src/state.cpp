@@ -1175,6 +1175,34 @@ void state::draw_random_tab() {
         event.rng.repeat = static_cast<uint16_t>(rval[2]);
         st.temp_ev.push_back(event);
     }
+    ImGui::TextUnformatted("RNG buffer: ");
+    if (st.rng_buf.empty())
+        return;
+    string buf_str;
+    int prev_range = 0;
+    int count = 0;
+    for (auto& pair : st.rng_buf) {
+        ASS(pair.first != 0);
+        if (prev_range != pair.first) {
+            if (prev_range != 0) {
+                ASS(buf_str.size() > 2);
+                ImGui::Text("%i (x%i): %s", prev_range, count, buf_str.c_str() + 2);
+            }
+            buf_str.clear();
+            prev_range = pair.first;
+            count = 0;
+        }
+        if (buf_str.size() > 128) {
+            if (buf_str.back() != '.')
+                buf_str += "...";
+        } else {
+            buf_str += ", ";
+            buf_str += std::to_string(pair.second);
+        }
+        count++;
+    }
+    ASS(buf_str.size() > 2);
+    ImGui::Text("%i (x%i): %s", prev_range, count, buf_str.c_str() + 2);
 }
 
 void state::clear_temp_events() {
@@ -1196,16 +1224,13 @@ void state::reset_game() {
     // Skip if reset is already in progress
     if (*ptr)
         return;
-    st.prev_input.clear();
-    st.ev.clear();
-    st.total = 0;
-    st.prev_input.clear();
-    st.mouse_pos.first = st.mouse_pos.second = -1.f;
+    int prev_frames = st.frames;
+    st.clear_lists();
+    st.clear_values();
     msgbox_buf.clear();
     cur_holding.clear();
     repl_index = 0;
-    if (st.frames != 0) {
-        st.frames = 0;
+    if (prev_frames != 0) {
         *ptr = 4;
         ptr = reinterpret_cast<short*>(plug::get().get_prop(plug::PtrProp::PNextFrameData, pState));
         ASS(ptr != nullptr);
