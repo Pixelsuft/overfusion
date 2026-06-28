@@ -7,8 +7,9 @@ enum class Type : uint8_t {
     KeyDown = 1,
     MouseDown = 2,
     MouseMove = 3,
-    PushRandom = 4,
-    PopRandom = 5,
+    SetSeed = 5,
+    PushRandom = 6,
+    PopRandom = 7,
     MsgBox = 20
 };
 

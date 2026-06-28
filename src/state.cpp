@@ -280,6 +280,7 @@ void state::export_replay(string_view fn) {
                                 ',' + std::to_string(e.rng.repeat));
             ENSURE(fret);
             break;
+        case event::Type::SetSeed:
         case event::Type::PopRandom:
             fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(int_idx) + ',' +
                                 std::to_string(e.rng.range));
@@ -462,6 +463,7 @@ void state::import_replay(string_view fn) {
                 continue;
             }
             break;
+        case event::Type::SetSeed:
         case event::Type::PopRandom:
             event.rng.range = static_cast<uint16_t>(str_to_int(line.substr(end)).value_or(0));
             break;
@@ -770,7 +772,15 @@ static bool exec_event(Event ev) {
         input::sim_mouse_move(real_p.first, real_p.second);
         return true;
     }
+    case event::Type::SetSeed: {
+        auto pState = plug::get().get_prop(plug::PtrProp::PState);
+        auto pRandomSeed = get_rng_seed_ptr(pState);
+        if (pRandomSeed)
+            *pRandomSeed = ev.rng.range;
+        return true;
+    }
     case event::Type::PushRandom: {
+        // Push value to RNG buffer
         IntPair elem(static_cast<int>(ev.rng.range), static_cast<int>(ev.rng.value));
         auto it =
             std::upper_bound(state::st.rng_buf.begin(), state::st.rng_buf.end(), elem.first,
@@ -779,6 +789,7 @@ static bool exec_event(Event ev) {
         return true;
     }
     case event::Type::PopRandom: {
+        // Clear RNG buffer with specific range (or entirely)
         int range = static_cast<int>(ev.rng.range);
         if (range == 0) {
             state::st.rng_buf.clear();
@@ -1170,11 +1181,11 @@ void state::draw_info() {
 void state::draw_random_tab() {
     static int rval[3] = {0, 0, 0};
     if (ImGui::InputInt("RNG range", &rval[0]))
-        rval[0] = std::max(rval[0], 0);
+        rval[0] = std::min(std::max(rval[0], 0), 65535);
     if (ImGui::InputInt("RNG value", &rval[1]))
-        rval[1] = std::max(rval[1], 0);
+        rval[1] = std::min(std::max(rval[1], 0), 65535);
     if (ImGui::InputInt("RNG repeat (0 - clear range)", &rval[2]))
-        rval[2] = std::max(rval[2], 0);
+        rval[2] = std::min(std::max(rval[2], 0), 65535);
     if (ImGui::Button("Push RNG temp event")) {
         Event event;
         event.frame = st.frames;
@@ -1187,6 +1198,7 @@ void state::draw_random_tab() {
         else
             st.temp_ev.push_back(event);
     }
+    // TODO: push random seed
     ImGui::TextUnformatted("RNG buffer: ");
     if (st.rng_buf.empty())
         return;
