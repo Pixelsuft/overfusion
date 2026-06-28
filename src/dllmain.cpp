@@ -28,6 +28,8 @@ static void of_main() {
 #endif
 #endif
     of::info("OverFusion injected!");
+    SetEnvironmentVariableW(L"WINEDEBUG", L"+d3d,+d3d9,+wined3d");
+    SetEnvironmentVariableW(L"WINE_DBG_OUTPUT", L"stdout");
     SetEnvironmentVariableW(L"GALLIUM_DRIVER", L"llvmpipe");
     SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", L"true");
     conf::init();

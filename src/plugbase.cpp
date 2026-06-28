@@ -28,6 +28,8 @@ void PlugBase::after_dll_load(ost::string_view path, ost::string_view fn, void* 
 
 void* PlugBase::after_proc_get(void* module, const char* proc, void* ret) { return ret; }
 
+void PlugBase::early_update() {}
+
 bool PlugBase::set_trans_enabled(bool enabled) { return false; }
 
 std::pair<float, float> PlugBase::mouse_from_window(int x, int y) { return {-1.f, -1.f}; }

@@ -996,9 +996,12 @@ void files::init() {
 }
 
 void files::hook_fs() {
+    auto& cfg = conf::get();
+    if (!cfg.virtual_fs)
+        return;
     IAT_STR_AUTO("kernel32.dll", DeleteFile);
     IAT_STR_AUTO("kernel32.dll", CreateFile);
-    if (!conf::get().no_ini_hooks) {
+    if (!cfg.no_ini_hooks) {
         // Why this shit is so slow
         IAT_STR_ONLY("kernel32.dll", WritePrivateProfileString);
         IAT_STR_ONLY("kernel32.dll", GetPrivateProfileString);

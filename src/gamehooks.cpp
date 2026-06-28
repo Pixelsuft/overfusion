@@ -102,8 +102,7 @@ static int __stdcall UpdateGameFrameH() {
         timehooks::update_init();
         threadhooks::update_init();
         extrahooks::init_adv();
-        if (conf::get().virtual_fs)
-            files::hook_fs();
+        files::hook_fs();
         if (!plug::get().update_init()) {
             of::error("Failed to init plugin first-frame");
             // Exit???
@@ -112,6 +111,7 @@ static int __stdcall UpdateGameFrameH() {
         hook::enable();
         hook::patch_iat();
     }
+    plug::get().early_update();
     state::early_update();
     if (!cfg.processing_save)
         input::process_update();

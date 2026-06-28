@@ -282,7 +282,7 @@ static bool module_iat_apply(void* hModule) {
 }
 
 static bool is_iat_dll_blocked(ost::string_view dll) {
-#ifdef _DEBUG
+#if defined(_DEBUG) && 1
     return false;
 #else
     return dll == "ntdll.dll" || dll == "dxcore.dll" || dll == "dxgi.dll" || dll == "ddraw.dll" ||

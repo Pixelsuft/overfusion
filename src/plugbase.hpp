@@ -47,6 +47,8 @@ public:
     virtual void after_dll_load(ost::string_view path, ost::string_view fn, void* mod);
     // GetProcAddress hook: return ret by default or your custom pointer
     virtual void* after_proc_get(void* module, const char* proc, void* ret);
+    // Before every frame update
+    virtual void early_update();
     // You should implement transition enable/disable if your game uses so
     virtual bool set_trans_enabled(bool enabled);
     // Normalize mouse coordinates from window
