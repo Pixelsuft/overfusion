@@ -91,6 +91,7 @@ public:
     bool already_processed_frame;
     bool redraw_on_skip;
     bool processing_save;
+    bool is_hourglass;
 
     Config();
     void read();

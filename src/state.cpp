@@ -924,6 +924,10 @@ void state::after_update() {
                 }
             }
         }
+        if (cfg.is_hourglass) {
+            Sleep(static_cast<DWORD>(get_time(TimeOffset::None) - prev_time));
+            return;
+        }
     } else if (!cfg.processing_save && need_scene_slot == empty_save_slot && pRandomSeed) {
         if (just_loaded) {
             // FIXME: sometimes fails when loading a state from a different scene FSR
