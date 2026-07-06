@@ -83,7 +83,7 @@ void* mem::get_addr(const char* obj_name, const char* func_name) {
 bool mem::_flush_instructions(size_t addr, size_t size) {
     auto ret = FlushInstructionCache(hproc, reinterpret_cast<void*>(addr), size);
     ENSURE(ret);
-    return ret;
+    return ret != FALSE;
 }
 
 bool mem::_write_memory(size_t addr, const void* data, size_t size) {
@@ -251,9 +251,8 @@ static bool module_iat_apply(void* hModule) {
                     reinterpret_cast<BYTE*>(hModule) + pOriginalThunk->u1.AddressOfData);
                 auto funcName = reinterpret_cast<char*>(pImportByName->Name);
                 auto target =
-                    std::find_if(targets.begin(), targets.end(), [funcName](const auto& t) {
-                        return strcmp(funcName, t.funcName.c_str()) == 0;
-                    });
+                    std::find_if(targets.begin(), targets.end(),
+                                 [funcName](const auto& t) { return t.funcName == funcName; });
                 if (target == targets.end())
                     continue;
                 if (reinterpret_cast<PVOID>(pThunk->u1.Function) == target->hookFunc)

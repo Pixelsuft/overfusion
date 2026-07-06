@@ -44,9 +44,13 @@ inline void log_format(const char* level, const std::string& fmt, Args&&... args
     std::cout << "[" << level << "] " << oss.str() << std::endl;
 }
 
+#ifdef _DEBUG
 template <typename... Args> void debug(const std::string& fmt, Args&&... args) {
     log_format("debug", fmt, std::forward<Args>(args)...);
 }
+#else
+template <typename... Args> void debug(const char* fmt, Args&&... args) {}
+#endif
 
 template <typename... Args> void info(const std::string& fmt, Args&&... args) {
     log_format("info", fmt, std::forward<Args>(args)...);
