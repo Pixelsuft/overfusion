@@ -10,6 +10,7 @@
 #include "mypair.hpp"
 #include "ofs.hpp"
 #include "plugbase.hpp"
+#include "randhooks.hpp"
 #include "timehooks.hpp"
 #include "video.hpp"
 #include <Windows.h>
@@ -1266,5 +1267,6 @@ void state::reset_game() {
     }
     files::clear_fs();
     audio::reinit_capture();
+    randhooks::reset();
     last_msg = "Restarting game";
 }

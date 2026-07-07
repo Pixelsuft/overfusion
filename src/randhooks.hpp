@@ -2,4 +2,5 @@
 
 namespace randhooks {
 void init();
+void reset();
 }

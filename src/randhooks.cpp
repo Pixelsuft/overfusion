@@ -22,11 +22,13 @@ static int __cdecl randH(void) {
     return ret;
 }
 
+void randhooks::reset() { rand_seed = 1; }
+
 void randhooks::init() {
     if (mem::get_base("msvcrt.dll") != 0) {
-        rand_seed = 1;
         IAT_ONLY("msvcrt.dll", srand);
         IAT_ONLY("msvcrt.dll", rand);
     } else
         of::warn("Failed to hook rand() and srand() (msvcrt.dll was not loaded)");
+    reset();
 }
