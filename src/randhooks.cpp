@@ -5,8 +5,6 @@
 #include "state.hpp"
 #include <Windows.h>
 
-// TODO: patch TextInputFramework.dll to not use rand() and srand()
-
 namespace randhooks {
 static DWORD rand_thread;
 static unsigned int rand_seed;
@@ -37,6 +35,10 @@ static int __cdecl randH(void) {
 
 static errno_t(__cdecl* rand_sO)(unsigned int* randomValue);
 static errno_t __cdecl rand_sH(unsigned int* randomValue) {
+    if (randhooks::rand_thread != GetCurrentThreadId()) {
+        of::debug("rand_s() was called from a different thread");
+        return rand_sO(randomValue);
+    }
     of::warn("Game used rand_s() which is not implemented");
     return rand_sO(randomValue);
 }

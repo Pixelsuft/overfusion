@@ -281,14 +281,16 @@ static bool module_iat_apply(void* hModule) {
 }
 
 static bool is_iat_dll_blocked(ost::string_view dll) {
-#if defined(_DEBUG) && 1
-    return false;
-#else
-    return dll == "ntdll.dll" || dll == "dxcore.dll" || dll == "dxgi.dll" || dll == "ddraw.dll" ||
-           dll == "d3d9.dll" || dll == "d3d8.dll" || dll == "dsound.dll" || dll == "nvd3dum.dll" ||
-           dll == "nvgpucomp32.dll" || dll == "nvldumd.dll" || dll == "NvMemMapStorage.dll" ||
-           dll == "nvppe.dll" || dll == "nvspcap.dll";
+    // NOTES:
+    // textinputframework.dll is important to block to not affect RNG
+    return
+#ifndef _DEBUG
+        dll == "ntdll.dll" || dll == "dxcore.dll" || dll == "dxgi.dll" || dll == "ddraw.dll" ||
+        dll == "d3d9.dll" || dll == "d3d8.dll" || dll == "dsound.dll" || dll == "nvd3dum.dll" ||
+        dll == "nvgpucomp32.dll" || dll == "nvldumd.dll" || dll == "nvmemmapstorage.dll" ||
+        dll == "nvppe.dll" || dll == "nvspcap.dll" ||
 #endif
+        dll == "textinputframework.dll";
 }
 
 bool hook::patch_iat() {

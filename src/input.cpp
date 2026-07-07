@@ -244,6 +244,31 @@ static UINT WINAPI SendInputH(UINT cInputs, LPINPUT pInputs, int cbSize) {
     return 0;
 }
 
+static SHORT WINAPI tsfGetKeyStateH(int vk) {
+    of::debug("tsfGetKeyStateH");
+    return GetKeyStateH(vk);
+}
+
+static SHORT WINAPI tsfGetAsyncKeyStateH(int vk) {
+    of::debug("tsfGetAsyncKeyState");
+    return GetKeyStateH(vk);
+}
+
+static BOOL WINAPI tsfGetKeyboardStateH(PBYTE lpKeyState) {
+    of::debug("tsfGetKeyboardState");
+    return GetKeyboardStateH(lpKeyState);
+}
+
+static void* WINAPI TsfOneCreateH(void* param_1, int* param_2, DWORD param_3, DWORD* param_4) {
+    of::debug("TsfOneCreate");
+    return nullptr;
+}
+
+static int WINAPI InputFocusChangedH(int param_1, void *param_2) {
+    of::debug("InputFocusChanged");
+    return 0;
+}
+
 void input::init() {
     std::memset(kbd_state, 0, sizeof(bool) * 256);
     IAT_AUTO("user32.dll", GetKeyState);
@@ -259,6 +284,12 @@ void input::init() {
     IAT_ONLY("user32.dll", mouse_event);
     IAT_ONLY("user32.dll", SendInput);
     IAT_ONLY("user32.dll", SetCursorPos);
+    // FIXME: these don't wanna get hooked
+    IAT_ONLY("textinputframework.dll", tsfGetKeyState);
+    IAT_ONLY("textinputframework.dll", tsfGetAsyncKeyState);
+    IAT_ONLY("textinputframework.dll", tsfGetKeyboardState);
+    IAT_ONLY("textinputframework.dll", TsfOneCreate);
+    IAT_ONLY("textinputframework.dll", InputFocusChanged);
 }
 
 ost::optional<int> input::vk_from_string(ost::string_view s) {
