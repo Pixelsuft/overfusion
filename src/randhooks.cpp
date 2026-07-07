@@ -47,12 +47,9 @@ static errno_t __cdecl rand_sH(unsigned int* randomValue) {
 void randhooks::reset() { rand_seed = 1; }
 
 void randhooks::init() {
-    if (mem::get_base("msvcrt.dll") != 0) {
-        IAT_AUTO("msvcrt.dll", srand);
-        IAT_AUTO("msvcrt.dll", rand);
-        IAT_AUTO("msvcrt.dll", rand_s);
-        rand_thread = GetCurrentThreadId();
-    } else
-        of::warn("Failed to hook rand() and srand() (msvcrt.dll was not loaded)");
+    rand_thread = GetCurrentThreadId();
     reset();
+    IAT_AUTO("msvcrt.dll", srand);
+    IAT_AUTO("msvcrt.dll", rand);
+    IAT_AUTO("msvcrt.dll", rand_s);
 }
