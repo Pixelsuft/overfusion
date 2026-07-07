@@ -24,13 +24,13 @@ static UINT WINAPI DragQueryFileWH(HDROP hDrop, UINT iFile, LPWSTR lpszFile, UIN
 static UINT WINAPI DragQueryFileAH(HDROP hDrop, UINT iFile, LPSTR lpszFile, UINT cch) { return 0; }
 
 static HINSTANCE WINAPI ShellExecuteAH(HWND hwnd, LPCSTR op, LPCSTR file, LPCSTR params, LPCSTR dir,
-                                INT show) {
+                                       INT show) {
     of::info("ShellExecuteA: {} {}", uconv::from_ansi(op), uconv::from_ansi(file));
     return reinterpret_cast<HINSTANCE>(SE_ERR_ACCESSDENIED);
 }
 
-static HINSTANCE WINAPI ShellExecuteWH(HWND hwnd, LPCWSTR op, LPCWSTR file, LPCWSTR params, LPCWSTR dir,
-                                INT show) {
+static HINSTANCE WINAPI ShellExecuteWH(HWND hwnd, LPCWSTR op, LPCWSTR file, LPCWSTR params,
+                                       LPCWSTR dir, INT show) {
     of::info("ShellExecuteW: {} {}", uconv::from_utf16(op), uconv::from_utf16(file));
     return reinterpret_cast<HINSTANCE>(SE_ERR_ACCESSDENIED);
 }
@@ -248,7 +248,7 @@ static LPWSTR WINAPI GetCommandLineWH() {
 }
 
 void extrahooks::init() {
-    [] {
+    {
         auto& cfg = conf::get();
         strcpy(my_argv_a, GetCommandLineA());
         wcscpy(my_argv_w, GetCommandLineW());
@@ -268,7 +268,7 @@ void extrahooks::init() {
         if (addr)
             *reinterpret_cast<wchar_t**>(addr) = my_argv_w;
         of::info("Command line: {}", uconv::from_utf16(my_argv_w));
-    }();
+    }
     // TODO: GetDateFormatEx, GetLocaleInfoEx, GetTimeFormatEx, GetUserDefaultLocaleName
     IAT_AUTO("shell32.dll", DragAcceptFiles);
     IAT_STR_ONLY("shell32.dll", DragQueryFile);

@@ -409,7 +409,7 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
     case WM_UAHDRAWMENU: {
         auto pUDM = reinterpret_cast<UAHMENU*>(lParam);
         RECT rc = {0};
-        if (true) {
+        {
             MENUBARINFO mbi = {sizeof(mbi)};
             GetMenuBarInfo(hWnd, OBJID_MENU, 0, &mbi);
             RECT rcWindow;
