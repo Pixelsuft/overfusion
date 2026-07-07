@@ -1,13 +1,14 @@
 #include "perspective.hpp"
 #include "../src/config.hpp"
+#include "../src/log.hpp"
 #include <cstring>
 #include <imgui.h>
 
 namespace perspective {
 static void* mod_handle = nullptr;
 
-short(__stdcall* DisplayRunObjectO)(void* pthis);
-short __stdcall DisplayRunObjectH(void* pthis) {
+static short(__stdcall* DisplayRunObjectO)(void* pthis);
+static short __stdcall DisplayRunObjectH(void* pthis) {
     if (conf::get().disable_perspective)
         return 0;
     return DisplayRunObjectO(pthis);
