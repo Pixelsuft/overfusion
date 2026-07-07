@@ -105,7 +105,7 @@ static video::CheckResult check_record(std::pair<int, int> new_size) {
     }
     if (video::recording && !video::ffmpeg.is_open()) {
         video::size = new_size;
-        string cmd = cfg.ffmpeg_cmdline;
+        string cmd = cfg.video_cmdline;
         size_t pos;
         while ((pos = cmd.find("$FPS")) != std::string::npos)
             cmd.replace(pos, 4, std::to_string(cfg.fps));

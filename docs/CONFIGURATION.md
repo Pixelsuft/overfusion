@@ -38,7 +38,7 @@ You can use [default config](../overfusion.json) and [default project config](..
 `disable_viewport` - disable `Viewport.mfx` Fusion plugin display <br />
 `disable_perspective` - disable `Perspective.mfx` Fusion plugin display <br />
 `audio_size_hash_limit` - maximum audio file size (in bytes) to hash audio to avoid duplicates during audio capturing <br />
-`ffmpeg_cmdline` - FFmpeg command line for video capturing <br />
+`video_cmdline` - FFmpeg command line for video capturing <br />
 `binds` - keyboard bindings <br />
 
 ## Settings (ofproject.json)

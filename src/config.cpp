@@ -122,7 +122,7 @@ Config::Config() {
         }
     }
     // TODO: validate project_name
-    ffmpeg_cmdline =
+    video_cmdline =
         "ffmpeg -y -f:v rawvideo -s $SIZE -pix_fmt rgb32 -r $FPS -i - -an $PROJ/$NAME.mp4";
     system_offset = local_offset = startup_offset = 0;
     tm_fix_event_entry_offset = tm_fix_event_entry_type_offset = 0;
@@ -251,8 +251,8 @@ void Config::read() {
         no_mouse_manipulation = proj_data["no_mouse_manipulation"];
     if (proj_data["cmdline_append"].is_string())
         cmdline_append = proj_data["cmdline_append"];
-    if (data["ffmpeg_cmdline"].is_string())
-        ffmpeg_cmdline = data["ffmpeg_cmdline"];
+    if (data["video_cmdline"].is_string())
+        video_cmdline = data["video_cmdline"];
     if (data["binds"].is_array()) {
         for (auto& val : data["binds"]) {
             if (!val.is_object())

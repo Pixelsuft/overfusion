@@ -31,7 +31,7 @@ public:
     std::vector<Bind> binds;
     std::string cmdline_append;
     std::string project_name;
-    std::string ffmpeg_cmdline;
+    std::string video_cmdline;
     std::pair<int, int> forced_res;
     uint64_t system_offset;
     uint64_t local_offset;

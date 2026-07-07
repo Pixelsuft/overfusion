@@ -480,17 +480,19 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
         }
         for (auto& win_hwnd : win_shit.cached_windows)
             fix_win32_theme_real(win_hwnd);
+        win_shit.enabled = 1;
         DeleteObject(win_shit.g_brItemBackground);
         DeleteObject(win_shit.g_brItemBackgroundHot);
         DeleteObject(win_shit.g_brItemBackgroundSelected);
-        win_shit.g_brItemBackground = win_shit.enabled == 1 ? CreateSolidBrush(RGB(32, 32, 32))
-                                                            : CreateSolidBrush(RGB(255, 255, 255));
+        win_shit.g_brItemBackground = win_shit.enabled == 1
+                                          ? CreateSolidBrush(RGB(32, 32, 32))
+                                          : CreateSolidBrush(GetSysColor(COLOR_3DFACE));
         win_shit.g_brItemBackgroundHot = win_shit.enabled == 1
                                              ? CreateSolidBrush(RGB(69, 69, 69))
                                              : CreateSolidBrush(RGB(245, 245, 245));
         win_shit.g_brItemBackgroundSelected = win_shit.enabled == 1
                                                   ? CreateSolidBrush(RGB(56, 56, 56))
-                                                  : CreateSolidBrush(RGB(249, 249, 249));
+                                                  : CreateSolidBrush(GetSysColor(COLOR_WINDOW));
         return false;
     }
     case WM_NCPAINT:

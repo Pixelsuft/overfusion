@@ -2,12 +2,12 @@
 #include "audio.hpp"
 #include "config.hpp"
 #include "lock.hpp"
+#include "log.hpp"
 #include "mem.hpp"
 #include "state.hpp"
 #include <Windows.h>
 #include <mmsystem.h>
 // after
-#include "log.hpp"
 #include <algorithm>
 #include <dsound.h>
 #include <vector>
@@ -482,7 +482,7 @@ void audio::reinit_capture() {
     capturing = conf::get().record_audio;
     last_uid = 0;
     last_time = 0;
-    cap_time_offset = 0; // TODO: configure it
+    cap_time_offset = 0;
 }
 
 void audio::init() {

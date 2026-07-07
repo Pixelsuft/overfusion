@@ -4,7 +4,7 @@ FFmpeg in the PATH variable
 
 ## Capturing video
 
-1. Configure `ffmpeg_cmdline` (note that it uses NVENC codec by default that works only with NVIDIA cards)
+1. Configure `video_cmdline` (note that it uses NVENC codec by default that works only with NVIDIA cards)
 2. Start video capture any time inside the `Recording` section of the menu
 3. You can see the `[VIDEO]` sign inside the info window
 4. Stop video capture
