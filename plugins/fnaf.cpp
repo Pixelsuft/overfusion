@@ -5,7 +5,6 @@
 #include "../src/winhooks.hpp"
 #include "../tools/perspective.hpp"
 #include <Windows.h>
-#include "../src/log.hpp"
 
 using of::string_view;
 using std::string;

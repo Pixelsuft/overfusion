@@ -5,7 +5,6 @@
 #include "../src/state.hpp"
 #include "../tools/perspective.hpp"
 #include "../tools/timer_fix.hpp"
-#include "../src/log.hpp"
 
 using of::string_view;
 using std::string;

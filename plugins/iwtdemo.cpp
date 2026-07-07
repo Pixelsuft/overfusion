@@ -1,6 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/config.hpp"
-#include "../src/log.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"

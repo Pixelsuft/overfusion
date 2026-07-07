@@ -7,7 +7,6 @@
 #include "../tools/perspective.hpp"
 #include "../tools/timer_fix.hpp"
 #include <Windows.h>
-#include "../src/log.hpp"
 
 using of::string_view;
 using std::string;
