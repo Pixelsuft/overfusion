@@ -13,7 +13,7 @@
 #include "uconv.hpp"
 #include <Windows.h>
 
-using ost::string_view;
+using of::string_view;
 using std::string;
 
 extern int WINAPI MessageBoxWH(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType);
@@ -50,14 +50,15 @@ static string get_module_path(HMODULE module) {
     return uconv::from_utf16(path);
 }
 
-static ost::optional<std::string> before_load(string_view path) {
+static of::optional<std::string> before_load(string_view path) {
     auto fn = get_filename(path);
     // Blocklist some unnecessary modules
     if (fn == "mmf2d3d8.dll") {
         of::warn("Direct3D8 is not supported, a custom window will be used");
         conf::get().custom_window = true;
         // return "";
-    } else if (fn == "Imm32.dll" || fn == "mscoree.dll" || fn == "uxtheme.dll") {
+    } else if (fn == "Imm32.dll" || fn == "imm32.dll" || fn == "mscoree.dll" || fn == "msctf.dll" ||
+               fn == "uxtheme.dll") {
         return "";
     } else if (fn == "xinput1_4.dll" || fn == "xinput1_3.dll" || fn == "xinput1_2.dll" ||
                fn == "xinput1_1.dll" || fn == "xinput9_1_0.dll") {

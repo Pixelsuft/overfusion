@@ -42,9 +42,9 @@ public:
     // Init before processing first frame
     virtual bool update_init();
     // DLL load hook: nullopt for default value, empty string for failing
-    virtual ost::optional<std::string> before_dll_load(ost::string_view path, ost::string_view fn);
+    virtual of::optional<std::string> before_dll_load(of::string_view path, of::string_view fn);
     // When DLL was loaded
-    virtual void after_dll_load(ost::string_view path, ost::string_view fn, void* mod);
+    virtual void after_dll_load(of::string_view path, of::string_view fn, void* mod);
     // GetProcAddress hook: return ret by default or your custom pointer
     virtual void* after_proc_get(void* module, const char* proc, void* ret);
     // Before every frame update
@@ -60,13 +60,13 @@ public:
     // Get pointer to something
     virtual void* get_prop(PtrProp prop, void* data = nullptr) = 0;
     // Save game and your data here
-    virtual ost::expected<void, std::string> save_state(ofs::File& file) = 0;
+    virtual of::expected<void, std::string> save_state(ofs::File& file) = 0;
     // Load game and your data here
-    virtual ost::expected<void, std::string> load_state(ofs::File& file) = 0;
+    virtual of::expected<void, std::string> load_state(ofs::File& file) = 0;
     virtual ~PlugBase();
 };
 
-using PlugCheckCallback = ost::optional<PlugBase*> (*)();
+using PlugCheckCallback = of::optional<PlugBase*> (*)();
 
 bool search_and_run();
 PlugBase& get();
@@ -75,7 +75,7 @@ PlugBase& get();
 void _reg_internal(plug::PlugCheckCallback callback);
 template <typename T, typename = typename std::enable_if<std::is_base_of<PlugBase, T>::value &&
                                                          !std::is_same<PlugBase, T>::value>::type>
-inline void reg(ost::optional<T*> (*callback)()) {
+inline void reg(of::optional<T*> (*callback)()) {
     _reg_internal(reinterpret_cast<PlugCheckCallback>(callback));
 }
 #endif

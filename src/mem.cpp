@@ -182,10 +182,10 @@ bool hook::_hook_iat_by_addr(void* hModule, const char* dll, const void* addr, v
     return false;
 }
 
-static bool has_no_uppercase(ost::string_view sv) {
+static bool has_no_uppercase(of::string_view sv) {
     return std::all_of(sv.begin(), sv.end(), [](unsigned char c) { return !std::isupper(c); });
 }
-bool hook::_reg_iat(ost::string_view dll, ost::string_view func_name, void* pNewFunc,
+bool hook::_reg_iat(of::string_view dll, of::string_view func_name, void* pNewFunc,
                     void** ppOriginal) {
     string str_dll(dll);
     ASS(has_no_uppercase(dll));
@@ -280,7 +280,7 @@ static bool module_iat_apply(void* hModule) {
     return true;
 }
 
-static bool is_iat_dll_blocked(ost::string_view dll) {
+static bool is_iat_dll_blocked(of::string_view dll) {
     // NOTES:
     // textinputframework.dll is important to block to not affect RNG
     return
@@ -320,7 +320,7 @@ bool hook::patch_iat() {
     }
 }
 
-void* hook::get_iated_func(void* mod, ost::string_view name) {
+void* hook::get_iated_func(void* mod, of::string_view name) {
 #ifdef IAT_SUPPORT_DYNAMIC
     auto mod_it = mod_map.find(mod);
     if (mod_it == mod_map.end())

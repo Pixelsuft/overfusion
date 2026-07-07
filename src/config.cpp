@@ -13,12 +13,12 @@
 #undef min
 
 using conf::Config;
-using ost::string_view;
+using of::string_view;
 using std::string;
 
 static Config* _conf_ptr;
 
-static nlohmann::json read_config_file(ost::string_view path) {
+static nlohmann::json read_config_file(of::string_view path) {
     // Try to read and parse config file from disk
     of::info("Reading config: {}", path);
     ofs::File file(path, 0);
@@ -61,7 +61,7 @@ static nlohmann::json read_config_file(ost::string_view path) {
 
 constexpr bool is_valid_vk(int vk) { return vk > 0 && vk < 256; }
 
-static ost::optional<conf::Task> task_from_string(string_view sv) {
+static of::optional<conf::Task> task_from_string(string_view sv) {
     static const std::map<string_view, conf::Task> task_map = {
         {"save", conf::Task::SaveState},
         {"load", conf::Task::LoadState},
@@ -83,7 +83,7 @@ static ost::optional<conf::Task> task_from_string(string_view sv) {
     return it->second;
 }
 
-static ost::optional<int> key_from_json(nlohmann::json& val) {
+static of::optional<int> key_from_json(nlohmann::json& val) {
     if (val.is_string()) {
         return input::vk_from_string(val);
     } else if (val.is_number_integer()) {

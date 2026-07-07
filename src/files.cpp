@@ -22,7 +22,7 @@
 
 // TODO: implement other filesystem functions
 
-using ost::string_view;
+using of::string_view;
 using std::string;
 
 // Our file structure we keep in memory
@@ -191,7 +191,7 @@ static bool is_allowed_file(string_view path) {
            !path.ends_with(".bin");*/
 }
 
-static ost::optional<void*> handle_file_open(string_view path, bool for_read, bool for_write,
+static of::optional<void*> handle_file_open(string_view path, bool for_read, bool for_write,
                                              DWORD dwCreationDisposition) {
     // of::debug("open file {}", path);
     string norm_fp = normalize_path(path);

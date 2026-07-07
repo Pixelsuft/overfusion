@@ -7,8 +7,7 @@
 #include <Windows.h>
 #include "../src/log.hpp"
 
-using ost::optional;
-using ost::string_view;
+using of::string_view;
 using std::string;
 
 class PlugIwbtg final : public plug::PlugBase {
@@ -45,11 +44,6 @@ public:
     }
 
     bool update_init() override { return true; }
-
-    optional<std::string> before_dll_load(string_view path, string_view fn) override {
-        // of::info("Before load {}", fn);
-        return {};
-    }
 
     void after_dll_load(string_view path, string_view fn, void* mod) override {
         if (mod == nullptr)
@@ -98,20 +92,20 @@ public:
         }
     }
 
-    ost::expected<void, string> save_state(ofs::File& file) override {
+    of::expected<void, string> save_state(ofs::File& file) override {
         // I think that is unsupported
         if (conf::get().save_game_state)
             state::invalidate_process("Unsupported");
         return {};
     }
 
-    ost::expected<void, string> load_state(ofs::File& file) override {
+    of::expected<void, string> load_state(ofs::File& file) override {
         if (!conf::get().is_replay)
             state::invalidate_process("Unsupported");
         return {};
     }
 
-    static ost::optional<PlugIwbtg*> on_plugin_check() {
+    static of::optional<PlugIwbtg*> on_plugin_check() {
         if (mem::exe_name == "stdrt.exe" &&
             ofs::file_exists(string(ofs::get_cwd()) + "\\iwbtg.exe"))
             return new PlugIwbtg;

@@ -7,7 +7,7 @@
 #include <Windows.h>
 
 using ofs::File;
-using ost::string_view;
+using of::string_view;
 using std::string;
 
 extern HANDLE(WINAPI* CreateFileWO)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD,
@@ -139,7 +139,7 @@ bool ofs::remove_file(string_view path) {
     return ret;
 }
 
-bool ofs::make_dir(ost::string_view path) {
+bool ofs::make_dir(of::string_view path) {
     wchar_t* converted = uconv::to_utf16(path);
     ENSURE(converted != nullptr);
     auto ret = CreateDirectoryW(converted, nullptr) != 0 || GetLastError() == ERROR_ALREADY_EXISTS;
@@ -147,7 +147,7 @@ bool ofs::make_dir(ost::string_view path) {
     return ret;
 }
 
-bool ofs::file_exists(ost::string_view path) {
+bool ofs::file_exists(of::string_view path) {
     wchar_t* converted = uconv::to_utf16(path);
     ENSURE(converted != nullptr);
     auto dwAttrib = GetFileAttributesW(converted);

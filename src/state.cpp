@@ -30,7 +30,7 @@ constexpr int replay_version = 1;
 constexpr int empty_save_slot = -10000;
 
 using event::Event;
-using ost::string_view;
+using of::string_view;
 using std::string;
 
 extern HWND hwnd;
@@ -156,7 +156,7 @@ static bool updating;
 static bool just_loaded;
 } // namespace state
 
-inline ost::optional<int> str_to_int(const string& str) {
+inline of::optional<int> str_to_int(const string& str) {
     // No exceptions please
     char* endptr;
     long num = std::strtol(str.c_str(), &endptr, 10);
@@ -165,7 +165,7 @@ inline ost::optional<int> str_to_int(const string& str) {
     return {};
 }
 
-inline ost::optional<float> str_to_float(const string& str) noexcept {
+inline of::optional<float> str_to_float(const string& str) noexcept {
     // No exceptions please
     char* endptr = nullptr;
     float num = std::strtof(str.c_str(), &endptr);
@@ -690,7 +690,7 @@ bool state::invalidate_process(string_view text) {
     return true;
 }
 
-int state::process_message_box(ost::string_view text, ost::string_view caption,
+int state::process_message_box(of::string_view text, of::string_view caption,
                                unsigned int uType) {
     if (uType == 0x30 && invalidate_process(text))
         return IDOK;

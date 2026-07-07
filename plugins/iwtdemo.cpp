@@ -1,15 +1,14 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/config.hpp"
+#include "../src/log.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
 #include "../tools/perspective.hpp"
 #include "../tools/timer_fix.hpp"
 #include <Windows.h>
-#include "../src/log.hpp"
 
-using ost::optional;
-using ost::string_view;
+using of::string_view;
 using std::string;
 
 class PlugIwtDemo final : public plug::PlugBase {
@@ -80,7 +79,7 @@ public:
         return true;
     }
 
-    optional<std::string> before_dll_load(string_view path, string_view fn) override {
+    of::optional<std::string> before_dll_load(string_view path, string_view fn) override {
         if (fn == "wininet.dll")
             return "";
         // of::info("Before load {}", fn);
@@ -156,7 +155,7 @@ public:
         }
     }
 
-    ost::expected<void, string> save_state(ofs::File& file) override {
+    of::expected<void, string> save_state(ofs::File& file) override {
         if (conf::get().save_game_state) {
             std::vector<IntPair> timer_data;
             auto timer_ret = timer_fix::save(timer_data);
@@ -171,7 +170,7 @@ public:
         return {};
     }
 
-    ost::expected<void, string> load_state(ofs::File& file) override {
+    of::expected<void, string> load_state(ofs::File& file) override {
         if (!conf::get().is_replay) {
             std::vector<IntPair> timer_data;
             state::load_bin(file, timer_data);
@@ -186,7 +185,7 @@ public:
         return {};
     }
 
-    static ost::optional<PlugIwtDemo*> on_plugin_check() {
+    static of::optional<PlugIwtDemo*> on_plugin_check() {
         if (mem::exe_name == "I WANNA TRY - A New Adventure Demo.exe")
             return new PlugIwtDemo;
         return {};

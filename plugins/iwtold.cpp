@@ -7,8 +7,7 @@
 #include "../tools/timer_fix.hpp"
 #include "../src/log.hpp"
 
-using ost::optional;
-using ost::string_view;
+using of::string_view;
 using std::string;
 
 class PlugIwtOld final : public plug::PlugBase {
@@ -127,7 +126,7 @@ public:
         }
     }
 
-    ost::expected<void, string> save_state(ofs::File& file) override {
+    of::expected<void, string> save_state(ofs::File& file) override {
         if (conf::get().save_game_state) {
             std::vector<IntPair> timer_data;
             auto timer_ret = timer_fix::save(timer_data);
@@ -142,7 +141,7 @@ public:
         return {};
     }
 
-    ost::expected<void, string> load_state(ofs::File& file) override {
+    of::expected<void, string> load_state(ofs::File& file) override {
         if (!conf::get().is_replay) {
             std::vector<IntPair> timer_data;
             state::load_bin(file, timer_data);
@@ -157,7 +156,7 @@ public:
         return {};
     }
 
-    static ost::optional<PlugIwtOld*> on_plugin_check() {
+    static of::optional<PlugIwtOld*> on_plugin_check() {
         if (mem::exe_name == "I WANNA TRY 1.9.8.3.exe")
             return new PlugIwtOld;
         return {};

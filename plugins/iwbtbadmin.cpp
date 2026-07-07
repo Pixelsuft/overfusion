@@ -9,8 +9,7 @@
 #include <Windows.h>
 #include "../src/log.hpp"
 
-using ost::optional;
-using ost::string_view;
+using of::string_view;
 using std::string;
 
 struct ConditionHeader {
@@ -88,7 +87,7 @@ public:
         return true;
     }
 
-    optional<std::string> before_dll_load(string_view path, string_view fn) override {
+    of::optional<std::string> before_dll_load(string_view path, string_view fn) override {
         if (fn == "wininet.dll")
             return "";
         // of::info("Before load {}", fn);
@@ -169,7 +168,7 @@ public:
         }
     }
 
-    ost::expected<void, string> save_state(ofs::File& file) override {
+    of::expected<void, string> save_state(ofs::File& file) override {
         if (conf::get().save_game_state) {
             std::vector<IntPair> timer_data;
             auto timer_ret = timer_fix::save(timer_data);
@@ -181,7 +180,7 @@ public:
         return {};
     }
 
-    ost::expected<void, string> load_state(ofs::File& file) override {
+    of::expected<void, string> load_state(ofs::File& file) override {
         unsigned int outframe = 0;
         if (!conf::get().is_replay) {
             std::vector<IntPair> timer_data;
@@ -194,7 +193,7 @@ public:
         return {};
     }
 
-    static ost::optional<PlugIwbtbAdmin*> on_plugin_check() {
+    static of::optional<PlugIwbtbAdmin*> on_plugin_check() {
         if (mem::exe_name == "I Wanna Be The Boshy [admin].exe")
             return new PlugIwbtbAdmin;
         return {};

@@ -17,7 +17,7 @@ namespace input {
 static bool kbd_state[256];
 static std::vector<std::pair<int, bool>> kbd_que;
 
-static const std::map<ost::string_view, int> vk_map = {{"f1", VK_F1},
+static const std::map<of::string_view, int> vk_map = {{"f1", VK_F1},
                                                        {"f2", VK_F2},
                                                        {"f3", VK_F3},
                                                        {"f4", VK_F4},
@@ -292,7 +292,7 @@ void input::init() {
     IAT_ONLY("textinputframework.dll", InputFocusChanged);
 }
 
-ost::optional<int> input::vk_from_string(ost::string_view s) {
+of::optional<int> input::vk_from_string(of::string_view s) {
     std::string lowered(s);
     std::transform(lowered.begin(), lowered.end(), lowered.begin(), ::tolower);
     auto it = vk_map.find(lowered);
@@ -304,7 +304,7 @@ ost::optional<int> input::vk_from_string(ost::string_view s) {
     return it->second;
 }
 
-ost::optional<ost::string_view> input::vk_to_string(int vk) {
+of::optional<of::string_view> input::vk_to_string(int vk) {
     switch (vk) {
     case VK_F1:
         return "F1";

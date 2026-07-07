@@ -10,7 +10,7 @@ namespace state {
 enum class TimeOffset { None, System, Local, Startup, Reminder };
 
 void init();
-bool invalidate_process(ost::string_view text);
+bool invalidate_process(of::string_view text);
 bool is_save_handle(void* handle);
 void early_update();
 bool before_update(bool is_transitioning);
@@ -30,14 +30,14 @@ void save_state(int slot);
 void load_state(int slot);
 void reset_game();
 void clear_temp_events();
-void set_last_msg(ost::string_view msg);
-void export_replay(ost::string_view fn);
-void import_replay(ost::string_view fn);
+void set_last_msg(of::string_view msg);
+void export_replay(of::string_view fn);
+void import_replay(of::string_view fn);
 std::pair<int, int> get_mouse_pos();
 bool get_tas_mouse_down(int vk);
 std::pair<float, float> get_tas_mouse_pos();
 bool set_win_mouse_pos(int x, int y);
-int process_message_box(ost::string_view text, ost::string_view caption, unsigned int uType);
+int process_message_box(of::string_view text, of::string_view caption, unsigned int uType);
 void remember_message_box(int choice);
 int fetch_random_number(int range, int value);
 void draw_random_tab();

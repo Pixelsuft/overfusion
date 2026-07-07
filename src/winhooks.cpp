@@ -12,7 +12,7 @@
 #include <Windows.h>
 #include <backends/imgui_impl_win32.h>
 
-using ost::string_view;
+using of::string_view;
 using std::string;
 
 namespace winhooks {

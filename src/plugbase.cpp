@@ -20,11 +20,11 @@ bool PlugBase::pre_init() { return true; }
 
 bool PlugBase::update_init() { return true; }
 
-ost::optional<std::string> PlugBase::before_dll_load(ost::string_view path, ost::string_view fn) {
+of::optional<std::string> PlugBase::before_dll_load(of::string_view path, of::string_view fn) {
     return {};
 }
 
-void PlugBase::after_dll_load(ost::string_view path, ost::string_view fn, void* mod) {}
+void PlugBase::after_dll_load(of::string_view path, of::string_view fn, void* mod) {}
 
 void* PlugBase::after_proc_get(void* module, const char* proc, void* ret) { return ret; }
 

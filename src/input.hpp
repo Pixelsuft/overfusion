@@ -12,6 +12,6 @@ void sim_key_event(int vk, bool down);
 void sim_mouse_event(int vk, bool down);
 void sim_mouse_move(int x, int y);
 std::pair<int, int> get_real_mouse_pos();
-ost::optional<int> vk_from_string(ost::string_view s);
-ost::optional<ost::string_view> vk_to_string(int vk);
+of::optional<int> vk_from_string(of::string_view s);
+of::optional<of::string_view> vk_to_string(int vk);
 } // namespace input

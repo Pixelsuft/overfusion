@@ -35,7 +35,7 @@ std::string uconv::from_ansi(const char* input) {
     return from_utf16(wide_str.data());
 }
 
-wchar_t* uconv::to_utf16(ost::string_view input) {
+wchar_t* uconv::to_utf16(of::string_view input) {
     if (input.empty()) {
         auto ret = reinterpret_cast<wchar_t*>(std::malloc(2));
         if (ret)
@@ -61,7 +61,7 @@ wchar_t* uconv::to_utf16(ost::string_view input) {
     return buffer;
 }
 
-char* uconv::to_ansi(ost::string_view input) {
+char* uconv::to_ansi(of::string_view input) {
     if (input.empty()) {
         auto ret = reinterpret_cast<char*>(std::malloc(1));
         if (ret)

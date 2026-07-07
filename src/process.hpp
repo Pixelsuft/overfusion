@@ -16,7 +16,7 @@ private:
 public:
     Subprocess();
     bool is_open();
-    bool open(ost::string_view cmdline);
+    bool open(of::string_view cmdline);
     bool close();
     bool write(const void* data, size_t size);
     Subprocess(const Subprocess&) = delete;
@@ -26,5 +26,5 @@ public:
     ~Subprocess();
 };
 
-ost::optional<std::string> get_env(ost::string_view key);
+of::optional<std::string> get_env(of::string_view key);
 } // namespace process

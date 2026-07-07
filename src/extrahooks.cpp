@@ -10,7 +10,7 @@
 #include <Windows.h>
 #include <shellapi.h>
 
-using ost::string_view;
+using of::string_view;
 
 namespace extrahooks {
 static char my_argv_a[MAX_PATH * 2];

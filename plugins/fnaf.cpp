@@ -7,8 +7,7 @@
 #include <Windows.h>
 #include "../src/log.hpp"
 
-using ost::optional;
-using ost::string_view;
+using of::string_view;
 using std::string;
 
 class PlugFnaf final : public plug::PlugBase {
@@ -125,20 +124,20 @@ public:
         }
     }
 
-    ost::expected<void, string> save_state(ofs::File& file) override {
+    of::expected<void, string> save_state(ofs::File& file) override {
         if (conf::get().save_game_state)
             SaveGameState(file.get_handle());
         return {};
     }
 
-    ost::expected<void, string> load_state(ofs::File& file) override {
+    of::expected<void, string> load_state(ofs::File& file) override {
         unsigned int outframe = 0;
         if (!conf::get().is_replay)
             LoadGameState(file.get_handle(), &outframe);
         return {};
     }
 
-    static ost::optional<PlugFnaf*> on_plugin_check() {
+    static of::optional<PlugFnaf*> on_plugin_check() {
         if (mem::exe_name == "FiveNightsatFreddys.exe")
             return new PlugFnaf;
         return {};

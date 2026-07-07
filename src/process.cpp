@@ -24,7 +24,7 @@ Subprocess::~Subprocess() {
 
 bool Subprocess::is_open() { return pi.hProcess != nullptr; }
 
-bool Subprocess::open(ost::string_view cmdline) {
+bool Subprocess::open(of::string_view cmdline) {
     ASS(!is_open());
     SECURITY_ATTRIBUTES saAttr;
     ZeroMemory(&saAttr, sizeof(saAttr));
@@ -98,7 +98,7 @@ bool Subprocess::close() {
     return true;
 }
 
-ost::optional<std::string> process::get_env(ost::string_view key) {
+of::optional<std::string> process::get_env(of::string_view key) {
     auto key_w = uconv::to_utf16(key);
     ENSURE(key_w);
     wchar_t buf[512];

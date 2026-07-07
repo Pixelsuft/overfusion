@@ -3,19 +3,19 @@
 #if (defined(_MSC_VER) ? _MSVC_LANG : __cplusplus) >= 202302L
 #include <expected>
 
-namespace ost {
+namespace of {
 using std::expected;
 using std::unexpect;
 using std::unexpect_t;
 using std::unexpected;
-} // namespace ost
+} // namespace of
 #else
 #include <tl/expected.hpp>
 
-namespace ost {
+namespace of {
 using tl::expected;
 using tl::unexpect;
 using tl::unexpect_t;
 using tl::unexpected;
-} // namespace ost
+} // namespace of
 #endif

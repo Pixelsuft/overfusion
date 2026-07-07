@@ -7,7 +7,7 @@
 // For some reason these timers get reset when game loads state, so let's manually remember them
 // FIXME: seems to be it's unstable during loading a state from a different scene and may crash
 
-ost::expected<void, std::string> timer_fix::save(std::vector<IntPair>& data) {
+of::expected<void, std::string> timer_fix::save(std::vector<IntPair>& data) {
     auto& cfg = conf::get();
     if (!cfg.allow_timers_fix)
         return {};
@@ -19,7 +19,7 @@ ost::expected<void, std::string> timer_fix::save(std::vector<IntPair>& data) {
     size_t eventGroup = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(gStats) + 0x80);
     if (eventGroup == 0) {
         of::error("eventGroup is nullptr WTF");
-        return ost::unexpected<std::string>("failed to save timers - eventGroup was nullptr");
+        return of::unexpected<std::string>("failed to save timers - eventGroup was nullptr");
     }
     while (*reinterpret_cast<short*>(eventGroup) != 0) {
         uint8_t* cond = reinterpret_cast<uint8_t*>(eventGroup) + cfg.tm_fix_event_entry_offset;
@@ -57,7 +57,7 @@ ost::expected<void, std::string> timer_fix::save(std::vector<IntPair>& data) {
     return {};
 }
 
-ost::expected<void, std::string> timer_fix::load(std::vector<IntPair> data) {
+of::expected<void, std::string> timer_fix::load(std::vector<IntPair> data) {
     auto& cfg = conf::get();
     if (!cfg.allow_timers_fix) {
         if (!data.empty())
@@ -72,7 +72,7 @@ ost::expected<void, std::string> timer_fix::load(std::vector<IntPair> data) {
     size_t eventGroup = *reinterpret_cast<size_t*>(reinterpret_cast<size_t>(gStats) + 0x80);
     if (eventGroup == 0) {
         of::error("eventGroup is nullptr WTF");
-        return ost::unexpected<std::string>("Failed to load timers - eventGroup was nullptr");
+        return of::unexpected<std::string>("Failed to load timers - eventGroup was nullptr");
     }
     while (*reinterpret_cast<short*>(eventGroup) != 0) {
         uint8_t* cond = reinterpret_cast<uint8_t*>(eventGroup) + cfg.tm_fix_event_entry_offset;
@@ -92,10 +92,10 @@ ost::expected<void, std::string> timer_fix::load(std::vector<IntPair> data) {
                             int intervalValue = *reinterpret_cast<int*>(cond2 + 4);
                             int* timerValue = reinterpret_cast<int*>(cond2 + 8);
                             if (it == data.end())
-                                return ost::unexpected<std::string>(
+                                return of::unexpected<std::string>(
                                     "WTF not enough data to fix timers");
                             if (intervalValue != it->first)
-                                return ost::unexpected<std::string>("Fixing timers gone wrong");
+                                return of::unexpected<std::string>("Fixing timers gone wrong");
                             *timerValue = it->second;
                             it++;
                         }

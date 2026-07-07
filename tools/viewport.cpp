@@ -14,7 +14,7 @@ short __stdcall DisplayRunObjectH(void* pthis) {
 }
 } // namespace viewport
 
-void viewport::after_dll_load(ost::string_view fn, void* mod) {
+void viewport::after_dll_load(of::string_view fn, void* mod) {
     if (!mod_handle && fn == "Viewport.mfx")
         mod_handle = mod;
 }

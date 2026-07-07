@@ -5,6 +5,6 @@
 #include <vector>
 
 namespace timer_fix {
-ost::expected<void, std::string> save(std::vector<IntPair>& data);
-ost::expected<void, std::string> load(std::vector<IntPair> data);
+of::expected<void, std::string> save(std::vector<IntPair>& data);
+of::expected<void, std::string> load(std::vector<IntPair> data);
 } // namespace timer_fix
