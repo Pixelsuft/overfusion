@@ -26,11 +26,9 @@ static int __cdecl randH(void) {
         of::debug("rand() was called from a different thread");
         return randO();
     }
-    // Taken from decompiled msvcrt.dll (Windows 7 - Windows 11, at least)
+    // Taken from decompiled msvcrt.dll (Windows XP - Windows 11)
     randhooks::rand_seed = randhooks::rand_seed * 0x343fd + 0x269ec3;
-    int ret = randhooks::rand_seed >> 16 & 0x7fff;
-    ret = state::fetch_random_number(0x7fff, ret);
-    return ret;
+    return state::fetch_random_number(0x7fff, randhooks::rand_seed >> 16 & 0x7fff);
 }
 
 static errno_t(__cdecl* rand_sO)(unsigned int* randomValue);
@@ -39,8 +37,11 @@ static errno_t __cdecl rand_sH(unsigned int* randomValue) {
         of::debug("rand_s() was called from a different thread");
         return rand_sO(randomValue);
     }
-    of::warn("Game used rand_s() which is not implemented");
-    return rand_sO(randomValue);
+    of::error("TODO: implement rand_s()");
+    auto ret = rand_sO(randomValue);
+    if (ret == 0 && randomValue)
+        *randomValue = 0;
+    return ret;
 }
 
 void randhooks::reset() { rand_seed = 1; }
