@@ -13,7 +13,6 @@
 #include "uconv.hpp"
 #include <Windows.h>
 
-using ost::optional;
 using ost::string_view;
 using std::string;
 
@@ -51,7 +50,7 @@ static string get_module_path(HMODULE module) {
     return uconv::from_utf16(path);
 }
 
-static optional<std::string> before_load(string_view path) {
+static ost::optional<std::string> before_load(string_view path) {
     auto fn = get_filename(path);
     // Blocklist some unnecessary modules
     if (fn == "mmf2d3d8.dll") {
