@@ -20,28 +20,28 @@ static wchar_t my_argv_w[MAX_PATH * 2];
 static void(WINAPI* DragAcceptFilesO)(HWND hWnd, BOOL fAccept);
 static void WINAPI DragAcceptFilesH(HWND hWnd, BOOL fAccept) { DragAcceptFilesO(hWnd, FALSE); }
 
-static UINT DragQueryFileWH(HDROP hDrop, UINT iFile, LPWSTR lpszFile, UINT cch) { return 0; }
-static UINT DragQueryFileAH(HDROP hDrop, UINT iFile, LPSTR lpszFile, UINT cch) { return 0; }
+static UINT WINAPI DragQueryFileWH(HDROP hDrop, UINT iFile, LPWSTR lpszFile, UINT cch) { return 0; }
+static UINT WINAPI DragQueryFileAH(HDROP hDrop, UINT iFile, LPSTR lpszFile, UINT cch) { return 0; }
 
-static HINSTANCE ShellExecuteAH(HWND hwnd, LPCSTR op, LPCSTR file, LPCSTR params, LPCSTR dir,
+static HINSTANCE WINAPI ShellExecuteAH(HWND hwnd, LPCSTR op, LPCSTR file, LPCSTR params, LPCSTR dir,
                                 INT show) {
     of::info("ShellExecuteA: {} {}", uconv::from_ansi(op), uconv::from_ansi(file));
     return reinterpret_cast<HINSTANCE>(SE_ERR_ACCESSDENIED);
 }
 
-static HINSTANCE ShellExecuteWH(HWND hwnd, LPCWSTR op, LPCWSTR file, LPCWSTR params, LPCWSTR dir,
+static HINSTANCE WINAPI ShellExecuteWH(HWND hwnd, LPCWSTR op, LPCWSTR file, LPCWSTR params, LPCWSTR dir,
                                 INT show) {
     of::info("ShellExecuteW: {} {}", uconv::from_utf16(op), uconv::from_utf16(file));
     return reinterpret_cast<HINSTANCE>(SE_ERR_ACCESSDENIED);
 }
 
-static BOOL ShellExecuteExAH(SHELLEXECUTEINFOA* pExecInfo) {
+static BOOL WINAPI ShellExecuteExAH(SHELLEXECUTEINFOA* pExecInfo) {
     of::info("ShellExecuteExA: {} {}", uconv::from_ansi(pExecInfo->lpVerb),
              uconv::from_ansi(pExecInfo->lpFile));
     return FALSE;
 }
 
-static BOOL ShellExecuteExWH(SHELLEXECUTEINFOW* pExecInfo) {
+static BOOL WINAPI ShellExecuteExWH(SHELLEXECUTEINFOW* pExecInfo) {
     of::info("ShellExecuteExW: {} {}", uconv::from_utf16(pExecInfo->lpVerb),
              uconv::from_utf16(pExecInfo->lpFile));
     return FALSE;
@@ -123,7 +123,7 @@ static int WINAPI WSAStartupH(WORD wVersionRequired, LPWSADATA lpWSAData) {
 
 static int WINAPI bindH(SOCKET s, const sockaddr* addr, int namelen) { return SOCKET_ERROR; }
 
-static BOOL __stdcall GetUserNameAH(LPSTR lpBuffer, LPDWORD pcbBuffer) {
+static BOOL WINAPI GetUserNameAH(LPSTR lpBuffer, LPDWORD pcbBuffer) {
     if (!pcbBuffer)
         return FALSE;
     *pcbBuffer = 11;
@@ -136,7 +136,7 @@ static BOOL __stdcall GetUserNameAH(LPSTR lpBuffer, LPDWORD pcbBuffer) {
     return TRUE;
 }
 
-static BOOL __stdcall GetUserNameWH(LPWSTR lpBuffer, LPDWORD pcbBuffer) {
+static BOOL WINAPI GetUserNameWH(LPWSTR lpBuffer, LPDWORD pcbBuffer) {
     if (!pcbBuffer)
         return FALSE;
     *pcbBuffer = 11;
@@ -231,18 +231,18 @@ static LSTATUS WINAPI RegCreateKeyWH(HKEY hKey, LPCWSTR lpSubKey, PHKEY phkResul
     return ERROR_ACCESS_DENIED;
 }
 
-static BOOL __stdcall InternetGetConnectedStateH(LPDWORD lpdwFlags, DWORD dwReserved) {
+static BOOL WINAPI InternetGetConnectedStateH(LPDWORD lpdwFlags, DWORD dwReserved) {
     of::debug("Faking InternetGetConnectedState returning an error");
     *lpdwFlags = 0x20;
     return FALSE;
 }
 
-static LPSTR GetCommandLineAH() {
+static LPSTR WINAPI GetCommandLineAH() {
     // of::debug("GetCommandLineAH {}", my_argv_a);
     return extrahooks::my_argv_a;
 }
 
-static LPWSTR GetCommandLineWH() {
+static LPWSTR WINAPI GetCommandLineWH() {
     // of::debug("GetCommandLineWH {}", uconv::from_utf16(my_argv_w));
     return extrahooks::my_argv_w;
 }
