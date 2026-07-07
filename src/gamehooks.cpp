@@ -8,6 +8,7 @@
 #include "log.hpp"
 #include "mem.hpp"
 #include "plugbase.hpp"
+#include "randhooks.hpp"
 #include "state.hpp"
 #include "threadhooks.hpp"
 #include "timehooks.hpp"
@@ -102,6 +103,7 @@ static int __stdcall UpdateGameFrameH() {
         timehooks::update_init();
         threadhooks::update_init();
         extrahooks::init_adv();
+        randhooks::init();
         files::hook_fs();
         if (!plug::get().update_init()) {
             of::error("Failed to init plugin first-frame");

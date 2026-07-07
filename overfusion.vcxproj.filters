@@ -183,6 +183,9 @@
     <ClCompile Include="tools\viewport.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
+    <ClCompile Include="src\randhooks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest">
@@ -284,6 +287,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\log.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\randhooks.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

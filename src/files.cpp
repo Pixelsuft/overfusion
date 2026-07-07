@@ -1001,7 +1001,7 @@ void files::hook_fs() {
     IAT_STR_AUTO("kernel32.dll", DeleteFile);
     IAT_STR_AUTO("kernel32.dll", CreateFile);
     if (!cfg.no_ini_hooks) {
-        // Why this shit is so slow
+        // FIXME: Why this shit is so slow
         IAT_STR_ONLY("kernel32.dll", WritePrivateProfileString);
         IAT_STR_ONLY("kernel32.dll", GetPrivateProfileString);
     }
