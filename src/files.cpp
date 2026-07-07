@@ -4,6 +4,7 @@
 #include "ass.hpp"
 #include "config.hpp"
 #include "lock.hpp"
+#include "log.hpp"
 #include "mem.hpp"
 #include "ofs.hpp"
 #include "opt.hpp"
@@ -12,7 +13,6 @@
 #include <Windows.h>
 #undef min
 #undef max
-#include "log.hpp"
 #include <SimpleIni.h>
 #include <algorithm>
 #include <fcntl.h>
@@ -22,7 +22,6 @@
 
 // TODO: implement other filesystem functions
 
-using ost::optional;
 using ost::string_view;
 using std::string;
 
@@ -192,8 +191,8 @@ static bool is_allowed_file(string_view path) {
            !path.ends_with(".bin");*/
 }
 
-static optional<void*> handle_file_open(string_view path, bool for_read, bool for_write,
-                                        DWORD dwCreationDisposition) {
+static ost::optional<void*> handle_file_open(string_view path, bool for_read, bool for_write,
+                                             DWORD dwCreationDisposition) {
     // of::debug("open file {}", path);
     string norm_fp = normalize_path(path);
     if (!is_allowed_file(norm_fp))
