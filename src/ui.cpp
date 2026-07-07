@@ -136,7 +136,7 @@ static void draw_menu(bool custom_window) {
         }
         if (cfg.record_audio && audio::is_recording()) {
             if (ImGui::Button("Stop audio capture"))
-                audio::flush();
+                audio::finish();
         }
     }
     if (cfg.virtual_fs && ImGui::CollapsingHeader("Virtual Filesystem")) {

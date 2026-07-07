@@ -73,6 +73,8 @@ struct AudioCapture {
 };
 
 class IDSBProxy;
+// Bat file
+static ofs::File bat;
 // History for generating filter
 static std::vector<AudioCapture> history;
 // Cache so we can include still-not-finished audio on 'flush'
@@ -89,6 +91,7 @@ static uint64_t last_time;
 static uint64_t cap_time_offset;
 // For generating fn
 static int last_uid;
+static int fn_counter;
 
 // Generate deterministic fn based on the current time
 static int gen_uid(uint64_t mytime) {
@@ -305,6 +308,8 @@ public:
                 auto it = std::find(cache.begin(), cache.end(), this);
                 ASS(it != cache.end());
                 cache.erase(it);
+                if (cache.empty())
+                    audio::flush();
             }
             delete this;
         }
@@ -479,10 +484,17 @@ static BOOL WINAPI BeepH(DWORD dwFreq, DWORD dwDuration) {
 bool audio::is_recording() { return capturing; }
 
 void audio::reinit_capture() {
+    if (bat.is_open())
+        bat.close();
+    auto bat_ret = bat.open(base_path + "\\..\\audio_merge.bat", 1);
+    ENSURE(bat_ret);
+    bat.writeln("@echo off");
+    bat.writeln("cd " + base_path);
     capturing = conf::get().record_audio;
     last_uid = 0;
     last_time = 0;
     cap_time_offset = 0;
+    fn_counter = 0;
 }
 
 void audio::init() {
@@ -498,13 +510,12 @@ void audio::init() {
     }
     if (!cfg.allow_audio_hook && !cfg.disable_audio)
         return;
-    if (cfg.record_audio)
+    if (cfg.record_audio) {
         of::warn("Audio recording is still in BETA");
-    reinit_capture();
-    if (capturing) {
         base_path = string(ofs::get_cwd()) + '\\' + cfg.project_name + "\\temp_audio";
         auto dir_ret = ofs::make_dir(base_path);
         ENSURE(dir_ret);
+        reinit_capture();
     }
     IAT_STR_ONLY("winmm.dll", mciSendCommand);
     IAT_ONLY("kernel32.dll", Beep);
@@ -518,19 +529,13 @@ void audio::init() {
 }
 
 void audio::flush() {
-    if (!capturing)
-        return;
-    lock::CSLock lock(acs);
-    auto& cfg = conf::get();
-    for (IDSBProxy* c : cache)
-        c->finalize_wav();
-    capturing = false;
-    of::debug("flush {}", history.size());
     if (history.empty())
         return;
-
-    // Let's make a FFmpeg script with filter file to join all the WAVs
-    ofs::File filters(base_path + "\\audio_filters.txt", 1);
+    auto& cfg = conf::get();
+    auto now = audio_get_time();
+    of::debug("audio flush {}", history.size());
+    ofs::File filters(base_path + "\\audio_filters" + std::to_string(fn_counter) + ".txt", 1);
+    ENSURE(filters.is_open());
     string mix = "";
     size_t count = 0;
     bool support_pan = cfg.support_audio_panning;
@@ -542,9 +547,8 @@ void audio::flush() {
         size_t numSegs = c.events.size();
         filters.write("amovie=" + audio_get_fn(c.hash, c.startTime, c.idx) +
                       ",asplit=" + std::to_string(numSegs));
-        for (size_t e = 0; e < numSegs; e++) {
+        for (size_t e = 0; e < numSegs; e++)
             filters.write("[b" + std::to_string(count) + "s" + std::to_string(e) + "]");
-        }
         filters.writeln(";");
         string segmentLabels = "";
         for (size_t e = 0; e < c.events.size(); e++) {
@@ -576,22 +580,38 @@ void audio::flush() {
         mix += finalLabel;
         count++;
     }
-    filters.write(mix + "amix=inputs=" + std::to_string(count) + ":normalize=0[out]");
-    auto bat_path = base_path + "\\..\\audio_merge.bat";
-    if (!ofs::file_exists(bat_path)) {
-        // Write bat script only once, don't touch if user modified it
-        ofs::File bat(bat_path, 1);
-        bat.writeln("@echo off");
-        bat.writeln("cd " + base_path);
-        // Note: this "-/filter_complex" syntax is fine (for stupid AI)
-        bat.writeln(
-            "ffmpeg -y -/filter_complex audio_filters.txt -map \"[out]\" -ar 48000 ../audio.wav");
-        bat.writeln("echo Waiting to delete wav cache...");
-        bat.writeln("pause");
-        bat.writeln("del audio_filters.txt");
-        bat.writeln("del a*.wav");
-        bat.writeln("cd ..");
-    }
+    filters.write(mix + "amix=inputs=" + std::to_string(count) + ":normalize=0[mixed];");
+    filters.writeln("[mixed]apad=whole_dur=" + std::to_string(static_cast<double>(now) / 1000.0) +
+                    "[out]");
+    filters.close();
+    bat.writeln("ffmpeg -y -/filter_complex audio_filters" + std::to_string(fn_counter) +
+                ".txt -map \"[out]\" -ac 2 -ar 48000 output" + std::to_string(fn_counter) + ".wav");
     history.clear();
+    cap_time_offset += now;
+    fn_counter++;
+}
+
+void audio::finish() {
+    if (!capturing)
+        return;
+    lock::CSLock lock(acs);
+    for (IDSBProxy* c : cache)
+        c->finalize_wav();
+    capturing = false;
+    flush();
+    ofs::File inputs(base_path + "\\audio_inputs.txt", 1);
+    ENSURE(inputs.is_open());
+    for (int i = 0; i < fn_counter; i++)
+        inputs.writeln("file 'output" + std::to_string(i) + ".wav'");
+    inputs.close();
+    bat.writeln("ffmpeg -f concat -i audio_inputs.txt -c copy ../audio.wav");
+    bat.writeln("echo Waiting to delete wav cache...");
+    bat.writeln("pause");
+    bat.writeln("del audio_inputs.txt");
+    bat.writeln("del audio_filters*.txt");
+    bat.writeln("del a*.wav");
+    bat.writeln("del output*.wav");
+    bat.writeln("cd ..");
+    bat.close();
     state::set_last_msg("Audio flushed, run audio_merge.bat script!");
 }
