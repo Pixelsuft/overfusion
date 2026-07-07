@@ -16,7 +16,7 @@
   "no_ini_hooks": true,
   "boxed_mode": false,
   "disable_dark_mode_support": false,
-  "disable_app_menu": true,
+  "disable_app_menu": false,
   "allow_timers_fix": true,
   "allow_direct_capture": true,
   "allow_audio_hook": false,

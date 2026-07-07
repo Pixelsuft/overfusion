@@ -127,11 +127,9 @@ struct win_shit_type {
                                            DWORD cbAttribute);
     RtlGetVersion_t RtlGetVersion;
     HTHEME g_menuTheme;
-    HBRUSH g_brBarBackground;
     HBRUSH g_brItemBackground;
     HBRUSH g_brItemBackgroundHot;
     HBRUSH g_brItemBackgroundSelected;
-    HBRUSH g_brItemBorder;
     HBRUSH g_hDarkBgBrush;
     HBRUSH g_hLightDarkBgBrush;
     DWORD build_num;
@@ -190,11 +188,9 @@ void winhooks::pre_init_win32_theme() {
     win_shit.g_hDarkBgBrush = nullptr;
     win_shit.g_hLightDarkBgBrush = nullptr;
     win_shit.g_menuTheme = nullptr;
-    win_shit.g_brBarBackground = nullptr;
     win_shit.g_brItemBackground = nullptr;
     win_shit.g_brItemBackgroundHot = nullptr;
     win_shit.g_brItemBackgroundSelected = nullptr;
-    win_shit.g_brItemBorder = nullptr;
     win_shit.AllowDarkModeForWindow = nullptr;
     win_shit.ShouldAppsUseDarkMode = nullptr;
     win_shit.SetWindowCompositionAttribute = nullptr;
@@ -402,7 +398,7 @@ static void UAHDrawMenuNCBottomLine(HWND hWnd) {
     rcAnnoyingLine.top--;
 
     HDC hdc = GetWindowDC(hWnd);
-    FillRect(hdc, &rcAnnoyingLine, win_shit.g_brBarBackground);
+    FillRect(hdc, &rcAnnoyingLine, win_shit.g_brItemBackground);
     ReleaseDC(hWnd, hdc);
 }
 
@@ -421,13 +417,12 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
             rc = mbi.rcBar;
             OffsetRect(&rc, -rcWindow.left, -rcWindow.top);
         }
-        FillRect(pUDM->hdc, &rc, win_shit.g_brBarBackground);
+        FillRect(pUDM->hdc, &rc, win_shit.g_brItemBackground);
         return true;
     }
     case WM_UAHDRAWMENUITEM: {
         auto pUDMI = reinterpret_cast<UAHDRAWMENUITEM*>(lParam);
         HBRUSH* pbrBackground = &win_shit.g_brItemBackground;
-        HBRUSH* pbrBorder = &win_shit.g_brItemBackground;
         wchar_t menuString[256] = {0};
         MENUITEMINFOW mii = {sizeof(mii), MIIM_STRING};
         {
@@ -448,14 +443,12 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
                 iBackgroundStateID = MBI_HOT;
 
                 pbrBackground = &win_shit.g_brItemBackgroundHot;
-                pbrBorder = &win_shit.g_brItemBorder;
             }
             if (pUDMI->dis.itemState & ODS_SELECTED) {
                 iTextStateID = MBI_PUSHED;
                 iBackgroundStateID = MBI_PUSHED;
 
                 pbrBackground = &win_shit.g_brItemBackgroundSelected;
-                pbrBorder = &win_shit.g_brItemBorder;
             }
             if ((pUDMI->dis.itemState & ODS_GRAYED) || (pUDMI->dis.itemState & ODS_DISABLED)) {
                 iTextStateID = MBI_DISABLED;
@@ -474,7 +467,6 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
                 : (win_shit.enabled == 0 ? RGB(0x6D, 0x6D, 0x6D) : RGB(0x64, 0x64, 0x64))};
 
         FillRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, *pbrBackground);
-        FrameRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, *pbrBorder);
         win_shit.DrawThemeTextEx(win_shit.g_menuTheme, pUDMI->um.hdc, MENU_BARITEM, MBI_NORMAL,
                                  menuString, mii.cch, dwFlags, &pUDMI->dis.rcItem, &opts);
 
@@ -488,23 +480,17 @@ bool UAHWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* 
         }
         for (auto& win_hwnd : win_shit.cached_windows)
             fix_win32_theme_real(win_hwnd);
-        DeleteObject(win_shit.g_brBarBackground);
         DeleteObject(win_shit.g_brItemBackground);
         DeleteObject(win_shit.g_brItemBackgroundHot);
         DeleteObject(win_shit.g_brItemBackgroundSelected);
-        DeleteObject(win_shit.g_brItemBorder);
-        win_shit.g_brBarBackground = win_shit.enabled == 0 ? CreateSolidBrush(RGB(255, 255, 255))
-                                                           : CreateSolidBrush(RGB(25, 25, 25));
-        win_shit.g_brItemBackground = win_shit.enabled == 0 ? CreateSolidBrush(RGB(255, 255, 255))
-                                                            : CreateSolidBrush(RGB(25, 25, 25));
-        win_shit.g_brItemBackgroundHot = win_shit.enabled == 0
-                                             ? CreateSolidBrush(RGB(245, 245, 245))
-                                             : CreateSolidBrush(RGB(67, 67, 67));
-        win_shit.g_brItemBackgroundSelected = win_shit.enabled == 0
-                                                  ? CreateSolidBrush(RGB(249, 249, 249))
-                                                  : CreateSolidBrush(RGB(33, 33, 33));
-        win_shit.g_brItemBorder = win_shit.enabled == 0 ? CreateSolidBrush(RGB(235, 235, 235))
-                                                        : CreateSolidBrush(RGB(19, 19, 19));
+        win_shit.g_brItemBackground = win_shit.enabled == 1 ? CreateSolidBrush(RGB(32, 32, 32))
+                                                            : CreateSolidBrush(RGB(255, 255, 255));
+        win_shit.g_brItemBackgroundHot = win_shit.enabled == 1
+                                             ? CreateSolidBrush(RGB(69, 69, 69))
+                                             : CreateSolidBrush(RGB(245, 245, 245));
+        win_shit.g_brItemBackgroundSelected = win_shit.enabled == 1
+                                                  ? CreateSolidBrush(RGB(56, 56, 56))
+                                                  : CreateSolidBrush(RGB(249, 249, 249));
         return false;
     }
     case WM_NCPAINT:
