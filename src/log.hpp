@@ -9,7 +9,11 @@
 namespace of {
 #ifndef NO_SPDLOG
 
+#ifdef _DEBUG
 using spdlog::debug;
+#else
+template <typename... Args> void debug(const char* fmt, Args&&... args) {}
+#endif
 using spdlog::error;
 using spdlog::info;
 using spdlog::warn;

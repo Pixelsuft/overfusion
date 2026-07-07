@@ -2,4 +2,4 @@
 
 namespace randhooks {
 void init();
-} // namespace randhooks
+}
