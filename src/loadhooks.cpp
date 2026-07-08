@@ -1,5 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "loadhooks.hpp"
+#include "ass.hpp"
 #include "audio.hpp"
 #include "config.hpp"
 #include "d3dhooks.hpp"
@@ -72,6 +73,10 @@ static void after_load(string_view path, void* mod) {
     auto fn = get_filename(path);
     if (mod) {
         if (fn == "mmfs2.dll") {
+            int(__stdcall * GetBuildNumber)(void) = reinterpret_cast<decltype(GetBuildNumber)>(
+                GetProcAddress(reinterpret_cast<HMODULE>(mod), reinterpret_cast<LPCSTR>(11)));
+            ENSURE(GetBuildNumber != nullptr);
+            spdlog::info("MMF2 build number: {}", GetBuildNumber() & 0xffff);
             d3dhooks::pre_init();
             gdihooks::init();
             audio::init();

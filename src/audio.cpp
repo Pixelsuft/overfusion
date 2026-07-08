@@ -520,7 +520,7 @@ void audio::init() {
     IAT_STR_ONLY("winmm.dll", mciSendCommand);
     IAT_ONLY("kernel32.dll", Beep);
     IAT_AUTO("dsound.dll", DirectSoundCreate);
-    // Keep this because mmfs2.dll might use Ordinal 1 import instead of DirectSoundCreate
+    // Keep this because mmfs2.dll may use Ordinal 1 import instead of DirectSoundCreate
     auto hook_ret1 = hook::iat_hook_by_addr(mem::get_base("mmfs2.dll"), "dsound.dll",
                                             mem::get_addr("dsound.dll", "DirectSoundCreate"),
                                             DirectSoundCreateH, &DirectSoundCreateO);
