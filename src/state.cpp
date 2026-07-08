@@ -228,6 +228,7 @@ bool state::is_save_handle(void* handle) {
     return conf::get().processing_save && handle == temp_handle;
 }
 
+// TODO: split export/import logic into seperate file?
 void state::export_replay(string_view fn) {
     last_msg.clear();
     if (st.ev.empty()) {
@@ -690,8 +691,7 @@ bool state::invalidate_process(string_view text) {
     return true;
 }
 
-int state::process_message_box(of::string_view text, of::string_view caption,
-                               unsigned int uType) {
+int state::process_message_box(of::string_view text, of::string_view caption, unsigned int uType) {
     if (uType == 0x30 && invalidate_process(text))
         return IDOK;
     auto& cfg = conf::get();
@@ -850,6 +850,9 @@ bool state::before_update(bool is_transitioning) {
     void* pState = plug::get().get_prop(plug::PtrProp::PState);
     auto pRandomSeed = get_rng_seed_ptr(pState);
     if (cfg.is_replay) {
+        // Allow to push temp events during replay mode
+        st.ev.insert(st.ev.begin() + repl_index, st.temp_ev.begin(), st.temp_ev.end());
+        st.temp_ev.clear();
         for (; repl_index < st.ev.size(); repl_index++) {
             Event& ev = st.ev[repl_index];
             if (ev.frame > st.frames)
@@ -1183,6 +1186,10 @@ void state::draw_info() {
     }
 }
 
+void state::draw_input_tab() {
+    // TODO: push mouse pos, mouse button down or up, etc
+}
+
 void state::draw_random_tab() {
     static int rval[3] = {0, 0, 0};
     if (ImGui::InputInt("RNG range", &rval[0]))
@@ -1203,7 +1210,13 @@ void state::draw_random_tab() {
         else
             st.temp_ev.push_back(event);
     }
-    // TODO: push random seed
+    if (ImGui::Button("Push current seed")) {
+        Event event;
+        event.frame = st.frames;
+        event.idx = event::Type::SetSeed;
+        event.rng.range = static_cast<uint16_t>(st.seed);
+        st.temp_ev.push_back(event);
+    }
     ImGui::TextUnformatted("RNG buffer: ");
     if (st.rng_buf.empty())
         return;

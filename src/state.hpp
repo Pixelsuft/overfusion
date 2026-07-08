@@ -40,6 +40,7 @@ bool set_win_mouse_pos(int x, int y);
 int process_message_box(of::string_view text, of::string_view caption, unsigned int uType);
 void remember_message_box(int choice);
 int fetch_random_number(int range, int value);
+void draw_input_tab();
 void draw_random_tab();
 
 // TODO: maybe to ofs?

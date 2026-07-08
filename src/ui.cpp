@@ -116,6 +116,9 @@ static void draw_menu(bool custom_window) {
     if (ImGui::CollapsingHeader("Plugin")) {
         plug::get().draw_menu();
     }
+    if (ImGui::CollapsingHeader("Input")) {
+        state::draw_input_tab();
+    }
     if (ImGui::CollapsingHeader("Random")) {
         state::draw_random_tab();
     }
