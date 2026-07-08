@@ -202,6 +202,7 @@
     <ClCompile Include="src\input.cpp" />
     <ClCompile Include="src\mem.cpp" />
     <ClCompile Include="src\loadhooks.cpp" />
+    <ClCompile Include="src\mmfshooks.cpp" />
     <ClCompile Include="src\ofs.cpp" />
     <ClCompile Include="src\plugbase.cpp" />
     <ClCompile Include="src\randhooks.cpp" />
@@ -237,6 +238,7 @@
     <ClInclude Include="src\lock.hpp" />
     <ClInclude Include="src\log.hpp" />
     <ClInclude Include="src\mem.hpp" />
+    <ClInclude Include="src\mmfshooks.hpp" />
     <ClInclude Include="src\mypair.hpp" />
     <ClInclude Include="src\ofs.hpp" />
     <ClInclude Include="src\opt.hpp" />

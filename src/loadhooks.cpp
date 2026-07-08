@@ -1,6 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
 #include "loadhooks.hpp"
-#include "ass.hpp"
 #include "audio.hpp"
 #include "config.hpp"
 #include "d3dhooks.hpp"
@@ -8,6 +7,7 @@
 #include "gdihooks.hpp"
 #include "log.hpp"
 #include "mem.hpp"
+#include "mmfshooks.hpp"
 #include "opt.hpp"
 #include "plugbase.hpp"
 #include "sv.hpp"
@@ -73,10 +73,7 @@ static void after_load(string_view path, void* mod) {
     auto fn = get_filename(path);
     if (mod) {
         if (fn == "mmfs2.dll") {
-            int(__stdcall * GetBuildNumber)(void) = reinterpret_cast<decltype(GetBuildNumber)>(
-                GetProcAddress(reinterpret_cast<HMODULE>(mod), reinterpret_cast<LPCSTR>(11)));
-            ENSURE(GetBuildNumber != nullptr);
-            spdlog::info("MMF2 build number: {}", GetBuildNumber() & 0xffff);
+            mmfshooks::init(mod);
             d3dhooks::pre_init();
             gdihooks::init();
             audio::init();
@@ -141,7 +138,7 @@ static HMODULE WINAPI LoadLibraryWH(LPCWSTR lpLibFileName) {
     return ret;
 }
 
-static FARPROC(WINAPI* GetProcAddressO)(HMODULE hModule, LPCSTR lpProcName) = GetProcAddress;
+FARPROC(WINAPI* GetProcAddressO)(HMODULE hModule, LPCSTR lpProcName) = GetProcAddress;
 static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
     if (!hModule || !lpProcName)
         return GetProcAddressO(hModule, lpProcName);

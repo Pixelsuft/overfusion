@@ -186,6 +186,9 @@
     <ClCompile Include="src\randhooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\mmfshooks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest">
@@ -290,6 +293,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\randhooks.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mmfshooks.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
