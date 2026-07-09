@@ -62,9 +62,8 @@ namespace hook {
 bool _enable_target(void* target);
 bool _hook_target(void* pTarget, void* pDetour, void** ppOriginal);
 void _patch_vtable(void** vtable, int index, void* new_func, void** old_func);
-bool _hook_iat_by_addr(void* hModule, const char* dll, const void* addr, void* pNewFunc,
-                       void** ppOriginal);
-bool _reg_iat(of::string_view dll, of::string_view func_name, void* pNewFunc, void** ppOriginal);
+bool _reg_iat(of::string_view dll, of::string_view func_name, int ordinal, void* pNewFunc,
+              void** ppOriginal);
 bool patch_iat();
 void* get_iated_func(void* mod, of::string_view name);
 
@@ -89,21 +88,13 @@ inline void patch_vtable(void** vtable, int index, A* new_func, B** old_func) {
                   reinterpret_cast<void**>(old_func));
 }
 
-template <typename M, typename F, typename T>
-inline bool iat_hook_by_addr(M module, const char* dll, const void* func, F* pDetour,
-                             T** ppOriginal) {
-    return _hook_iat_by_addr(reinterpret_cast<void*>(module), dll,
-                             reinterpret_cast<const char*>(func), reinterpret_cast<void*>(pDetour),
-                             reinterpret_cast<void**>(ppOriginal));
-}
-
 template <typename F> inline bool iat_reg(of::string_view dll, of::string_view func, F* pDetour) {
-    return _reg_iat(dll, func, reinterpret_cast<void*>(pDetour), nullptr);
+    return _reg_iat(dll, func, 0, reinterpret_cast<void*>(pDetour), nullptr);
 }
 
 template <typename F, typename T>
 inline bool iat_reg(of::string_view dll, of::string_view func, F* pDetour, T** ppOriginal) {
-    return _reg_iat(dll, func, reinterpret_cast<void*>(pDetour),
+    return _reg_iat(dll, func, 0, reinterpret_cast<void*>(pDetour),
                     reinterpret_cast<void**>(ppOriginal));
 }
 

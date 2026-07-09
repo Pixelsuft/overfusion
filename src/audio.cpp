@@ -454,8 +454,10 @@ public:
 static HRESULT(WINAPI* DirectSoundCreateO)(LPCGUID guid, LPDIRECTSOUND* ds, LPUNKNOWN unk);
 static HRESULT WINAPI DirectSoundCreateH(LPCGUID guid, LPDIRECTSOUND* ds, LPUNKNOWN unk) {
     // of::debug("DirectSoundCreate");
-    if (conf::get().disable_audio)
+    if (conf::get().disable_audio) {
+        // of::debug("Failing DirectSoundCreate");
         return DSERR_NODRIVER;
+    }
     HRESULT hr = DirectSoundCreateO(guid, ds, unk);
     if (SUCCEEDED(hr) && ds && *ds) {
         of::info("Wrapping IDirectSound into IDSProxy");
@@ -519,11 +521,10 @@ void audio::init() {
     }
     IAT_STR_ONLY("winmm.dll", mciSendCommand);
     IAT_ONLY("kernel32.dll", Beep);
-    IAT_AUTO("dsound.dll", DirectSoundCreate);
-    // Keep this because mmfs2.dll may use Ordinal 1 import instead of DirectSoundCreate
-    auto hook_ret1 = hook::iat_hook_by_addr(mem::get_base("mmfs2.dll"), "dsound.dll",
-                                            mem::get_addr("dsound.dll", "DirectSoundCreate"),
-                                            DirectSoundCreateH, &DirectSoundCreateO);
+    // Hook both by name and ordinal
+    auto hook_ret1 = hook::_reg_iat("dsound.dll", "DirectSoundCreate", 1,
+                                    reinterpret_cast<void*>(DirectSoundCreateH),
+                                    reinterpret_cast<void**>(&DirectSoundCreateO));
     ENSURE(hook_ret1);
     of::info("Audio hooked");
 }

@@ -17,6 +17,9 @@ template <typename T> static void load_ord(T*& func_ptr, int ord) {
 }
 } // namespace mmfshooks
 
+// TODO:
+// - hook 420, 424 (CreateFileA wrappers)
+
 void mmfshooks::init(void* _mod) {
     ASS(_mod != nullptr);
     mod = _mod;

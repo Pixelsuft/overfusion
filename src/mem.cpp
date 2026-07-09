@@ -27,6 +27,7 @@ static HANDLE hproc;
 namespace hook {
 struct HookTarget {
     string funcName;
+    int ordinal;
     void* hookFunc;
     void** origFunc;
 };
@@ -117,88 +118,28 @@ void hook::_patch_vtable(void** vtable, int index, void* new_func, void** old_fu
         of::warn("VirtualProtect failed while patching vtable");
 }
 
-bool hook::_hook_iat_by_addr(void* hModule, const char* dll, const void* addr, void* pNewFunc,
-                             void** ppOriginal) {
-    ENSURE(hModule && dll && addr && pNewFunc);
-    if (!hModule || !dll || !addr || !pNewFunc)
-        return false;
-
-    auto pDosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(hModule);
-    ENSURE(pDosHeader->e_magic == IMAGE_DOS_SIGNATURE);
-
-    auto pNtHeaders = reinterpret_cast<PIMAGE_NT_HEADERS>(
-        (reinterpret_cast<BYTE*>(hModule) + pDosHeader->e_lfanew));
-    ENSURE(pNtHeaders->Signature == IMAGE_NT_SIGNATURE);
-
-    auto importDir = pNtHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
-    ENSURE(importDir.VirtualAddress != 0);
-
-    auto pImportDesc = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>(
-        (reinterpret_cast<BYTE*>(hModule) + importDir.VirtualAddress));
-
-    for (; pImportDesc->Name != 0; pImportDesc++) {
-        auto szModName =
-            reinterpret_cast<char*>(reinterpret_cast<BYTE*>(hModule) + pImportDesc->Name);
-        if (_stricmp(szModName, dll) == 0) {
-            DWORD thunkOffset = pImportDesc->OriginalFirstThunk ? pImportDesc->OriginalFirstThunk
-                                                                : pImportDesc->FirstThunk;
-            if (thunkOffset == 0)
-                continue;
-
-            auto pOriginalThunk =
-                reinterpret_cast<PIMAGE_THUNK_DATA>(reinterpret_cast<BYTE*>(hModule) + thunkOffset);
-            auto pThunk = reinterpret_cast<PIMAGE_THUNK_DATA>(reinterpret_cast<BYTE*>(hModule) +
-                                                              pImportDesc->FirstThunk);
-
-            for (; pOriginalThunk->u1.AddressOfData != 0; pOriginalThunk++, pThunk++) {
-                auto pImportByName = reinterpret_cast<PIMAGE_IMPORT_BY_NAME>(
-                    reinterpret_cast<BYTE*>(hModule) + pOriginalThunk->u1.AddressOfData);
-
-                if (reinterpret_cast<void*>(pThunk->u1.Function) == addr) {
-                    if (reinterpret_cast<PVOID>(pThunk->u1.Function) == pNewFunc)
-                        return false;
-
-                    DWORD dwOldProtect;
-                    if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), PAGE_READWRITE,
-                                        &dwOldProtect)) {
-                        of::error("VirtualProtect failed to IAT hook");
-                        return false;
-                    }
-
-                    if (ppOriginal)
-                        *ppOriginal = reinterpret_cast<void*>(pThunk->u1.Function);
-
-                    pThunk->u1.Function = reinterpret_cast<DWORD_PTR>(pNewFunc);
-
-                    if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), dwOldProtect,
-                                        &dwOldProtect))
-                        of::warn("VirtualProtect failed to IAT hook");
-
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
 static bool has_no_uppercase(of::string_view sv) {
     return std::all_of(sv.begin(), sv.end(), [](unsigned char c) { return !std::isupper(c); });
 }
-bool hook::_reg_iat(of::string_view dll, of::string_view func_name, void* pNewFunc,
+
+bool hook::_reg_iat(of::string_view dll, of::string_view func_name, int ordinal, void* pNewFunc,
                     void** ppOriginal) {
     string str_dll(dll);
     ASS(has_no_uppercase(dll));
     HookTarget target;
     target.funcName = std::string(func_name);
+    target.ordinal = ordinal;
     target.hookFunc = pNewFunc;
     target.origFunc = ppOriginal;
+    ASS(!func_name.empty() || ordinal > 0);
 #ifdef _DEBUG
-    auto& v = iat_map[str_dll];
-    auto it = std::find_if(v.begin(), v.end(), [target](const HookTarget& t2) {
-        return t2.funcName == target.funcName;
-    });
-    ASS(it == v.end());
+    if (!func_name.empty()) {
+        auto& v = iat_map[str_dll];
+        auto it = std::find_if(v.begin(), v.end(), [target](const HookTarget& t2) {
+            return t2.funcName == target.funcName;
+        });
+        ASS(it == v.end());
+    }
 #endif
     iat_map[str_dll].push_back(std::move(target));
 #ifdef IAT_SUPPORT_DYNAMIC
@@ -246,35 +187,44 @@ static bool module_iat_apply(void* hModule) {
                                                           pImportDesc->FirstThunk);
 
         for (; pOriginalThunk->u1.AddressOfData != 0; pOriginalThunk++, pThunk++) {
-            if (!(pOriginalThunk->u1.Ordinal & IMAGE_ORDINAL_FLAG)) {
+            std::vector<hook::HookTarget>::const_iterator target;
+
+            if (!IMAGE_SNAP_BY_ORDINAL(pOriginalThunk->u1.Ordinal)) {
                 auto pImportByName = reinterpret_cast<PIMAGE_IMPORT_BY_NAME>(
                     reinterpret_cast<BYTE*>(hModule) + pOriginalThunk->u1.AddressOfData);
-                auto funcName = reinterpret_cast<char*>(pImportByName->Name);
-                auto target =
-                    std::find_if(targets.begin(), targets.end(),
-                                 [funcName](const auto& t) { return t.funcName == funcName; });
-                if (target == targets.end())
+                auto funcName = reinterpret_cast<const char*>(pImportByName->Name);
+                ASS(funcName != nullptr);
+                ASS(*funcName != '\0');
+                target = std::find_if(targets.begin(), targets.end(),
+                                      [funcName](const auto& t) { return t.funcName == funcName; });
+            } else {
+                WORD ordinal = IMAGE_ORDINAL(pOriginalThunk->u1.Ordinal);
+                if (ordinal == 0)
                     continue;
-                if (reinterpret_cast<PVOID>(pThunk->u1.Function) == target->hookFunc)
-                    continue;
-
-                DWORD dwOldProtect;
-                if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), PAGE_READWRITE,
-                                    &dwOldProtect)) {
-                    of::error("VirtualProtect failed to IAT hook");
-                    return false;
-                }
-
-                if (target->origFunc)
-                    *target->origFunc = reinterpret_cast<void*>(pThunk->u1.Function);
-
-                pThunk->u1.Function = reinterpret_cast<DWORD_PTR>(target->hookFunc);
-
-                if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), dwOldProtect,
-                                    &dwOldProtect))
-                    of::warn("VirtualProtect failed to IAT hook");
-                // of::debug("{}->{} iated", dllKey, target->funcName);
+                target = std::find_if(targets.begin(), targets.end(), [ordinal](const auto& t) {
+                    return t.ordinal == static_cast<int>(ordinal);
+                });
             }
+            if (target == targets.end())
+                continue;
+            if (reinterpret_cast<PVOID>(pThunk->u1.Function) == target->hookFunc)
+                continue;
+
+            DWORD dwOldProtect;
+            if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), PAGE_READWRITE,
+                                &dwOldProtect)) {
+                of::error("VirtualProtect failed to IAT hook");
+                return false;
+            }
+
+            if (target->origFunc)
+                *target->origFunc = reinterpret_cast<void*>(pThunk->u1.Function);
+
+            pThunk->u1.Function = reinterpret_cast<DWORD_PTR>(target->hookFunc);
+
+            if (!VirtualProtect(&pThunk->u1.Function, sizeof(DWORD_PTR), dwOldProtect,
+                                &dwOldProtect))
+                of::warn("VirtualProtect failed to IAT hook");
         }
     }
     return true;
