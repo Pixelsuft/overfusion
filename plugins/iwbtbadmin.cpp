@@ -15,12 +15,14 @@ class PlugIwbtbAdmin final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
+    inline static unsigned int(__stdcall* RandomO)(int dummy, unsigned short maxv);
 
 public:
     PlugIwbtbAdmin() {
         name = "I Wanna Be The Boshy [admin]";
         SaveGameState = nullptr;
         LoadGameState = nullptr;
+        RandomO = nullptr;
     }
 
     bool pre_init() override {
@@ -51,11 +53,18 @@ public:
         return true;
     }
 
+    static unsigned int __stdcall RandomH(int dummy, unsigned short maxv) {
+        auto ret = RandomO(dummy, maxv);
+        return static_cast<unsigned int>(
+            state::fetch_random_number(static_cast<int>(maxv), static_cast<int>(ret)));
+    }
+
     bool update_init() override {
         auto& cfg = conf::get();
         cfg.tm_fix_event_entry_offset = 0x10;
         cfg.tm_fix_event_entry_type_offset = 0x12;
-        // hook::hook(mem::get_base() + 0xc200, TimerProcH, &TimerProcO);
+        // FIXME: random func got inlined in many parts. how to fix???
+        hook::hook(mem::get_base() + 0x31d50, RandomH, &RandomO);
         return true;
     }
 
