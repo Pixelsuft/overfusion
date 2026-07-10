@@ -10,10 +10,14 @@ using of::string_view;
 using std::string;
 
 class PlugIwbtg final : public plug::PlugBase {
+private:
+    inline static unsigned int(__cdecl* RandomO)(unsigned int maxv);
+
 public:
     PlugIwbtg() {
         name = "I Wanna Be The Guy";
         cmdline_append = string(" /SF \"") + string(ofs::get_cwd()) + "\\iwbtg.exe\" /SO94208";
+        RandomO = nullptr;
     }
 
     bool pre_init() override {
@@ -42,7 +46,16 @@ public:
         return true;
     }
 
-    bool update_init() override { return true; }
+    static unsigned int __cdecl RandomH(unsigned int maxv) {
+        auto ret = RandomO(maxv);
+        return static_cast<unsigned int>(
+            state::fetch_random_number(static_cast<int>(maxv), static_cast<int>(ret)));
+    }
+
+    bool update_init() override {
+        hook::hook(mem::get_base() + 0x17e30, RandomH, &RandomO);
+        return true;
+    }
 
     void after_dll_load(string_view path, string_view fn, void* mod) override {
         if (mod == nullptr)
