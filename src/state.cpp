@@ -1137,6 +1137,18 @@ void state::on_mode_switch() {
     }
 }
 
+static string get_keys_str(const std::vector<int> input) {
+    string keys_str;
+    for (auto& vk : input) {
+        auto opt = input::vk_to_string(vk);
+        if (opt.has_value()) {
+            keys_str += string(opt.value());
+            keys_str += ", ";
+        }
+    }
+    return keys_str.empty() ? "" : keys_str.substr(0, keys_str.size() - 2);
+}
+
 void state::draw_info() {
     auto& cfg = conf::get();
     if (updating) {
@@ -1171,16 +1183,9 @@ void state::draw_info() {
         auto win_pos = plug::get().mouse_to_window(m_pos.first, m_pos.second);
         ImGui::Text("Window mouse%s: %i, %i", get_tas_mouse_down(VK_LBUTTON) ? " [DOWN]" : "",
                     win_pos.first, win_pos.second);
-        string keys_str;
-        for (auto& vk : st.prev_input) {
-            auto opt = input::vk_to_string(vk);
-            if (opt.has_value()) {
-                keys_str += string(opt.value());
-                keys_str += ", ";
-            }
-        }
-        ImGui::Text("Keys: %s",
-                    keys_str.empty() ? "" : keys_str.substr(0, keys_str.size() - 2).c_str());
+        ImGui::Text("Keys: %s", get_keys_str(st.prev_input).c_str());
+        if (!cfg.is_replay)
+            ImGui::Text("Holding: %s", get_keys_str(real_holding).c_str());
         ImGui::Text("Prev RNG (frame %i):", prev_rng_frame);
         for (auto& pair : prev_rng)
             ImGui::Text("%i (x%i): %s", pair.first, pair.second.second, pair.second.first.c_str());

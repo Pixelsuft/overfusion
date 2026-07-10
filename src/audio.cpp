@@ -454,12 +454,13 @@ public:
 static HRESULT(WINAPI* DirectSoundCreateO)(LPCGUID guid, LPDIRECTSOUND* ds, LPUNKNOWN unk);
 static HRESULT WINAPI DirectSoundCreateH(LPCGUID guid, LPDIRECTSOUND* ds, LPUNKNOWN unk) {
     // of::debug("DirectSoundCreate");
-    if (conf::get().disable_audio) {
+    auto& cfg = conf::get();
+    if (cfg.disable_audio) {
         // of::debug("Failing DirectSoundCreate");
         return DSERR_NODRIVER;
     }
     HRESULT hr = DirectSoundCreateO(guid, ds, unk);
-    if (SUCCEEDED(hr) && ds && *ds) {
+    if (cfg.allow_audio_hook && SUCCEEDED(hr) && ds && *ds) {
         of::info("Wrapping IDirectSound into IDSProxy");
         *ds = new audio::IDSProxy(*ds);
     }
@@ -510,8 +511,9 @@ void audio::init() {
         cfg.disable_audio = false;
         cfg.allow_audio_hook = true;
     }
-    if (!cfg.allow_audio_hook && !cfg.disable_audio)
-        return;
+    capturing = false;
+    // if (!cfg.allow_audio_hook && !cfg.disable_audio)
+    //     return;
     if (cfg.record_audio) {
         of::warn("Audio recording is still in BETA");
         base_path = string(ofs::get_cwd()) + '\\' + cfg.project_name + "\\temp_audio";
