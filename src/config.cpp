@@ -240,6 +240,7 @@ void Config::read() {
     READ_BOOL(pause_on_scene_switch);
     READ_BOOL(forced_window_resize);
     READ_BOOL(redraw_on_skip);
+    READ_BOOL(boxed_mode);
     if (proj_data["system_time_offset"].is_number_unsigned())
         system_offset = proj_data["system_time_offset"];
     if (proj_data["local_time_offset"].is_number_unsigned())
