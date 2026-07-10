@@ -137,7 +137,7 @@ static void draw_menu(bool custom_window) {
                 audio::reinit_capture();
             }
         }
-        if (cfg.record_audio && audio::is_recording()) {
+        if (cfg.record_audio && audio::is_recording() && state::get_frame_counter() != 0) {
             if (ImGui::Button("Stop audio capture"))
                 audio::finish();
         }

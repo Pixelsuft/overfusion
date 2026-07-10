@@ -502,6 +502,8 @@ void audio::reinit_capture() {
 
 void audio::init() {
     auto& cfg = conf::get();
+    if (cfg.disable_audio)
+        cfg.allow_audio_hook = true;
     if (!cfg.allow_audio_hook && cfg.record_audio) {
         of::warn("Audio hook was disabled, but audio recording is enabled; enabling audio hook");
         cfg.disable_audio = false;
@@ -516,6 +518,8 @@ void audio::init() {
     //     return;
     if (cfg.record_audio) {
         of::warn("Audio recording is still in BETA");
+        if (!cfg.emulate_mm_timers)
+            of::warn("Not emulating WINMM timers, expect audio problems");
         base_path = string(ofs::get_cwd()) + '\\' + cfg.project_name + "\\temp_audio";
         auto dir_ret = ofs::make_dir(base_path);
         ENSURE(dir_ret);
@@ -602,6 +606,10 @@ void audio::finish() {
         c->finalize_wav();
     capturing = false;
     flush();
+    if (fn_counter == 0) {
+        of::warn("No audio was recorded");
+        return;
+    }
     ofs::File inputs(base_path + "\\audio_inputs.txt", 1);
     ENSURE(inputs.is_open());
     for (int i = 0; i < fn_counter; i++)
@@ -616,5 +624,6 @@ void audio::finish() {
     bat.writeln("del output*.wav");
     bat.writeln("cd ..");
     bat.close();
-    state::set_last_msg("Audio flushed, run audio_merge.bat script!");
+    of::info("Audio recording finished");
+    state::set_last_msg("Audio finished, run audio_merge.bat script!");
 }
