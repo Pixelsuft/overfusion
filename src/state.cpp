@@ -129,7 +129,7 @@ static std::vector<int> cur_holding;
 static std::vector<int> msgbox_buf;
 // Prev frame RNG
 static std::map<int, std::pair<string, int>> prev_rng;
-// Manual waiting stuff
+// Manual waiting stuff (without fastforward)
 static LARGE_INTEGER last_counter;
 static double const_dt;
 static double to_wait;
@@ -282,6 +282,7 @@ void state::export_replay(string_view fn) {
                                 ',' + std::to_string(e.rng.repeat));
             ENSURE(fret);
             break;
+        case event::Type::HashSeed:
         case event::Type::SetSeed:
         case event::Type::PopRandom:
             fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(int_idx) + ',' +
@@ -465,6 +466,7 @@ void state::import_replay(string_view fn) {
                 continue;
             }
             break;
+        case event::Type::HashSeed:
         case event::Type::SetSeed:
         case event::Type::PopRandom:
             event.rng.range = static_cast<uint16_t>(str_to_int(line.substr(end)).value_or(0));
@@ -771,6 +773,10 @@ static bool exec_event(Event ev) {
         state::st.mouse_pos.first = ev.mouse.x;
         state::st.mouse_pos.second = ev.mouse.y;
         input::sim_mouse_move(real_p.first, real_p.second);
+        return true;
+    }
+    case event::Type::HashSeed: {
+        // TODO
         return true;
     }
     case event::Type::SetSeed: {
@@ -1216,6 +1222,17 @@ void state::draw_random_tab() {
         else
             st.temp_ev.push_back(event);
     }
+    static int seed_needed = 0;
+    ImGui::InputInt("Needed seed", &seed_needed);
+    if (ImGui::Button("Push needed seed")) {
+        seed_needed = std::min(std::max(seed_needed, 0), 65535);
+        Event event;
+        event.frame = st.frames;
+        event.idx = event::Type::SetSeed;
+        event.rng.range = static_cast<uint16_t>(seed_needed);
+        st.temp_ev.push_back(event);
+    }
+    ImGui::SameLine();
     if (ImGui::Button("Push current seed")) {
         Event event;
         event.frame = st.frames;
