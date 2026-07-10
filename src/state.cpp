@@ -936,7 +936,8 @@ void state::after_update() {
         if (just_loaded) {
             // FIXME: sometimes fails when loading a state from a different scene FSR
             if (*pRandomSeed != st.seed) {
-                of::warn("Seed check failed (got {} instead of {}), fixed", *pRandomSeed, st.seed);
+                of::error("Seed check failed (got {} instead of {}), fixed", *pRandomSeed, st.seed);
+                last_msg = "Please reload save (could desync while switching scene)";
                 *pRandomSeed = st.seed;
             }
         } else {

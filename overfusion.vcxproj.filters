@@ -186,7 +186,7 @@
     <ClCompile Include="src\randhooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\mmfshooks.cpp">
+    <ClCompile Include="src\mmfhooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -295,7 +295,7 @@
     <ClInclude Include="src\randhooks.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\mmfshooks.hpp">
+    <ClInclude Include="src\mmfhooks.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

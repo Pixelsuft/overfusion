@@ -7,7 +7,7 @@
 #include "gdihooks.hpp"
 #include "log.hpp"
 #include "mem.hpp"
-#include "mmfshooks.hpp"
+#include "mmfhooks.hpp"
 #include "opt.hpp"
 #include "plugbase.hpp"
 #include "sv.hpp"
@@ -22,7 +22,8 @@ extern int WINAPI MessageBoxAH(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT 
 
 namespace loadhooks {
 static HMODULE user32_handle;
-}
+static HMODULE cctrans_handle;
+} // namespace loadhooks
 
 #if (defined(_MSC_VER) ? _MSVC_LANG : __cplusplus) >= 201703L
 static constexpr
@@ -73,7 +74,7 @@ static void after_load(string_view path, void* mod) {
     auto fn = get_filename(path);
     if (mod) {
         if (fn == "mmfs2.dll") {
-            mmfshooks::init(mod);
+            mmfhooks::init(mod);
             d3dhooks::pre_init();
             gdihooks::init();
             audio::init();
@@ -89,6 +90,9 @@ static void after_load(string_view path, void* mod) {
         } else if (fn == "Yaso.mfx") {
             extrahooks::init_inet();
             hook::enable();
+        } else if (fn == "CCTrans.dll" || fn == "cctrans.dll") {
+            loadhooks::cctrans_handle = reinterpret_cast<HMODULE>(mod);
+            of::debug("CCTrans.dll loaded");
         }
     }
     plug::get().after_dll_load(path, fn, mod);
@@ -166,6 +170,8 @@ static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
                 temp_ret = reinterpret_cast<void*>(MessageBoxAH);
             else if (proc == "MessageBoxW")
                 temp_ret = reinterpret_cast<void*>(MessageBoxWH);
+        } else if (hModule == loadhooks::cctrans_handle) {
+            temp_ret = mmfhooks::cctrans_get_proc(proc, temp_ret);
         }
         // of::debug("GetProcAddress: {}", lpProcName);
     }
@@ -173,6 +179,7 @@ static FARPROC WINAPI GetProcAddressH(HMODULE hModule, LPCSTR lpProcName) {
 }
 
 void loadhooks::init() {
+    cctrans_handle = nullptr;
     user32_handle = GetModuleHandleW(L"user32.dll");
     IAT_STR_AUTO("kernel32.dll", LoadLibrary);
     IAT_AUTO("kernel32.dll", GetProcAddress);
