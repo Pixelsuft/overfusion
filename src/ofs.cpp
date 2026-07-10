@@ -1,13 +1,14 @@
 #define WIN32_LEAN_AND_MEAN
 #include "ofs.hpp"
 #include "ass.hpp"
+#include "config.hpp"
 #include "log.hpp"
 #include "sv.hpp"
 #include "uconv.hpp"
 #include <Windows.h>
 
-using ofs::File;
 using of::string_view;
+using ofs::File;
 using std::string;
 
 extern HANDLE(WINAPI* CreateFileWO)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD,
@@ -39,6 +40,7 @@ File& File::operator=(File&& other) noexcept {
 bool File::open(string_view path, int mode, bool hooked) {
     if (is_open())
         close();
+    ASS(!hooked || conf::get().virtual_fs);
     wchar_t* w_path = uconv::to_utf16(path);
     ENSURE(w_path != nullptr);
     handle = static_cast<void*>((hooked ? CreateFileWH : CreateFileWO)(

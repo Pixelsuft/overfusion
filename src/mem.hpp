@@ -22,6 +22,8 @@
      hook::iat_reg(lib, #func "A", func##AH, &func##AO))
 #define IAT_STR_ONLY(lib, func)                                                                    \
     (hook::iat_reg(lib, #func "W", func##WH) && hook::iat_reg(lib, #func "A", func##AH))
+#define IAT_ORD_AUTO(lib, ord) hook::iat_reg_ord(lib, ord, Ordinal_##ord##H, &Ordinal_##ord##O)
+#define IAT_ORD_ONLY(lib, ord) hook::iat_reg_ord(lib, ord, Ordinal_##ord##H)
 
 namespace mem {
 extern std::string exe_name;
@@ -95,6 +97,16 @@ template <typename F> inline bool iat_reg(of::string_view dll, of::string_view f
 template <typename F, typename T>
 inline bool iat_reg(of::string_view dll, of::string_view func, F* pDetour, T** ppOriginal) {
     return _reg_iat(dll, func, 0, reinterpret_cast<void*>(pDetour),
+                    reinterpret_cast<void**>(ppOriginal));
+}
+
+template <typename F> inline bool iat_reg_ord(of::string_view dll, int ord, F* pDetour) {
+    return _reg_iat(dll, "", ord, reinterpret_cast<void*>(pDetour), nullptr);
+}
+
+template <typename F, typename T>
+inline bool iat_reg_ord(of::string_view dll, int ord, F* pDetour, T** ppOriginal) {
+    return _reg_iat(dll, "", ord, reinterpret_cast<void*>(pDetour),
                     reinterpret_cast<void**>(ppOriginal));
 }
 

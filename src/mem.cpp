@@ -133,10 +133,16 @@ bool hook::_reg_iat(of::string_view dll, of::string_view func_name, int ordinal,
     target.origFunc = ppOriginal;
     ASS(!func_name.empty() || ordinal > 0);
 #ifdef _DEBUG
+    auto& v = iat_map[str_dll];
     if (!func_name.empty()) {
-        auto& v = iat_map[str_dll];
         auto it = std::find_if(v.begin(), v.end(), [target](const HookTarget& t2) {
             return t2.funcName == target.funcName;
+        });
+        ASS(it == v.end());
+    }
+    if (ordinal > 0) {
+        auto it = std::find_if(v.begin(), v.end(), [target](const HookTarget& t2) {
+            return t2.ordinal == target.ordinal;
         });
         ASS(it == v.end());
     }
@@ -199,8 +205,7 @@ static bool module_iat_apply(void* hModule) {
                                       [funcName](const auto& t) { return t.funcName == funcName; });
             } else {
                 WORD ordinal = IMAGE_ORDINAL(pOriginalThunk->u1.Ordinal);
-                if (ordinal == 0)
-                    continue;
+                ASS(ordinal != 0);
                 target = std::find_if(targets.begin(), targets.end(), [ordinal](const auto& t) {
                     return t.ordinal == static_cast<int>(ordinal);
                 });
