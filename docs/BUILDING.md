@@ -36,6 +36,6 @@ Just do the same, but use Visual Studio 2015 and open `overfusion.sln` project f
 ## Building the OverFusion injector
 
 1. Open `x86 Native Tools Command Prompt for VS` inside `Visual Studio Tools`
-2. Navigate to the `scripts` folder
+2. Navigate to the `utils` folder
 3. Run `build_injector.bat` script inside the opened terminal
 4. Now you have `ofinjector.exe` binary

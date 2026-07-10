@@ -8,7 +8,7 @@ ReleaseFast
 x64
 joined.txt
 nul
-scripts/*.manifest
+utils/*.manifest
 jumbo/main.cpp
 *.VC.db
 *.VC.db-shm
