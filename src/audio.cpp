@@ -369,7 +369,7 @@ public:
     }
     STDMETHOD(SetPan)(LONG p) override {
         HRESULT hr = pBuf->SetPan(p);
-        if (capturing) {
+        if (capturing && conf::get().support_audio_panning) {
             lock::CSLock lock(acs);
             push_event();
         }

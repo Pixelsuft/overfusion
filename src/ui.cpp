@@ -124,6 +124,9 @@ static void draw_menu(bool custom_window) {
     }
     if (ImGui::CollapsingHeader("Recording")) {
         if (!video::is_recording()) {
+            if (cfg.render_type == conf::RenderType::D3D9 ||
+                cfg.render_type == conf::RenderType::GDI)
+                ImGui::Checkbox("Allow direct video capture", &cfg.allow_direct_capture);
             if (ImGui::Button("Start video recording"))
                 video::start();
         } else {
@@ -150,11 +153,13 @@ static void draw_menu(bool custom_window) {
             cfg.font_scale = std::min(std::max(cfg.font_scale, 0.05f), 3.f);
         if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
             cfg.font_scale = 1.f;
-        ImGui::Checkbox("Allow timer fix", &cfg.allow_timers_fix);
+        ImGui::Checkbox("Allow timers fix", &cfg.allow_timers_fix);
+        ImGui::Checkbox("Don't fix RNG seeds", &cfg.dont_fix_seeds);
         ImGui::Checkbox("Draw cursor", &cfg.draw_cursor);
         ImGui::Checkbox("Pause on scene switch", &cfg.pause_on_scene_switch);
         ImGui::Checkbox("Redraw on frame drawing skip", &cfg.redraw_on_skip);
         ImGui::Checkbox("Save game state", &cfg.save_game_state);
+        ImGui::Checkbox("Skip hashing", &cfg.skip_hashing);
         ImGui::Checkbox("Save VFS in state", &cfg.save_vfs);
         if (cfg.render_type == conf::RenderType::D3D9) {
             ImGui::Checkbox("Show info window", &cfg.show_info);

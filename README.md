@@ -9,12 +9,12 @@ TAS tool/framework for games based on the MMF2/CTF2.5 runtime
 
 ## List of the supported games
 
-- `Five Nights at Freddy's`: Works good but not really because of strange buttons behaviour after state load
+- `Five Nights at Freddy's`: Works good but not really because of strange buttons and doors sprites ravdom disappear after state load
 - `Five Nights at Freddy's 3`: Haven't tested it much
 - `I Wanna be The Boshy`: PoC, use [boshyst](https://github.com/Pixelsuft/boshyst) instead
 - `I Wanna be The Guy`: Very old MMF2 runtime, requires `stdrt.exe` and related stuff unpacking; doesn't support in-game states
-- `I Wanna be The Try (1.9.8.3)`: Save states are very broken because of Box2D physics; restarting works strange
-- `I Wanna be The Try: A New Adventure (DEMO)`: Same but every frame INI writes are really slow and should be disabled
+- `I Wanna be The Try (1.9.8.3)`: Save states are broken because of Box2D physics; restarting works strange
+- `I Wanna be The Try: A New Adventure (DEMO)`: Same but every frame INI writes (when using VFS) are really slow and should be disabled
 
 ## Docs
 

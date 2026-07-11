@@ -1,6 +1,6 @@
 ## OverFusion Replay format
 
-It's a CSV compatible format. <br />
+It's a CSV compatible format. You can even use Excel to modify replays! <br />
 
 First lines (order may be different): <br />
 1st line starts with: `negative number (-9)`,pixelsuft_overfusion,`replay version` <br />
