@@ -1235,7 +1235,7 @@ void state::draw_info() {
 }
 
 void state::draw_input_tab() {
-    // TODO: push mouse pos, mouse button down or up, etc
+    ImGui::Text("TODO: push mouse pos, mouse button down or up, etc");
 }
 
 void state::draw_random_tab() {
