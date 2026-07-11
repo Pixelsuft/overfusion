@@ -1,3 +1,5 @@
+TODO: update this document
+
 ## Injector
 
 How does injector work? <br />
@@ -106,7 +108,7 @@ Disable subprocess creation and extra thread for determinism if `disable_threads
 
 ## Time hooks
 
-Time hooks for deterministic system time emulation and optionally timers
+Time hooks for deterministic time emulation and optional (single-threaded) timers emulation
 
 ## UI
 
@@ -119,7 +121,7 @@ Video capturing logic. See more [here](CAPTURING.md)
 ## Window hooks
 
 1. Window creation hooks
-2. Event processing hooks (for UI, dark mode, input manipulation, determinism)
+2. Event processing hooks (for UI, dark mode, determinism)
 3. Message boxes hooks for manipulation
 4. Some extra hooks for determinism
 

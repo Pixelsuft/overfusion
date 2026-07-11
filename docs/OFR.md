@@ -2,7 +2,7 @@
 
 It's a CSV compatible format. You can even use Excel to modify replays! <br />
 
-First lines (order may be different): <br />
+First lines (order may (unlikely) be different except for `events_begin`): <br />
 1st line starts with: `negative number (-9)`,pixelsuft_overfusion,`replay version` <br />
 2nd line starts with: `negative number (-8)`,total,`total frames` <br />
 3rd line starts with: `negative number (-7)`,rerecords,`rerecord count` <br />
@@ -20,6 +20,10 @@ Then event lines (sorted by `frame number`): <br />
 `1` (key down/up) (the same VK once per frame at maximum) (no double press/release allowed) - `virtual keycode`,`is down? (1/0)` <br />
 `2` (mouse down/up) (no double press/release allowed) - `virtual keycode`,`is down? (1/0)` <br />
 `3` (mouse move) - `normalized x (float) in [0; 1000]`,`normalized y (float) in [0; 1000]` <br />
+`4` (hash check) - `current internal RNG seed for hopefully catching desyncs (only RNG for now)` <br />
+`5` (set RNG seed) - `set internal RNG seed (RNG manipulation)` <br />
+`6` (push value to the RNG buffer) - `RNG range`,`RNG value`,`repeat count` <br />
+`7` (pop value from RNG buffer with specific range) - `RNG range or 0 to fully clear RNG buffer` <br />
 `20` (message box choice) - `message box choice (int)`
 
 Example replay:

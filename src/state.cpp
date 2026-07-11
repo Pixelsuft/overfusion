@@ -279,10 +279,10 @@ void state::export_replay(string_view fn) {
                                 ',' + std::to_string(e.rng.repeat));
             ENSURE(fret);
             break;
-        case event::Type::HashSeed:
+        case event::Type::HashCheck:
         case event::Type::SetSeed:
         case event::Type::PopRandom:
-            if (e.idx == event::Type::HashSeed && cfg.skip_hashing)
+            if (e.idx == event::Type::HashCheck && cfg.skip_hashing)
                 break;
             fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(int_idx) + ',' +
                                 std::to_string(e.rng.range));
@@ -475,10 +475,10 @@ void state::import_replay(string_view fn) {
                 continue;
             }
             break;
-        case event::Type::HashSeed:
+        case event::Type::HashCheck:
         case event::Type::SetSeed:
         case event::Type::PopRandom:
-            if (event.idx == event::Type::HashSeed && cfg.skip_hashing)
+            if (event.idx == event::Type::HashCheck && cfg.skip_hashing)
                 break;
             event.rng.range = static_cast<uint16_t>(str_to_int(line.substr(end)).value_or(0));
             break;
@@ -786,7 +786,7 @@ static bool exec_event(Event& ev) {
         input::sim_mouse_move(real_p.first, real_p.second);
         return true;
     }
-    case event::Type::HashSeed: {
+    case event::Type::HashCheck: {
         auto& cfg = conf::get();
         if (cfg.skip_hashing)
             return true;
@@ -794,11 +794,11 @@ static bool exec_event(Event& ev) {
         auto pRandomSeed = get_rng_seed_ptr(pState);
         ENSURE(pRandomSeed != nullptr);
         if (pRandomSeed && *pRandomSeed != ev.rng.range) {
-            state::last_msg = "RNG hash check failed (got " + std::to_string(*pRandomSeed) +
-                              " instead of " + std::to_string(ev.rng.range) + ")";
+            state::last_msg = "RNG hash check failed on frame " + std::to_string(state::st.frames);
             if (cfg.dont_fix_seeds)
                 return true;
-            of::warn("Fixing RNG hash (got {} instead of {})", *pRandomSeed, ev.rng.range);
+            of::warn("Fixing RNG hash (got {} instead of {}) on frame {}", *pRandomSeed,
+                     ev.rng.range, state::st.frames);
             ev.rng.range = *pRandomSeed;
         }
         return true;
@@ -925,7 +925,7 @@ bool state::before_update(bool is_transitioning) {
             if (pRandomSeed) {
                 Event event;
                 event.frame = st.frames;
-                event.idx = event::Type::HashSeed;
+                event.idx = event::Type::HashCheck;
                 event.rng.range = static_cast<short>(*pRandomSeed);
                 st.temp_ev.push_back(event);
             }
