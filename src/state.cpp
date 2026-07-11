@@ -353,6 +353,7 @@ void state::import_replay(string_view fn) {
             if (need_fps != cfg.fps) {
                 of::warn("Mismatch between config FPS ({}) and replay ({}), may desync", cfg.fps,
                          need_fps);
+                cfg.fps = need_fps;
             }
         } else if (sub == "delta_multiplier") {
             int need_mul = str_to_int(sub2).value_or(0);
@@ -360,6 +361,7 @@ void state::import_replay(string_view fn) {
                 of::warn(
                     "Mismatch between config delta multiplier ({}) and replay ({}), may desync",
                     cfg.delta_multiplier, need_mul);
+                cfg.delta_multiplier = need_mul;
             }
         } else if (sub == "system_offset") {
             auto offset = static_cast<uint64_t>(str_to_int(sub2).value_or(0));
@@ -367,6 +369,7 @@ void state::import_replay(string_view fn) {
                 of::warn(
                     "Mismatch between config system time offset ({}) and replay ({}), may desync",
                     cfg.system_offset, offset);
+                cfg.system_offset = offset;
             }
         } else if (sub == "local_offset") {
             auto offset = static_cast<uint64_t>(str_to_int(sub2).value_or(0));
@@ -374,6 +377,7 @@ void state::import_replay(string_view fn) {
                 of::warn(
                     "Mismatch between config local time offset ({}) and replay ({}), may desync",
                     cfg.local_offset, offset);
+                cfg.local_offset = offset;
             }
         } else if (sub == "startup_offset") {
             auto offset = static_cast<uint64_t>(str_to_int(sub2).value_or(0));
@@ -381,6 +385,7 @@ void state::import_replay(string_view fn) {
                 of::warn(
                     "Mismatch between config startup time offset ({}) and replay ({}), may desync",
                     cfg.startup_offset, offset);
+                cfg.startup_offset = offset;
             }
         } else if (sub == "events_begin") {
             break;
