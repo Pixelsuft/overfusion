@@ -1,7 +1,7 @@
 ## Requirements
 
 - Git
-- Microsoft Visual Studio (with at least C++14 support)
+- Microsoft Visual Studio (at least 2019, but can be 2015 for Windows XP jumbo build)
 - Python
 
 ## Clonning the repository

@@ -176,6 +176,8 @@ Config::Config() {
     already_processed_frame = false;
     redraw_on_skip = false;
     processing_save = false;
+    dont_fix_seeds = false;
+    skip_hashing = false;
 }
 
 // Read boolean variable
@@ -241,6 +243,8 @@ void Config::read() {
     READ_BOOL(forced_window_resize);
     READ_BOOL(redraw_on_skip);
     READ_BOOL(boxed_mode);
+    READ_BOOL(dont_fix_seeds);
+    READ_BOOL(skip_hashing);
     if (proj_data["system_time_offset"].is_number_unsigned())
         system_offset = proj_data["system_time_offset"];
     if (proj_data["local_time_offset"].is_number_unsigned())

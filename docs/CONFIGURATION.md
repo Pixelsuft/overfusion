@@ -32,6 +32,8 @@ You can use [default config](../overfusion.json) and [default project config](..
 `draw_cursor` - draw dot in the virtual mouse position (currently works only without the custom window for Direct3D 9 games) <br />
 `pixel_filter` - make the game look pixelated instead of blurry (only for Direct3D 9 games) <br />
 `ui_pixel_filter` - do the same but for OF UI <br />
+`dont_fix_seeds` - don't modify RNG seed check in replay when seed got desynced <br />
+`skip_hashing` - disable and don't import from and export to replay hash check (disable desync detection), also disables inserting these type of events <br />
 `save_vfs` - save/load virtual FS state into state file <br />
 `pause_on_scene_switch` - pause the game when scene switches (or gets reset) <br />
 `redraw_on_skip` - draw the frame manually when the game didn't draw (when game is unpaused), breaks FNAF magazine transition <br />

@@ -92,6 +92,8 @@ public:
     bool redraw_on_skip;
     bool processing_save;
     bool is_hourglass;
+    bool dont_fix_seeds;
+    bool skip_hashing;
 
     Config();
     void read();

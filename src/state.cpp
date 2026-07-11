@@ -22,9 +22,6 @@
 #undef max
 #undef min
 
-// TODO: RNG seed hash check event
-// TODO: event to repeat prev event
-
 constexpr int save_version = 1;
 constexpr int replay_version = 1;
 constexpr int empty_save_slot = -10000;
@@ -285,6 +282,8 @@ void state::export_replay(string_view fn) {
         case event::Type::HashSeed:
         case event::Type::SetSeed:
         case event::Type::PopRandom:
+            if (e.idx == event::Type::HashSeed && cfg.skip_hashing)
+                break;
             fret = file.writeln(std::to_string(e.frame) + ',' + std::to_string(int_idx) + ',' +
                                 std::to_string(e.rng.range));
             ENSURE(fret);
@@ -469,6 +468,8 @@ void state::import_replay(string_view fn) {
         case event::Type::HashSeed:
         case event::Type::SetSeed:
         case event::Type::PopRandom:
+            if (event.idx == event::Type::HashSeed && cfg.skip_hashing)
+                break;
             event.rng.range = static_cast<uint16_t>(str_to_int(line.substr(end)).value_or(0));
             break;
         case event::Type::MsgBox:
@@ -718,7 +719,7 @@ void state::remember_message_box(int choice) {
     }
 }
 
-static bool exec_event(Event ev) {
+static bool exec_event(Event& ev) {
     switch (ev.idx) {
     case event::Type::KeyDown: {
         auto it = std::find(state::cur_holding.begin(), state::cur_holding.end(), ev.key.k);
@@ -776,12 +777,26 @@ static bool exec_event(Event ev) {
         return true;
     }
     case event::Type::HashSeed: {
-        // TODO
+        auto& cfg = conf::get();
+        if (cfg.skip_hashing)
+            return true;
+        auto pState = plug::get().get_prop(plug::PtrProp::PState);
+        auto pRandomSeed = get_rng_seed_ptr(pState);
+        ENSURE(pRandomSeed != nullptr);
+        if (pRandomSeed && *pRandomSeed != ev.rng.range) {
+            state::last_msg = "RNG hash check failed (got " + std::to_string(*pRandomSeed) +
+                              " instead of " + std::to_string(ev.rng.range) + ")";
+            if (cfg.dont_fix_seeds)
+                return true;
+            of::warn("Fixing RNG hash (got {} instead of {})", *pRandomSeed, ev.rng.range);
+            ev.rng.range = *pRandomSeed;
+        }
         return true;
     }
     case event::Type::SetSeed: {
         auto pState = plug::get().get_prop(plug::PtrProp::PState);
         auto pRandomSeed = get_rng_seed_ptr(pState);
+        ENSURE(pRandomSeed != nullptr);
         if (pRandomSeed)
             *pRandomSeed = ev.rng.range;
         return true;
@@ -891,6 +906,17 @@ bool state::before_update(bool is_transitioning) {
                 event.idx = event::Type::KeyDown;
                 event.key.k = static_cast<short>(*pit);
                 event.key.down = false;
+                st.temp_ev.push_back(event);
+            }
+        }
+        if (!cfg.skip_hashing && st.frames % 128 == 0 && st.frames != 0) {
+            // Sometimes hash RNG to (possibly) catch desyncs
+            auto pRandomSeed = get_rng_seed_ptr(pState);
+            if (pRandomSeed) {
+                Event event;
+                event.frame = st.frames;
+                event.idx = event::Type::HashSeed;
+                event.rng.range = static_cast<short>(*pRandomSeed);
                 st.temp_ev.push_back(event);
             }
         }

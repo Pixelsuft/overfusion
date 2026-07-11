@@ -26,6 +26,8 @@
   "draw_cursor": true,
   "pixel_filter": true,
   "ui_pixel_filter": true,
+  "dont_fix_seeds": false,
+  "skip_hashing": false,
   "save_vfs": true,
   "pause_on_scene_switch": false,
   "redraw_on_skip": false,
