@@ -30,7 +30,7 @@ Direct Direct3D 9 capture: <br />
 Unlike video recording, audio recording must be started from the game start. <br />
 OF captures every single sound into seperate WAV file, remembers audio events. When recording is stopped, it generates audio filter for FFmpeg to join all files into a single output.
 
-1. Set `record_audio` to `true` (also optionally `support_audio_panning`, beta)
+1. Set `record_audio` and `emulate_mm_timers` to `true` (also optionally `support_audio_panning`, beta)
 2. Start the game inside the OF
 3. You can see the `[AUDIO]` sign inside the info window
 4. Play the game at normal speed (no fast forward)

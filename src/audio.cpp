@@ -587,12 +587,13 @@ void audio::flush() {
         mix += finalLabel;
         count++;
     }
+    auto length_limit = std::to_string(static_cast<double>(now) / 1000.0);
     filters.write(mix + "amix=inputs=" + std::to_string(count) + ":normalize=0[mixed];");
-    filters.writeln("[mixed]apad=whole_dur=" + std::to_string(static_cast<double>(now) / 1000.0) +
-                    "[out]");
+    filters.writeln("[mixed]apad=whole_dur=" + length_limit + "[out]");
     filters.close();
     bat.writeln("ffmpeg -y -/filter_complex audio_filters" + std::to_string(fn_counter) +
-                ".txt -map \"[out]\" -ac 2 -ar 48000 output" + std::to_string(fn_counter) + ".wav");
+                ".txt -map \"[out]\" -ac 2 -ar 48000 -t " + length_limit + " output" +
+                std::to_string(fn_counter) + ".wav");
     history.clear();
     cap_time_offset += now;
     fn_counter++;
