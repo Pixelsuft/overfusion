@@ -55,7 +55,7 @@ struct WavHeader {
 
 // Happens when something changes in the current audio
 struct AudioEvent {
-    uint64_t timeOffset;
+    double timeOffset;
     LONG volume;
     LONG pan;
     DWORD frequency;
@@ -216,19 +216,18 @@ class IDSBProxy : public IDirectSoundBuffer {
             currentFreq = newFreq;
         }
 
-        uint64_t offset = static_cast<uint64_t>(virtualTimeAcc);
         if (!cap.events.empty()) {
             auto& last = cap.events.back();
             // Last event has the same time -> override it
-            if (last.timeOffset == offset) {
-                last = {offset, vol, pan, newFreq};
+            if (last.timeOffset == virtualTimeAcc) {
+                last = {virtualTimeAcc, vol, pan, newFreq};
                 return;
             }
             // Last event has the same params -> skip it
             if (last.frequency == newFreq && last.volume == vol && last.pan == pan)
                 return;
         }
-        cap.events.push_back({offset, vol, pan, newFreq});
+        cap.events.push_back({virtualTimeAcc, vol, pan, newFreq});
     }
 
     void reinit_wav() {
@@ -575,10 +574,9 @@ void audio::flush() {
             string branchIn = "[b" + std::to_string(count) + "s" + std::to_string(e) + "]";
             string branchOut = "[p" + std::to_string(count) + "s" + std::to_string(e) + "]";
 
-            double start = static_cast<double>(c.events[e].timeOffset) / 1000.0;
-            double end = (e + 1 < c.events.size())
-                             ? static_cast<double>(c.events[e + 1].timeOffset) / 1000.0
-                             : totalDuration;
+            double start = c.events[e].timeOffset / 1000.0;
+            double end =
+                (e + 1 < c.events.size()) ? c.events[e + 1].timeOffset / 1000.0 : totalDuration;
             double volLinear = std::pow(10.0, static_cast<double>(c.events[e].volume) / 2000.0);
             double panNorm = static_cast<double>(c.events[e].pan) / 10000.0;
             double leftGain = (panNorm <= 0.0) ? 1.0 : (1.0 - panNorm);
