@@ -322,10 +322,11 @@ public:
         if (capturing && SUCCEEDED(hr) && conf::get().adjust_audio_pos) {
             ASS(pdwCurrentPlayCursor != nullptr);
             lock::CSLock lock(acs);
-            *pdwCurrentPlayCursor =
-                (static_cast<DWORD>(audio_get_time() - cap.startTime) * header.byteRate / 1000) %
-                bufferSize;
-            pBuf->SetCurrentPosition(*pdwCurrentPlayCursor);
+            auto needed =
+                static_cast<DWORD>(audio_get_time() - cap.startTime) * header.byteRate / 1000;
+            needed = (needed / header.blockAlign * header.blockAlign) % bufferSize;
+            *pdwCurrentPlayCursor = needed;
+            pBuf->SetCurrentPosition(needed);
         }
         return hr;
     }
