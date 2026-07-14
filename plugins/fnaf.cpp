@@ -2,6 +2,7 @@
 #include "../src/config.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
+#include "../src/state.hpp"
 #include "../src/winhooks.hpp"
 #include "../tools/perspective.hpp"
 #include <Windows.h>
@@ -13,6 +14,7 @@ class PlugFnaf final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
+    inline static unsigned int(__stdcall* RandomO)(int dummy, unsigned short maxv);
     size_t trans_ptr;
 
 public:
@@ -20,6 +22,7 @@ public:
         name = "Five Nights at Freddy's";
         SaveGameState = nullptr;
         LoadGameState = nullptr;
+        RandomO = nullptr;
         trans_ptr = 0;
     }
 
@@ -51,7 +54,18 @@ public:
         return true;
     }
 
-    bool update_init() override { return true; }
+    static unsigned int __stdcall RandomH(int dummy, unsigned short maxv) {
+        auto ret = RandomO(dummy, maxv);
+        return static_cast<unsigned int>(
+            state::fetch_random_number(static_cast<int>(maxv), static_cast<int>(ret)));
+    }
+
+    bool update_init() override {
+        // FIXME: random func got inlined in many parts. how to fix???
+        // TODO: hook other important funcs
+        hook::hook(mem::get_base() + 0x2c500, RandomH, &RandomO);
+        return true;
+    }
 
     void after_dll_load(string_view path, string_view fn, void* mod) override {
         if (mod == nullptr)

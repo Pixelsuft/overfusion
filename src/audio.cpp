@@ -14,7 +14,7 @@
 #undef min
 #undef max
 
-// TODO: write extended WAV header with channels number info
+// TODO: write extended WAV header with channels number info?
 
 using std::string;
 
@@ -188,6 +188,7 @@ class IDSBProxy : public IDirectSoundBuffer {
     IDirectSoundBuffer* pBuf;
     DWORD currentFreq;
     DWORD originalFreq;
+    DWORD bufferSize;
     bool inited;
 
     void push_event() {
@@ -285,8 +286,8 @@ public:
         header.bitsPerSample = desc->lpwfxFormat->wBitsPerSample;
         header.blockAlign = desc->lpwfxFormat->nBlockAlign;
         header.byteRate = desc->lpwfxFormat->nAvgBytesPerSec;
-        originalFreq = desc->lpwfxFormat->nSamplesPerSec;
-        currentFreq = originalFreq;
+        originalFreq = currentFreq = desc->lpwfxFormat->nSamplesPerSec;
+        bufferSize = desc->dwBufferBytes;
         lastRealTime = 0;
         virtualTimeAcc = 0.0;
         inited = false;
@@ -318,7 +319,16 @@ public:
     STDMETHOD(GetCaps)(LPDSBCAPS pDSBCaps) override { return pBuf->GetCaps(pDSBCaps); }
     STDMETHOD(GetCurrentPosition)(LPDWORD pdwCurrentPlayCursor,
                                   LPDWORD pdwCurrentWriteCursor) override {
-        return pBuf->GetCurrentPosition(pdwCurrentPlayCursor, pdwCurrentWriteCursor);
+        HRESULT hr = pBuf->GetCurrentPosition(pdwCurrentPlayCursor, pdwCurrentWriteCursor);
+        if (capturing && SUCCEEDED(hr) && conf::get().adjust_audio_pos) {
+            ASS(pdwCurrentPlayCursor != nullptr);
+            lock::CSLock lock(acs);
+            *pdwCurrentPlayCursor =
+                (static_cast<DWORD>(audio_get_time() - cap.startTime) * header.byteRate / 1000) %
+                bufferSize;
+            pBuf->SetCurrentPosition(*pdwCurrentPlayCursor);
+        }
+        return hr;
     }
     STDMETHOD(GetFormat)(LPWAVEFORMATEX pwfxFormat, DWORD dwSizeAllocated,
                          LPDWORD pdwSizeWritten) override {
@@ -340,12 +350,12 @@ public:
                           pdwAudioBytes2, dwFlags);
     }
     STDMETHOD(Play)(DWORD dwReserved1, DWORD dwPriority, DWORD dwFlags) override {
-        of::debug("DirectSoundBuffer::Play");
+        // of::debug("DirectSoundBuffer::Play");
         return pBuf->Play(dwReserved1, dwPriority, dwFlags);
     }
     STDMETHOD(SetCurrentPosition)(DWORD dwNewPosition) override {
         auto ret = pBuf->SetCurrentPosition(dwNewPosition);
-        of::debug("DirectSoundBuffer::SetCurrentPosition");
+        // of::debug("DirectSoundBuffer::SetCurrentPosition {}", dwNewPosition);
         return ret;
     }
     STDMETHOD(SetFormat)(LPCWAVEFORMATEX pcfxFormat) override {
@@ -353,7 +363,7 @@ public:
     }
     STDMETHOD(SetFrequency)(DWORD f) override {
         HRESULT hr = pBuf->SetFrequency(f);
-        if (capturing) {
+        if (capturing && SUCCEEDED(hr)) {
             lock::CSLock lock(acs);
             push_event();
         }
@@ -361,7 +371,7 @@ public:
     }
     STDMETHOD(SetVolume)(LONG v) override {
         HRESULT hr = pBuf->SetVolume(v);
-        if (capturing) {
+        if (capturing && SUCCEEDED(hr)) {
             lock::CSLock lock(acs);
             push_event();
         }
@@ -369,7 +379,7 @@ public:
     }
     STDMETHOD(SetPan)(LONG p) override {
         HRESULT hr = pBuf->SetPan(p);
-        if (capturing && conf::get().support_audio_panning) {
+        if (capturing && SUCCEEDED(hr) && conf::get().support_audio_panning) {
             lock::CSLock lock(acs);
             push_event();
         }
@@ -388,6 +398,7 @@ public:
             lock::CSLock lock(acs);
             if (!inited) {
                 reinit_wav();
+                lock.unlock();
                 return pBuf->Unlock(pv1, db1, pv2, db2);
             }
             if (pv1 && db1 > 0)
@@ -513,6 +524,8 @@ void audio::init() {
         cfg.disable_audio = false;
         cfg.allow_audio_hook = true;
     }
+    if (cfg.adjust_audio_pos && !cfg.allow_audio_hook)
+        of::warn("Disabling audio pos adjusting");
     capturing = false;
     // if (!cfg.allow_audio_hook && !cfg.disable_audio)
     //     return;

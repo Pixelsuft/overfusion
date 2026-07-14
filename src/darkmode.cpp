@@ -217,6 +217,8 @@ void winhooks::init_win32_theme() {
         win_shit.DwmSetWindowAttribute = reinterpret_cast<decltype(win_shit.DwmSetWindowAttribute)>(
             GetProcAddress(dwmapi_handle, "DwmSetWindowAttribute"));
     }
+    else
+        win_shit.DwmSetWindowAttribute = nullptr;
     WIN_NTDLL_OSVERSIONINFOEXW os_ver;
     os_ver.dwOSVersionInfoSize = sizeof(WIN_NTDLL_OSVERSIONINFOEXW);
     win_shit.RtlGetVersion(&os_ver);

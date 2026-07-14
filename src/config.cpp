@@ -178,6 +178,7 @@ Config::Config() {
     processing_save = false;
     dont_fix_seeds = false;
     skip_hashing = false;
+    adjust_audio_pos = false;
 }
 
 // Read boolean variable
@@ -245,6 +246,7 @@ void Config::read() {
     READ_BOOL(boxed_mode);
     READ_BOOL(dont_fix_seeds);
     READ_BOOL(skip_hashing);
+    READ_BOOL(adjust_audio_pos);
     if (proj_data["system_time_offset"].is_number_unsigned())
         system_offset = proj_data["system_time_offset"];
     if (proj_data["local_time_offset"].is_number_unsigned())

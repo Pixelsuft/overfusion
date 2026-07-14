@@ -28,6 +28,7 @@ You can use [default config](../overfusion.json) and [default project config](..
 `allow_audio_hook` - allow hooking the audio subsystem <br />
 `disable_audio` - disable audio playback completely <br />
 `record_audio` - record in-game audio <br />
+`adjust_audio_pos` - adjust real audio pos to TAS time to improve audio recording (TODO: support not only when capturing audio) <br />
 `support_audio_panning` - support panning for recording audio <br />
 `draw_cursor` - draw dot in the virtual mouse position (currently works only without the custom window for Direct3D 9 games) <br />
 `pixel_filter` - make the game look pixelated instead of blurry (only for Direct3D 9 games) <br />

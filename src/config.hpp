@@ -68,6 +68,7 @@ public:
     bool allow_timers_fix;
     bool allow_direct_capture;
     bool allow_audio_hook;
+    bool adjust_audio_pos;
     bool disable_audio;
     bool record_audio;
     bool support_audio_panning;
