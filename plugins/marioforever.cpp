@@ -1,5 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/config.hpp"
+#include "../src/log.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
@@ -66,6 +67,9 @@ public:
         size_t base = reinterpret_cast<size_t>(mod);
         if (fn == "cctrans.dll") {
             trans_addr = base + 0x78b8;
+        } else if (fn == "Onu.mfx") {
+            if (conf::get().disable_audio)
+                mem::write(base + 0x66a9, {0xeb});
         }
     };
 
