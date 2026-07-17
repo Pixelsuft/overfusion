@@ -28,7 +28,7 @@ public:
     bool pre_init() override {
         auto& cfg = conf::get();
         if (cfg.fps <= 0)
-            cfg.fps = 60;
+            cfg.fps = 50;
         SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x4f090);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x50d00);
         cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x4cac0);
