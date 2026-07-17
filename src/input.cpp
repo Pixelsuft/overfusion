@@ -286,6 +286,7 @@ void input::init() {
     IAT_ONLY("user32.dll", mouse_event);
     IAT_ONLY("user32.dll", SendInput);
     IAT_ONLY("user32.dll", SetCursorPos);
+    return;
     // FIXME: these don't wanna get hooked
     IAT_ONLY("textinputframework.dll", tsfGetKeyState);
     IAT_ONLY("textinputframework.dll", tsfGetAsyncKeyState);

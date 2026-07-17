@@ -116,7 +116,7 @@ BOOL(WINAPI* QueryPerformanceCounterO)(LARGE_INTEGER* lpFrequency) = QueryPerfor
 static BOOL WINAPI QueryPerformanceCounterH(LARGE_INTEGER* lpFrequency) {
     if (ui::is_processing())
         return QueryPerformanceCounterO(lpFrequency);
-    // TODO: RETURN actual precise value and 10000000 freq
+    // TODO: RETURN actual precise value and 1000000 freq
     lpFrequency->QuadPart = state::get_time(state::TimeOffset::None) * 1000 +
                             state::get_time(state::TimeOffset::Reminder);
     return TRUE;
@@ -208,13 +208,14 @@ static MMRESULT WINAPI timeKillEventH(UINT uTimerID) {
 void timehooks::init() {
     auto& cfg = conf::get();
     if (cfg.boxed_mode)
-        return;
+        return; // Right???
     mm_timer_counter = 1;
     // TODO:
     // localtime?
     IAT_ONLY("winmm.dll", timeGetSystemTime);
     IAT_AUTO("winmm.dll", timeGetTime);
     IAT_AUTO("kernel32.dll", QueryPerformanceFrequency);
+    IAT_AUTO("kernel32.dll", QueryPerformanceCounter);
     IAT_ONLY("kernel32.dll", GetTickCount);
     IAT_ONLY("kernel32.dll", SetLocalTime);
     IAT_ONLY("kernel32.dll", GetLocalTime);
@@ -231,14 +232,6 @@ void timehooks::init() {
         IAT_ONLY("winmm.dll", timeSetEvent);
         IAT_ONLY("winmm.dll", timeKillEvent);
     }
-}
-
-void timehooks::update_init() {
-    auto& cfg = conf::get();
-    if (cfg.boxed_mode)
-        return;
-    // FIXME: breaks IWBTB admin mod FSR
-    IAT_AUTO("kernel32.dll", QueryPerformanceCounter);
 }
 
 void timehooks::update(int dt) {

@@ -11,7 +11,6 @@
 #include "randhooks.hpp"
 #include "state.hpp"
 #include "threadhooks.hpp"
-#include "timehooks.hpp"
 #include "video.hpp"
 #include "winhooks.hpp"
 #include <Windows.h>
@@ -100,7 +99,6 @@ static int __stdcall UpdateGameFrameH() {
         inited = true;
         winhooks::after_ui_init();
         video::init();
-        timehooks::update_init();
         threadhooks::update_init();
         extrahooks::init_adv();
         randhooks::init();
