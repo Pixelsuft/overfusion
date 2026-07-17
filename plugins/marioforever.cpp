@@ -69,6 +69,13 @@ public:
         }
     };
 
+    void early_update() override {
+        if (state::get_frame_counter() == 0) {
+            // Enable back audio
+            mem::write(mem::get_base("Onu.mfx") + 0x66a9, {0x75});
+        }
+    }
+
     bool set_trans_enabled(bool enabled) override {
         if (trans_addr == 0)
             return false;
