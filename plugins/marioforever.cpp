@@ -124,28 +124,15 @@ public:
     }
 
     of::expected<void, string> save_state(ofs::File& file) override {
-        if (conf::get().save_game_state) {
-            std::vector<IntPair> timer_data;
-            auto timer_ret = timer_fix::save(timer_data);
-            if (!timer_ret.has_value())
-                return timer_ret;
-            state::write_bin(file, timer_data);
+        if (conf::get().save_game_state)
             SaveGameState(file.get_handle());
-        }
         return {};
     }
 
     of::expected<void, string> load_state(ofs::File& file) override {
         unsigned int outframe = 0;
-        if (!conf::get().is_replay) {
-            std::vector<IntPair> timer_data;
-            state::load_bin(file, timer_data);
+        if (!conf::get().is_replay)
             LoadGameState(file.get_handle(), &outframe);
-            // Check if LoadGameState already failed
-            if (!conf::get().processing_save)
-                return {};
-            return timer_fix::load(std::move(timer_data));
-        }
         return {};
     }
 
