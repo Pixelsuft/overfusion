@@ -1,6 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/config.hpp"
-#include "../src/log.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
@@ -65,9 +64,8 @@ public:
         if (mod == nullptr)
             return;
         size_t base = reinterpret_cast<size_t>(mod);
-        if (fn == "CCTrans.dll") {
+        if (fn == "cctrans.dll") {
             trans_addr = base + 0x7de7;
-            of::error("CCTRANS PATCHER");
         }
     };
 
