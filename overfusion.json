@@ -10,7 +10,7 @@
   "show_info": true,
   "emulate_user_timers": true,
   "emulate_mm_timers": true,
-  "virtual_fs": false,
+  "virtual_fs": true,
   "disable_threads": false,
   "delay_thread_hook": false,
   "no_ini_hooks": true,
