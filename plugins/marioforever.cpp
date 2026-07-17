@@ -14,7 +14,7 @@ class PlugMarioForever final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
-    inline static unsigned int(__cdecl* RandomO)(unsigned int maxv);
+    size_t trans_addr;
 
 public:
     PlugMarioForever() {
@@ -22,7 +22,7 @@ public:
         cmdline_append = string(" /SF \"") + string(ofs::get_cwd()) + "\\data.exe\" /SO394240";
         SaveGameState = nullptr;
         LoadGameState = nullptr;
-        RandomO = nullptr;
+        trans_addr = 0;
     }
 
     bool pre_init() override {
@@ -64,10 +64,17 @@ public:
         if (mod == nullptr)
             return;
         size_t base = reinterpret_cast<size_t>(mod);
-        if (fn == "mmfs2.dll") {
-        } else if (fn == "mmf2d3d9.dll") {
+        if (fn == "cctrans.dll") {
+            trans_addr = base + 0x78b8;
         }
     };
+
+    bool set_trans_enabled(bool enabled) override {
+        if (trans_addr == 0)
+            return false;
+        return enabled ? mem::write<true>(trans_addr, {0x74})
+                       : mem::write<true>(trans_addr, {0xeb});
+    }
 
     std::pair<float, float> mouse_from_window(int x, int y) override {
         if (x < 0 || y < 0)
