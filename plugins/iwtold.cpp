@@ -19,7 +19,6 @@ public:
         name = "I Wanna Try 1.9.8.3";
         SaveGameState = nullptr;
         LoadGameState = nullptr;
-        conf::get().need_key_message = true;
     }
 
     bool pre_init() override {
@@ -32,6 +31,7 @@ public:
         cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2c3f0);
         cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x28b50);
         cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x29f30);
+        cfg.need_key_message = true;
         // Show scene name in title
         mem::write(mem::get_base() + 0x273a8, {0x90, 0x90});
         // No __security_check_cookie

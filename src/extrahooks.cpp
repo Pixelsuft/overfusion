@@ -112,6 +112,11 @@ static UINT WINAPI joyGetPosExH(UINT uJoyID, const void* pji) {
     return 6;
 }
 
+static UINT WINAPI joySetCaptureH(HWND hwnd, UINT uJoyID, UINT uPeriod, BOOL fChanged) {
+    of::warn("Failing joySetCapture");
+    return 6;
+}
+
 static HRESULT WINAPI SHGetSpecialFolderLocationH(HWND hwnd, int csidl, void* ppidl) {
     return static_cast<HRESULT>(1);
 }
@@ -268,6 +273,7 @@ void extrahooks::init() {
         if (addr)
             *reinterpret_cast<wchar_t**>(addr) = my_argv_w;
         of::info("Command line: {}", uconv::from_utf16(my_argv_w));
+        IAT_STR_ONLY("kernel32.dll", GetCommandLine);
     }
     // TODO:
     // GetDateFormatEx
@@ -279,7 +285,6 @@ void extrahooks::init() {
     IAT_STR_ONLY("shell32.dll", DragQueryFile);
     IAT_STR_ONLY("shell32.dll", ShellExecute);
     IAT_STR_ONLY("shell32.dll", ShellExecuteEx);
-    IAT_STR_ONLY("kernel32.dll", GetCommandLine);
     IAT_STR_ONLY("kernel32.dll", GetVersionEx);
     IAT_STR_ONLY("kernel32.dll", EnumSystemLocales);
     IAT_ONLY("shell32.dll", SHGetSpecialFolderLocation);
@@ -287,6 +292,7 @@ void extrahooks::init() {
     IAT_ONLY("kernel32.dll", GetVersion);
     IAT_STR_ONLY("winmm.dll", joyGetDevCaps);
     IAT_ONLY("winmm.dll", joyGetPosEx);
+    IAT_ONLY("winmm.dll", joySetCapture);
 }
 
 void extrahooks::init_ws32() {

@@ -36,6 +36,7 @@ public:
         cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x30640);
         cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x2bd50);
         cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x2d5a0);
+        cfg.need_key_message = true;
         // No waiting
         mem::write(mem::get_base() + 0x302e, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         mem::write(mem::get_base() + 0x2fbb, {0xeb});
@@ -73,7 +74,7 @@ public:
     void early_update() override {
         if (state::get_frame_counter() == 0) {
             // Enable back audio
-            // mem::write(mem::get_base("Onu.mfx") + 0x66a9, {0x75});
+            mem::write(mem::get_base("Onu.mfx") + 0x66a9, {0x75});
         }
     }
 

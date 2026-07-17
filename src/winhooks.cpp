@@ -291,8 +291,13 @@ static HHOOK(WINAPI* SetWindowsHookExAO)(int idHook, HOOKPROC lpfn, HINSTANCE hm
                                          DWORD dwThreadId);
 static HHOOK WINAPI SetWindowsHookExAH(int idHook, HOOKPROC lpfn, HINSTANCE hmod,
                                        DWORD dwThreadId) {
+    if (idHook == 5 && hmod == nullptr && mem::get_base("KcActiveX.mfx") != 0) {
+        // Mario Forever Remake hack for AfxWnd42s window
+        return SetWindowsHookExAO(5, lpfn, hmod, dwThreadId);
+    }
     // No size/move hooks which cause desyncs
-    of::debug("Failing SetWindowsHookExA");
+    of::debug("Failing SetWindowsHookExA {} {} {} {}", idHook, reinterpret_cast<void*>(lpfn),
+              reinterpret_cast<void*>(hmod), dwThreadId);
     return nullptr;
 }
 
@@ -300,7 +305,8 @@ static HHOOK(WINAPI* SetWindowsHookExWO)(int idHook, HOOKPROC lpfn, HINSTANCE hm
                                          DWORD dwThreadId);
 static HHOOK WINAPI SetWindowsHookExWH(int idHook, HOOKPROC lpfn, HINSTANCE hmod,
                                        DWORD dwThreadId) {
-    of::debug("Failing SetWindowsHookExW");
+    of::debug("Failing SetWindowsHookExW {} {} {} {}", idHook, reinterpret_cast<void*>(lpfn),
+              reinterpret_cast<void*>(hmod), dwThreadId);
     return nullptr;
 }
 

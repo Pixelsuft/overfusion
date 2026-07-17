@@ -210,6 +210,8 @@ void timehooks::init() {
     if (cfg.boxed_mode)
         return;
     mm_timer_counter = 1;
+    // TODO:
+    // localtime?
     IAT_ONLY("winmm.dll", timeGetSystemTime);
     IAT_AUTO("winmm.dll", timeGetTime);
     IAT_AUTO("kernel32.dll", QueryPerformanceFrequency);
