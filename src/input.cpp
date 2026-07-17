@@ -210,7 +210,6 @@ static HKL WINAPI GetKeyboardLayoutH(DWORD idThread) {
     return reinterpret_cast<HKL>(0x04090409);
 }
 
-static BOOL(WINAPI* GetKeyboardStateO)(PBYTE lpKeyState);
 static BOOL WINAPI GetKeyboardStateH(PBYTE lpKeyState) {
     // of::info("GetKeyboardState");
     ASS(lpKeyState != nullptr);
@@ -279,7 +278,7 @@ void input::init() {
     IAT_AUTO("user32.dll", GetCursorPos);
     IAT_ONLY("user32.dll", GetInputState);
     IAT_AUTO("user32.dll", GetKeyboardLayout);
-    IAT_AUTO("user32.dll", GetKeyboardState);
+    IAT_ONLY("user32.dll", GetKeyboardState);
     IAT_ONLY("user32.dll", SetKeyboardState);
     // IAT_ONLY("user32.dll", OpenClipboard);
     IAT_ONLY("user32.dll", IsClipboardFormatAvailable);
