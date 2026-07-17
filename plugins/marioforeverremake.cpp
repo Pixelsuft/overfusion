@@ -44,7 +44,8 @@ public:
         // Game FPS is fine
         mem::write(mem::get_base() + 0x2e441, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         // Game title
-        mem::write(mem::get_base() + 0x2bfd6, {0x90, 0x90});
+        mem::write(mem::get_base() + 0x2bfd6, {0xeb});
+        mem::write(mem::get_base() + 0x2c004, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         return true;
     }
 
