@@ -3,7 +3,6 @@
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
-#include "../src/winhooks.hpp"
 #include "../tools/perspective.hpp"
 #include <Windows.h>
 

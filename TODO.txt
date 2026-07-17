@@ -8,5 +8,6 @@
 [ ] Restart game event?
 [ ] Allow to specify VFS rules in ofproject.json (map specific file to...)
 [ ] Add skip drawing
+[ ] Support pure RNG manipulation in modern runtimes (de-inline RNG funcs)
 [ ] Optimize jumbo builds via Python (devirtualize calls, etc)
 [ ] Fix TODO/FIXME in code

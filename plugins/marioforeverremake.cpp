@@ -3,22 +3,23 @@
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
-#include "../tools/perspective.hpp"
 #include "../tools/timer_fix.hpp"
 #include <Windows.h>
 
 using of::string_view;
 using std::string;
 
-class PlugFnaf3 final : public plug::PlugBase {
+class PlugMarioForeverRemake final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
     size_t trans_addr;
 
 public:
-    PlugFnaf3() {
-        name = "Five Nights at Freddy's 3";
+    PlugMarioForeverRemake() {
+        name = "Mario Forever Remake";
+        cmdline_append = string(" /SF \"") + string(ofs::get_cwd()) +
+                         "\\Mario Forever Remake v4.02.exe\" /SO621568";
         SaveGameState = nullptr;
         LoadGameState = nullptr;
         trans_addr = 0;
@@ -28,22 +29,20 @@ public:
         auto& cfg = conf::get();
         if (cfg.fps <= 0)
             cfg.fps = 60;
-        SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x48080);
-        LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49c70);
-        cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x46010);
-        cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2c270);
-        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x28a80);
-        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x29e10);
+        SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x469f0);
+        LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x485e0);
+        cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x449b0);
+        cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2acc0);
+        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x27380);
+        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x28790);
         // No waiting
-        mem::write(mem::get_base() + 0x2fae, {0xeb});
-        mem::write(mem::get_base() + 0x2fdb, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
-        // By saying pause I mean pause
-        mem::write(mem::get_base() + 0x2a9c8, {0xeb});
+        mem::write(mem::get_base() + 0x2f57, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x2f28, {0xeb});
         // Game FPS is fine
-        mem::write(mem::get_base() + 0x2aa40, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x292ba, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         // Game title
-        mem::write(mem::get_base() + 0x272ad, {0xeb});
-        mem::write(mem::get_base() + 0x272d8, {0x90, 0x90});
+        mem::write(mem::get_base() + 0x25bcd, {0xeb});
+        mem::write(mem::get_base() + 0x25bf8, {0x90, 0x90});
         return true;
     }
 
@@ -54,21 +53,28 @@ public:
         return true;
     }
 
+    of::optional<std::string> before_dll_load(string_view path, string_view fn) override {
+        if (fn == "wininet.dll")
+            return "";
+        // of::info("Before load {}", fn);
+        return {};
+    }
+
     void after_dll_load(string_view path, string_view fn, void* mod) override {
         if (mod == nullptr)
             return;
         size_t base = reinterpret_cast<size_t>(mod);
         if (fn == "cctrans.dll") {
-            trans_addr = base + 0x7557;
+            trans_addr = base + 0x78b8;
         }
-        perspective::after_dll_load(fn, mod);
     };
 
-    void* after_proc_get(void* module, const char* proc, void* ret) override {
-        return perspective::after_proc_get(module, proc, ret);
+    void early_update() override {
+        if (state::get_frame_counter() == 0) {
+            // Enable back audio
+            mem::write(mem::get_base("Onu.mfx") + 0x66a9, {0x75});
+        }
     }
-
-    void draw_menu() override { perspective::draw_menu(); }
 
     bool set_trans_enabled(bool enabled) override {
         if (trans_addr == 0)
@@ -80,11 +86,11 @@ public:
     void* get_prop(plug::PtrProp prop, void* data) override {
         switch (prop) {
         case plug::PtrProp::PState:
-            return *reinterpret_cast<void**>(mem::get_base() + 0xb39d4);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xab4bc);
         case plug::PtrProp::PStats:
-            return *reinterpret_cast<void**>(mem::get_base() + 0xb39d0);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xab4b8);
         case plug::PtrProp::PGlobalApp:
-            return *reinterpret_cast<void**>(mem::get_base() + 0xb39cc);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xab4b4);
         case plug::PtrProp::PNextFrameTask:
             // From pState
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x30);
@@ -128,16 +134,19 @@ public:
             LoadGameState(file.get_handle(), &outframe);
             if (!conf::get().processing_save)
                 return {};
+            // Disable sound, otherwise it will crash
+            mem::write(mem::get_base("Onu.mfx") + 0x66a9, {0xeb});
             return timer_fix::load(std::move(timer_data));
         }
         return {};
     }
 
-    static of::optional<PlugFnaf3*> on_plugin_check() {
-        if (mem::exe_name == "FiveNightsatFreddys3.exe")
-            return new PlugFnaf3;
+    static of::optional<PlugMarioForeverRemake*> on_plugin_check() {
+        if (mem::exe_name == "stdrtex.exe" &&
+            ofs::file_exists(string(ofs::get_cwd()) + "\\Mario Forever Remake v4.02.exe"))
+            return new PlugMarioForeverRemake;
         return {};
     }
 };
 
-PLUG_REG(PlugFnaf3);
+PLUG_REG(PlugMarioForeverRemake);

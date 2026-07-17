@@ -183,6 +183,7 @@
     <ClCompile Include="plugins\iwtdemo.cpp" />
     <ClCompile Include="plugins\iwtold.cpp" />
     <ClCompile Include="plugins\marioforever.cpp" />
+    <ClCompile Include="plugins\marioforeverremake.cpp" />
     <ClCompile Include="spdlog\src\async.cpp" />
     <ClCompile Include="spdlog\src\bundled_fmtlib_format.cpp" />
     <ClCompile Include="spdlog\src\cfg.cpp" />

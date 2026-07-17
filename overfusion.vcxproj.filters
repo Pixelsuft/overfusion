@@ -192,6 +192,9 @@
     <ClCompile Include="plugins\marioforever.cpp">
       <Filter>Plugins</Filter>
     </ClCompile>
+    <ClCompile Include="plugins\marioforeverremake.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest">
