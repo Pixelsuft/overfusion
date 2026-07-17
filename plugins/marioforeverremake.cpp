@@ -67,6 +67,9 @@ public:
         size_t base = reinterpret_cast<size_t>(mod);
         if (fn == "cctrans.dll") {
             trans_addr = base + 0x7de7;
+        } else if (fn == "KcActiveX.mfx") {
+            // Skip CBT hook installing
+            mem::write(base + 0x21b2a, {0xeb});
         }
     };
 

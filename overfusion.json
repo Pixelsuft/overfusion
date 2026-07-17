@@ -20,7 +20,7 @@
   "allow_timers_fix": true,
   "allow_direct_capture": true,
   "allow_audio_hook": true,
-  "disable_audio": true,
+  "disable_audio": false,
   "record_audio": false,
   "adjust_audio_pos": true,
   "support_audio_panning": false,

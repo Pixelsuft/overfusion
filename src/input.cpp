@@ -274,6 +274,7 @@ void input::init() {
     // TODO: RegisterClipboardFormat, GetCapture, SetCapture
     IAT_AUTO("user32.dll", GetKeyState);
     IAT_AUTO("user32.dll", GetAsyncKeyState);
+    return;
     IAT_AUTO("user32.dll", GetCursorPos);
     IAT_ONLY("user32.dll", GetInputState);
     IAT_AUTO("user32.dll", GetKeyboardLayout);

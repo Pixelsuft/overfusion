@@ -108,7 +108,7 @@ static UINT WINAPI joyGetDevCapsWH(UINT_PTR uJoyID, const void* pjc, UINT cbjc) 
 }
 
 static UINT WINAPI joyGetPosExH(UINT uJoyID, const void* pji) {
-    of::warn("Failing joyGetPosEx");
+    // of::warn("Failing joyGetPosEx");
     return 6;
 }
 
