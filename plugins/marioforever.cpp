@@ -53,8 +53,6 @@ public:
     }
 
     of::optional<std::string> before_dll_load(string_view path, string_view fn) override {
-        if (fn == "wininet.dll")
-            return "";
         // of::info("Before load {}", fn);
         return {};
     }

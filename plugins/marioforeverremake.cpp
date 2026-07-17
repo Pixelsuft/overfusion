@@ -1,5 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/config.hpp"
+#include "../src/log.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
@@ -29,20 +30,21 @@ public:
         auto& cfg = conf::get();
         if (cfg.fps <= 0)
             cfg.fps = 60;
-        SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x469f0);
-        LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x485e0);
-        cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x449b0);
-        cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2acc0);
-        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x27380);
-        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x28790);
+        SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x4f090);
+        LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x50d00);
+        cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x4cac0);
+        cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x30640);
+        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x2bd50);
+        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x2d5a0);
         // No waiting
-        mem::write(mem::get_base() + 0x2f57, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
-        mem::write(mem::get_base() + 0x2f28, {0xeb});
+        mem::write(mem::get_base() + 0x302e, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x2fbb, {0xeb});
+        // Pause is pause
+        mem::write(mem::get_base() + 0x2e3de, {0xeb});
         // Game FPS is fine
-        mem::write(mem::get_base() + 0x292ba, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x2e441, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         // Game title
-        mem::write(mem::get_base() + 0x25bcd, {0xeb});
-        mem::write(mem::get_base() + 0x25bf8, {0x90, 0x90});
+        mem::write(mem::get_base() + 0x2bfd6, {0x90, 0x90});
         return true;
     }
 
@@ -54,8 +56,6 @@ public:
     }
 
     of::optional<std::string> before_dll_load(string_view path, string_view fn) override {
-        if (fn == "wininet.dll")
-            return "";
         // of::info("Before load {}", fn);
         return {};
     }
@@ -64,15 +64,16 @@ public:
         if (mod == nullptr)
             return;
         size_t base = reinterpret_cast<size_t>(mod);
-        if (fn == "cctrans.dll") {
-            trans_addr = base + 0x78b8;
+        if (fn == "CCTrans.dll") {
+            trans_addr = base + 0x7de7;
+            of::error("CCTRANS PATCHER");
         }
     };
 
     void early_update() override {
         if (state::get_frame_counter() == 0) {
             // Enable back audio
-            mem::write(mem::get_base("Onu.mfx") + 0x66a9, {0x75});
+            // mem::write(mem::get_base("Onu.mfx") + 0x66a9, {0x75});
         }
     }
 
@@ -86,11 +87,11 @@ public:
     void* get_prop(plug::PtrProp prop, void* data) override {
         switch (prop) {
         case plug::PtrProp::PState:
-            return *reinterpret_cast<void**>(mem::get_base() + 0xab4bc);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb4b9c);
         case plug::PtrProp::PStats:
-            return *reinterpret_cast<void**>(mem::get_base() + 0xab4b8);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb4b98);
         case plug::PtrProp::PGlobalApp:
-            return *reinterpret_cast<void**>(mem::get_base() + 0xab4b4);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb4b94);
         case plug::PtrProp::PNextFrameTask:
             // From pState
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x30);
