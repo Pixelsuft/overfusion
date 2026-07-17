@@ -1,6 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/config.hpp"
-#include "../src/log.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
@@ -49,8 +48,8 @@ public:
 
     bool update_init() override {
         auto& cfg = conf::get();
-        // cfg.tm_fix_event_entry_offset = 0xe;
-        // cfg.tm_fix_event_entry_type_offset = 0x10;
+        cfg.tm_fix_event_entry_offset = 0x10;
+        cfg.tm_fix_event_entry_type_offset = 0x12;
         return true;
     }
 
@@ -128,15 +127,27 @@ public:
     }
 
     of::expected<void, string> save_state(ofs::File& file) override {
-        if (conf::get().save_game_state)
+        if (conf::get().save_game_state) {
+            std::vector<IntPair> timer_data;
+            auto timer_ret = timer_fix::save(timer_data);
+            if (!timer_ret.has_value())
+                return timer_ret;
+            state::write_bin(file, timer_data);
             SaveGameState(file.get_handle());
+        }
         return {};
     }
 
     of::expected<void, string> load_state(ofs::File& file) override {
         unsigned int outframe = 0;
-        if (!conf::get().is_replay)
+        if (!conf::get().is_replay) {
+            std::vector<IntPair> timer_data;
+            state::load_bin(file, timer_data);
             LoadGameState(file.get_handle(), &outframe);
+            if (!conf::get().processing_save)
+                return {};
+            return timer_fix::load(std::move(timer_data));
+        }
         return {};
     }
 
