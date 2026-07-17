@@ -66,9 +66,6 @@ public:
         size_t base = reinterpret_cast<size_t>(mod);
         if (fn == "cctrans.dll") {
             trans_addr = base + 0x78b8;
-        } else if (fn == "Onu.mfx") {
-            if (conf::get().disable_audio)
-                mem::write(base + 0x66a9, {0xeb});
         }
     };
 
@@ -130,6 +127,8 @@ public:
             LoadGameState(file.get_handle(), &outframe);
             if (!conf::get().processing_save)
                 return {};
+            // Disable sound, otherwise it will crash
+            mem::write(mem::get_base("Onu.mfx") + 0x66a9, {0xeb});
             return timer_fix::load(std::move(timer_data));
         }
         return {};

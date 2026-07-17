@@ -231,16 +231,14 @@ class IDSBProxy : public IDirectSoundBuffer {
     }
 
     void reinit_wav() {
-        if (!capturing)
-            return;
-        // Open audio file, write default WAV header
         auto cur_time = audio_get_time();
-        auto idx = gen_uid(cur_time);
-        data.clear();
         inited = true;
         cap.startTime = cap.endTime = cur_time;
-        cap.idx = idx;
+        if (!capturing)
+            return;
+        data.clear();
         cap.events.clear();
+        cap.idx = gen_uid(cur_time);
         push_event();
     }
 
@@ -249,6 +247,8 @@ public:
         // Update header, close file, remove if empty
         if (inited) {
             inited = false;
+            if (!capturing)
+                return;
             uint64_t now = audio_get_time();
             double scale = static_cast<double>(currentFreq) / static_cast<double>(originalFreq);
             virtualTimeAcc += static_cast<double>(now - lastRealTime) * scale;
@@ -319,7 +319,7 @@ public:
     STDMETHOD(GetCurrentPosition)(LPDWORD pdwCurrentPlayCursor,
                                   LPDWORD pdwCurrentWriteCursor) override {
         HRESULT hr = pBuf->GetCurrentPosition(pdwCurrentPlayCursor, pdwCurrentWriteCursor);
-        if (capturing && SUCCEEDED(hr) && conf::get().adjust_audio_pos) {
+        if (SUCCEEDED(hr) && conf::get().adjust_audio_pos) {
             ASS(pdwCurrentPlayCursor != nullptr);
             lock::CSLock lock(acs);
             auto needed =
@@ -407,6 +407,13 @@ public:
             if (pv2 && db2 > 0)
                 data.insert(data.end(), reinterpret_cast<uint8_t*>(pv2),
                             reinterpret_cast<uint8_t*>(pv2) + db2);
+        } else {
+            lock::CSLock lock(acs);
+            if (!inited) {
+                reinit_wav();
+                lock.unlock();
+                return pBuf->Unlock(pv1, db1, pv2, db2);
+            }
         }
         return pBuf->Unlock(pv1, db1, pv2, db2);
     }
