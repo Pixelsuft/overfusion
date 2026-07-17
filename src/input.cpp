@@ -271,6 +271,7 @@ static int WINAPI InputFocusChangedH(int param_1, void *param_2) {
 
 void input::init() {
     std::memset(kbd_state, 0, sizeof(bool) * 256);
+    // TODO: RegisterClipboardFormat, GetCapture, SetCapture
     IAT_AUTO("user32.dll", GetKeyState);
     IAT_AUTO("user32.dll", GetAsyncKeyState);
     IAT_AUTO("user32.dll", GetCursorPos);

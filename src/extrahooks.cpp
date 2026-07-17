@@ -269,7 +269,12 @@ void extrahooks::init() {
             *reinterpret_cast<wchar_t**>(addr) = my_argv_w;
         of::info("Command line: {}", uconv::from_utf16(my_argv_w));
     }
-    // TODO: GetDateFormatEx, GetLocaleInfoEx, GetTimeFormatEx, GetUserDefaultLocaleName
+    // TODO:
+    // GetDateFormatEx
+    // GetLocaleInfoEx
+    // GetTimeFormatEx
+    // GetUserDefaultLocaleName
+    // WinHelpA
     IAT_AUTO("shell32.dll", DragAcceptFiles);
     IAT_STR_ONLY("shell32.dll", DragQueryFile);
     IAT_STR_ONLY("shell32.dll", ShellExecute);

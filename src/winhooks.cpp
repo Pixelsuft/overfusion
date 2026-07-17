@@ -520,6 +520,7 @@ void winhooks::init() {
     MainWindowProcO = EditWindowProcO = nullptr;
     inited = false;
     winhooks::pre_init_win32_theme();
+    // TODO: RegisterWindowMessage
     // IAT_STR_ONLY("user32.dll", GetMonitorInfo);
     IAT_STR_AUTO("user32.dll", CreateWindowEx);
     IAT_STR_AUTO("user32.dll", RegisterClassEx);
