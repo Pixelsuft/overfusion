@@ -257,7 +257,7 @@ void extrahooks::init() {
         auto& cfg = conf::get();
         strcpy(my_argv_a, GetCommandLineA());
         wcscpy(my_argv_w, GetCommandLineW());
-        auto str_cmd = plug::get().cmdline_append + cfg.cmdline_append;
+        auto str_cmd = cfg.cmdline_append + plug::get().cmdline_append;
         if (cfg.disable_fullscreen)
             str_cmd += " /NOF";
         auto temp1 = uconv::to_ansi(str_cmd);
