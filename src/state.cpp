@@ -1120,8 +1120,13 @@ bool state::set_win_mouse_pos(int x, int y) {
 }
 
 void state::fill_kbd_state(unsigned char* data) {
-    for (auto& val : st.prev_input)
-        data[val] = 0x80;
+    auto& cfg = conf::get();
+    if (cfg.is_replay && cfg.need_key_message)
+        for (auto& val : cur_holding)
+            data[val] = 0x80;
+    else
+        for (auto& val : st.prev_input)
+            data[val] = 0x80;
 }
 
 inline void state_reg_rng(int range, int value, bool our) {

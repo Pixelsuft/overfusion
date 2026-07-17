@@ -569,6 +569,7 @@ void audio::flush() {
 
     for (const auto& c : history) {
         string finalLabel = "[f" + std::to_string(count) + "]";
+        ASS(c.endTime > c.startTime);
         double totalDuration = static_cast<double>(c.endTime - c.startTime) / 1000.0;
         ASS(!c.events.empty());
         size_t numSegs = c.events.size();
