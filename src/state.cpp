@@ -1121,7 +1121,7 @@ bool state::set_win_mouse_pos(int x, int y) {
 
 void state::fill_kbd_state(unsigned char* data) {
     for (auto& val : st.prev_input)
-        data[val] = 1;
+        data[val] = 0x80;
 }
 
 inline void state_reg_rng(int range, int value, bool our) {
@@ -1234,9 +1234,7 @@ void state::draw_info() {
     }
 }
 
-void state::draw_input_tab() {
-    ImGui::Text("TODO: push mouse pos, mouse button down or up, etc");
-}
+void state::draw_input_tab() { ImGui::Text("TODO: push mouse pos, mouse button down or up, etc"); }
 
 void state::draw_random_tab() {
     static int rval[3] = {0, 0, 0};
