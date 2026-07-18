@@ -171,6 +171,7 @@ static HWND WINAPI CreateWindowExAH(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR 
         // of::warn("Failing AfxWnd42s window creation");
         // return nullptr;
         lpClassName = "STATIC";
+        // dwExStyle &= ~WS_VISIBLE;
     }
     auto ret = CreateWindowExAO(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth,
                                 nHeight, hWndParent, hMenu, hInstance, lpParam);

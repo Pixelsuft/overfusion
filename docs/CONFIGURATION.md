@@ -70,6 +70,7 @@ You can use [default config](../overfusion.json) and [default project config](..
 ## Default bindings
 
 In-game key maps: `Left`, `Right`, `Up`, `Down`, `Enter`, `R`, `S`, `Z`, `X`, `Del` <br />
+`C` - maps to `Space` <br />
 `I` - maps to `F2` <br />
 `O` - maps to `F3` <br />
 `P` - maps to `Esc` <br />
