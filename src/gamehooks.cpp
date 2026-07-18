@@ -54,6 +54,7 @@ static int __stdcall ProcessTransitionH() {
     int ret;
     if (cfg.boxed_mode)
         cfg.is_paused = false;
+    of::error("TRANSITION");
     if (cfg.is_paused && !cfg.need_advance) {
         *pIsPaused = true;
         ret = ProcessTransitionO();

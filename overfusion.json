@@ -92,6 +92,11 @@
       "target": "Z"
     },
     {
+      "key": "C",
+      "task": "map",
+      "target": "Space"
+    },
+    {
       "key": "X",
       "task": "map",
       "target": "X"

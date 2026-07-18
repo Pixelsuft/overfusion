@@ -33,8 +33,8 @@ public:
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x34d30);
         cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x31f60);
         cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x1b870);
-        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x188e0);
-        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x184f0);
+        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x18390);
+        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x17f10);
         // No waiting
         mem::write(mem::get_base() + 0x29b4, {0x90, 0x90});
         mem::write(mem::get_base() + 0x2989, {0xeb});
@@ -72,6 +72,7 @@ public:
 
     void early_update() override {
         if (state::get_frame_counter() == 0) {
+            // set_trans_enabled(false);
         }
     }
 

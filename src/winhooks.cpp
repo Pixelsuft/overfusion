@@ -166,10 +166,11 @@ static HWND WINAPI CreateWindowExAH(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR 
                                     DWORD dwStyle, int X, int Y, int nWidth, int nHeight,
                                     HWND hWndParent, HMENU hMenu, HINSTANCE hInstance,
                                     LPVOID lpParam) {
-    if (false && reinterpret_cast<size_t>(lpClassName) > 0xFFFF &&
+    if (reinterpret_cast<size_t>(lpClassName) > 0xFFFF &&
         std::strcmp(lpClassName, "AfxWnd42s") == 0) {
-        of::warn("Failing AfxWnd42s window creation");
-        return nullptr;
+        // of::warn("Failing AfxWnd42s window creation");
+        // return nullptr;
+        lpClassName = "STATIC";
     }
     auto ret = CreateWindowExAO(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth,
                                 nHeight, hWndParent, hMenu, hInstance, lpParam);
@@ -317,10 +318,11 @@ static HHOOK WINAPI SetWindowsHookExWH(int idHook, HOOKPROC lpfn, HINSTANCE hmod
     return nullptr;
 }
 
+static HWND (WINAPI* SetFocusO)(HWND hWnd);
 static HWND WINAPI SetFocusH(HWND hWnd) {
     // Note: it's breaks win32 controls, we don't support them anyway
     of::info("Failing SetFocus");
-    return nullptr;
+    return SetFocusO(::mhwnd);
 }
 
 static HWND WINAPI SetActiveWindowH(HWND hWnd) {
@@ -547,7 +549,7 @@ void winhooks::init() {
     IAT_AUTO("user32.dll", GetForegroundWindow);
     IAT_ONLY("user32.dll", SetForegroundWindow);
     IAT_AUTO("user32.dll", GetActiveWindow);
-    IAT_ONLY("user32.dll", SetFocus);
+    IAT_AUTO("user32.dll", SetFocus);
     IAT_ONLY("user32.dll", SetActiveWindow);
     IAT_AUTO("user32.dll", GetSystemMetrics);
     IAT_AUTO("user32.dll", SetMenu);
