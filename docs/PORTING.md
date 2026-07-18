@@ -55,7 +55,7 @@ cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2c270);
 
 Now find a function which refs to `UpdateGameFrame` and looks like this (uses switch-case): <br />
 ![porting5](../screenshots/porting5.png) <br />
-Rename it into `MainLoopTick`. Now inside this function rename this function into `ProcessTransition` and remember it's offsets: <br />
+Rename it into `MainLoopTick`. Now inside this function rename this function into `ProcessTransition` and remember it's offsets (in older MMF2 runtimes it also can be in `case 2`, then use it): <br />
 ![porting6](../screenshots/porting6.png)
 
 ```cpp
