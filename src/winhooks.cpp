@@ -156,6 +156,8 @@ static void on_win_create(HWND hwnd, string_view class_name, bool unicode) {
         winhooks::fix_win32_set_dark_style(hwnd, L"ExplorerStatusBar");
     else if (class_name == "RebarWindow32")
         winhooks::fix_win32_set_dark_style(hwnd, L"DarkModeNavbar");
+    else if (true)
+        of::debug("Unknown window creation: {}", class_name);
 }
 
 static HWND(WINAPI* CreateWindowExAO)(DWORD, LPCSTR, LPCSTR, DWORD, int, int, int, int, HWND, HMENU,
@@ -164,7 +166,7 @@ static HWND WINAPI CreateWindowExAH(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR 
                                     DWORD dwStyle, int X, int Y, int nWidth, int nHeight,
                                     HWND hWndParent, HMENU hMenu, HINSTANCE hInstance,
                                     LPVOID lpParam) {
-    if (reinterpret_cast<size_t>(lpClassName) > 0xFFFF &&
+    if (false && reinterpret_cast<size_t>(lpClassName) > 0xFFFF &&
         std::strcmp(lpClassName, "AfxWnd42s") == 0) {
         of::warn("Failing AfxWnd42s window creation");
         return nullptr;
@@ -178,8 +180,8 @@ static HWND WINAPI CreateWindowExAH(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR 
     return ret;
 }
 
-static HWND(WINAPI* CreateWindowExWO)(DWORD, LPCWSTR, LPCWSTR, DWORD, int, int, int, int, HWND,
-                                      HMENU, HINSTANCE, LPVOID);
+HWND(WINAPI* CreateWindowExWO)(DWORD, LPCWSTR, LPCWSTR, DWORD, int, int, int, int, HWND, HMENU,
+                               HINSTANCE, LPVOID);
 static HWND WINAPI CreateWindowExWH(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName,
                                     DWORD dwStyle, int X, int Y, int nWidth, int nHeight,
                                     HWND hWndParent, HMENU hMenu, HINSTANCE hInstance,
@@ -296,12 +298,10 @@ static HHOOK(WINAPI* SetWindowsHookExAO)(int idHook, HOOKPROC lpfn, HINSTANCE hm
                                          DWORD dwThreadId);
 static HHOOK WINAPI SetWindowsHookExAH(int idHook, HOOKPROC lpfn, HINSTANCE hmod,
                                        DWORD dwThreadId) {
-    /*
     if (idHook == 5 && hmod == nullptr && mem::get_base("KcActiveX.mfx") != 0) {
-        // Mario Forever Remake hack for AfxWnd42s window
+        // Mario Forever hack for AfxWnd42s window
         return SetWindowsHookExAO(5, lpfn, hmod, dwThreadId);
     }
-    */
     // No size/move hooks which cause desyncs
     of::debug("Failing SetWindowsHookExA {} {} {} {}", idHook, reinterpret_cast<void*>(lpfn),
               reinterpret_cast<void*>(hmod), dwThreadId);

@@ -1,6 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/config.hpp"
-#include "../src/log.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
@@ -35,7 +34,7 @@ public:
         cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x31f60);
         cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x1b870);
         cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x188e0);
-        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x184f0); // FIXME
+        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x184f0);
         // No waiting
         mem::write(mem::get_base() + 0x29b4, {0x90, 0x90});
         mem::write(mem::get_base() + 0x2989, {0xeb});
@@ -63,12 +62,11 @@ public:
         if (mod == nullptr)
             return;
         size_t base = reinterpret_cast<size_t>(mod);
-        if (fn == "cctrans.dll") {
-            of::error("TRANS PATCHED");
+        if (fn == "CCTrans.dll") {
             trans_addr = base + 0x74a8;
         } else if (fn == "KcActiveX.mfx") {
             // Skip CBT hook installing
-            mem::write(base + 0x21b2a, {0xeb});
+            // mem::write(base + 0x21951, {0xeb});
         }
     };
 

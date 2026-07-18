@@ -13,6 +13,8 @@
 #include <imgui.h>
 #pragma comment(lib, "d3d9.lib")
 
+extern HWND(WINAPI* CreateWindowExWO)(DWORD, LPCWSTR, LPCWSTR, DWORD, int, int, int, int, HWND,
+                                      HMENU, HINSTANCE, LPVOID);
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam,
                                                              LPARAM lParam);
 extern IDirect3D9*(WINAPI* Direct3DCreate9O)(UINT SDKVersion);
@@ -135,9 +137,11 @@ bool Window::CreateCustomWindow(HINSTANCE hInstance) {
                   (this == g_menu ? 0 : (WS_MINIMIZEBOX | WS_SYSMENU)) | WS_THICKFRAME;
     AdjustWindowRect(&rect, style, FALSE);
     m_hwnd =
-        CreateWindowExW(0, class_name, this == g_menu ? L"OverFusion Menu" : L"OverFusion Info",
-                        style, CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left,
-                        rect.bottom - rect.top, nullptr, nullptr, hInstance, nullptr);
+        CreateWindowExWO(0, class_name, this == g_menu ? L"OverFusion Menu" : L"OverFusion Info",
+                         style, CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left,
+                         rect.bottom - rect.top, nullptr, nullptr, hInstance, nullptr);
+    if (m_hwnd)
+        winhooks::fix_win32_theme_instant(m_hwnd);
     return m_hwnd != nullptr;
 }
 
