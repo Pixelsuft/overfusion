@@ -193,11 +193,15 @@ class IDSBProxy : public IDirectSoundBuffer {
 
     void push_event() {
         // Remember current params in case something has changed
-        DWORD newFreq;
-        LONG vol, pan;
+        DWORD newFreq = 0;
+        LONG vol = 0;
+        LONG pan = 0;
+
         pBuf->GetFrequency(&newFreq);
         pBuf->GetVolume(&vol);
         pBuf->GetPan(&pan);
+        if (newFreq == 0)
+            newFreq = originalFreq;
 
         uint64_t now = audio_get_time();
 
@@ -210,7 +214,7 @@ class IDSBProxy : public IDirectSoundBuffer {
         } else {
             uint64_t deltaReal = now - lastRealTime;
             double scale =
-                (originalFreq > 0.0) ? (static_cast<double>(currentFreq) / originalFreq) : 1.0;
+                (originalFreq > 0) ? (static_cast<double>(currentFreq) / originalFreq) : 1.0;
             virtualTimeAcc += static_cast<double>(deltaReal) * scale;
             lastRealTime = now;
             currentFreq = newFreq;
@@ -250,7 +254,8 @@ public:
             if (!capturing)
                 return;
             uint64_t now = audio_get_time();
-            double scale = static_cast<double>(currentFreq) / static_cast<double>(originalFreq);
+            double scale =
+                (originalFreq > 0) ? (static_cast<double>(currentFreq) / originalFreq) : 1.0;
             virtualTimeAcc += static_cast<double>(now - lastRealTime) * scale;
             if (virtualTimeAcc <= 0.0) {
                 of::debug("Audio got virtualTimeAcc <= 0");
@@ -290,8 +295,8 @@ public:
         lastRealTime = 0;
         virtualTimeAcc = 0.0;
         inited = false;
-        reinit_wav();
         lock::CSLock lock(acs);
+        reinit_wav();
         if (capturing)
             cache.push_back(this);
     }
@@ -440,10 +445,12 @@ public:
     }
     STDMETHOD(CreateSoundBuffer)(LPCDSBUFFERDESC pcDSBufferDesc, LPDIRECTSOUNDBUFFER* ppDSBuffer,
                                  LPUNKNOWN pUnkOuter) override {
-        HRESULT hr = pDev->CreateSoundBuffer(pcDSBufferDesc, ppDSBuffer, pUnkOuter);
-        if (SUCCEEDED(hr) && ppDSBuffer && *ppDSBuffer && pcDSBufferDesc->lpwfxFormat) {
+        auto hackyDesc = const_cast<LPDSBUFFERDESC>(pcDSBufferDesc);
+        // hackyDesc->dwFlags |= DSBCAPS_CTRLFREQUENCY;
+        HRESULT hr = pDev->CreateSoundBuffer(hackyDesc, ppDSBuffer, pUnkOuter);
+        if (SUCCEEDED(hr) && ppDSBuffer && *ppDSBuffer && hackyDesc->lpwfxFormat) {
             of::debug("Wrapping IDirectSoundBuffer into IDSBProxy");
-            *ppDSBuffer = new IDSBProxy(*ppDSBuffer, pcDSBufferDesc);
+            *ppDSBuffer = new IDSBProxy(*ppDSBuffer, hackyDesc);
         }
         return hr;
     }
