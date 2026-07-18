@@ -195,6 +195,9 @@
     <ClCompile Include="plugins\marioforeverremake.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="plugins\marioforever5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest">
