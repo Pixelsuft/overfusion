@@ -1,5 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/config.hpp"
+#include "../src/log.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
 #include "../src/state.hpp"
@@ -29,20 +30,20 @@ public:
         auto& cfg = conf::get();
         if (cfg.fps <= 0)
             cfg.fps = 60;
-        SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x469f0);
-        LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x485e0);
-        cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x449b0);
-        cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2acc0);
-        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x27380);
-        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x28790);
+        SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x336d0);
+        LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x34d30);
+        cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x31f60);
+        cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x1b870);
+        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x188e0);
+        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x184f0); // FIXME
         // No waiting
-        mem::write(mem::get_base() + 0x2f57, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
-        mem::write(mem::get_base() + 0x2f28, {0xeb});
+        mem::write(mem::get_base() + 0x29b4, {0x90, 0x90});
+        mem::write(mem::get_base() + 0x2989, {0xeb});
         // Game FPS is fine
-        mem::write(mem::get_base() + 0x292ba, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x1a3c7, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         // Game title
-        mem::write(mem::get_base() + 0x25bcd, {0xeb});
-        mem::write(mem::get_base() + 0x25bf8, {0x90, 0x90});
+        mem::write(mem::get_base() + 0x170d3, {0xeb});
+        mem::write(mem::get_base() + 0x170f3, {0x90, 0x90});
         return true;
     }
 
@@ -63,7 +64,8 @@ public:
             return;
         size_t base = reinterpret_cast<size_t>(mod);
         if (fn == "cctrans.dll") {
-            trans_addr = base + 0x78b8;
+            of::error("TRANS PATCHED");
+            trans_addr = base + 0x74a8;
         } else if (fn == "KcActiveX.mfx") {
             // Skip CBT hook installing
             mem::write(base + 0x21b2a, {0xeb});
@@ -85,11 +87,11 @@ public:
     void* get_prop(plug::PtrProp prop, void* data) override {
         switch (prop) {
         case plug::PtrProp::PState:
-            return *reinterpret_cast<void**>(mem::get_base() + 0xab4bc);
+            return *reinterpret_cast<void**>(mem::get_base() + 0x525b4);
         case plug::PtrProp::PStats:
-            return *reinterpret_cast<void**>(mem::get_base() + 0xab4b8);
+            return *reinterpret_cast<void**>(mem::get_base() + 0x525b0);
         case plug::PtrProp::PGlobalApp:
-            return *reinterpret_cast<void**>(mem::get_base() + 0xab4b4);
+            return *reinterpret_cast<void**>(mem::get_base() + 0x525ac);
         case plug::PtrProp::PNextFrameTask:
             // From pState
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x30);
