@@ -13,8 +13,8 @@ TAS tool/framework for games based on the MMF2/CTF2.5 runtime
 - `Five Nights at Freddy's 3`: Haven't tested it much
 - `I Wanna be The Boshy`: PoC, use [boshyst](https://github.com/Pixelsuft/boshyst) instead
 - `I Wanna be The Guy`: Very old MMF2 runtime, requires `stdrt.exe` and related stuff unpacking; doesn't support in-game states
-- `I Wanna be The Try (1.9.8.3)`: Save states are broken because of Box2D physics; restarting works strange
-- `I Wanna be The Try: A New Adventure (DEMO)`: Same but every frame INI writes (when using VFS) are really slow and should be disabled
+- `I Wanna Try (1.9.8.3)`: Save states are broken because of Box2D physics; restarting works strange
+- `I Wanna Try: A New Adventure (DEMO)`: Same but every frame INI writes (when using VFS) are really slow and should be disabled
 - `Mario Forever (Latest)`: Uses weird audio plugin (also audio relies on audio); also sometimes collision desyncs; requires `stdrt.exe` and related stuff unpacking
 
 ## Docs
