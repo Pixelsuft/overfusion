@@ -185,7 +185,8 @@ public:
     }
 
     static of::optional<PlugIwtDemo*> on_plugin_check() {
-        if (mem::exe_name == "I WANNA TRY - A New Adventure Demo.exe")
+        if (mem::exe_name == "I WANNA TRY - A New Adventure Demo.exe" ||
+            mem::exe_name == "iwtnademo.exe") // For libTAS
             return new PlugIwtDemo;
         return {};
     }
