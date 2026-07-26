@@ -95,11 +95,11 @@ public:
         return pDev->GetSwapChain(iSwapChain, pSwapChain);
     }
     STDMETHOD_(UINT, GetNumberOfSwapChains)() override { return pDev->GetNumberOfSwapChains(); }
-    STDMETHOD(Reset)(D3DPRESENT_PARAMETERS* pPresentationParameters) {
+    STDMETHOD(Reset)(D3DPRESENT_PARAMETERS* pPresentationParameters) override {
         auto& cfg = conf::get();
         of::info("IDirect3DDevice9->Reset");
         // Invalidate ImGui
-        if (cfg.custom_window)
+        if (!imgui_d3d9_inited || cfg.custom_window)
             return pDev->Reset(pPresentationParameters);
         ImGui_ImplDX9_InvalidateDeviceObjects();
         HRESULT hr = pDev->Reset(pPresentationParameters);
