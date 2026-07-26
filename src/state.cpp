@@ -988,7 +988,7 @@ void state::after_update() {
             // ASS(*pRandomSeed == st.seed);
         }
     }
-    if (cfg.fast_forward)
+    if (cfg.fast_forward || cfg.skip_waiting)
         return;
     if (to_wait < 0.0)
         to_wait = 0.0;
@@ -1201,10 +1201,10 @@ void state::draw_info() {
     if (updating) {
         // Hacky way to sync stats without sleeping
         // TODO: maybe make a RAII class for wrapping temp vars?
-        auto prev_fast = cfg.fast_forward;
-        cfg.fast_forward = true;
+        auto prev_wait = cfg.skip_waiting;
+        cfg.skip_waiting = true;
         after_update();
-        cfg.fast_forward = prev_fast;
+        cfg.skip_waiting = prev_wait;
     }
     ImGui::Text("[RE%s]%s%s%s", cfg.is_replay ? "PLAY" : "CORD", cfg.fast_forward ? " [FF]" : "",
                 video::is_recording() ? " [VIDEO]" : "", audio::is_recording() ? " [AUDIO]" : "");

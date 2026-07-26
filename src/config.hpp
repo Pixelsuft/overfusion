@@ -95,6 +95,7 @@ public:
     bool is_hourglass;
     bool dont_fix_seeds;
     bool skip_hashing;
+    bool skip_waiting;
 
     Config();
     void read();
