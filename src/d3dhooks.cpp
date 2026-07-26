@@ -597,10 +597,12 @@ public:
     }
 };
 
-IDirect3D9*(WINAPI* Direct3DCreate9O)(UINT SDKVersion) = Direct3DCreate9;
+IDirect3D9*(WINAPI* Direct3DCreate9O)(UINT SDKVersion) = nullptr;
 static IDirect3D9* WINAPI Direct3DCreate9H(UINT SDKVersion) {
     of::debug("Direct3DCreate9");
+    mem::write(mem::get_base("d3d9.dll") + 0x1a70, {0x90, 0x90});
     auto ret = Direct3DCreate9O(SDKVersion);
+    ENSURE(ret);
     if (ret) {
         of::debug("Wrapping IDirect3D9 into ID3D9Proxy");
         return new IDirect3D9Proxy(ret);

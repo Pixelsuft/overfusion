@@ -11,12 +11,12 @@
 #include <backends/imgui_impl_win32.h>
 #include <d3d9.h>
 #include <imgui.h>
-#pragma comment(lib, "d3d9.lib")
 
 extern HWND(WINAPI* CreateWindowExWO)(DWORD, LPCWSTR, LPCWSTR, DWORD, int, int, int, int, HWND,
                                       HMENU, HINSTANCE, LPVOID);
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam,
                                                              LPARAM lParam);
+extern HMODULE(WINAPI* LoadLibraryWO)(LPCWSTR lpLibFileName);
 extern IDirect3D9*(WINAPI* Direct3DCreate9O)(UINT SDKVersion);
 extern HWND hwnd;
 
@@ -146,6 +146,17 @@ bool Window::CreateCustomWindow(HINSTANCE hInstance) {
 }
 
 bool Window::InitD3D9() {
+    if (!Direct3DCreate9O) {
+        // Yeah I'm lazy to free that
+        auto lib = LoadLibraryWO(L"d3d9.dll");
+        if (lib)
+            Direct3DCreate9O = reinterpret_cast<decltype(Direct3DCreate9O)>(
+                GetProcAddress(lib, "Direct3DCreate9"));
+        if (!Direct3DCreate9O) {
+            of::error("Failed to load Direct3DCreate9");
+            return false;
+        }
+    }
     m_pD3D = Direct3DCreate9O(D3D_SDK_VERSION);
     if (m_pD3D == nullptr) {
         of::error("Failed to create D3D9 object");

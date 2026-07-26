@@ -121,7 +121,7 @@ static HMODULE WINAPI LoadLibraryAH(LPCSTR lpLibFileName) {
     return ret;
 }
 
-static HMODULE(WINAPI* LoadLibraryWO)(LPCWSTR lpLibFileName);
+HMODULE(WINAPI* LoadLibraryWO)(LPCWSTR lpLibFileName);
 static HMODULE WINAPI LoadLibraryWH(LPCWSTR lpLibFileName) {
     HMODULE ret = nullptr;
     auto orig_name = uconv::from_utf16(lpLibFileName);
