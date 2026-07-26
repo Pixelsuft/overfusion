@@ -514,6 +514,8 @@ bool audio::is_recording() { return capturing; }
 void audio::reinit_capture() {
     if (bat.is_open())
         bat.close();
+    else
+        return;
     auto bat_ret = bat.open(base_path + "\\..\\audio_merge.bat", 1);
     ENSURE(bat_ret);
     bat.writeln("@echo off");
