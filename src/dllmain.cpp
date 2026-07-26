@@ -29,8 +29,8 @@ static void of_main(HMODULE mod) {
 #endif
     // SetEnvironmentVariableW(L"WINEDEBUG", L"+d3d,+d3d9,+wined3d");
     // SetEnvironmentVariableW(L"WINE_DBG_OUTPUT", L"stdout");
-    // SetEnvironmentVariableW(L"GALLIUM_DRIVER", L"llvmpipe");
-    // SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", L"true");
+    SetEnvironmentVariableW(L"GALLIUM_DRIVER", L"llvmpipe");
+    SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", L"true");
     of::info("OverFusion injected!");
     mem::init(mod);
     if (mem::exe_name == "rundll32.exe")
