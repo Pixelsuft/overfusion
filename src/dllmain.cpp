@@ -15,7 +15,7 @@
 #include "winhooks.hpp"
 #include <Windows.h>
 
-static void of_main() {
+static void of_main(HMODULE mod) {
     // This function runs as early as possible
     AllocConsole();
     freopen_s(reinterpret_cast<FILE**>(stdout), "CONOUT$", "w", stdout);
@@ -27,15 +27,17 @@ static void of_main() {
     spdlog::set_pattern("[%^%l%$] %v");
 #endif
 #endif
+    // SetEnvironmentVariableW(L"WINEDEBUG", L"+d3d,+d3d9,+wined3d");
+    // SetEnvironmentVariableW(L"WINE_DBG_OUTPUT", L"stdout");
+    // SetEnvironmentVariableW(L"GALLIUM_DRIVER", L"llvmpipe");
+    // SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", L"true");
     of::info("OverFusion injected!");
-    SetEnvironmentVariableW(L"WINEDEBUG", L"+d3d,+d3d9,+wined3d");
-    SetEnvironmentVariableW(L"WINE_DBG_OUTPUT", L"stdout");
-    SetEnvironmentVariableW(L"GALLIUM_DRIVER", L"llvmpipe");
-    SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", L"true");
+    mem::init(mod);
     conf::init();
     if (conf::get().project_name.empty())
         return;
-    mem::init();
+    if (mem::exe_name == "rundll32.exe")
+        return;
     ui::init();
     ofs::pre_init();
     files::pre_init();
@@ -68,7 +70,7 @@ extern "C" BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVO
     DisableThreadLibraryCalls(hModule);
     switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH:
-        of_main();
+        of_main(hModule);
         break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
@@ -77,3 +79,20 @@ extern "C" BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVO
     }
     return TRUE;
 }
+
+#if defined(_MSC_VER) && !defined(_DEBUG)
+// comovf32.dll exports
+
+extern "C" __declspec(dllexport) BOOL WINAPI OvfSaveFileNameT(const void* data) {
+    of::error("OvfSaveFileNameT unreachable");
+    return FALSE;
+}
+
+extern "C" __declspec(dllexport) BOOL WINAPI OvfOpenFileNameT(const void* data) {
+    of::error("OvfOpenFileNameT unreachable");
+    return FALSE;
+}
+
+#pragma comment(linker, "/EXPORT:OvfSaveFileNameT=_OvfSaveFileNameT@4")
+#pragma comment(linker, "/EXPORT:OvfOpenFileNameT=_OvfOpenFileNameT@4")
+#endif

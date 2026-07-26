@@ -20,6 +20,7 @@ using std::string;
 
 namespace mem {
 string exe_name;
+string self_name;
 static HMODULE base_module;
 static HANDLE hproc;
 } // namespace mem
@@ -38,20 +39,26 @@ static std::unordered_map<void*, string> mod_map;
 #endif
 } // namespace hook
 
-void mem::init() {
+void mem::init(void* self_mod) {
     base_module = GetModuleHandleW(nullptr);
     hproc = GetCurrentProcess();
     auto mh_ret = MH_Initialize();
+    ENSURE(self_mod != nullptr);
     ENSURE(base_module != nullptr);
     ENSURE(hproc != nullptr);
     ENSURE(mh_ret == MH_OK);
-    [] {
+    {
         wchar_t buf[MAX_PATH];
         auto ret_len = GetModuleBaseNameW(hproc, base_module, buf, MAX_PATH);
         ENSURE(ret_len > 0);
         buf[ret_len] = L'\0';
         exe_name = uconv::from_utf16(buf);
-    }();
+        ret_len = GetModuleBaseNameW(hproc, reinterpret_cast<HMODULE>(self_mod), buf, MAX_PATH);
+        ENSURE(ret_len > 0);
+        buf[ret_len] = L'\0';
+        self_name = uconv::from_utf16(buf);
+        std::transform(self_name.begin(), self_name.end(), self_name.begin(), ::tolower);
+    }
 }
 
 void mem::terminate() {

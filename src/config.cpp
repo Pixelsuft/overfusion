@@ -3,6 +3,7 @@
 #include "ass.hpp"
 #include "input.hpp"
 #include "log.hpp"
+#include "mem.hpp"
 #include "ofs.hpp"
 #include "process.hpp"
 #include <Windows.h>
@@ -109,9 +110,9 @@ Config::Config() {
         of::info("Project name: {}", project_name);
     } else {
 #ifdef _DEBUG
-        if (true)
+        if (mem::self_name == "overfusion.dll")
 #else
-        if (is_hourglass)
+        if (is_hourglass || mem::self_name == "comovf32.dll")
 #endif
         {
             of::warn("No project name was specified, defaulting to 'test_proj'");

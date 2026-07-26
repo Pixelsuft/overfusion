@@ -27,9 +27,10 @@
 
 namespace mem {
 extern std::string exe_name;
+extern std::string self_name;
 bool _write_memory(size_t addr, const void* data, size_t size);
 bool _flush_instructions(size_t addr, size_t size);
-void init();
+void init(void* self_mod);
 void terminate();
 size_t get_base();
 size_t get_base(const char* obj_name);
