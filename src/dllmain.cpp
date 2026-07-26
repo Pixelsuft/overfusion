@@ -33,10 +33,10 @@ static void of_main(HMODULE mod) {
     // SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", L"true");
     of::info("OverFusion injected!");
     mem::init(mod);
+    if (mem::exe_name == "rundll32.exe")
+        return;
     conf::init();
     if (conf::get().project_name.empty())
-        return;
-    if (mem::exe_name == "rundll32.exe")
         return;
     ui::init();
     ofs::pre_init();
