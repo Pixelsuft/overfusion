@@ -15,7 +15,7 @@ class PlugIwbtb final : public plug::PlugBase {
 private:
     void(__cdecl* SaveGameState)(void* hfile);
     void(__cdecl* LoadGameState)(void* hfile, unsigned int* outframe);
-    inline static unsigned int(__cdecl* RandomO)(unsigned int maxv);
+    static unsigned int(__cdecl* RandomO)(unsigned int maxv);
 
 public:
     PlugIwbtb() {
@@ -195,4 +195,5 @@ public:
     }
 };
 
+unsigned int(__cdecl* PlugIwbtb::RandomO)(unsigned int) = nullptr;
 PLUG_REG(PlugIwbtb);

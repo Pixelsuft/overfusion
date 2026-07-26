@@ -15,14 +15,13 @@ class PlugIwbtbAdmin final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
-    inline static unsigned int(__stdcall* RandomO)(int dummy, unsigned short maxv);
+    static unsigned int(__stdcall* RandomO)(int dummy, unsigned short maxv);
 
 public:
     PlugIwbtbAdmin() {
         name = "I Wanna Be The Boshy [admin]";
         SaveGameState = nullptr;
         LoadGameState = nullptr;
-        RandomO = nullptr;
     }
 
     bool pre_init() override {
@@ -169,4 +168,5 @@ public:
     }
 };
 
+unsigned int(__stdcall* PlugIwbtbAdmin::RandomO)(int dummy, unsigned short maxv) = nullptr;
 PLUG_REG(PlugIwbtbAdmin);

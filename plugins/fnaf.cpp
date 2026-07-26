@@ -13,7 +13,7 @@ class PlugFnaf final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
-    inline static unsigned int(__stdcall* RandomO)(int dummy, unsigned short maxv);
+    static unsigned int(__stdcall* RandomO)(int dummy, unsigned short maxv);
     size_t trans_ptr;
 
 public:
@@ -21,7 +21,6 @@ public:
         name = "Five Nights at Freddy's";
         SaveGameState = nullptr;
         LoadGameState = nullptr;
-        RandomO = nullptr;
         trans_ptr = 0;
     }
 
@@ -140,4 +139,5 @@ public:
     }
 };
 
+unsigned int(__stdcall* PlugFnaf::RandomO)(int dummy, unsigned short maxv) = nullptr;
 PLUG_REG(PlugFnaf);

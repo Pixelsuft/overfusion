@@ -11,13 +11,12 @@ using std::string;
 
 class PlugIwbtg final : public plug::PlugBase {
 private:
-    inline static unsigned int(__cdecl* RandomO)(unsigned int maxv);
+    static unsigned int(__cdecl* RandomO)(unsigned int maxv);
 
 public:
     PlugIwbtg() {
         name = "I Wanna Be The Guy";
         cmdline_append = string(" /SF \"") + string(ofs::get_cwd()) + "\\iwbtg.exe\" /SO94208";
-        RandomO = nullptr;
     }
 
     bool pre_init() override {
@@ -125,4 +124,5 @@ public:
     }
 };
 
+unsigned int(__cdecl* PlugIwbtg::RandomO)(unsigned int maxv) = nullptr;
 PLUG_REG(PlugIwbtg);
