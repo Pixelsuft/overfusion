@@ -140,7 +140,7 @@ Config::Config() {
     is_paused = true;
     need_advance = false;
     fast_forward = false;
-    skip_waiting = mem::self_name == "comovf32.dll";
+    skip_waiting = false;
     emulate_user_timers = false;
     emulate_mm_timers = false;
     disable_threads = false;
