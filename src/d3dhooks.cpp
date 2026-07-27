@@ -92,6 +92,7 @@ public:
         return pDev->SetCursorProperties(XHotSpot, YHotSpot, pCursorBitmap);
     }
     STDMETHOD_(void, SetCursorPosition)(int X, int Y, DWORD Flags) override {
+        of::warn("D3D9 SetCursorPosition {} {} {}", X, Y, Flags);
         pDev->SetCursorPosition(X, Y, Flags);
     }
     STDMETHOD_(BOOL, ShowCursor)(BOOL bShow) override { return pDev->ShowCursor(bShow); }

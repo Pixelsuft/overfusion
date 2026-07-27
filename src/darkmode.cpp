@@ -6,7 +6,6 @@
 // Should be after Windows.h
 #include <CommCtrl.h>
 #include <Uxtheme.h>
-#include <algorithm>
 #include <vsstyle.h>
 #pragma comment(lib, "comctl32.lib") // FIXME
 
@@ -216,8 +215,7 @@ void winhooks::init_win32_theme() {
     if (dwmapi_handle) {
         win_shit.DwmSetWindowAttribute = reinterpret_cast<decltype(win_shit.DwmSetWindowAttribute)>(
             GetProcAddress(dwmapi_handle, "DwmSetWindowAttribute"));
-    }
-    else
+    } else
         win_shit.DwmSetWindowAttribute = nullptr;
     WIN_NTDLL_OSVERSIONINFOEXW os_ver;
     os_ver.dwOSVersionInfoSize = sizeof(WIN_NTDLL_OSVERSIONINFOEXW);
