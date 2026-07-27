@@ -89,13 +89,18 @@ public:
     }
     STDMETHOD(SetCursorProperties)(UINT XHotSpot, UINT YHotSpot,
                                    IDirect3DSurface9* pCursorBitmap) override {
+        of::warn("D3D9 SetCursorProperties {} {} {}", XHotSpot, YHotSpot,
+                 reinterpret_cast<void*>(pCursorBitmap));
         return pDev->SetCursorProperties(XHotSpot, YHotSpot, pCursorBitmap);
     }
     STDMETHOD_(void, SetCursorPosition)(int X, int Y, DWORD Flags) override {
         of::warn("D3D9 SetCursorPosition {} {} {}", X, Y, Flags);
         pDev->SetCursorPosition(X, Y, Flags);
     }
-    STDMETHOD_(BOOL, ShowCursor)(BOOL bShow) override { return pDev->ShowCursor(bShow); }
+    STDMETHOD_(BOOL, ShowCursor)(BOOL bShow) override {
+        of::warn("D3D9 ShowCursor {}", bShow);
+        return pDev->ShowCursor(bShow);
+    }
     STDMETHOD(CreateAdditionalSwapChain)(D3DPRESENT_PARAMETERS* pPresentationParameters,
                                          IDirect3DSwapChain9** pSwapChain) override {
         of::warn("CreateAdditionalSwapChain");
