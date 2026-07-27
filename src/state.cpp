@@ -873,7 +873,8 @@ bool state::before_update(bool is_transitioning) {
     // Do not update when the game is minimized
     if (!cfg.is_paused && IsIconic(::hwnd))
         cfg.is_paused = true;
-    if ((cfg.is_paused && !cfg.need_advance) || need_scene_slot != empty_save_slot)
+    if (((cfg.is_paused && !cfg.need_advance) || need_scene_slot != empty_save_slot) &&
+        !cfg.boxed_mode)
         return false;
     updating = true;
     cur_holding = st.prev_input;
