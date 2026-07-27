@@ -215,6 +215,7 @@ void Config::read() {
     }
     if (data["audio_size_hash_limit"].is_number_unsigned())
         audio_size_hash_limit = data["audio_size_hash_limit"];
+    READ_BOOL(is_paused);
     READ_BOOL(show_info);
     READ_BOOL(show_menu);
     READ_BOOL(emulate_user_timers);
