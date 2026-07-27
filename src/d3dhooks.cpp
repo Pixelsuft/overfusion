@@ -19,6 +19,14 @@ static bool d3d9_need_pixelated() {
     return ui::is_processing() ? cfg.ui_pixel_filter : cfg.pixel_filter;
 }
 
+static void d3d9_check_d3dpp(D3DPRESENT_PARAMETERS* d3dpp) {
+    // TODO: somehow do the same for other renderers
+    if (d3dpp->PresentationInterval != D3DPRESENT_INTERVAL_IMMEDIATE) {
+        of::warn("Disabling D3D9 VSync (from {})", d3dpp->PresentationInterval);
+        d3dpp->PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
+    }
+}
+
 static HRESULT(WINAPI* DirectDrawCreateO)(void* lpGUID, void** lplpDD, void* pUnkOuter);
 static HRESULT WINAPI DirectDrawCreateH(void* lpGUID, void** lplpDD, void* pUnkOuter) {
     of::warn("The game is using DirectDraw, forcing custom window");
@@ -89,6 +97,8 @@ public:
     STDMETHOD_(BOOL, ShowCursor)(BOOL bShow) override { return pDev->ShowCursor(bShow); }
     STDMETHOD(CreateAdditionalSwapChain)(D3DPRESENT_PARAMETERS* pPresentationParameters,
                                          IDirect3DSwapChain9** pSwapChain) override {
+        of::warn("CreateAdditionalSwapChain");
+        d3d9_check_d3dpp(pPresentationParameters);
         return pDev->CreateAdditionalSwapChain(pPresentationParameters, pSwapChain);
     }
     STDMETHOD(GetSwapChain)(UINT iSwapChain, IDirect3DSwapChain9** pSwapChain) override {
@@ -98,6 +108,7 @@ public:
     STDMETHOD(Reset)(D3DPRESENT_PARAMETERS* pPresentationParameters) override {
         auto& cfg = conf::get();
         of::info("IDirect3DDevice9->Reset");
+        d3d9_check_d3dpp(pPresentationParameters);
         // Invalidate ImGui
         if (!imgui_d3d9_inited || cfg.custom_window)
             return pDev->Reset(pPresentationParameters);
@@ -579,6 +590,7 @@ public:
                             DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,
                             IDirect3DDevice9** ppReturnedDeviceInterface) override {
         of::debug("IDirect3D9Proxy -> CreateDevice called");
+        d3d9_check_d3dpp(pPresentationParameters);
 
         HRESULT hr = pD3D->CreateDevice(Adapter, DeviceType, hFocusWindow, BehaviorFlags,
                                         pPresentationParameters, ppReturnedDeviceInterface);
