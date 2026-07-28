@@ -80,7 +80,7 @@ extern "C" BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVO
     return TRUE;
 }
 
-#if defined(_MSC_VER) && !defined(_DEBUG)
+#if defined(_MSC_VER)
 // comovf32.dll exports
 
 extern "C" __declspec(dllexport) BOOL WINAPI OvfSaveFileNameT(const void* data) {

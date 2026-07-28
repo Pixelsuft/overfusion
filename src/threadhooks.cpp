@@ -1,10 +1,10 @@
 #define WIN32_LEAN_AND_MEAN
 #include "threadhooks.hpp"
 #include "config.hpp"
+#include "log.hpp"
 #include "mem.hpp"
 #include "uconv.hpp"
 #include <Windows.h>
-#include "log.hpp"
 
 static HANDLE(WINAPI* CreateThreadO)(LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID,
                                      DWORD, LPDWORD);
@@ -50,6 +50,12 @@ static BOOL WINAPI CreateProcessWH(LPCWSTR lpApplicationName, LPWSTR lpCommandLi
     return FALSE;
 }
 
+static VOID(WINAPI* ExitProcessO)(UINT uExitCode);
+static VOID WINAPI ExitProcessH(UINT uExitCode) {
+    of::info("ExitProcess {}", uExitCode);
+    ExitProcessO(uExitCode);
+}
+
 void threadhooks::update_init() {
     if (conf::get().delay_thread_hook)
         HOOK_AUTO("kernel32.dll", CreateThread);
@@ -60,4 +66,5 @@ void threadhooks::pre_init() {
         HOOK_AUTO("kernel32.dll", CreateThread);
     HOOK_ONLY("kernel32.dll", CreateProcessA);
     HOOK_AUTO("kernel32.dll", CreateProcessW);
+    HOOK_AUTO("kernel32.dll", ExitProcess);
 }
