@@ -198,6 +198,9 @@
     <ClCompile Include="plugins\marioforever5.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="plugins\fnaf2.cpp">
+      <Filter>Plugins</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest">
