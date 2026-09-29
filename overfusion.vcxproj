@@ -177,6 +177,7 @@
     <ClCompile Include="minhook\src\trampoline.c" />
     <ClCompile Include="plugins\fnaf.cpp" />
     <ClCompile Include="plugins\fnaf2_3_4.cpp" />
+    <ClCompile Include="plugins\fnaf5.cpp" />
     <ClCompile Include="plugins\iwbtb.cpp" />
     <ClCompile Include="plugins\iwbtbadmin.cpp" />
     <ClCompile Include="plugins\iwbtg.cpp" />
