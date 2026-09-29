@@ -10,3 +10,4 @@
 [ ] Support pure RNG manipulation in modern runtimes (de-inline RNG funcs)
 [ ] Optimize jumbo builds via Python (devirtualize calls, etc)
 [ ] Fix TODO/FIXME in code
+[ ] Refactor code style (avoid using std::, of:: etc)

@@ -7,20 +7,18 @@
 #include "../tools/timer_fix.hpp"
 #include <Windows.h>
 
-// TODO: check timers fix
-
 using of::string_view;
 using std::string;
 
-class PlugFnaf2 final : public plug::PlugBase {
+class PlugFnaf2_3 final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
     size_t trans_addr;
 
 public:
-    PlugFnaf2() {
-        name = "Five Nights at Freddy's 2";
+    PlugFnaf2_3(bool fnaf_3) {
+        name = fnaf_3 ? "Five Nights at Freddy's 3" : "Five Nights at Freddy's 2";
         SaveGameState = nullptr;
         LoadGameState = nullptr;
         trans_addr = 0;
@@ -135,11 +133,13 @@ public:
         return {};
     }
 
-    static of::optional<PlugFnaf2*> on_plugin_check() {
-        if (mem::exe_name == "FiveNightsatFreddys2.exe")
-            return new PlugFnaf2;
+    static of::optional<PlugFnaf2_3*> on_plugin_check() {
+        if (mem::exe_name == "FiveNightsatFreddys3.exe")
+            return new PlugFnaf2_3(true);
+        else if (mem::exe_name == "FiveNightsatFreddys2.exe")
+            return new PlugFnaf2_3(false);
         return {};
     }
 };
 
-PLUG_REG(PlugFnaf2);
+PLUG_REG(PlugFnaf2_3);
