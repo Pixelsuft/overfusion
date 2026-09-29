@@ -6,9 +6,6 @@
 #include "../tools/perspective.hpp"
 #include "../tools/timer_fix.hpp"
 
-using of::string_view;
-using std::string;
-
 class PlugIwtOld final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
@@ -73,7 +70,7 @@ public:
         return true;
     }
 
-    void after_dll_load(string_view path, string_view fn, void* mod) override {
+    void after_dll_load(of::string_view path, of::string_view fn, void* mod) override {
         if (mod == nullptr)
             return;
         if (fn == "mmfs2.dll") {
@@ -125,7 +122,7 @@ public:
         }
     }
 
-    of::expected<void, string> save_state(ofs::File& file) override {
+    of::expected<void, std::string> save_state(ofs::File& file) override {
         if (conf::get().save_game_state) {
             std::vector<IntPair> timer_data;
             auto timer_ret = timer_fix::save(timer_data);
@@ -140,7 +137,7 @@ public:
         return {};
     }
 
-    of::expected<void, string> load_state(ofs::File& file) override {
+    of::expected<void, std::string> load_state(ofs::File& file) override {
         if (!conf::get().is_replay) {
             std::vector<IntPair> timer_data;
             state::load_bin(file, timer_data);

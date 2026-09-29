@@ -6,9 +6,6 @@
 #include "../src/state.hpp"
 #include <Windows.h>
 
-using of::string_view;
-using std::string;
-
 class PlugIwbtg final : public plug::PlugBase {
 private:
     static unsigned int(__cdecl* RandomO)(unsigned int maxv);
@@ -16,7 +13,7 @@ private:
 public:
     PlugIwbtg() {
         name = "I Wanna Be The Guy";
-        cmdline_append = string(" /SF \"") + string(ofs::get_cwd()) + "\\iwbtg.exe\" /SO94208";
+        cmdline_append = std::string(" /SF \"") + std::string(ofs::get_cwd()) + "\\iwbtg.exe\" /SO94208";
     }
 
     bool pre_init() override {
@@ -56,7 +53,7 @@ public:
         return true;
     }
 
-    void after_dll_load(string_view path, string_view fn, void* mod) override {
+    void after_dll_load(of::string_view path, of::string_view fn, void* mod) override {
         if (mod == nullptr)
             return;
         size_t base = reinterpret_cast<size_t>(mod);
@@ -103,14 +100,14 @@ public:
         }
     }
 
-    of::expected<void, string> save_state(ofs::File& file) override {
+    of::expected<void, std::string> save_state(ofs::File& file) override {
         // I think that is unsupported
         if (conf::get().save_game_state)
             state::invalidate_process("Unsupported");
         return {};
     }
 
-    of::expected<void, string> load_state(ofs::File& file) override {
+    of::expected<void, std::string> load_state(ofs::File& file) override {
         if (!conf::get().is_replay)
             state::invalidate_process("Unsupported");
         return {};
@@ -118,7 +115,7 @@ public:
 
     static of::optional<PlugIwbtg*> on_plugin_check() {
         if (mem::exe_name == "stdrt.exe" &&
-            ofs::file_exists(string(ofs::get_cwd()) + "\\iwbtg.exe"))
+            ofs::file_exists(std::string(ofs::get_cwd()) + "\\iwbtg.exe"))
             return new PlugIwbtg;
         return {};
     }

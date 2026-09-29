@@ -7,9 +7,6 @@
 #include "../tools/timer_fix.hpp"
 #include <Windows.h>
 
-using of::string_view;
-using std::string;
-
 class PlugFnaf2_3 final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
@@ -54,7 +51,7 @@ public:
         return true;
     }
 
-    void after_dll_load(string_view path, string_view fn, void* mod) override {
+    void after_dll_load(of::string_view path, of::string_view fn, void* mod) override {
         if (mod == nullptr)
             return;
         size_t base = reinterpret_cast<size_t>(mod);
@@ -108,7 +105,7 @@ public:
         }
     }
 
-    of::expected<void, string> save_state(ofs::File& file) override {
+    of::expected<void, std::string> save_state(ofs::File& file) override {
         if (conf::get().save_game_state) {
             std::vector<IntPair> timer_data;
             auto timer_ret = timer_fix::save(timer_data);
@@ -120,7 +117,7 @@ public:
         return {};
     }
 
-    of::expected<void, string> load_state(ofs::File& file) override {
+    of::expected<void, std::string> load_state(ofs::File& file) override {
         unsigned int outframe = 0;
         if (!conf::get().is_replay) {
             std::vector<IntPair> timer_data;
