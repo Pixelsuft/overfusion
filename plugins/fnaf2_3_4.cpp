@@ -7,15 +7,15 @@
 #include "../tools/timer_fix.hpp"
 #include <Windows.h>
 
-class PlugFnaf2_3 final : public plug::PlugBase {
+class PlugFnaf2_3_4 final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
     size_t trans_addr;
 
 public:
-    PlugFnaf2_3(bool fnaf_3) {
-        name = fnaf_3 ? "Five Nights at Freddy's 3" : "Five Nights at Freddy's 2";
+    PlugFnaf2_3_4(int version) {
+        name = std::string("Five Nights at Freddy's ") + std::to_string(version);
         SaveGameState = nullptr;
         LoadGameState = nullptr;
         trans_addr = 0;
@@ -130,13 +130,15 @@ public:
         return {};
     }
 
-    static of::optional<PlugFnaf2_3*> on_plugin_check() {
-        if (mem::exe_name == "FiveNightsatFreddys3.exe")
-            return new PlugFnaf2_3(true);
-        else if (mem::exe_name == "FiveNightsatFreddys2.exe")
-            return new PlugFnaf2_3(false);
+    static of::optional<PlugFnaf2_3_4*> on_plugin_check() {
+        if (mem::exe_name == "FiveNightsatFreddys2.exe")
+            return new PlugFnaf2_3_4(2);
+        else if (mem::exe_name == "FiveNightsatFreddys3.exe")
+            return new PlugFnaf2_3_4(3);
+        else if (mem::exe_name == "FiveNightsatFreddys4.exe")
+            return new PlugFnaf2_3_4(4);
         return {};
     }
 };
 
-PLUG_REG(PlugFnaf2_3);
+PLUG_REG(PlugFnaf2_3_4);
