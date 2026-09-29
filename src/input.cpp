@@ -272,7 +272,7 @@ static int WINAPI InputFocusChangedH(int param_1, void* param_2) {
 
 static HCURSOR(WINAPI* SetCursorO)(HCURSOR hCursor);
 static HCURSOR WINAPI SetCursorH(HCURSOR hCursor) {
-    // of::warn("SetCursorH {}", (void*)hCursor);
+    // of::debug("SetCursorH {}", (void*)hCursor);
     return SetCursorO(hCursor);
 }
 
