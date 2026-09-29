@@ -91,6 +91,7 @@ static LRESULT WINAPI MainWindowProcH(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
             mmi->ptMaxTrackSize.y = needed_size.second;
             return FALSE;
         }
+        break;
     }
     case WM_PAINT:
         if (!conf::get().disable_dark_mode_support)
