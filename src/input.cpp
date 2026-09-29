@@ -270,16 +270,9 @@ static int WINAPI InputFocusChangedH(int param_1, void* param_2) {
     return 0;
 }
 
-static HCURSOR(WINAPI* SetCursorO)(HCURSOR hCursor);
-static HCURSOR WINAPI SetCursorH(HCURSOR hCursor) {
-    // of::debug("SetCursorH {}", (void*)hCursor);
-    return SetCursorO(hCursor);
-}
-
 void input::init() {
     std::memset(kbd_state, 0, sizeof(bool) * 256);
     // TODO: RegisterClipboardFormat, GetCapture, SetCapture
-    IAT_AUTO("user32.dll", SetCursor);
     IAT_AUTO("user32.dll", GetKeyState);
     IAT_AUTO("user32.dll", GetAsyncKeyState);
     IAT_AUTO("user32.dll", GetCursorPos);

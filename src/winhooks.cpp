@@ -320,7 +320,7 @@ static HHOOK WINAPI SetWindowsHookExWH(int idHook, HOOKPROC lpfn, HINSTANCE hmod
     return nullptr;
 }
 
-static HWND (WINAPI* SetFocusO)(HWND hWnd);
+static HWND(WINAPI* SetFocusO)(HWND hWnd);
 static HWND WINAPI SetFocusH(HWND hWnd) {
     // Note: it's breaks win32 controls, we don't support them anyway
     of::info("Failing SetFocus");
@@ -532,6 +532,19 @@ static BOOL WINAPI ShowWindowH(HWND hWnd, int nCmdShow) {
     return ShowWindowO(hWnd, nCmdShow);
 }
 
+static HCURSOR(WINAPI* SetCursorO)(HCURSOR hCursor);
+static HCURSOR WINAPI SetCursorH(HCURSOR hCursor) {
+    // of::debug("SetCursorH {}", (void*)hCursor);
+    return SetCursorO(hCursor);
+}
+
+static int(WINAPI* ShowCursorO)(BOOL bShow);
+static int WINAPI ShowCursorH(BOOL bShow) {
+    // of::debug("ShowCursorH {}", bShow);
+    bShow = TRUE;
+    return ShowCursorO(bShow);
+}
+
 void winhooks::init() {
     hwnd = mhwnd = nullptr;
     MainWindowProcO = EditWindowProcO = nullptr;
@@ -546,6 +559,8 @@ void winhooks::init() {
     IAT_STR_ONLY("user32.dll", DialogBoxParam);
     IAT_STR_AUTO("user32.dll", SetWindowsHookEx);
     IAT_STR_AUTO("user32.dll", SetWindowLong);
+    IAT_AUTO("user32.dll", SetCursor);
+    IAT_AUTO("user32.dll", ShowCursor);
     IAT_AUTO("user32.dll", GetClientRect);
     IAT_AUTO("user32.dll", GetFocus);
     IAT_AUTO("user32.dll", GetForegroundWindow);
