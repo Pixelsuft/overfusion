@@ -511,11 +511,20 @@ static BOOL WINAPI BeepH(DWORD dwFreq, DWORD dwDuration) {
 
 bool audio::is_recording() { return capturing; }
 
+static void audio_ensure_base_path() {
+    if (!audio::base_path.empty())
+        return;
+    audio::base_path = string(ofs::get_cwd()) + '\\' + conf::get().project_name + "\\temp_audio";
+    auto dir_ret = ofs::make_dir(audio::base_path);
+    ENSURE(dir_ret);
+}
+
 void audio::reinit_capture() {
     if (!conf::get().record_audio)
         return;
     if (bat.is_open())
         bat.close();
+    audio_ensure_base_path();
     auto bat_ret = bat.open(base_path + "\\..\\audio_merge.bat", 1);
     ENSURE(bat_ret);
     bat.writeln("@echo off");
@@ -549,9 +558,6 @@ void audio::init() {
         of::warn("Audio recording is still in BETA");
         if (!cfg.emulate_mm_timers)
             of::warn("Not emulating WINMM timers, expect audio problems");
-        base_path = string(ofs::get_cwd()) + '\\' + cfg.project_name + "\\temp_audio";
-        auto dir_ret = ofs::make_dir(base_path);
-        ENSURE(dir_ret);
         reinit_capture();
     }
     IAT_STR_ONLY("winmm.dll", mciSendCommand);
