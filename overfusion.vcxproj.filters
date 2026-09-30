@@ -201,6 +201,9 @@
     <ClCompile Include="plugins\fnaf2_3_4.cpp">
       <Filter>Plugins</Filter>
     </ClCompile>
+    <ClCompile Include="plugins\fnaf6.cpp">
+      <Filter>Plugins</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest">
