@@ -7,14 +7,14 @@
 #include "../tools/timer_fix.hpp"
 #include <Windows.h>
 
-class PlugFnaf5 final : public plug::PlugBase {
+class PlugUCN final : public plug::PlugBase {
 private:
     void(__fastcall* SaveGameState)(void* hfile);
     void(__fastcall* LoadGameState)(void* hfile, unsigned int* outframe);
 
 public:
-    PlugFnaf5() {
-        name = std::string("Five Nights at Freddy's: Sister Location");
+    PlugUCN() {
+        name = std::string("Ultimate Custom Night");
         SaveGameState = nullptr;
         LoadGameState = nullptr;
     }
@@ -23,20 +23,22 @@ public:
         auto& cfg = conf::get();
         if (cfg.fps <= 0)
             cfg.fps = 60;
-        SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x47ea0);
-        LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49a90);
-        cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x45e60);
-        cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2c1f0);
-        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x28960);
-        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x29d00);
+        SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x48350);
+        LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49f40);
+        cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x462e0);
+        cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2c3f0);
+        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x28b50);
+        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x29f30);
         // No waiting
-        mem::write(mem::get_base() + 0x2f98, {0xeb});
-        mem::write(mem::get_base() + 0x2fc7, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x2ee5, {0xeb});
+        mem::write(mem::get_base() + 0x2f0a, {0x90, 0x90});
+        // By saying pause I mean pause
+        mem::write(mem::get_base() + 0x2aaf8, {0xeb});
         // Game FPS is fine
-        mem::write(mem::get_base() + 0x2a7fa, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x2ab6c, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
         // Game title
-        mem::write(mem::get_base() + 0x2718d, {0xeb});
-        mem::write(mem::get_base() + 0x271b8, {0x90, 0x90});
+        mem::write(mem::get_base() + 0x2737d, {0xeb});
+        mem::write(mem::get_base() + 0x273a8, {0x90, 0x90});
         return true;
     }
 
@@ -62,11 +64,11 @@ public:
     void* get_prop(plug::PtrProp prop, void* data) override {
         switch (prop) {
         case plug::PtrProp::PState:
-            return *reinterpret_cast<void**>(mem::get_base() + 0xb39b4);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb49d4);
         case plug::PtrProp::PStats:
-            return *reinterpret_cast<void**>(mem::get_base() + 0xb39b0);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb49d0);
         case plug::PtrProp::PGlobalApp:
-            return *reinterpret_cast<void**>(mem::get_base() + 0xb39ac);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb49cc);
         case plug::PtrProp::PNextFrameTask:
             // From pState
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x30);
@@ -115,11 +117,11 @@ public:
         return {};
     }
 
-    static of::optional<PlugFnaf5*> on_plugin_check() {
-        if (mem::exe_name == "SisterLocation.exe")
-            return new PlugFnaf5;
+    static of::optional<PlugUCN*> on_plugin_check() {
+        if (mem::exe_name == "Ultimate Custom Night.exe")
+            return new PlugUCN;
         return {};
     }
 };
 
-PLUG_REG(PlugFnaf5);
+PLUG_REG(PlugUCN);
