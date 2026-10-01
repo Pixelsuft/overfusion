@@ -27,19 +27,20 @@ public:
             cfg.fps = 60;
         SaveGameState = reinterpret_cast<decltype(SaveGameState)>(mem::get_base() + 0x480d0);
         LoadGameState = reinterpret_cast<decltype(LoadGameState)>(mem::get_base() + 0x49cc0);
-        // TODO: continue working on
-        cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x45e60);
-        cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2c1f0);
-        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x28960);
-        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x29d00);
+        cfg.pUpdateGameFrame = reinterpret_cast<void*>(mem::get_base() + 0x46060);
+        cfg.pRenderFrame = reinterpret_cast<void*>(mem::get_base() + 0x2c300);
+        cfg.pProcessTransition = reinterpret_cast<void*>(mem::get_base() + 0x28ae0);
+        cfg.pRenderTransition = reinterpret_cast<void*>(mem::get_base() + 0x29ea0);
         // No waiting
-        mem::write(mem::get_base() + 0x2f98, {0xeb});
-        mem::write(mem::get_base() + 0x2fc7, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        mem::write(mem::get_base() + 0x2fae, {0xeb});
+        mem::write(mem::get_base() + 0x2fdb, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        // By saying pause I mean pause
+        mem::write(mem::get_base() + 0x2aa58, {0xeb});
         // Game FPS is fine
-        mem::write(mem::get_base() + 0x2a7fa, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
-        // Game title TODO
-        mem::write(mem::get_base() + 0x2718d, {0xeb});
-        mem::write(mem::get_base() + 0x271b8, {0x90, 0x90});
+        mem::write(mem::get_base() + 0x2aad0, {0x90, 0x90, 0x90, 0x90, 0x90, 0x90});
+        // Game title
+        mem::write(mem::get_base() + 0x272fd, {0xeb});
+        mem::write(mem::get_base() + 0x27328, {0x90, 0x90});
         return true;
     }
 
@@ -76,11 +77,11 @@ public:
     void* get_prop(plug::PtrProp prop, void* data) override {
         switch (prop) {
         case plug::PtrProp::PState:
-            return *reinterpret_cast<void**>(mem::get_base() + 0xb39b4);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb39d4);
         case plug::PtrProp::PStats:
-            return *reinterpret_cast<void**>(mem::get_base() + 0xb39b0);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb39d0);
         case plug::PtrProp::PGlobalApp:
-            return *reinterpret_cast<void**>(mem::get_base() + 0xb39ac);
+            return *reinterpret_cast<void**>(mem::get_base() + 0xb39cc);
         case plug::PtrProp::PNextFrameTask:
             // From pState
             return reinterpret_cast<void*>(reinterpret_cast<size_t>(data) + 0x30);

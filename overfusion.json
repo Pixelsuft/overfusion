@@ -83,9 +83,24 @@
       "target": "R"
     },
     {
+      "key": "W",
+      "task": "map",
+      "target": "W"
+    },
+    {
+      "key": "A",
+      "task": "map",
+      "target": "A"
+    },
+    {
       "key": "S",
       "task": "map",
       "target": "S"
+    },
+    {
+      "key": "D",
+      "task": "map",
+      "target": "D"
     },
     {
       "key": "Z",

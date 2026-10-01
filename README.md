@@ -13,6 +13,8 @@ TAS tool/framework for games based on the MMF2/CTF2.5 runtime
 - `Five Nights at Freddy's 2`: Haven't tested it much
 - `Five Nights at Freddy's 3`: Haven't tested it much
 - `Five Nights at Freddy's 4`: Haven't tested it much (TODO: fix mouse lock!!!!!!!!!!!!)
+- `Five Nights at Freddy's: Sister Location`: Haven't tested it much
+- `Freddy Fazbear's Pizzeria Simulator`: Haven't tested it much
 - `I Wanna be The Boshy`: PoC, use [boshyst](https://github.com/Pixelsuft/boshyst) instead
 - `I Wanna be The Guy`: Very old MMF2 runtime, requires `stdrt.exe` and related stuff unpacking; doesn't support in-game states
 - `I Wanna Try (1.9.8.3)`: Save states are broken because of Box2D physics; restarting works strange
