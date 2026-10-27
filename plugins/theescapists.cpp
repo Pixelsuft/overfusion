@@ -120,7 +120,7 @@ public:
     }
 
     static of::optional<PlugTheEscapists*> on_plugin_check() {
-        if (mem::exe_name == "SisterLocation.exe")
+        if (mem::exe_name == "TheEscapists_eur.exe")
             return new PlugTheEscapists;
         return {};
     }
