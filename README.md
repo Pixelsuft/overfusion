@@ -21,6 +21,7 @@ TAS tool/framework for games based on the MMF2/CTF2.5 runtime
 - `I Wanna Try: A New Adventure (DEMO)`: Same but every frame INI writes (when using VFS) are really slow and should be disabled
 - `Mario Forever (Latest)`: Uses weird audio plugin (also audio relies on audio); also sometimes collision desyncs; requires `stdrt.exe` and related stuff unpacking
 - `Ultimate Custom Night`: Haven't tested it much
+- `The Escapists`: Just runs (with steam emu); states work very bad; virtual FS breaks the game
 
 ## Docs
 
