@@ -998,6 +998,7 @@ void files::hook_fs() {
     auto& cfg = conf::get();
     if (!cfg.virtual_fs)
         return;
+    // TODO: CreateDirectoryW
     IAT_STR_AUTO("kernel32.dll", DeleteFile);
     IAT_STR_AUTO("kernel32.dll", CreateFile);
     if (!cfg.no_ini_hooks) {

@@ -153,6 +153,12 @@ static void __cdecl _ftimeH(struct my_timeb* timeptr) {
     }
 }
 
+static clock_t __cdecl clockH() {
+    // TODO
+    of::warn("TODO: clock()");
+    return -1;
+}
+
 static UINT_PTR WINAPI SetTimerH(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse,
                                  TIMERPROC lpTimerFunc) {
     if (nIDEvent == 0xb)
@@ -224,6 +230,7 @@ void timehooks::init() {
     IAT_ONLY("kernel32.dll", GetSystemTimeAsFileTime);
     IAT_ONLY("msvcrt.dll", _ftime);
     IAT_ONLY("msvcrt.dll", time);
+    IAT_ONLY("msvcrt.dll", clock);
     if (cfg.emulate_user_timers) {
         IAT_ONLY("user32.dll", SetTimer);
         IAT_ONLY("user32.dll", KillTimer);

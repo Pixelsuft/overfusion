@@ -62,6 +62,7 @@ void threadhooks::update_init() {
 }
 
 void threadhooks::pre_init() {
+    // TODO: deal with process.mfx plugin
     if (!conf::get().delay_thread_hook)
         HOOK_AUTO("kernel32.dll", CreateThread);
     HOOK_ONLY("kernel32.dll", CreateProcessA);

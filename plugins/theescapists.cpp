@@ -2,6 +2,7 @@
 #include "../src/config.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
+#include "../src/log.hpp"
 #include "../src/state.hpp"
 #include "../tools/timer_fix.hpp"
 #include <Windows.h>
@@ -56,6 +57,13 @@ public:
         size_t base = reinterpret_cast<size_t>(mod);
         if (fn == "cctrans.dll") {
             trans_ptr = base + 0x7557;
+        }
+        else if (fn == "SimpleActive.mfx") {
+            // FIXME
+            // of::info("Steam requirement patched!");
+            // mem::write(base + 0x10ed, {0xeb});
+            // mem::write(base + 0x11a1, {0xeb});
+            // mem::write(base + 0x117c, {0xeb});
         }
     };
 
