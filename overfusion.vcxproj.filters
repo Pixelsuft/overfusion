@@ -207,6 +207,9 @@
     <ClCompile Include="plugins\ucn.cpp">
       <Filter>Plugins</Filter>
     </ClCompile>
+    <ClCompile Include="plugins\theescapists.cpp">
+      <Filter>Plugins</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest">
