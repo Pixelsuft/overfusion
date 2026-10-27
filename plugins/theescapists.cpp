@@ -38,6 +38,8 @@ public:
         // Game title
         mem::write(mem::get_base() + 0x2718d, {0xeb});
         mem::write(mem::get_base() + 0x271b8, {0x90, 0x90});
+        // Cursor fix
+        mem::write(mem::get_base() + 0xa3b9, {0xeb});
         return true;
     }
 

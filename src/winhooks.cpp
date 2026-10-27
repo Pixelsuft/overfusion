@@ -541,6 +541,7 @@ static HCURSOR WINAPI SetCursorH(HCURSOR hCursor) {
 static int(WINAPI* ShowCursorO)(BOOL bShow);
 static int WINAPI ShowCursorH(BOOL bShow) {
     // of::debug("ShowCursorH {}", bShow);
+    // FIXME: this bugs out The Escapists
     bShow = TRUE;
     return ShowCursorO(bShow);
 }
