@@ -258,8 +258,14 @@ static bool is_iat_dll_blocked(of::string_view dll) {
 bool hook::patch_iat() {
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, 0);
     if (hSnapshot == INVALID_HANDLE_VALUE) {
-        of::error("Failed to create snapshot (code: {})", GetLastError());
-        return 1;
+        if (GetLastError() == ERROR_BAD_LENGTH) {
+            Sleep(500);
+            hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, 0);
+        }
+        if (hSnapshot == INVALID_HANDLE_VALUE) {
+            of::error("Failed to create snapshot (code: {})", GetLastError());
+            return 1;
+        }
     }
 
     MODULEENTRY32W me = {0};

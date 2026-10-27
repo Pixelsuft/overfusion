@@ -192,12 +192,6 @@
     <ClCompile Include="plugins\marioforever.cpp">
       <Filter>Plugins</Filter>
     </ClCompile>
-    <ClCompile Include="plugins\marioforeverremake.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="plugins\marioforever5.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="plugins\fnaf2_3_4.cpp">
       <Filter>Plugins</Filter>
     </ClCompile>
@@ -208,6 +202,12 @@
       <Filter>Plugins</Filter>
     </ClCompile>
     <ClCompile Include="plugins\theescapists.cpp">
+      <Filter>Plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="plugins\marioforever5.cpp">
+      <Filter>Plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="plugins\marioforeverremake.cpp">
       <Filter>Plugins</Filter>
     </ClCompile>
   </ItemGroup>

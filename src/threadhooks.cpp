@@ -5,6 +5,7 @@
 #include "mem.hpp"
 #include "uconv.hpp"
 #include <Windows.h>
+#include <tlhelp32.h>
 
 static HANDLE(WINAPI* CreateThreadO)(LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID,
                                      DWORD, LPDWORD);
@@ -56,6 +57,30 @@ static VOID WINAPI ExitProcessH(UINT uExitCode) {
     ExitProcessO(uExitCode);
 }
 
+static HANDLE WINAPI OpenProcessH(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) {
+    of::warn("Failing OpenProcess");
+    return nullptr;
+}
+
+static HANDLE(WINAPI* CreateToolhelp32SnapshotO)(DWORD dwFlags, DWORD th32ProcessID);
+static HANDLE WINAPI CreateToolhelp32SnapshotH(DWORD dwFlags, DWORD th32ProcessID) {
+    // Bypass our IAT stuff
+    if (dwFlags == (TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32) && th32ProcessID == 0)
+        return CreateToolhelp32SnapshotO(dwFlags, th32ProcessID);
+    // Bypass MinHook stuff
+    if (dwFlags == TH32CS_SNAPTHREAD && th32ProcessID == 0)
+        return CreateToolhelp32SnapshotO(dwFlags, th32ProcessID);
+    // process.mfx hack
+    of::warn("Failing CreateToolhelp32Snapshot");
+    return INVALID_HANDLE_VALUE;
+}
+
+static BOOL WINAPI OpenProcessTokenH(HANDLE ProcessHandle, DWORD DesiredAccess,
+                                     PHANDLE TokenHandle) {
+    of::warn("Failing OpenProcessToken");
+    return FALSE;
+}
+
 void threadhooks::update_init() {
     if (conf::get().delay_thread_hook)
         HOOK_AUTO("kernel32.dll", CreateThread);
@@ -65,7 +90,10 @@ void threadhooks::pre_init() {
     // TODO: deal with process.mfx plugin
     if (!conf::get().delay_thread_hook)
         HOOK_AUTO("kernel32.dll", CreateThread);
+    HOOK_ONLY("kernel32.dll", OpenProcess);
     HOOK_ONLY("kernel32.dll", CreateProcessA);
     HOOK_AUTO("kernel32.dll", CreateProcessW);
     HOOK_AUTO("kernel32.dll", ExitProcess);
+    HOOK_AUTO("kernel32.dll", CreateToolhelp32Snapshot);
+    IAT_ONLY("advapi32.dll", OpenProcessToken);
 }

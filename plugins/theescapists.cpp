@@ -1,11 +1,12 @@
 #define WIN32_LEAN_AND_MEAN
 #include "../src/config.hpp"
+#include "../src/log.hpp"
 #include "../src/mem.hpp"
 #include "../src/plugbase.hpp"
-#include "../src/log.hpp"
 #include "../src/state.hpp"
 #include "../tools/timer_fix.hpp"
 #include <Windows.h>
+
 
 class PlugTheEscapists final : public plug::PlugBase {
 private:
@@ -57,8 +58,7 @@ public:
         size_t base = reinterpret_cast<size_t>(mod);
         if (fn == "cctrans.dll") {
             trans_ptr = base + 0x7557;
-        }
-        else if (fn == "SimpleActive.mfx") {
+        } else if (fn == "SimpleActive.mfx") {
             // FIXME
             // of::info("Steam requirement patched!");
             // mem::write(base + 0x10ed, {0xeb});
@@ -130,7 +130,8 @@ public:
     }
 
     static of::optional<PlugTheEscapists*> on_plugin_check() {
-        if (mem::exe_name == "TheEscapists_eur.exe")
+        if (mem::exe_name == "TheEscapists_eur.exe" || mem::exe_name == "TheEscapists_pol.exe" ||
+            mem::exe_name == "TheEscapists_rus.exe")
             return new PlugTheEscapists;
         return {};
     }
